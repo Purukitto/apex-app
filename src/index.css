@@ -9,3 +9,28 @@
   --color-apex-green: #00FF41;
   --color-apex-red: #FF3B30;
 }
+
+/* Sonner Toast Styling for Apex */
+[data-sonner-toast] {
+  background: #0A0A0A !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #E2E2E2 !important;
+  font-family: inherit !important;
+}
+
+[data-sonner-toast][data-type="success"] {
+  border-color: #00FF41 !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  border-color: #FF3B30 !important;
+}
+
+[data-sonner-toast] [data-description] {
+  color: #E2E2E2 !important;
+}
+
+/* Ensure numbers use font-mono in toasts */
+[data-sonner-toast] .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}

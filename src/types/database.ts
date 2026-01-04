@@ -23,3 +23,14 @@ export type Bike = {
     max_lean_right: number;
     route_path?: GeoJSONLineString;
   };
+
+  export type MaintenanceLog = {
+    id: string;
+    bike_id: string;
+    user_id: string;
+    odo_at_service: number;
+    service_date: string;
+    service_type?: string;
+    notes?: string;
+    created_at: string;
+  };

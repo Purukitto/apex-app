@@ -17,10 +17,14 @@
     "@capacitor/ios": "^8.0.0",
     "@capacitor/motion": "^8.0.0",
     "@supabase/supabase-js": "^2.89.0",
+    "@tanstack/react-query": "^5.90.16",
+    "date-fns": "^4.1.0",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.11.0"
+    "react-router-dom": "^7.11.0",
+    "sonner": "^2.0.7",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

@@ -1,0 +1,131 @@
+---
+description: Notification and user feedback standards for Apex
+globs: ["src/**/*.{ts,tsx}", "src/lib/toast.ts", "src/stores/*.ts"]
+alwaysApply: true
+---
+
+# Apex Notification Rules
+
+## Toast System (Sonner)
+
+### Implementation
+- **Always use** `apexToast` utility from `src/lib/toast.ts` for all notifications.
+- **Never** import `toast` directly from `sonner` - use the wrapper for consistency.
+- The `<Toaster />` component is configured in `MainLayout.tsx` with:
+  - `theme="dark"`
+  - `position="top-center"`
+  - `expand={false}`
+
+### Automatic Toasts for Mutations
+- **MANDATORY**: Every TanStack Query mutation (Create, Update, Delete) MUST show a toast notification.
+- **MANDATORY**: Every form submission MUST show a toast notification.
+- Use `apexToast.promise()` for async operations (mutations, API calls).
+- Use `apexToast.success()` or `apexToast.error()` for synchronous operations or when promise handling is done manually.
+
+### Toast Message Standards
+
+#### Success Messages
+- **MUST** be minimalist and concise.
+- **GOOD**: "Ride Saved", "Bike Added", "Profile Updated"
+- **BAD**: "Your ride has been successfully saved to the database", "The bike was added to your garage successfully"
+
+#### Error Messages
+- **MUST** include actionable information when possible.
+- **MUST** use `apexToast.error()` with a "Retry" action if the operation can be retried.
+- Example: `apexToast.error("Failed to save ride", { action: { label: "Retry", onClick: handleRetry } })`
+
+#### Promise Messages
+- Loading message: Describe the action in progress (e.g., "Adding machine to garage...")
+- Success message: Confirm completion (e.g., "Bike successfully added to your fleet.")
+- Error message: Provide context (e.g., "Failed to add bike. Check your connection.")
+
+### Visual Style
+- **Background**: `#0A0A0A` (apex-black)
+- **Success border**: `#00FF41` (apex-green)
+- **Error border**: `#FF3B30` (apex-red)
+- **Text color**: `#E2E2E2` (apex-white)
+- **Font**: Inherit from theme (use `font-mono` for numbers/data in toast content)
+
+## Persistent Notifications (Zustand Store)
+
+### Notification Store
+- **MUST** use `useNotificationStore` (Zustand) for persistent alerts that need to remain visible.
+- Store location: `src/stores/useNotificationStore.ts`
+- Use cases:
+  - Maintenance warnings (service intervals)
+  - Critical system alerts
+  - Business logic warnings that persist across page navigation
+
+### Business Logic Alerts
+- **MANDATORY**: When a calculation triggers a warning (e.g., Odometer approaching service interval):
+  1. Add the alert to `useNotificationStore`
+  2. Show a toast notification using `apexToast`
+  3. Display the alert in the UI (e.g., Dashboard maintenance section)
+
+### Alert Structure
+```typescript
+interface Notification {
+  id: string;
+  type: 'warning' | 'error' | 'info';
+  message: string;
+  timestamp: Date;
+  dismissible: boolean;
+  action?: { label: string; onClick: () => void };
+}
+```
+
+## Examples
+
+### TanStack Query Mutation
+```typescript
+const createBike = useMutation({
+  mutationFn: async (bikeData) => { /* ... */ },
+  onSuccess: () => {
+    apexToast.success('Bike Added');
+    queryClient.invalidateQueries({ queryKey: ['bikes'] });
+  },
+  onError: (error) => {
+    apexToast.error(error.message || 'Failed to add bike');
+  },
+});
+```
+
+### Form Submission with Promise
+```typescript
+const handleSubmit = async (data) => {
+  apexToast.promise(
+    submitForm(data),
+    {
+      loading: 'Saving...',
+      success: 'Saved',
+      error: 'Save failed',
+    }
+  );
+};
+```
+
+### Business Logic Alert
+```typescript
+// In Dashboard or component
+if (kmUntilService <= 500) {
+  // Add to notification store
+  useNotificationStore.getState().addNotification({
+    id: `maintenance-${bike.id}`,
+    type: 'warning',
+    message: `${bike.nick_name} service due in ${kmUntilService} km`,
+    timestamp: new Date(),
+    dismissible: true,
+  });
+  
+  // Show toast
+  apexToast.error(`Service due soon: ${bike.nick_name}`);
+}
+```
+
+## Anti-Patterns
+
+- ❌ **DON'T**: Use `toast` directly from `sonner`
+- ❌ **DON'T**: Show verbose success messages
+- ❌ **DON'T**: Skip toast notifications for mutations
+- ❌ **DON'T**: Use different toast styling than apexToast provides
+- ❌ **DON'T**: Show persistent alerts without adding to NotificationStore

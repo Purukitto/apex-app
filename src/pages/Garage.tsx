@@ -4,6 +4,7 @@ import { useBikes } from '../hooks/useBikes';
 import BikeCard from '../components/BikeCard';
 import AddBikeModal from '../components/AddBikeModal';
 import { Bike as BikeType } from '../types/database';
+import { apexToast } from '../lib/toast';
 
 export default function Garage() {
   const { bikes, isLoading, createBike, updateBike, deleteBike } = useBikes();
@@ -32,7 +33,17 @@ export default function Garage() {
   };
 
   const handleDeleteBike = async (id: string) => {
-    await deleteBike.mutateAsync(id);
+    try {
+      await deleteBike.mutateAsync(id);
+      // Only show success if mutation completed without error
+      apexToast.success('Bike deleted');
+    } catch (error) {
+      console.error('Delete bike error:', error);
+      apexToast.error(
+        error instanceof Error ? error.message : 'Failed to delete bike'
+      );
+      throw error; // Re-throw to prevent BikeCard from thinking it succeeded
+    }
   };
 
   const handleCloseModal = () => {

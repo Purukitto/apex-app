@@ -22,12 +22,15 @@ export function useMaintenanceChecker() {
       if (!user) return;
 
       // Fetch all maintenance logs for user's bikes
+      // Note: maintenance_logs doesn't have user_id, so we filter by bike_id only
+      // RLS on maintenance_logs should ensure users can only see logs for their bikes
       const bikeIds = bikes.map((bike) => bike.id);
+      if (bikeIds.length === 0) return;
+
       const { data: maintenanceLogs, error } = await supabase
         .from('maintenance_logs')
         .select('*')
         .in('bike_id', bikeIds)
-        .eq('user_id', user.id)
         .order('odo_at_service', { ascending: false });
 
       if (error) {

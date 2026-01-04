@@ -14,8 +14,13 @@ export default function BikeCard({ bike, onDelete, onEdit }: BikeCardProps) {
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this bike?')) {
       setIsDeleting(true);
-      await onDelete(bike.id);
-      setIsDeleting(false);
+      try {
+        await onDelete(bike.id);
+      } catch (error) {
+        console.error('Error deleting bike:', error);
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -37,7 +42,7 @@ export default function BikeCard({ bike, onDelete, onEdit }: BikeCardProps) {
             )}
           </div>
         </div>
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
           {onEdit && (
             <button
               onClick={() => onEdit(bike)}
@@ -50,7 +55,7 @@ export default function BikeCard({ bike, onDelete, onEdit }: BikeCardProps) {
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="p-2 text-apex-white/60 hover:text-apex-red transition-colors disabled:opacity-50"
+            className="p-2 text-apex-white/60 hover:text-apex-red transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Delete bike"
           >
             <Trash2 size={18} />

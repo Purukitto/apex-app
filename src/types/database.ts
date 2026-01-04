@@ -27,7 +27,6 @@ export type Bike = {
   export type MaintenanceLog = {
     id: string;
     bike_id: string;
-    user_id: string;
     odo_at_service: number;
     service_date: string;
     service_type?: string;

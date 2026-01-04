@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+@theme {
+  /* Base Colors */
+  --color-apex-black: #0A0A0A;
+  --color-apex-white: #E2E2E2;
+  
+  /* Data Accent Colors */
+  --color-apex-green: #00FF41;
+  --color-apex-red: #FF3B30;
+}

@@ -1,0 +1,20 @@
+---
+description: Database and Auth rules for Supabase + PostGIS
+globs: ["src/lib/supabase.ts", "src/hooks/use*.ts"]
+alwaysApply: false
+---
+
+# Supabase & Data Rules
+
+## PostGIS Integration
+- Ride paths are stored as `GEOGRAPHY(LINESTRING, 4326)`.
+- When fetching routes, use RPC calls or specific GeoJSON selectors.
+- Telemetry precision: Lean angles should be rounded to 1 decimal place.
+
+## Row Level Security (RLS)
+- Every query must include a `user_id` check.
+- Never write code that bypasses RLS in the frontend.
+
+## Schema Reference
+- `bikes`: id, user_id, make, model, current_odo.
+- `rides`: id, bike_id, route_path (LineString), max_lean_left, max_lean_right.

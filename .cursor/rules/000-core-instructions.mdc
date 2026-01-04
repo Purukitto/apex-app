@@ -1,0 +1,21 @@
+---
+description: Global coding standards and UI/UX rules for Apex
+globs: ["src/**/*.{ts,tsx}"]
+alwaysApply: true
+---
+
+# Apex Core Rules
+
+## UI/UX Standards
+- Always use **Tailwind CSS**.
+- Backgrounds must be `bg-apex-black`.
+- Telemetry/Numbers must use `font-mono` (JetBrains Mono).
+- Use `lucide-react` for all iconography.
+- Favor `framer-motion` for subtle, high-end transitions.
+
+## Code Standards
+- Use **TypeScript** with strict type checking.
+- Prefer Functional Components and Hooks.
+- Centralize state using **Zustand**.
+- Fetch data using **TanStack Query** (React Query).
+- Logic for "Ride Recording" must check for mobile platform using Capacitor.

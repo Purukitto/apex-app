@@ -12,9 +12,44 @@ alwaysApply: false
 - Telemetry precision: Lean angles should be rounded to 1 decimal place.
 
 ## Row Level Security (RLS)
-- Every query must include a `user_id` check.
+- Every query must include a `user_id` check where applicable.
+- For tables with `user_id` column: Always filter by `user_id` matching `auth.uid()`.
+- For tables without `user_id` (e.g., `maintenance_logs`): RLS policies must enforce access through related tables (e.g., join through `bikes` table).
 - Never write code that bypasses RLS in the frontend.
 
 ## Schema Reference
-- `bikes`: id, user_id, make, model, current_odo.
-- `rides`: id, bike_id, route_path (LineString), max_lean_left, max_lean_right.
+
+### `bikes` table
+- `id` (uuid, PK)
+- `user_id` (uuid, FK to auth.users.id)
+- `make` (text)
+- `model` (text)
+- `year` (int4, nullable)
+- `current_odo` (int4)
+- `nick_name` (text, nullable)
+- `image_url` (text, nullable)
+- `created_at` (timestamptz)
+
+### `rides` table
+- `id` (uuid, PK)
+- `bike_id` (uuid, FK to bikes.id)
+- `user_id` (uuid, FK to auth.users.id)
+- `start_time` (timestamptz)
+- `end_time` (timestamptz, nullable)
+- `distance_km` (numeric)
+- `max_lean_left` (int4)
+- `max_lean_right` (int4)
+- `route_path` (geography, LineString, nullable)
+- `created_at` (timestamptz)
+
+### `maintenance_logs` table
+- `id` (uuid, PK)
+- `bike_id` (uuid, FK to bikes.id)
+- `service_type` (text, nullable)
+- `odo_at_service` (int4)
+- `date_performed` (date)
+- `notes` (text, nullable)
+- `receipt_url` (text, nullable)
+- `created_at` (timestamptz)
+
+**Note**: `maintenance_logs` does NOT have a `user_id` column. Access control must be enforced via RLS policies that join through the `bikes` table.

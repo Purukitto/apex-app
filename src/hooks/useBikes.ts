@@ -27,7 +27,7 @@ export function useBikes() {
 
   // Create a new bike
   const createBike = useMutation({
-    mutationFn: async (bikeData: Omit<Bike, 'id' | 'user_id'>) => {
+    mutationFn: async (bikeData: Omit<Bike, 'id' | 'user_id' | 'created_at'>) => {
       const {
         data: { user },
       } = await supabase.auth.getUser();

@@ -6,7 +6,7 @@ import { apexToast } from '../lib/toast';
 interface AddBikeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (bikeData: Omit<Bike, 'id' | 'user_id'>) => Promise<void>;
+  onSubmit: (bikeData: Omit<Bike, 'id' | 'user_id' | 'created_at'>) => Promise<void>;
   editingBike?: Bike | null;
 }
 
@@ -53,7 +53,7 @@ export default function AddBikeModal({
     setIsSubmitting(true);
 
     try {
-      const bikeData: Omit<Bike, 'id' | 'user_id'> = {
+      const bikeData: Omit<Bike, 'id' | 'user_id' | 'created_at'> = {
         make: formData.make.trim(),
         model: formData.model.trim(),
         year: formData.year ? parseInt(formData.year, 10) : undefined,

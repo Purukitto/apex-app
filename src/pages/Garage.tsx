@@ -11,12 +11,12 @@ export default function Garage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBike, setEditingBike] = useState<BikeType | null>(null);
 
-  const handleAddBike = async (bikeData: Omit<BikeType, 'id' | 'user_id'>) => {
+  const handleAddBike = async (bikeData: Omit<BikeType, 'id' | 'user_id' | 'created_at'>) => {
     await createBike.mutateAsync(bikeData);
   };
 
   const handleUpdateBike = async (
-    bikeData: Omit<BikeType, 'id' | 'user_id'>
+    bikeData: Omit<BikeType, 'id' | 'user_id' | 'created_at'>
   ) => {
     if (editingBike) {
       await updateBike.mutateAsync({

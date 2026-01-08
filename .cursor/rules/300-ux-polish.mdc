@@ -1,0 +1,95 @@
+---
+description: Standards for animations, polish, and "Dark Cockpit" UX refinement
+globs: ["src/components/**/*.tsx", "src/pages/**/*.tsx"]
+alwaysApply: true
+---
+
+# Apex UX & Polish Standards
+
+## 1. Motion & Transitions (Framer Motion)
+
+### Shared Animation Library
+- **MANDATORY**: Import animation variants and props from `src/lib/animations.ts`
+- **DO NOT** define animation variants inline - always use the shared library for consistency.
+- **Available exports:**
+  - `containerVariants` - For page-level containers with staggered children
+  - `itemVariants` - For individual items (0.5s duration, y: 20 offset)
+  - `fastItemVariants` - For faster animations (0.3s duration, y: 10 offset)
+  - `listContainerVariants` - For lists with 0.05s stagger
+  - `buttonHoverProps` - Standard button hover/tap animations
+  - `cardHoverProps` - Standard card border hover effect
+
+### Staggered Entry Animations
+- **MANDATORY**: All pages must use staggered entry animations for their main content.
+- **Usage:**
+  ```typescript
+  import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
+  
+  // In component:
+  <motion.div
+    variants={containerVariants}
+    initial="hidden"
+    animate="visible"
+  >
+    <motion.h1 variants={itemVariants}>Page Title</motion.h1>
+    <motion.button {...buttonHoverProps}>Click</motion.button>
+  </motion.div>
+  ```
+- **Lists and Cards:** Must use `staggerChildren` (0.05s - 0.1s) to reveal items sequentially.
+- **Page Wrapper:** Wrap page content in `<motion.div>` with `variants={containerVariants}` and `initial="hidden" animate="visible"`.
+
+### Micro-Interactions
+- **Buttons:** **MANDATORY** Use `{...buttonHoverProps}` from animations library (spreads `whileHover` and `whileTap`).
+- **Cards:** **MANDATORY** Use `{...cardHoverProps}` from animations library for border hover effect.
+- **Page Transitions:** MainLayout uses `AnimatePresence` for smooth exit/entry between views.
+
+## 2. Component Standards
+
+### Card Components
+- **MANDATORY Styling:**
+  - Background: `bg-gradient-to-br from-white/5 to-transparent`
+  - Border: `border border-apex-white/20`
+  - Hover: `hover:border-apex-green/40` with framer-motion `whileHover`
+  - Padding: `p-4` or `p-6` depending on content density
+  - Rounded: `rounded-lg`
+
+- **Icon Containers:**
+  - Background: `bg-apex-green/10`
+  - Hover: `group-hover:bg-apex-green/20`
+  - Padding: `p-2` or `p-1.5` for smaller icons
+  - Rounded: `rounded-lg`
+
+- **Action Buttons:**
+  - Desktop: Hidden by default, show on group-hover: `opacity-100 md:opacity-0 md:group-hover:opacity-100`
+  - Mobile: Always visible: `opacity-100`
+  - Must use framer-motion scale feedback
+
+### Page Structure
+- **MANDATORY**: All pages must:
+  1. Import animation variants from `src/lib/animations.ts`
+  2. Wrap content in `<motion.div>` with `variants={containerVariants}` and `initial="hidden" animate="visible"`
+  3. Apply `itemVariants` to page header/title
+  4. Apply `containerVariants` to lists/grids of items
+  5. Apply `itemVariants` or `fastItemVariants` to each list item
+  6. Use `{...buttonHoverProps}` for all buttons
+  7. Use `{...cardHoverProps}` for all cards
+
+### Consistency Rules
+- **All cards must look cohesive:** Use the same gradient, border, and hover patterns.
+- **All buttons must use `{...buttonHoverProps}`:** No inline animation definitions.
+- **All cards must use `{...cardHoverProps}`:** No inline hover definitions.
+- **All lists must have staggered animations:** Use `listContainerVariants` and `fastItemVariants` for list items.
+- **No duplicate animation code:** Always import from `src/lib/animations.ts`.
+
+## 3. Visual Hierarchy & Polish
+- **Borders over Shadows:** Avoid heavy shadows. Use `border border-white/10` or `border-white/20` for containers.
+- **Typography:**
+  - Header: `font-sans font-bold tracking-tight`.
+  - Telemetry: Always `font-mono text-apex-green`.
+  - Card Titles: `font-semibold` for consistency.
+- **Empty States:** Never show a blank screen. Use minimalist line-art or subtle Lucide icons with "muted" text.
+- **Skeleton Loaders:** Use "Shimmer" effects (`.animate-shimmer`) for data fetching instead of generic loading spinners.
+
+## 4. QoL (Quality of Life)
+- **Haptic Feedback:** On mobile (Capacitor), trigger light haptics for "Start Ride" or "Save" actions.
+- **Pull-to-Refresh:** Implement standard mobile refresh gestures for the Garage and Dashboard feeds.

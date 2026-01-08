@@ -1,35 +1,40 @@
 export type Bike = {
-    id: string;
-    user_id: string;
-    make: string;
-    model: string;
-    year?: number;
-    current_odo: number;
-    nick_name?: string;
-  };
+  id: string;
+  user_id: string;
+  make: string;
+  model: string;
+  year?: number;
+  current_odo: number;
+  nick_name?: string;
+  image_url?: string;
+  created_at: string;
+};
 
-  export type GeoJSONLineString = {
-    type: "LineString";
-    coordinates: [number, number][]; // [longitude, latitude] pairs
-  };
-  
-  export type Ride = {
-    id: string;
-    bike_id: string;
-    start_time: string;
-    end_time?: string;
-    distance_km: number;
-    max_lean_left: number;
-    max_lean_right: number;
-    route_path?: GeoJSONLineString;
-  };
+export type GeoJSONLineString = {
+  type: "LineString";
+  coordinates: [number, number][]; // [longitude, latitude] pairs
+};
 
-  export type MaintenanceLog = {
-    id: string;
-    bike_id: string;
-    odo_at_service: number;
-    service_date: string;
-    service_type?: string;
-    notes?: string;
-    created_at: string;
-  };
+export type Ride = {
+  id: string;
+  bike_id: string;
+  user_id: string;
+  start_time: string;
+  end_time?: string;
+  distance_km: number;
+  max_lean_left: number;
+  max_lean_right: number;
+  route_path?: GeoJSONLineString;
+  created_at: string;
+};
+
+export type MaintenanceLog = {
+  id: string;
+  bike_id: string;
+  service_type?: string;
+  odo_at_service: number;
+  date_performed: string; // date format
+  notes?: string;
+  receipt_url?: string;
+  created_at: string;
+};

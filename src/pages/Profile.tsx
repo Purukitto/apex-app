@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, LogOut, Save } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 
 export default function Profile() {
   const { profile, isLoading, updateRiderName, signOut } = useUserProfile();
@@ -55,13 +57,27 @@ export default function Profile() {
     );
   }
 
-  return (
-    <div className="p-6 max-w-2xl">
-      <h1 className="text-2xl font-bold text-apex-white mb-6">Profile</h1>
 
-      <div className="space-y-6">
+  return (
+    <motion.div
+      className="p-6 max-w-2xl"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.h1
+        className="text-2xl font-bold text-apex-white mb-6"
+        variants={itemVariants}
+      >
+        Profile
+      </motion.h1>
+
+      <motion.div className="space-y-6" variants={containerVariants}>
         {/* Email Section */}
-        <div className="border border-apex-white/20 rounded-lg p-6 bg-apex-black">
+        <motion.div
+          className="border border-apex-white/20 rounded-lg p-6 bg-gradient-to-br from-white/5 to-transparent"
+          variants={itemVariants}
+        >
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-apex-green/10 rounded-lg">
               <Mail size={20} className="text-apex-green" />
@@ -69,10 +85,13 @@ export default function Profile() {
             <h2 className="text-lg font-semibold text-apex-white">Email</h2>
           </div>
           <p className="text-apex-white font-mono">{profile?.email || 'N/A'}</p>
-        </div>
+        </motion.div>
 
         {/* Rider Name Section */}
-        <div className="border border-apex-white/20 rounded-lg p-6 bg-apex-black">
+        <motion.div
+          className="border border-apex-white/20 rounded-lg p-6 bg-gradient-to-br from-white/5 to-transparent"
+          variants={itemVariants}
+        >
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-apex-green/10 rounded-lg">
               <User size={20} className="text-apex-green" />
@@ -94,21 +113,23 @@ export default function Profile() {
                 <div className="text-apex-red text-sm">{error}</div>
               )}
               <div className="flex gap-3">
-                <button
+                <motion.button
                   onClick={handleSave}
                   disabled={isSaving}
                   className="flex items-center gap-2 px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  {...(isSaving ? {} : buttonHoverProps)}
                 >
                   <Save size={18} />
                   {isSaving ? 'Saving...' : 'Save'}
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   onClick={handleCancel}
                   disabled={isSaving}
                   className="px-4 py-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors disabled:opacity-50"
+                  {...(isSaving ? {} : buttonHoverProps)}
                 >
                   Cancel
-                </button>
+                </motion.button>
               </div>
             </div>
           ) : (
@@ -118,28 +139,33 @@ export default function Profile() {
                   <span className="text-apex-white/40 italic">Not set</span>
                 )}
               </p>
-              <button
+              <motion.button
                 onClick={() => setIsEditing(true)}
                 className="px-4 py-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
+                {...buttonHoverProps}
               >
                 Edit
-              </button>
+              </motion.button>
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Sign Out Section */}
-        <div className="border border-apex-white/20 rounded-lg p-6 bg-apex-black">
-          <button
+        <motion.div
+          className="border border-apex-white/20 rounded-lg p-6 bg-gradient-to-br from-white/5 to-transparent"
+          variants={itemVariants}
+        >
+          <motion.button
             onClick={handleSignOut}
             disabled={signOut.isPending}
             className="flex items-center gap-2 px-4 py-2 text-apex-red hover:bg-apex-red/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
+            {...(signOut.isPending ? {} : buttonHoverProps)}
           >
             <LogOut size={18} />
             {signOut.isPending ? 'Signing out...' : 'Sign Out'}
-          </button>
-        </div>
-      </div>
-    </div>
+          </motion.button>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }

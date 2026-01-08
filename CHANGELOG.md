@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.3](https://github.com/Purukitto/apex-app/compare/v0.3.2...v0.3.3) (2026-01-08)
+
+
+### Features
+
+* **auth:** add password strength indicator and validation on signup ([9d3a218](https://github.com/Purukitto/apex-app/commit/9d3a218b017b4b62734c3a448f9bc2ccd22ae3dd))
+
+
+### Documentation
+
+* add comprehensive README and contributing guidelines ([6dbfbe6](https://github.com/Purukitto/apex-app/commit/6dbfbe67443b3899f4a172327bb6f684afbaa358))
+
+
+### Continuous Integration
+
+* add GitHub Actions workflows and repository templates ([3c828c0](https://github.com/Purukitto/apex-app/commit/3c828c00e8f51811503040d97cf855a26aee2b55))
+
+
+### Miscellaneous Chores
+
+* add environment template and update gitignore ([be06f4f](https://github.com/Purukitto/apex-app/commit/be06f4fba49320d2a771f36b6e0dad9346d04d47))
+
 ### 0.3.2 (2026-01-08)
 
 

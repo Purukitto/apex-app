@@ -1,13 +1,19 @@
 {
   "name": "apex-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.3.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepare": "husky",
+    "release": "standard-version",
+    "release:minor": "standard-version --release-as minor",
+    "release:major": "standard-version --release-as major",
+    "release:patch": "standard-version --release-as patch",
+    "release:first-release": "standard-version --first-release"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",
@@ -28,6 +34,8 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.3.0",
+    "@commitlint/config-conventional": "^20.3.0",
     "@eslint/js": "^9.39.1",
     "@tailwindcss/vite": "^4.1.18",
     "@types/node": "^24.10.1",
@@ -38,6 +46,8 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "standard-version": "^9.5.0",
     "tailwindcss": "^4.1.18",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",

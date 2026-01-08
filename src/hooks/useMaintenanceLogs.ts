@@ -67,14 +67,11 @@ export function useMaintenanceLogs(bikeId?: string) {
         throw new Error('Bike not found or you do not have permission');
       }
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('maintenance_logs')
-        .insert(logData)
-        .select()
-        .single();
+        .insert(logData);
 
       if (error) throw error;
-      return data as MaintenanceLog;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['maintenanceLogs'] });
@@ -116,15 +113,12 @@ export function useMaintenanceLogs(bikeId?: string) {
         throw new Error('You do not have permission to update this log');
       }
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('maintenance_logs')
         .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+        .eq('id', id);
 
       if (error) throw error;
-      return data as MaintenanceLog;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['maintenanceLogs'] });

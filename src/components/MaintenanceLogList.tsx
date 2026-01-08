@@ -14,7 +14,6 @@ interface MaintenanceLogListProps {
 
 export default function MaintenanceLogList({
   logs,
-  bike,
   onEdit,
   onDelete,
   isLoading,

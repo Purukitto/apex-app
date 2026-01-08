@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Bike, Wrench, X } from 'lucide-react';
+import { Plus, Bike, X } from 'lucide-react';
 import { useBikes } from '../hooks/useBikes';
 import { useMaintenanceLogs } from '../hooks/useMaintenanceLogs';
 import BikeCard from '../components/BikeCard';

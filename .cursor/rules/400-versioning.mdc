@@ -1,0 +1,137 @@
+# Versioning & Release Rules
+
+## Commit Message Standards (Conventional Commits)
+
+### Format
+All commit messages **MUST** follow the Conventional Commits specification:
+```
+<type>(<scope>): <subject>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Types
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation only changes
+- **style**: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+- **refactor**: A code change that neither fixes a bug nor adds a feature
+- **perf**: A code change that improves performance
+- **test**: Adding missing tests or correcting existing tests
+- **build**: Changes that affect the build system or external dependencies (example scopes: npm, gradle, maven)
+- **ci**: Changes to CI configuration files and scripts
+- **chore**: Other changes that don't modify src or test files
+- **revert**: Reverts a previous commit
+
+### Examples
+- ✅ `feat(garage): add bike deletion functionality`
+- ✅ `fix(dashboard): resolve maintenance alert calculation`
+- ✅ `refactor(hooks): simplify useBikes hook logic`
+- ✅ `docs(readme): update installation instructions`
+- ❌ `Added new feature` (missing type)
+- ❌ `fix: bug` (too vague)
+- ❌ `FEAT: Add feature` (wrong case)
+
+### Subject Rules
+- Use imperative, present tense: "change" not "changed" nor "changes"
+- Don't capitalize the first letter
+- No dot (.) at the end
+- Maximum 72 characters
+- Be descriptive but concise
+
+## Versioning Workflow
+
+### Automated Versioning with standard-version
+
+**standard-version** automatically:
+- Bumps version in `package.json`
+- Generates/updates `CHANGELOG.md` based on commit messages
+- Creates a git tag
+- Commits all changes
+
+### Release Commands
+
+#### Standard Release (Auto-detect version bump)
+```bash
+npm run release
+```
+Automatically determines version bump (patch/minor/major) based on commit types:
+- **feat** commits → minor version bump
+- **fix** commits → patch version bump
+- **BREAKING CHANGE** in footer → major version bump
+
+#### Manual Version Bump
+```bash
+npm run release:patch   # 0.3.1 → 0.3.2
+npm run release:minor  # 0.3.1 → 0.4.0
+npm run release:major  # 0.3.1 → 1.0.0
+```
+
+### Release Process
+
+1. **Ensure all commits follow conventional format** (enforced by commitlint)
+2. **Run release command:**
+   ```bash
+   npm run release
+   ```
+3. **Review generated CHANGELOG.md**
+4. **Push changes and tags:**
+   ```bash
+   git push --follow-tags origin main
+   ```
+
+### Breaking Changes
+
+To trigger a major version bump, include `BREAKING CHANGE:` in the commit footer:
+```
+feat(api): redesign authentication system
+
+BREAKING CHANGE: Authentication now requires OAuth2 instead of basic auth
+```
+
+## Git Hooks
+
+### Commit Message Validation
+- **Hook**: `.husky/commit-msg`
+- **Tool**: commitlint
+- **Enforcement**: All commits are automatically validated
+- **Failure**: Commit is rejected if message doesn't follow conventional format
+
+### Pre-commit Hook
+- Currently runs `npm test` (can be customized)
+- Add linting, type checking, or other checks as needed
+
+## CHANGELOG.md
+
+- **Auto-generated** by standard-version
+- **Format**: Based on conventional commits
+- **Sections**: Features, Bug Fixes, Performance Improvements, etc.
+- **Manual edits**: Allowed, but will be preserved during next release
+
+## Best Practices
+
+1. **Always use conventional commits** - Required for automated changelog
+2. **Review CHANGELOG.md** after each release
+3. **Push tags with commits** - Use `git push --follow-tags`
+4. **Don't manually edit version** - Let standard-version handle it
+5. **Use descriptive commit messages** - They become changelog entries
+
+## Troubleshooting
+
+### Commit rejected by commitlint
+- Check message format matches: `<type>(<scope>): <subject>`
+- Ensure type is lowercase
+- Ensure subject doesn't end with period
+- Run `npx commitlint --from HEAD~1 --to HEAD --verbose` to debug
+
+### Version not bumping correctly
+- Check commit history for conventional commits
+- Use manual version commands if needed
+- Review `.versionrc.json` configuration
+
+### CHANGELOG not updating
+- Ensure commits follow conventional format
+- Check `.versionrc.json` for hidden types
+- Manually review commit history

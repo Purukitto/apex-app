@@ -3,6 +3,7 @@ import { Bike as BikeIcon, Trash2, Edit, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { buttonHoverProps, cardHoverProps } from '../lib/animations';
+import ConfirmModal from './ConfirmModal';
 
 interface BikeCardProps {
   bike: Bike;
@@ -13,17 +14,20 @@ interface BikeCardProps {
 
 export default function BikeCard({ bike, onDelete, onEdit, onViewMaintenance }: BikeCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this bike?')) {
-      setIsDeleting(true);
-      try {
-        await onDelete(bike.id);
-      } catch (error) {
-        console.error('Error deleting bike:', error);
-      } finally {
-        setIsDeleting(false);
-      }
+  const handleDeleteClick = () => {
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    setShowConfirmModal(false);
+    try {
+      await onDelete(bike.id);
+    } catch {
+      // Error handling is done in parent component (Garage.tsx)
+      setIsDeleting(false);
     }
   };
 
@@ -73,7 +77,7 @@ export default function BikeCard({ bike, onDelete, onEdit, onViewMaintenance }: 
             </motion.button>
           )}
           <motion.button
-            onClick={handleDelete}
+            onClick={handleDeleteClick}
             disabled={isDeleting}
             className="p-2 text-apex-white/60 hover:text-apex-red transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Delete bike"
@@ -98,7 +102,18 @@ export default function BikeCard({ bike, onDelete, onEdit, onViewMaintenance }: 
           </span>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Bike"
+        message={`Are you sure you want to delete ${bike.nick_name || `${bike.make} ${bike.model}`}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </motion.div>
   );
 }
-

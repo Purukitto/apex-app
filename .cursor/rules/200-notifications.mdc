@@ -31,8 +31,12 @@ alwaysApply: true
 
 #### Error Messages
 - **MUST** include actionable information when possible.
+- **MUST** use user-friendly, non-technical language.
 - **MUST** use `apexToast.error()` with a "Retry" action if the operation can be retried.
+- **DO NOT** expose technical error details (error codes, stack traces, etc.) to users.
 - Example: `apexToast.error("Failed to save ride", { action: { label: "Retry", onClick: handleRetry } })`
+- **BAD**: "PGRST301: Permission denied" or "Error: Cannot read property 'id' of undefined"
+- **GOOD**: "Failed to save ride. Please try again." or "Permission denied. Please contact support."
 
 #### Promise Messages
 - Loading message: Describe the action in progress (e.g., "Adding machine to garage...")
@@ -122,6 +126,52 @@ if (kmUntilService <= 500) {
 }
 ```
 
+## Error Handling Guidelines
+
+### When to Show Toasts vs Console Errors
+
+#### Show Toast to User (User-Facing Errors)
+- **Mutations** (Create, Update, Delete operations) - Always show toast
+- **Form submissions** - Always show toast
+- **User-initiated actions** that fail - Show toast
+- **Critical system errors** that affect user workflow - Show toast
+- **Network/API errors** that the user can retry - Show toast
+
+#### Keep as Console Error Only (Internal/Debugging)
+- **Background checks** (e.g., maintenance checker) - Log only, toast only for critical failures
+- **Geolocation errors** during ride recording - Log only, component can handle user feedback
+- **Non-critical validation errors** - Log only
+- **Development/debugging information** - Always console only
+
+### Error Message Transformation
+
+When catching errors from APIs or libraries:
+1. **Log the full error** to console for debugging: `console.error('Technical error:', error)`
+2. **Transform to user-friendly message** for toast: `apexToast.error('User-friendly message')`
+
+Example:
+```typescript
+try {
+  await deleteBike.mutateAsync(id);
+} catch (error) {
+  // Log technical details for debugging
+  console.error('Delete error:', error);
+  // Show user-friendly message
+  apexToast.error(
+    error instanceof Error 
+      ? error.message  // If already user-friendly
+      : 'Failed to delete bike. Please try again.'
+  );
+}
+```
+
+### Confirmation Modals
+
+- **MANDATORY**: Use `ConfirmModal` component for destructive actions (delete, remove, etc.)
+- **NEVER** use `window.confirm()` - it breaks the design system
+- **Location**: `src/components/ConfirmModal.tsx`
+- **Variants**: `danger` (red), `warning` (green), `default` (green)
+
 ## Anti-Patterns
 
 - ❌ **DON'T**: Use `toast` directly from `sonner`
@@ -129,3 +179,7 @@ if (kmUntilService <= 500) {
 - ❌ **DON'T**: Skip toast notifications for mutations
 - ❌ **DON'T**: Use different toast styling than apexToast provides
 - ❌ **DON'T**: Show persistent alerts without adding to NotificationStore
+- ❌ **DON'T**: Use `window.confirm()` - use `ConfirmModal` instead
+- ❌ **DON'T**: Show technical error details to users (error codes, stack traces)
+- ❌ **DON'T**: Show toasts for background/automated processes (unless critical failure)
+- ❌ **DON'T**: Skip console.error for debugging - always log technical details

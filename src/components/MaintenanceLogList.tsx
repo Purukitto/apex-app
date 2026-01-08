@@ -1,8 +1,10 @@
 import { Wrench, Edit, Trash2, Calendar, ExternalLink } from 'lucide-react';
 import type { MaintenanceLog, Bike } from '../types/database';
 import { format } from 'date-fns';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { listContainerVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
+import ConfirmModal from './ConfirmModal';
 
 interface MaintenanceLogListProps {
   logs: MaintenanceLog[];
@@ -18,6 +20,9 @@ export default function MaintenanceLogList({
   onDelete,
   isLoading,
 }: MaintenanceLogListProps) {
+  const [deletingLogId, setDeletingLogId] = useState<string | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [logToDelete, setLogToDelete] = useState<MaintenanceLog | null>(null);
   if (isLoading) {
     return (
       <div className="text-apex-white/60 text-sm">Loading maintenance logs...</div>
@@ -104,13 +109,8 @@ export default function MaintenanceLogList({
               </motion.button>
               <motion.button
                 onClick={() => {
-                  if (
-                    window.confirm(
-                      'Are you sure you want to delete this maintenance log?'
-                    )
-                  ) {
-                    onDelete(log.id);
-                  }
+                  setLogToDelete(log);
+                  setShowConfirmModal(true);
                 }}
                 className="p-2 text-apex-white/60 hover:text-apex-red transition-colors"
                 aria-label="Delete maintenance log"
@@ -122,6 +122,29 @@ export default function MaintenanceLogList({
           </div>
         </motion.div>
       ))}
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => {
+          setShowConfirmModal(false);
+          setLogToDelete(null);
+        }}
+        onConfirm={() => {
+          if (logToDelete) {
+            setDeletingLogId(logToDelete.id);
+            onDelete(logToDelete.id);
+            setShowConfirmModal(false);
+            setLogToDelete(null);
+            setDeletingLogId(null);
+          }
+        }}
+        title="Delete Maintenance Log"
+        message={`Are you sure you want to delete this maintenance log? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={deletingLogId !== null}
+      />
     </motion.div>
   );
 }

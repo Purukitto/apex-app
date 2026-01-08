@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
+import { apexToast } from '../lib/toast';
 import type { Bike } from '../types/database';
 
 export function useBikes() {
@@ -47,6 +48,10 @@ export function useBikes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
+      apexToast.success('Bike Added');
+    },
+    onError: (error) => {
+      apexToast.error(error instanceof Error ? error.message : 'Failed to add bike');
     },
   });
 
@@ -77,6 +82,10 @@ export function useBikes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
+      apexToast.success('Bike Updated');
+    },
+    onError: (error) => {
+      apexToast.error(error instanceof Error ? error.message : 'Failed to update bike');
     },
   });
 
@@ -97,7 +106,10 @@ export function useBikes() {
         .single();
 
       if (checkError || !bikeCheck) {
-        console.error('Bike check error:', checkError);
+        // Log for debugging, but show user-friendly message
+        if (checkError) {
+          console.error('Bike check error:', checkError);
+        }
         throw new Error(
           'Bike not found or you do not have permission to access it.'
         );
@@ -111,7 +123,8 @@ export function useBikes() {
         .limit(1);
 
       // Check maintenance logs (no user_id filter needed - RLS handles it)
-      const { data: maintenanceLogs } = await supabase
+      // Note: Maintenance logs don't block deletion, but we check for reference
+      await supabase
         .from('maintenance_logs')
         .select('id')
         .eq('bike_id', id)
@@ -123,10 +136,7 @@ export function useBikes() {
         );
       }
 
-      if (maintenanceLogs && maintenanceLogs.length > 0) {
-        // Maintenance logs shouldn't block deletion, but we'll note it
-        console.warn('Bike has maintenance logs, but proceeding with deletion');
-      }
+      // Maintenance logs don't block deletion - silently proceed
 
       // Attempt deletion
       const { data, error } = await supabase
@@ -137,16 +147,17 @@ export function useBikes() {
         .select();
 
       if (error) {
+        // Log technical details for debugging
         console.error('Supabase delete error:', error);
-        // Provide more specific error messages
+        // Provide user-friendly error messages
         if (error.code === '23503') {
           throw new Error(
-            'Cannot delete bike: It is referenced by other records (rides or maintenance logs).'
+            'Cannot delete bike: It has associated rides or maintenance logs.'
           );
         }
         if (error.code === 'PGRST301' || error.message?.includes('permission')) {
           throw new Error(
-            'Permission denied: Check your Row Level Security (RLS) policies in Supabase. Ensure you have a DELETE policy for the bikes table.'
+            'Permission denied. Please try again or contact support.'
           );
         }
         throw new Error(error.message || 'Failed to delete bike');
@@ -154,9 +165,10 @@ export function useBikes() {
 
       // Check if any rows were actually deleted
       if (!data || data.length === 0) {
+        // Log technical details for debugging
         console.error('Delete returned no rows. Bike ID:', id, 'User ID:', user.id);
         throw new Error(
-          'Deletion was blocked by Row Level Security (RLS). Please check your Supabase RLS policies. You need a DELETE policy like: CREATE POLICY "Users can delete own bikes" ON bikes FOR DELETE USING (auth.uid() = user_id);'
+          'Failed to delete bike. Please try again or contact support.'
         );
       }
 
@@ -164,8 +176,11 @@ export function useBikes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
+      // Success toast is handled in Garage.tsx after mutation completes
     },
     onError: (error) => {
+      // Error toast is handled in Garage.tsx
+      // Only log for debugging
       console.error('Error deleting bike:', error);
     },
   });

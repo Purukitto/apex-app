@@ -48,10 +48,9 @@ export default function Garage() {
   const handleDeleteBike = async (id: string) => {
     try {
       await deleteBike.mutateAsync(id);
-      // Only show success if mutation completed without error
       apexToast.success('Bike deleted');
     } catch (error) {
-      console.error('Delete bike error:', error);
+      // Error message is already user-friendly from useBikes hook
       apexToast.error(
         error instanceof Error ? error.message : 'Failed to delete bike'
       );

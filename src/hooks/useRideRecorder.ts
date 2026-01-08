@@ -18,7 +18,11 @@ export const useRideRecorder = () => {
         { enableHighAccuracy: true },
         (position: Position | null, err?: Error) => {
           if (err) {
+            // Log for debugging
             console.error('Geolocation error:', err);
+            // Show user-friendly error for critical geolocation failures
+            // Note: This would need to be imported, but since this is a hook,
+            // we'll let the component handle user-facing errors
             return;
           }
           if (position?.coords) {

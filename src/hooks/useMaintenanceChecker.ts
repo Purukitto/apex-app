@@ -34,7 +34,12 @@ export function useMaintenanceChecker() {
         .order('odo_at_service', { ascending: false });
 
       if (error) {
+        // Log for debugging - this is a background check, don't spam user with toasts
         console.error('Error fetching maintenance logs:', error);
+        // Only show toast for critical failures that prevent the feature from working
+        if (error.code === 'PGRST301' || error.message?.includes('permission')) {
+          apexToast.error('Unable to check maintenance status. Please refresh the page.');
+        }
         return;
       }
 

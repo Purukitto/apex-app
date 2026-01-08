@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { apexToast } from '../lib/toast';
+import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
+import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
+import { calculatePasswordStrength } from '../lib/passwordStrength';
 
 export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -11,6 +15,10 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // Calculate password strength for signup validation
+  const passwordStrength = calculatePasswordStrength(password);
+  const isPasswordValid = isSignUp ? passwordStrength.isValid : true;
 
   useEffect(() => {
     // Redirect if already authenticated
@@ -23,26 +31,123 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent submission if password is invalid in signup mode
+    if (isSignUp && !isPasswordValid) {
+      setError('Password does not meet all requirements');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       if (isSignUp) {
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
         });
-        if (signUpError) throw signUpError;
+        
+        if (signUpError) {
+          // Handle specific Supabase errors
+          let errorMessage = 'Failed to create account';
+          
+          // Check error message and code for duplicate email
+          const errorMsg = signUpError.message?.toLowerCase() || '';
+          const errorCode = signUpError.status?.toString() || '';
+          
+          if (
+            errorMsg.includes('already registered') ||
+            errorMsg.includes('already exists') ||
+            errorMsg.includes('user already registered') ||
+            errorMsg.includes('email address is already') ||
+            errorCode === '422' // Unprocessable Entity often used for duplicates
+          ) {
+            errorMessage = 'This email is already registered';
+          } else if (errorMsg.includes('password')) {
+            errorMessage = 'Password does not meet requirements';
+          } else if (signUpError.message) {
+            errorMessage = signUpError.message;
+          }
+          
+          throw new Error(errorMessage);
+        }
+        
+        // Check if user was actually created
+        if (!signUpData.user) {
+          throw new Error('This email is already registered');
+        }
+        
+        // KEY: Check if identities array is empty - this indicates duplicate email
+        // Supabase returns user object with empty identities array for duplicate emails
+        // to prevent email enumeration attacks
+        if (!signUpData.user.identities || signUpData.user.identities.length === 0) {
+          throw new Error('This email is already registered');
+        }
+        
+        // Check if email confirmation is required
+        // If confirmation_sent_at exists but no session, user needs to confirm email
+        const needsEmailConfirmation = signUpData.user.confirmation_sent_at && !signUpData.session;
+        
+        if (needsEmailConfirmation) {
+          // Email confirmation required - don't navigate, show message
+          apexToast.success('Please check your email to confirm your account');
+          setEmail('');
+          setPassword('');
+          return;
+        }
+        
+        // Check if we have a session (user is automatically signed in)
+        // Wait a brief moment for session to be established
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          throw new Error(sessionError.message || 'Failed to create session');
+        }
+        
+        // If no session exists, it means email confirmation is required
+        if (!session) {
+          apexToast.success('Please check your email to confirm your account');
+          setEmail('');
+          setPassword('');
+          return;
+        }
+        
+        // Verify the session user matches the signup user
+        if (session.user.id !== signUpData.user.id) {
+          throw new Error('This email is already registered');
+        }
+        
+        // Ensure session is valid before navigating
+        if (!session.access_token) {
+          throw new Error('Invalid session. This email may already be registered.');
+        }
+        
         // After sign up, user is automatically signed in
-        apexToast.success('Account created successfully');
+        // Show toast and give it time to display before navigating
+        apexToast.success('Account created');
+        // Small delay to ensure toast is visible before navigation
+        await new Promise(resolve => setTimeout(resolve, 300));
         navigate('/dashboard');
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (signInError) throw signInError;
-        apexToast.success('Signed in successfully');
+        
+        if (signInError) {
+          let errorMessage = 'Failed to sign in';
+          if (signInError.message.includes('Invalid login')) {
+            errorMessage = 'Invalid email or password';
+          } else if (signInError.message) {
+            errorMessage = signInError.message;
+          }
+          throw new Error(errorMessage);
+        }
+        
+        apexToast.success('Signed in');
         navigate('/dashboard');
       }
     } catch (err) {
@@ -56,14 +161,19 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-apex-black flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
+      <motion.div
+        className="w-full max-w-md"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div className="mb-8 text-center" variants={itemVariants}>
           <h1 className="text-3xl font-bold text-apex-white mb-2">Apex</h1>
           <p className="text-apex-white/60">The Rider's Black Box</p>
-        </div>
+        </motion.div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+          <motion.div variants={itemVariants}>
             <input
               type="email"
               placeholder="Email"
@@ -72,26 +182,40 @@ export default function Login() {
               required
               className="w-full px-4 py-3 bg-apex-black border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
             />
-          </div>
+          </motion.div>
 
-          <div>
+          <motion.div variants={itemVariants}>
             <input
               type="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete={isSignUp ? 'new-password' : 'current-password'}
               className="w-full px-4 py-3 bg-apex-black border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
             />
-          </div>
+            {isSignUp && password && (
+              <div className="mt-3">
+                <PasswordStrengthIndicator password={password} />
+              </div>
+            )}
+          </motion.div>
 
           {error && (
-            <div className="text-apex-red text-sm text-center">{error}</div>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="text-apex-red text-sm text-center min-h-[20px]"
+            >
+              {error}
+            </motion.div>
           )}
 
-          <button
+          <motion.button
+            {...buttonHoverProps}
             type="submit"
-            disabled={loading}
+            disabled={loading || !isPasswordValid}
             className="w-full py-3 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {loading ? (
@@ -102,20 +226,24 @@ export default function Login() {
                 {isSignUp ? 'Sign Up' : 'Sign In'}
               </>
             )}
-          </button>
+          </motion.button>
         </form>
 
-        <div className="mt-6 text-center">
+        <motion.div className="mt-6 text-center" variants={itemVariants}>
           <button
-            onClick={() => setIsSignUp(!isSignUp)}
+            onClick={() => {
+              setIsSignUp(!isSignUp);
+              setError(null); // Clear error when switching modes
+              setPassword(''); // Clear password when switching modes
+            }}
             className="text-apex-green hover:text-apex-green/80 text-sm transition-colors"
           >
             {isSignUp
               ? 'Already have an account? Sign In'
               : "Don't have an account? Sign Up"}
           </button>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

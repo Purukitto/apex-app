@@ -5,6 +5,7 @@ import { Bike, Activity, AlertTriangle, Calendar, Bell } from 'lucide-react';
 import { useState } from 'react';
 import NotificationPane from '../components/layout/NotificationPane';
 import { motion } from 'framer-motion';
+import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 
 const SERVICE_INTERVAL_KM = 5000;
 
@@ -44,29 +45,6 @@ export default function Dashboard() {
     .filter((alert) => alert.kmUntilService <= 500 && alert.kmUntilService > 0)
     .sort((a, b) => a.kmUntilService - b.kmUntilService);
 
-  // Animation variants for staggered entry
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.4, 0, 0.2, 1],
-      },
-    },
-  };
 
   return (
     <motion.div
@@ -85,8 +63,7 @@ export default function Dashboard() {
           onClick={() => setNotificationPaneOpen(true)}
           className="relative p-2 text-apex-white/60 hover:text-apex-green transition-colors"
           aria-label="Notifications"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          {...buttonHoverProps}
         >
           <Bell size={24} />
           {unreadCount > 0 && (
@@ -164,8 +141,9 @@ export default function Dashboard() {
             {maintenanceAlerts.map((alert) => (
               <motion.div
                 key={alert.bike.id}
-                className="flex items-center justify-between p-3 bg-apex-black/50 rounded-lg border border-apex-green/20"
+                className="flex items-center justify-between p-3 bg-gradient-to-br from-white/5 to-transparent rounded-lg border border-apex-green/20 hover:border-apex-green/40 transition-colors"
                 variants={itemVariants}
+                whileHover={{ borderColor: 'rgba(0, 255, 65, 0.4)' }}
               >
                 <div>
                   <p className="text-apex-white font-medium">

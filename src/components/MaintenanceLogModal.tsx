@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import type { MaintenanceLog, Bike } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
+import { buttonHoverProps } from '../lib/animations';
 
 interface MaintenanceLogModalProps {
   isOpen: boolean;
@@ -133,8 +134,7 @@ export default function MaintenanceLogModal({
             onClick={onClose}
             className="text-apex-white/60 hover:text-apex-white transition-colors"
             aria-label="Close modal"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            {...buttonHoverProps}
           >
             <X size={24} />
           </motion.button>
@@ -235,8 +235,7 @@ export default function MaintenanceLogModal({
               type="button"
               onClick={onClose}
               className="flex-1 px-4 py-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              {...buttonHoverProps}
             >
               Cancel
             </motion.button>
@@ -244,8 +243,7 @@ export default function MaintenanceLogModal({
               type="submit"
               disabled={isSubmitting}
               className="flex-1 px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
-              whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+              {...(isSubmitting ? {} : buttonHoverProps)}
             >
               {isSubmitting
                 ? 'Saving...'

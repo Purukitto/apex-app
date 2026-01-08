@@ -2,6 +2,7 @@ import type { Bike } from '../types/database';
 import { Bike as BikeIcon, Trash2, Edit, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { buttonHoverProps, cardHoverProps } from '../lib/animations';
 
 interface BikeCardProps {
   bike: Bike;
@@ -29,7 +30,7 @@ export default function BikeCard({ bike, onDelete, onEdit, onViewMaintenance }: 
   return (
     <motion.div
       className="border border-apex-white/20 rounded-lg p-6 bg-gradient-to-br from-white/5 to-transparent hover:border-apex-green/40 transition-colors relative group"
-      whileHover={{ borderColor: 'rgba(0, 255, 65, 0.4)' }}
+      {...cardHoverProps}
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -56,8 +57,7 @@ export default function BikeCard({ bike, onDelete, onEdit, onViewMaintenance }: 
               onClick={() => onViewMaintenance(bike)}
               className="p-2 text-apex-white/60 hover:text-apex-green transition-colors"
               aria-label="View maintenance logs"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              {...buttonHoverProps}
             >
               <Wrench size={18} />
             </motion.button>
@@ -67,8 +67,7 @@ export default function BikeCard({ bike, onDelete, onEdit, onViewMaintenance }: 
               onClick={() => onEdit(bike)}
               className="p-2 text-apex-white/60 hover:text-apex-green transition-colors"
               aria-label="Edit bike"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              {...buttonHoverProps}
             >
               <Edit size={18} />
             </motion.button>
@@ -78,8 +77,7 @@ export default function BikeCard({ bike, onDelete, onEdit, onViewMaintenance }: 
             disabled={isDeleting}
             className="p-2 text-apex-white/60 hover:text-apex-red transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Delete bike"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            {...(isDeleting ? {} : buttonHoverProps)}
           >
             <Trash2 size={18} />
           </motion.button>

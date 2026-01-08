@@ -9,6 +9,7 @@ import MaintenanceLogList from '../components/MaintenanceLogList';
 import type { Bike as BikeType, MaintenanceLog } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
+import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 
 export default function Garage() {
   const { bikes, isLoading, createBike, updateBike, deleteBike } = useBikes();
@@ -111,6 +112,7 @@ export default function Garage() {
     }
   };
 
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -121,22 +123,32 @@ export default function Garage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <motion.div
+      className="p-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div
+        className="flex items-center justify-between mb-6"
+        variants={itemVariants}
+      >
         <h1 className="text-2xl font-bold text-apex-white">Garage</h1>
         <motion.button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 transition-colors"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          {...buttonHoverProps}
         >
           <Plus size={20} />
           Add Bike
         </motion.button>
-      </div>
+      </motion.div>
 
       {bikes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
+        <motion.div
+          className="flex flex-col items-center justify-center py-16 text-center"
+          variants={itemVariants}
+        >
           <div className="p-4 bg-apex-green/10 rounded-full mb-4">
             <Bike size={48} className="text-apex-green" />
           </div>
@@ -149,25 +161,28 @@ export default function Garage() {
           <motion.button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 px-6 py-3 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 transition-colors"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            {...buttonHoverProps}
           >
             <Plus size={20} />
             Add your first machine
           </motion.button>
-        </div>
+        </motion.div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          variants={containerVariants}
+        >
           {bikes.map((bike) => (
-            <BikeCard
-              key={bike.id}
-              bike={bike}
-              onDelete={handleDeleteBike}
-              onEdit={handleEditBike}
-              onViewMaintenance={handleViewMaintenance}
-            />
+            <motion.div key={bike.id} variants={itemVariants}>
+              <BikeCard
+                bike={bike}
+                onDelete={handleDeleteBike}
+                onEdit={handleEditBike}
+                onViewMaintenance={handleViewMaintenance}
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       <AddBikeModal
@@ -203,8 +218,7 @@ export default function Garage() {
                     setIsMaintenanceModalOpen(true);
                   }}
                   className="flex items-center gap-2 px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  {...buttonHoverProps}
                 >
                   <Plus size={18} />
                   Add Log
@@ -213,8 +227,7 @@ export default function Garage() {
                   onClick={handleCloseMaintenanceView}
                   className="p-2 text-apex-white/60 hover:text-apex-white transition-colors"
                   aria-label="Close"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  {...buttonHoverProps}
                 >
                   <X size={24} />
                 </motion.button>
@@ -249,7 +262,7 @@ export default function Garage() {
           bike={selectedBikeForMaintenance}
         />
       )}
-    </div>
+    </motion.div>
   );
 }
 

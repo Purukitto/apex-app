@@ -4,7 +4,8 @@ import { Bike, Activity, User, Menu, X, Bell } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import NotificationPane from './NotificationPane';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { buttonHoverProps } from '../../lib/animations';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -32,7 +33,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }, []);
 
   const navItems = [
-    { path: '/dashboard', icon: Activity, label: 'Activity' },
+    { path: '/dashboard', icon: Activity, label: 'Dashboard' },
     { path: '/garage', icon: Bike, label: 'Garage' },
     { path: '/profile', icon: User, label: 'Profile' },
   ];
@@ -48,8 +49,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           onClick={() => setNotificationPaneOpen(true)}
           className="relative p-2 text-apex-white/60 hover:text-apex-green transition-colors"
           aria-label="Notifications"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          {...buttonHoverProps}
         >
           <Bell size={20} />
           {unreadCount > 0 && (
@@ -136,8 +136,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
               onClick={() => setNotificationPaneOpen(true)}
               className="relative p-2 text-apex-white/60 hover:text-apex-green transition-colors"
               aria-label="Notifications"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              {...buttonHoverProps}
             >
               <Bell size={20} />
               {unreadCount > 0 && (
@@ -149,8 +148,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <motion.button
               onClick={() => setSidebarOpen(false)}
               className="text-apex-white/60 hover:text-apex-white"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              {...buttonHoverProps}
             >
               <X size={24} />
             </motion.button>
@@ -188,8 +186,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <motion.button
           onClick={() => setSidebarOpen(true)}
           className="fixed top-4 left-4 z-30 p-2 text-apex-white/60 hover:text-apex-white bg-apex-black/80 rounded-lg border border-apex-white/10"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          {...buttonHoverProps}
         >
           <Menu size={24} />
         </motion.button>
@@ -207,7 +204,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
           isMobile ? 'pb-16 pt-16' : 'ml-64'
         } min-h-screen transition-all`}
       >
-        {children}
+        <AnimatePresence mode="wait">
+          {children}
+        </AnimatePresence>
       </main>
 
       {/* Mobile Bottom Navigation */}

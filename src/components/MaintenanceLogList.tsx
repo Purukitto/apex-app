@@ -2,6 +2,7 @@ import { Wrench, Edit, Trash2, Calendar, ExternalLink } from 'lucide-react';
 import type { MaintenanceLog, Bike } from '../types/database';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
+import { listContainerVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
 
 interface MaintenanceLogListProps {
   logs: MaintenanceLog[];
@@ -37,22 +38,31 @@ export default function MaintenanceLogList({
   }
 
   return (
-    <div className="space-y-3">
+    <motion.div
+      className="space-y-3"
+      initial="hidden"
+      animate="visible"
+      variants={listContainerVariants}
+    >
       {logs.map((log) => (
-        <div
+        <motion.div
           key={log.id}
-          className="border border-apex-white/10 rounded-lg p-4 bg-apex-black/50 hover:border-apex-white/20 transition-colors group"
+          className="border border-apex-white/20 rounded-lg p-4 bg-gradient-to-br from-white/5 to-transparent hover:border-apex-green/40 transition-colors group"
+          variants={fastItemVariants}
+          {...cardHoverProps}
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
-                <Wrench size={16} className="text-apex-green flex-shrink-0" />
-                <h4 className="text-apex-white font-medium truncate">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1.5 bg-apex-green/10 rounded-lg group-hover:bg-apex-green/20 transition-colors">
+                  <Wrench size={16} className="text-apex-green" />
+                </div>
+                <h4 className="text-apex-white font-semibold truncate">
                   {log.service_type || 'General Service'}
                 </h4>
               </div>
 
-              <div className="space-y-1 text-sm">
+              <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2 text-apex-white/60">
                   <Calendar size={14} />
                   <span>
@@ -60,7 +70,7 @@ export default function MaintenanceLogList({
                   </span>
                 </div>
                 <div className="text-apex-white/60">
-                  <span className="font-mono text-apex-green">
+                  <span className="font-mono text-apex-green group-hover:text-apex-green/90 transition-colors">
                     {log.odo_at_service.toLocaleString()} km
                   </span>
                   {' at service'}
@@ -84,13 +94,12 @@ export default function MaintenanceLogList({
               </div>
             </div>
 
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
               <motion.button
                 onClick={() => onEdit(log)}
                 className="p-2 text-apex-white/60 hover:text-apex-green transition-colors"
                 aria-label="Edit maintenance log"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                {...buttonHoverProps}
               >
                 <Edit size={16} />
               </motion.button>
@@ -106,16 +115,15 @@ export default function MaintenanceLogList({
                 }}
                 className="p-2 text-apex-white/60 hover:text-apex-red transition-colors"
                 aria-label="Delete maintenance log"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                {...buttonHoverProps}
               >
                 <Trash2 size={16} />
               </motion.button>
             </div>
           </div>
-        </div>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
 

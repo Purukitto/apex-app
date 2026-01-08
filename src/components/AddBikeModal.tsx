@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import type { Bike } from '../types/database';
 import { apexToast } from '../lib/toast';
+import { motion } from 'framer-motion';
 
 interface AddBikeModalProps {
   isOpen: boolean;
@@ -116,13 +117,15 @@ export default function AddBikeModal({
           <h2 className="text-xl font-bold text-apex-white">
             {editingBike ? 'Edit Bike' : 'Add Bike'}
           </h2>
-          <button
+          <motion.button
             onClick={onClose}
             className="text-apex-white/60 hover:text-apex-white transition-colors"
             aria-label="Close modal"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             <X size={24} />
-          </button>
+          </motion.button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -205,24 +208,28 @@ export default function AddBikeModal({
           )}
 
           <div className="flex gap-3 pt-4">
-            <button
+            <motion.button
               type="button"
               onClick={onClose}
               className="flex-1 px-4 py-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               Cancel
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="submit"
               disabled={isSubmitting}
               className="flex-1 px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+              whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
             >
               {isSubmitting
                 ? 'Saving...'
                 : editingBike
                   ? 'Update'
                   : 'Add Bike'}
-            </button>
+            </motion.button>
           </div>
         </form>
       </div>

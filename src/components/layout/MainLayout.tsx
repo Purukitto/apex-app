@@ -4,6 +4,7 @@ import { Bike, Activity, User, Menu, X, Bell } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import NotificationPane from './NotificationPane';
+import { motion } from 'framer-motion';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -43,10 +44,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
     <aside className="w-64 bg-apex-black border-r border-apex-white/10 h-screen fixed left-0 top-0 flex flex-col">
       <div className="p-6 border-b border-apex-white/10 flex items-center justify-between">
         <h1 className="text-xl font-bold text-apex-white">Apex</h1>
-        <button
+        <motion.button
           onClick={() => setNotificationPaneOpen(true)}
           className="relative p-2 text-apex-white/60 hover:text-apex-green transition-colors"
           aria-label="Notifications"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
           <Bell size={20} />
           {unreadCount > 0 && (
@@ -54,7 +57,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
-        </button>
+        </motion.button>
       </div>
       <nav className="flex-1 p-4 space-y-2">
         {navItems.map((item) => {
@@ -89,7 +92,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           <Link
             key={item.path}
             to={item.path}
-            className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors ${
+            className={`relative flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors ${
               active
                 ? 'text-apex-green'
                 : 'text-apex-white/60 hover:text-apex-white'
@@ -97,6 +100,15 @@ export default function MainLayout({ children }: MainLayoutProps) {
           >
             <Icon size={24} />
             <span className="text-xs">{item.label}</span>
+            {active && (
+              <motion.div
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-apex-green rounded-full"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              />
+            )}
           </Link>
         );
       })}
@@ -120,10 +132,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <div className="p-6 border-b border-apex-white/10 flex items-center justify-between">
           <h1 className="text-xl font-bold text-apex-white">Apex</h1>
           <div className="flex items-center gap-2">
-            <button
+            <motion.button
               onClick={() => setNotificationPaneOpen(true)}
               className="relative p-2 text-apex-white/60 hover:text-apex-green transition-colors"
               aria-label="Notifications"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               <Bell size={20} />
               {unreadCount > 0 && (
@@ -131,13 +145,15 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={() => setSidebarOpen(false)}
               className="text-apex-white/60 hover:text-apex-white"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               <X size={24} />
-            </button>
+            </motion.button>
           </div>
         </div>
         <nav className="flex-1 p-4 space-y-2">
@@ -169,12 +185,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
     <div className="min-h-screen bg-apex-black">
       {/* Mobile Menu Button */}
       {isMobile && (
-        <button
+        <motion.button
           onClick={() => setSidebarOpen(true)}
           className="fixed top-4 left-4 z-30 p-2 text-apex-white/60 hover:text-apex-white bg-apex-black/80 rounded-lg border border-apex-white/10"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
           <Menu size={24} />
-        </button>
+        </motion.button>
       )}
 
       {/* Desktop Sidebar */}

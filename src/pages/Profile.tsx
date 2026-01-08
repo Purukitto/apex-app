@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, LogOut, Save } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function Profile() {
   const { profile, isLoading, updateRiderName, signOut } = useUserProfile();
@@ -94,21 +95,25 @@ export default function Profile() {
                 <div className="text-apex-red text-sm">{error}</div>
               )}
               <div className="flex gap-3">
-                <button
+                <motion.button
                   onClick={handleSave}
                   disabled={isSaving}
                   className="flex items-center gap-2 px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  whileHover={{ scale: isSaving ? 1 : 1.02 }}
+                  whileTap={{ scale: isSaving ? 1 : 0.98 }}
                 >
                   <Save size={18} />
                   {isSaving ? 'Saving...' : 'Save'}
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   onClick={handleCancel}
                   disabled={isSaving}
                   className="px-4 py-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors disabled:opacity-50"
+                  whileHover={{ scale: isSaving ? 1 : 1.02 }}
+                  whileTap={{ scale: isSaving ? 1 : 0.98 }}
                 >
                   Cancel
-                </button>
+                </motion.button>
               </div>
             </div>
           ) : (
@@ -118,26 +123,30 @@ export default function Profile() {
                   <span className="text-apex-white/40 italic">Not set</span>
                 )}
               </p>
-              <button
+              <motion.button
                 onClick={() => setIsEditing(true)}
                 className="px-4 py-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 Edit
-              </button>
+              </motion.button>
             </div>
           )}
         </div>
 
         {/* Sign Out Section */}
         <div className="border border-apex-white/20 rounded-lg p-6 bg-apex-black">
-          <button
+          <motion.button
             onClick={handleSignOut}
             disabled={signOut.isPending}
             className="flex items-center gap-2 px-4 py-2 text-apex-red hover:bg-apex-red/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
+            whileHover={{ scale: signOut.isPending ? 1 : 1.02 }}
+            whileTap={{ scale: signOut.isPending ? 1 : 0.98 }}
           >
             <LogOut size={18} />
             {signOut.isPending ? 'Signing out...' : 'Sign Out'}
-          </button>
+          </motion.button>
         </div>
       </div>
     </div>

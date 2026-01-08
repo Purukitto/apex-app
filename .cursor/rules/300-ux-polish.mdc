@@ -1,0 +1,25 @@
+---
+description: Standards for animations, polish, and "Dark Cockpit" UX refinement
+globs: ["src/components/**/*.tsx", "src/pages/**/*.tsx"]
+alwaysApply: true
+---
+
+# Apex UX & Polish Standards
+
+## 1. Motion & Transitions (Framer Motion)
+- **Staggered Entry:** Lists and cards must use `staggerChildren` (0.05s - 0.1s) to reveal items sequentially.
+- **Micro-Interactions:** - Buttons: `whileHover={{ scale: 1.02 }}` and `whileTap={{ scale: 0.98 }}`.
+  - Cards: Subtle `border-color` transitions on hover using `apex-green`.
+- **Page Transitions:** Use `AnimatePresence` for smooth exit/entry between views.
+
+## 2. Visual Hierarchy & Polish
+- **Borders over Shadows:** Avoid heavy shadows. Use `border border-white/10` for containers.
+- **Typography:**
+  - Header: `font-sans font-bold tracking-tight`.
+  - Telemetry: Always `font-mono text-apex-green`.
+- **Empty States:** Never show a blank screen. Use minimalist line-art or subtle Lucide icons with "muted" text.
+- **Skeleton Loaders:** Use "Shimmer" effects for data fetching instead of generic loading spinners.
+
+## 3. QoL (Quality of Life)
+- **Haptic Feedback:** On mobile (Capacitor), trigger light haptics for "Start Ride" or "Save" actions.
+- **Pull-to-Refresh:** Implement standard mobile refresh gestures for the Garage and Activity feeds.

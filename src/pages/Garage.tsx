@@ -8,6 +8,7 @@ import MaintenanceLogModal from '../components/MaintenanceLogModal';
 import MaintenanceLogList from '../components/MaintenanceLogList';
 import type { Bike as BikeType, MaintenanceLog } from '../types/database';
 import { apexToast } from '../lib/toast';
+import { motion } from 'framer-motion';
 
 export default function Garage() {
   const { bikes, isLoading, createBike, updateBike, deleteBike } = useBikes();
@@ -123,13 +124,15 @@ export default function Garage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-apex-white">Garage</h1>
-        <button
+        <motion.button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 transition-colors"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
           <Plus size={20} />
           Add Bike
-        </button>
+        </motion.button>
       </div>
 
       {bikes.length === 0 ? (
@@ -143,13 +146,15 @@ export default function Garage() {
           <p className="text-apex-white/60 mb-6 max-w-md">
             Add your first machine to start tracking rides and maintenance.
           </p>
-          <button
+          <motion.button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 px-6 py-3 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 transition-colors"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             <Plus size={20} />
             Add your first machine
-          </button>
+          </motion.button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -191,24 +196,28 @@ export default function Garage() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <button
+                <motion.button
                   onClick={() => {
                     setEditingLog(null);
                     setIsMaintenanceViewOpen(false);
                     setIsMaintenanceModalOpen(true);
                   }}
                   className="flex items-center gap-2 px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <Plus size={18} />
                   Add Log
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   onClick={handleCloseMaintenanceView}
                   className="p-2 text-apex-white/60 hover:text-apex-white transition-colors"
                   aria-label="Close"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <X size={24} />
-                </button>
+                </motion.button>
               </div>
             </div>
 

@@ -1,6 +1,7 @@
 import { Wrench, Edit, Trash2, Calendar, ExternalLink } from 'lucide-react';
 import type { MaintenanceLog, Bike } from '../types/database';
 import { format } from 'date-fns';
+import { motion } from 'framer-motion';
 
 interface MaintenanceLogListProps {
   logs: MaintenanceLog[];
@@ -84,14 +85,16 @@ export default function MaintenanceLogList({
             </div>
 
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
+              <motion.button
                 onClick={() => onEdit(log)}
                 className="p-2 text-apex-white/60 hover:text-apex-green transition-colors"
                 aria-label="Edit maintenance log"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 <Edit size={16} />
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 onClick={() => {
                   if (
                     window.confirm(
@@ -103,9 +106,11 @@ export default function MaintenanceLogList({
                 }}
                 className="p-2 text-apex-white/60 hover:text-apex-red transition-colors"
                 aria-label="Delete maintenance log"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 <Trash2 size={16} />
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>

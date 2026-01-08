@@ -1,0 +1,21 @@
+# Default owners for everything in the repo
+
+# Core application code
+/src/ @Purukitto
+
+# Configuration files
+*.json @Purukitto
+*.ts @Purukitto
+*.js @Purukitto
+*.config.* @Purukitto
+
+# Documentation
+*.md @Purukitto
+/docs/ @Purukitto
+
+# GitHub workflows
+/.github/ @Purukitto
+
+# Mobile platform code (review by platform experts if available)
+/android/ @Purukitto
+/ios/ @Purukitto

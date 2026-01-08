@@ -186,7 +186,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       {/* Main Content */}
       <main
         className={`${
-          isMobile ? 'pb-16' : 'ml-64'
+          isMobile ? 'pb-16 pt-16' : 'ml-64'
         } min-h-screen transition-all`}
       >
         {children}

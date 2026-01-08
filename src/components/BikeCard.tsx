@@ -1,14 +1,15 @@
-import { Bike } from '../types/database';
-import { Bike as BikeIcon, Trash2, Edit } from 'lucide-react';
+import type { Bike } from '../types/database';
+import { Bike as BikeIcon, Trash2, Edit, Wrench } from 'lucide-react';
 import { useState } from 'react';
 
 interface BikeCardProps {
   bike: Bike;
   onDelete: (id: string) => void;
   onEdit?: (bike: Bike) => void;
+  onViewMaintenance?: (bike: Bike) => void;
 }
 
-export default function BikeCard({ bike, onDelete, onEdit }: BikeCardProps) {
+export default function BikeCard({ bike, onDelete, onEdit, onViewMaintenance }: BikeCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -43,6 +44,15 @@ export default function BikeCard({ bike, onDelete, onEdit }: BikeCardProps) {
           </div>
         </div>
         <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+          {onViewMaintenance && (
+            <button
+              onClick={() => onViewMaintenance(bike)}
+              className="p-2 text-apex-white/60 hover:text-apex-green transition-colors"
+              aria-label="View maintenance logs"
+            >
+              <Wrench size={18} />
+            </button>
+          )}
           {onEdit && (
             <button
               onClick={() => onEdit(bike)}

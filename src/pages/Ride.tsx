@@ -6,80 +6,145 @@ import { useBikes } from '../hooks/useBikes';
 import { useRideStore } from '../stores/useRideStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
-import { Bike, Smartphone, Download, QrCode, Gauge } from 'lucide-react';
+import { Bike, Gauge, Copy, Check } from 'lucide-react';
 import { apexToast } from '../lib/toast';
 import type { Bike as BikeType } from '../types/database';
+import QRCode from 'react-qr-code';
 
 /**
  * Web Fallback Component
- * Shows when platform is 'web' - encourages mobile app download
+ * Full-screen, non-scrollable landing page for web platforms
  */
 const WebFallback = () => {
+  const downloadUrl = 'https://github.com/Purukitto/apex-app/releases/latest';
+  const [qrSize, setQrSize] = useState(240);
+  const [availableHeight, setAvailableHeight] = useState(600);
+  const [copied, setCopied] = useState(false);
+
+  // Calculate available height and QR code size
+  useEffect(() => {
+    const calculateDimensions = () => {
+      if (typeof window === 'undefined') return;
+      
+      const isMobile = window.innerWidth < 768;
+      // Account for header (3.5rem = 56px) and bottom nav (4rem = 64px) on mobile
+      // Desktop has sidebar but no bottom nav
+      const headerHeight = isMobile ? 56 : 0;
+      const footerHeight = isMobile ? 64 : 0;
+      const padding = isMobile ? 48 : 24; // Top and bottom padding
+      
+      const viewportHeight = window.innerHeight;
+      const available = viewportHeight - headerHeight - footerHeight - padding;
+      setAvailableHeight(available);
+      
+      // QR code should be proportional but not too large
+      const viewportWidth = window.innerWidth;
+      const maxQRSize = Math.min(
+        Math.min(viewportWidth * 0.5, available * 0.35),
+        280
+      );
+      setQrSize(Math.max(200, maxQRSize));
+    };
+
+    calculateDimensions();
+    window.addEventListener('resize', calculateDimensions);
+    return () => window.removeEventListener('resize', calculateDimensions);
+  }, []);
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(downloadUrl);
+      setCopied(true);
+      apexToast.success('Link copied to clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+      apexToast.error('Failed to copy link');
+    }
+  };
+
   return (
-    <motion.div
-      className="flex flex-col items-center justify-center min-h-screen p-6 bg-apex-black"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
+    <div 
+      className="w-full bg-apex-black flex flex-col items-center justify-center"
+      style={{ 
+        height: availableHeight > 0 ? `${availableHeight}px` : 'calc(100vh - 7rem)',
+        maxHeight: '100vh',
+        overflow: 'hidden'
+      }}
     >
       <motion.div
-        className="max-w-md w-full text-center space-y-6"
-        variants={itemVariants}
+        className="flex flex-col items-center justify-center w-full max-w-sm px-6"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
       >
-        <div className="mb-8">
-          <motion.div
-            className="mx-auto w-24 h-24 bg-apex-green/10 rounded-full flex items-center justify-center mb-6"
-            variants={itemVariants}
-            whileHover={{ scale: 1.05 }}
-          >
-            <Smartphone size={48} className="text-apex-green" />
-          </motion.div>
-          <motion.h1
-            className="text-3xl font-bold text-apex-white mb-2"
-            variants={itemVariants}
-          >
-            Apex is better on the road
-          </motion.h1>
-          <motion.p
-            className="text-apex-white/60 text-lg"
-            variants={itemVariants}
-          >
-            Ride tracking requires GPS and motion sensors available only on mobile devices.
-          </motion.p>
-        </div>
-
-        {/* QR Code Placeholder */}
+        {/* Hero Section - Minimal Design */}
         <motion.div
-          className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-8 mb-6"
+          className="flex flex-col items-center space-y-3 mb-6"
           variants={itemVariants}
         >
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-48 h-48 bg-apex-white/5 border-2 border-dashed border-apex-white/20 rounded-lg flex items-center justify-center">
-              <QrCode size={64} className="text-apex-white/20" />
-            </div>
-            <p className="text-sm text-apex-white/40">
-              Scan with your phone to download the app
-            </p>
-          </div>
+          <motion.h1
+            className="text-xl md:text-2xl font-medium text-apex-white text-center tracking-tight"
+            variants={itemVariants}
+          >
+            Recorder is Mobile Only
+          </motion.h1>
+          
+          <motion.p
+            className="text-xs text-apex-white/40 text-center max-w-xs leading-relaxed"
+            variants={itemVariants}
+          >
+            GPS and motion sensors are required for ride tracking
+          </motion.p>
         </motion.div>
 
+        {/* QR Code Section - Refined */}
         <motion.div
-          className="space-y-4"
+          className="flex flex-col items-center space-y-3 w-full"
+          variants={itemVariants}
+        >
+          <div className="bg-apex-white p-3 rounded">
+            <QRCode
+              value={downloadUrl}
+              size={qrSize}
+              level="M"
+              bgColor="#FFFFFF"
+              fgColor="#0A0A0A"
+            />
+          </div>
+          
+          <p className="text-[10px] md:text-xs text-apex-white/50 text-center font-normal tracking-wider uppercase">
+            Scan to download the latest Flight Recorder (APK)
+          </p>
+        </motion.div>
+
+        {/* Copy Link Pill */}
+        <motion.div
+          className="mt-6 w-full"
           variants={itemVariants}
         >
           <motion.button
-            className="w-full bg-apex-green text-apex-black font-semibold py-4 px-6 rounded-lg flex items-center justify-center gap-2"
+            onClick={handleCopyLink}
+            className="w-full bg-apex-white/5 border border-apex-white/10 rounded-full px-4 py-2.5 flex items-center justify-center gap-2 hover:bg-apex-white/10 hover:border-apex-white/20 transition-colors"
             {...buttonHoverProps}
           >
-            <Download size={20} />
-            Download Mobile App
+            {copied ? (
+              <>
+                <Check size={14} className="text-apex-green" />
+                <span className="text-xs text-apex-green font-medium">Copied</span>
+              </>
+            ) : (
+              <>
+                <Copy size={14} className="text-apex-white/60" />
+                <span className="text-xs text-apex-white/60 font-normal truncate max-w-[200px]">
+                  {downloadUrl}
+                </span>
+              </>
+            )}
           </motion.button>
-          <p className="text-xs text-apex-white/40">
-            Available for iOS and Android
-          </p>
         </motion.div>
       </motion.div>
-    </motion.div>
+    </div>
   );
 };
 

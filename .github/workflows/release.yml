@@ -12,7 +12,11 @@ jobs:
     permissions: { contents: write }
     
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Get Version from package.json
         id: pkg
@@ -24,14 +28,25 @@ jobs:
         run: |
           if git rev-parse "${{ steps.pkg.outputs.VERSION }}" >/dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag ${{ steps.pkg.outputs.VERSION }} already exists, skipping release"
           else
             echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Tag ${{ steps.pkg.outputs.VERSION }} does not exist, proceeding with release"
           fi
+          
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install dependencies
+        if: steps.check_tag.outputs.exists == 'false'
+        run: npm ci
 
       - name: Build and Sync
         if: steps.check_tag.outputs.exists == 'false'
         run: |
-          npm install
           npm run build
           npx cap sync android
 
@@ -39,11 +54,16 @@ jobs:
         if: steps.check_tag.outputs.exists == 'false'
         run: |
           echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > android/app/release.jks
-          cd android && ./gradlew assembleRelease \
-            -Pandroid.injected.signing.store.file=release.jks \
+          cd android
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=app/release.jks \
             -Pandroid.injected.signing.store.password=${{ secrets.RELEASE_KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.RELEASE_KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.RELEASE_KEY_PASSWORD }}
+
+      - name: Cleanup keystore
+        if: always() && steps.check_tag.outputs.exists == 'false'
+        run: rm -f android/app/release.jks
 
       - name: Create Release & Tag
         if: steps.check_tag.outputs.exists == 'false'
@@ -52,3 +72,5 @@ jobs:
           tag_name: ${{ steps.pkg.outputs.VERSION }}
           files: android/app/build/outputs/apk/release/app-release.apk
           generate_release_notes: true
+          draft: false
+          prerelease: false

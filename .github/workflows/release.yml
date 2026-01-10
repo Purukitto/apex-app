@@ -68,17 +68,17 @@ jobs:
       - name: Sign & Build APK
         if: steps.check_release.outputs.exists == 'false'
         run: |
-          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > android/app/release.jks
+          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > android/release.jks
           cd android
           ./gradlew assembleRelease \
-            -Pandroid.injected.signing.store.file=app/release.jks \
+            -Pandroid.injected.signing.store.file=release.jks \
             -Pandroid.injected.signing.store.password=${{ secrets.RELEASE_KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.RELEASE_KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.RELEASE_KEY_PASSWORD }}
 
       - name: Cleanup keystore
         if: always() && steps.check_release.outputs.exists == 'false'
-        run: rm -f android/app/release.jks
+        run: rm -f android/release.jks
 
       - name: Create Release & Tag
         if: steps.check_release.outputs.exists == 'false'

@@ -19,3 +19,9 @@ alwaysApply: true
 - Centralize state using **Zustand**.
 - Fetch data using **TanStack Query** (React Query).
 - Logic for "Ride Recording" must check for mobile platform using Capacitor.
+
+## Mobile-Only Logic
+- All components in `src/pages/Recorder.tsx` must be wrapped in a platform check.
+- Use `Capacitor.getPlatform()` to detect 'ios' or 'android'.
+- If the platform is 'web', render a "Mobile Only" fallback view with a QR code to download the app.
+- Never initialize GPS or Motion listeners if `Capacitor.isNativePlatform()` is false.

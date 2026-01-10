@@ -1,9 +1,10 @@
 import { useBikes } from '../hooks/useBikes';
 import { useMaintenanceChecker } from '../hooks/useMaintenanceChecker';
 import { useNotificationStore } from '../stores/useNotificationStore';
-import { Bike, Activity, AlertTriangle, Calendar, Bell } from 'lucide-react';
+import { Motorbike, Activity, AlertTriangle, Bell, ChartNoAxesGantt } from 'lucide-react';
 import { useState } from 'react';
 import NotificationPane from '../components/layout/NotificationPane';
+import RecentRidesList from '../components/RecentRidesList';
 import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 
@@ -107,7 +108,7 @@ export default function Dashboard() {
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-apex-green/10 rounded-lg">
-              <Bike size={20} className="text-apex-green" />
+              <Motorbike size={20} className="text-apex-green" />
             </div>
             <h2 className="text-sm text-apex-white/60 uppercase tracking-wide">
               Bikes in Garage
@@ -173,41 +174,13 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-apex-green/10 rounded-lg">
-              <Calendar size={20} className="text-apex-green" />
+              <ChartNoAxesGantt size={20} className="text-apex-green" />
             </div>
             <h2 className="text-lg font-semibold text-apex-white">Recent Rides</h2>
           </div>
         </div>
 
-        {/* Skeleton Loaders with Shimmer Effect */}
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="border border-apex-white/10 rounded-lg p-4 bg-apex-black/50 relative overflow-hidden"
-              >
-                <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-                <div className="flex items-center justify-between relative">
-                  <div className="space-y-2 flex-1">
-                    <div className="h-4 bg-apex-white/10 rounded w-32" />
-                    <div className="h-3 bg-apex-white/5 rounded w-24" />
-                  </div>
-                  <div className="text-right space-y-2">
-                    <div className="h-4 bg-apex-white/10 rounded w-20 ml-auto" />
-                    <div className="h-3 bg-apex-white/5 rounded w-16 ml-auto" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-4 text-center">
-            <p className="text-sm text-apex-white/40">
-              No rides recorded yet. Start tracking your rides to see them here.
-            </p>
-          </div>
-        )}
+        <RecentRidesList limit={10} />
       </motion.div>
 
       {/* Notification Pane */}

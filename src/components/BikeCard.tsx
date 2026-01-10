@@ -1,5 +1,5 @@
 import type { Bike } from '../types/database';
-import { Bike as BikeIcon, Trash2, Edit, Wrench } from 'lucide-react';
+import { Motorbike as BikeIcon, Trash2, Edit, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { buttonHoverProps, cardHoverProps } from '../lib/animations';

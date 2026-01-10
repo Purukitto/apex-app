@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Garage from './pages/Garage';
 import Profile from './pages/Profile';
+import Ride from './pages/Ride';
 import MainLayout from './components/layout/MainLayout';
 import AuthGuard from './components/AuthGuard';
 
@@ -37,6 +38,16 @@ function App() {
             <AuthGuard>
               <MainLayout>
                 <Profile />
+              </MainLayout>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/ride"
+          element={
+            <AuthGuard>
+              <MainLayout>
+                <Ride />
               </MainLayout>
             </AuthGuard>
           }

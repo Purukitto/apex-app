@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.2](https://github.com/Purukitto/apex-app/compare/v0.4.1...v0.4.2) (2026-01-10)
+
+
+### Bug Fixes
+
+* **ci:** improve release workflow with tag fetching and keystore cleanup ([8d29c2e](https://github.com/Purukitto/apex-app/commit/8d29c2e63777667bc1e89d866c6fdc17d70abd22))
+
 ### [0.4.1](https://github.com/Purukitto/apex-app/compare/v0.4.0...v0.4.1) (2026-01-10)
 
 

@@ -5,12 +5,19 @@ import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import './index.css'
 import App from './App.tsx'
+import { ErrorBoundary } from './components/ErrorBoundary.tsx'
+import { isSupabaseConfigured } from './lib/supabaseClient.ts'
 
 // Configure StatusBar for fullscreen on native platforms
 if (Capacitor.isNativePlatform()) {
   StatusBar.setOverlaysWebView({ overlay: true })
   StatusBar.setStyle({ style: Style.Dark })
   StatusBar.hide()
+}
+
+// Check Supabase configuration and log warning if missing
+if (!isSupabaseConfigured()) {
+  console.error('⚠️ Supabase environment variables are missing! The app may not work correctly.');
 }
 
 const queryClient = new QueryClient({
@@ -24,8 +31,10 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )

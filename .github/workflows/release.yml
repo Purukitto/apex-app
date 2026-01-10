@@ -1,13 +1,10 @@
 name: Production Release
 on:
-  pull_request:
+  push:
     branches: [main]
-    types: [closed]
 
 jobs:
   release:
-    # Trigger only if merged into main
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions: { contents: write }
     
@@ -23,35 +20,46 @@ jobs:
         run: echo "VERSION=v$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
       - name: Check if Release Exists
-        id: check_tag
+        id: check_release
         shell: bash
         run: |
-          if git rev-parse "${{ steps.pkg.outputs.VERSION }}" >/dev/null 2>&1; then
+          TAG_NAME="${{ steps.pkg.outputs.VERSION }}"
+          echo "Checking for GitHub Release: $TAG_NAME"
+          echo "Current version from package.json: $(node -p "require('./package.json').version")"
+          
+          # Check if a GitHub Release exists for this tag using GitHub API
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/$TAG_NAME")
+          
+          if [ "$RESPONSE" = "200" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Tag ${{ steps.pkg.outputs.VERSION }} already exists, skipping release"
+            echo "GitHub Release for $TAG_NAME already exists, skipping release"
           else
             echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Tag ${{ steps.pkg.outputs.VERSION }} does not exist, proceeding with release"
+            echo "No GitHub Release found for $TAG_NAME (HTTP $RESPONSE), proceeding with release"
           fi
           
       - name: Setup Node
         uses: actions/setup-node@v4
+        if: steps.check_release.outputs.exists == 'false'
         with:
           node-version: 22
           cache: "npm"
 
       - name: Install dependencies
-        if: steps.check_tag.outputs.exists == 'false'
+        if: steps.check_release.outputs.exists == 'false'
         run: npm ci
 
       - name: Build and Sync
-        if: steps.check_tag.outputs.exists == 'false'
+        if: steps.check_release.outputs.exists == 'false'
         run: |
           npm run build
           npx cap sync android
 
       - name: Sign & Build APK
-        if: steps.check_tag.outputs.exists == 'false'
+        if: steps.check_release.outputs.exists == 'false'
         run: |
           echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > android/app/release.jks
           cd android
@@ -62,11 +70,11 @@ jobs:
             -Pandroid.injected.signing.key.password=${{ secrets.RELEASE_KEY_PASSWORD }}
 
       - name: Cleanup keystore
-        if: always() && steps.check_tag.outputs.exists == 'false'
+        if: always() && steps.check_release.outputs.exists == 'false'
         run: rm -f android/app/release.jks
 
       - name: Create Release & Tag
-        if: steps.check_tag.outputs.exists == 'false'
+        if: steps.check_release.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.pkg.outputs.VERSION }}

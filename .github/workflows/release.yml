@@ -41,6 +41,13 @@ jobs:
             echo "No GitHub Release found for $TAG_NAME (HTTP $RESPONSE), proceeding with release"
           fi
           
+      - name: Setup Java
+        if: steps.check_release.outputs.exists == 'false'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
       - name: Setup Node
         uses: actions/setup-node@v4
         if: steps.check_release.outputs.exists == 'false'

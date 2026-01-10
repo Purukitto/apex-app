@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation, type Position } from '@capacitor/geolocation';
 import { Motion, type AccelListenerEvent } from '@capacitor/motion';
-import { useMutation } from '@tanstack/react-query';
+import { Sensors } from '@danyalwe/capacitor-sensors';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
 import { apexToast } from '../lib/toast';
 import { useRideStore } from '../stores/useRideStore';
@@ -40,6 +41,7 @@ interface RideTrackingState {
  */
 export const useRideTracking = () => {
   const isMobile = Capacitor.isNativePlatform();
+  const queryClient = useQueryClient();
 
   // Restore state from Zustand store on mount
   const storeState = useRideStore.getState();
@@ -273,8 +275,8 @@ export const useRideTracking = () => {
           p_start_time: startTime.toISOString(),
           p_end_time: endTime.toISOString(),
           p_distance_km: Math.round(totalDistance * 100) / 100,
-          p_max_lean_left: Math.round(maxLeanLeft * 10) / 10,
-          p_max_lean_right: Math.round(maxLeanRight * 10) / 10,
+          p_max_lean_left: Math.round(maxLeanLeft * 10) / 10, // Round to 1 decimal place
+          p_max_lean_right: Math.round(maxLeanRight * 10) / 10, // Round to 1 decimal place
           p_route_path_geojson: JSON.stringify(geoJSON),
         });
         
@@ -292,8 +294,8 @@ export const useRideTracking = () => {
               start_time: startTime.toISOString(),
               end_time: endTime.toISOString(),
               distance_km: Math.round(totalDistance * 100) / 100,
-              max_lean_left: Math.round(maxLeanLeft * 10) / 10,
-              max_lean_right: Math.round(maxLeanRight * 10) / 10,
+              max_lean_left: Math.round(maxLeanLeft), // Database expects int4, round to integer
+              max_lean_right: Math.round(maxLeanRight), // Database expects int4, round to integer
               route_path: null, // Can't insert geometry without RPC function
             })
             .select()
@@ -312,8 +314,8 @@ export const useRideTracking = () => {
             start_time: startTime.toISOString(),
             end_time: endTime.toISOString(),
             distance_km: Math.round(totalDistance * 100) / 100,
-            max_lean_left: Math.round(maxLeanLeft * 10) / 10,
-            max_lean_right: Math.round(maxLeanRight * 10) / 10,
+            max_lean_left: Math.round(maxLeanLeft * 10) / 10, // Round to 1 decimal place
+            max_lean_right: Math.round(maxLeanRight * 10) / 10, // Round to 1 decimal place
             route_path: null,
           })
           .select()
@@ -334,8 +336,18 @@ export const useRideTracking = () => {
       }
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       apexToast.success('Ride Saved');
+      // Invalidate and refetch rides query to refresh recent rides list immediately
+      await queryClient.invalidateQueries({ 
+        queryKey: ['rides'],
+        refetchType: 'active', // Only refetch active queries (visible components)
+      });
+      // Force refetch all active rides queries
+      await queryClient.refetchQueries({ 
+        queryKey: ['rides'],
+        type: 'active',
+      });
     },
     onError: (error: unknown) => {
       // Log technical details for debugging
@@ -731,105 +743,279 @@ export const useRideTracking = () => {
       isNative: isMobile,
     });
     
-    // Motion permissions are handled automatically by the OS
-    // Just proceed with listener
-    let callbackCallCount = 0;
-    const startTime = Date.now();
-    
-    console.log('Calling Motion.addListener...');
-    Motion.addListener('accel', (event: AccelListenerEvent) => {
-      const timeSinceStart = Date.now() - startTime;
-      callbackCallCount++;
-      
-      console.log(`[Motion #${callbackCallCount}] Callback fired after ${timeSinceStart}ms`);
-      callbackCallCount++;
-      
-      // Calculate roll angle from accelerometer
-      // For a phone mounted on a motorcycle (portrait mode):
-      // - x-axis: left/right tilt (roll)
-      // - y-axis: forward/backward pitch
-      // - z-axis: up/down (gravity)
-      // Roll angle = atan2(x, z) gives the lean angle
-      const { x, y, z } = event.accelerationIncludingGravity;
-      
-      // Calculate roll angle (lean left/right)
-      // For a phone mounted in portrait mode on a motorcycle:
-      // - When bike leans left, x becomes negative
-      // - When bike leans right, x becomes positive
-      // - z-axis points forward (gravity component)
-      // Formula: roll = atan2(x, sqrt(y^2 + z^2))
-      const rollRad = Math.atan2(x, Math.sqrt(y * y + z * z));
-      const rollDeg = rollRad * (180 / Math.PI);
-      
-      // The lean angle is the absolute value of roll
-      // Negative roll = leaning left, Positive roll = leaning right
-      const leanAngle = Math.abs(rollDeg);
-      
-      // Log every callback for first 10, then every 10th
-      const shouldLog = callbackCallCount <= 10 || callbackCallCount % 10 === 0;
-      if (shouldLog) {
-        console.log(`[Motion ${callbackCallCount}] Sensor data:`, {
-          x: x.toFixed(3),
-          y: y.toFixed(3),
-          z: z.toFixed(3),
-          rollDeg: rollDeg.toFixed(2),
-          leanAngle: leanAngle.toFixed(2),
-        });
-      }
-
-      setState((prev) => {
-        // Update current lean
-        const newCurrentLean = Math.round(leanAngle * 10) / 10; // Round to 1 decimal
-
-        // Peak filter: Only update max if new value is higher
-        let newMaxLeanLeft = prev.maxLeanLeft;
-        let newMaxLeanRight = prev.maxLeanRight;
-
-        if (rollDeg < 0) {
-          // Leaning left (negative roll)
-          if (leanAngle > prev.maxLeanLeft) {
-            newMaxLeanLeft = newCurrentLean;
-            if (shouldLog) {
-              console.log(`[Motion ${callbackCallCount}] New max lean left: ${newMaxLeanLeft.toFixed(1)}°`);
-            }
+    // Request permission for iOS devices (required before adding listener)
+    const setupMotionListener = async () => {
+      try {
+        // Platform-specific motion sensor implementation:
+        // - Android: Native accelerometer via @danyalwe/capacitor-sensors (direct hardware access)
+        // - iOS: DeviceMotionEvent via @capacitor/motion (Safari/WebView API)
+        // - Web: DeviceMotionEvent via @capacitor/motion (browser API, requires HTTPS)
+        const platform = Capacitor.getPlatform();
+        console.log('Setting up motion listener for platform:', platform);
+        
+        if (platform === 'android') {
+          // Use native Android accelerometer via @danyalwe/capacitor-sensors
+          console.log('Using native Android accelerometer sensor...');
+          
+          // Check if accelerometer is available
+          const availableSensors = await Sensors.getAvailableSensors();
+          console.log('Available sensors:', availableSensors);
+          
+          if (!availableSensors.sensors.includes('ACCELEROMETER')) {
+            console.error('Accelerometer not available on this device');
+            apexToast.error('Accelerometer not available on this device.');
+            return;
           }
-        } else {
-          // Leaning right (positive roll)
-          if (leanAngle > prev.maxLeanRight) {
-            newMaxLeanRight = newCurrentLean;
-            if (shouldLog) {
-              console.log(`[Motion ${callbackCallCount}] New max lean right: ${newMaxLeanRight.toFixed(1)}°`);
-            }
+          
+          // Initialize the accelerometer
+          const sensorData = await Sensors.init({ type: 'ACCELEROMETER', delay: 'UI' });
+          console.log('Accelerometer initialized:', sensorData);
+          
+          if (!sensorData) {
+            console.error('Failed to initialize accelerometer');
+            apexToast.error('Failed to initialize accelerometer.');
+            return;
           }
+          
+          // Start the accelerometer
+          await Sensors.start({ type: 'ACCELEROMETER' });
+          console.log('✅ Started accelerometer');
+          
+          let callbackCallCount = 0;
+          const startTime = Date.now();
+          
+          // Add listener for accelerometer data
+          // SensorResult.values is [x, y, z] in m/s²
+          const listener = await Sensors.addListener('ACCELEROMETER', (result) => {
+            const timeSinceStart = Date.now() - startTime;
+            callbackCallCount++;
+            
+            // Extract x, y, z from values array
+            const [x, y, z] = result.values;
+            
+            // Validate sensor data
+            if (x === undefined || y === undefined || z === undefined || 
+                isNaN(x) || isNaN(y) || isNaN(z)) {
+              console.warn('[Accel] Invalid sensor data:', result);
+              return;
+            }
+            
+            // Log every callback for first 10, then every 10th
+            const shouldLog = callbackCallCount <= 10 || callbackCallCount % 10 === 0;
+            if (shouldLog) {
+              console.log(`[Accel #${callbackCallCount}] Data received after ${timeSinceStart}ms:`, {
+                x: x.toFixed(3),
+                y: y.toFixed(3),
+                z: z.toFixed(3),
+                timestamp: result.timestamp,
+              });
+            }
+            
+            // Calculate roll angle (lean left/right)
+            // Android accelerometer: x=left/right, y=forward/back, z=up/down
+            // Values are in m/s², including gravity
+            const rollRad = Math.atan2(x, Math.sqrt(y * y + z * z));
+            const rollDeg = rollRad * (180 / Math.PI);
+            const leanAngle = Math.abs(rollDeg);
+            
+            if (shouldLog) {
+              console.log(`[Accel ${callbackCallCount}] Calculated:`, {
+                rollDeg: rollDeg.toFixed(2),
+                leanAngle: leanAngle.toFixed(2),
+              });
+            }
+            
+            setState((prev) => {
+              const newCurrentLean = Math.round(leanAngle * 10) / 10;
+              let newMaxLeanLeft = prev.maxLeanLeft;
+              let newMaxLeanRight = prev.maxLeanRight;
+              
+              if (rollDeg < 0) {
+                // Leaning left
+                if (leanAngle > prev.maxLeanLeft) {
+                  newMaxLeanLeft = newCurrentLean;
+                  if (shouldLog) {
+                    console.log(`[Accel ${callbackCallCount}] New max lean left: ${newMaxLeanLeft.toFixed(1)}°`);
+                  }
+                }
+              } else {
+                // Leaning right
+                if (leanAngle > prev.maxLeanRight) {
+                  newMaxLeanRight = newCurrentLean;
+                  if (shouldLog) {
+                    console.log(`[Accel ${callbackCallCount}] New max lean right: ${newMaxLeanRight.toFixed(1)}°`);
+                  }
+                }
+              }
+              
+              useRideStore.getState().setCurrentLean(newCurrentLean);
+              useRideStore.getState().updateMaxLean(newMaxLeanLeft, newMaxLeanRight);
+              
+              return {
+                ...prev,
+                currentLean: newCurrentLean,
+                maxLeanLeft: newMaxLeanLeft,
+                maxLeanRight: newMaxLeanRight,
+              };
+            });
+          });
+          
+          motionListenerRef.current = listener as unknown as Awaited<ReturnType<typeof Motion.addListener>>;
+          console.log('✅ Native accelerometer listener added successfully');
+          return;
         }
+        
+        // iOS/Web: Use @capacitor/motion (DeviceMotionEvent API)
+        // Note: @capacitor/motion is web-only and uses DeviceMotionEvent
+        // On iOS, this works through Safari/WebView's DeviceMotionEvent support
+        // iOS requires explicit permission request (iOS 13+)
+        console.log('Using DeviceMotionEvent API for iOS/Web platform');
+        
+        if (typeof window === 'undefined' || !('DeviceMotionEvent' in window)) {
+          console.error('DeviceMotionEvent not available in this environment');
+          apexToast.error('Motion sensors not available on this device.');
+          return;
+        }
+        
+        // iOS requires explicit permission request (iOS 13+)
+        // This will show a native permission dialog on iOS
+        if (typeof (window as unknown as { DeviceMotionEvent?: { requestPermission?: () => Promise<string> } }).DeviceMotionEvent?.requestPermission === 'function') {
+          console.log('Requesting DeviceMotionEvent permission for iOS...');
+          const permission = await (window as unknown as { DeviceMotionEvent: { requestPermission: () => Promise<string> } }).DeviceMotionEvent.requestPermission();
+          if (permission !== 'granted') {
+            console.error('DeviceMotionEvent permission denied');
+            apexToast.error('Motion sensor permission denied. Lean angle tracking disabled.');
+            return;
+          }
+          console.log('✅ DeviceMotionEvent permission granted');
+        } else {
+          console.log('DeviceMotionEvent available (no permission required for this iOS version)');
+        }
+        
+        let callbackCallCount = 0;
+        const startTime = Date.now();
+        
+        console.log('Calling Motion.addListener (web/iOS)...');
+        const listener = await Motion.addListener('accel', (event: AccelListenerEvent) => {
+          const timeSinceStart = Date.now() - startTime;
+          callbackCallCount++;
+          
+          console.log(`[Motion #${callbackCallCount}] Callback fired after ${timeSinceStart}ms`);
+      
+          // Calculate roll angle from accelerometer
+          // For a phone mounted on a motorcycle (portrait mode):
+          // Device coordinate system (portrait):
+          // - x-axis: horizontal, positive to the right
+          // - y-axis: vertical, positive upward
+          // - z-axis: perpendicular to screen, positive outward
+          // 
+          // When bike leans:
+          // - Left lean: x becomes negative (gravity shifts left)
+          // - Right lean: x becomes positive (gravity shifts right)
+          // 
+          // Roll angle calculation:
+          // roll = atan2(x, sqrt(y^2 + z^2))
+          // This gives the angle of rotation around the y-axis (vertical axis)
+          
+          const { x, y, z } = event.accelerationIncludingGravity;
+          
+          // Validate that we have valid sensor data
+          if (x === undefined || y === undefined || z === undefined || 
+              isNaN(x) || isNaN(y) || isNaN(z)) {
+            console.warn('[Motion] Invalid sensor data:', { x, y, z });
+            return;
+          }
+          
+          // Calculate roll angle (lean left/right)
+          // Using atan2(x, sqrt(y^2 + z^2)) for accurate roll calculation
+          const rollRad = Math.atan2(x, Math.sqrt(y * y + z * z));
+          const rollDeg = rollRad * (180 / Math.PI);
+          
+          // The lean angle is the absolute value of roll
+          // Negative roll = leaning left, Positive roll = leaning right
+          const leanAngle = Math.abs(rollDeg);
+          
+          // Log every callback for first 10, then every 10th
+          const shouldLog = callbackCallCount <= 10 || callbackCallCount % 10 === 0;
+          if (shouldLog) {
+            console.log(`[Motion ${callbackCallCount}] Sensor data:`, {
+              x: x.toFixed(3),
+              y: y.toFixed(3),
+              z: z.toFixed(3),
+              rollDeg: rollDeg.toFixed(2),
+              leanAngle: leanAngle.toFixed(2),
+            });
+          }
 
-        // Sync to Zustand store
-        useRideStore.getState().setCurrentLean(newCurrentLean);
-        useRideStore.getState().updateMaxLean(newMaxLeanLeft, newMaxLeanRight);
+          setState((prev) => {
+            // Update current lean
+            const newCurrentLean = Math.round(leanAngle * 10) / 10; // Round to 1 decimal
 
-        return {
-          ...prev,
-          currentLean: newCurrentLean,
-          maxLeanLeft: newMaxLeanLeft,
-          maxLeanRight: newMaxLeanRight,
-        };
-      });
-    })
-      .then((listener) => {
+            // Peak filter: Only update max if new value is higher
+            let newMaxLeanLeft = prev.maxLeanLeft;
+            let newMaxLeanRight = prev.maxLeanRight;
+
+            if (rollDeg < 0) {
+              // Leaning left (negative roll)
+              if (leanAngle > prev.maxLeanLeft) {
+                newMaxLeanLeft = newCurrentLean;
+                if (shouldLog) {
+                  console.log(`[Motion ${callbackCallCount}] New max lean left: ${newMaxLeanLeft.toFixed(1)}°`);
+                }
+              }
+            } else {
+              // Leaning right (positive roll)
+              if (leanAngle > prev.maxLeanRight) {
+                newMaxLeanRight = newCurrentLean;
+                if (shouldLog) {
+                  console.log(`[Motion ${callbackCallCount}] New max lean right: ${newMaxLeanRight.toFixed(1)}°`);
+                }
+              }
+            }
+
+            // Sync to Zustand store
+            useRideStore.getState().setCurrentLean(newCurrentLean);
+            useRideStore.getState().updateMaxLean(newMaxLeanLeft, newMaxLeanRight);
+
+            return {
+              ...prev,
+              currentLean: newCurrentLean,
+              maxLeanLeft: newMaxLeanLeft,
+              maxLeanRight: newMaxLeanRight,
+            };
+          });
+        });
+        
         motionListenerRef.current = listener;
         console.log('✅ Motion listener added successfully, waiting for sensor data...');
-      })
-      .catch((error: unknown) => {
+      } catch (error: unknown) {
         console.error('❌ Failed to add motion listener:', error);
         console.error('Motion listener error details:', JSON.stringify(error, null, 2));
         // Don't block recording if motion fails
         apexToast.error('Motion sensor unavailable. Lean angle tracking disabled.');
-      });
+      }
+    };
+    
+    // Call the async setup function
+    setupMotionListener();
 
     return () => {
       if (motionListenerRef.current) {
         try {
-          motionListenerRef.current.remove();
+          const platform = Capacitor.getPlatform();
+          if (platform === 'android') {
+            // Stop native accelerometer
+            Sensors.stop({ type: 'ACCELEROMETER' }).catch((err: unknown) => {
+              console.warn('Error stopping accelerometer:', err);
+            });
+            // Remove listener
+            if (motionListenerRef.current && typeof motionListenerRef.current.remove === 'function') {
+              motionListenerRef.current.remove();
+            }
+          } else {
+            // Remove web/iOS listener
+            motionListenerRef.current.remove();
+          }
           motionListenerRef.current = undefined;
           console.log('Motion listener removed');
         } catch (error) {

@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, MapPin, TrendingUp } from 'lucide-react';
+import { Calendar, MapPin, TrendingUp, RefreshCw } from 'lucide-react';
 import { useBikes } from '../hooks/useBikes';
 import { useRides } from '../hooks/useRides';
-import { containerVariants, fastItemVariants } from '../lib/animations';
+import { useQueryClient } from '@tanstack/react-query';
+import { containerVariants, fastItemVariants, buttonHoverProps } from '../lib/animations';
+import { apexToast } from '../lib/toast';
 
 interface RecentRidesListProps {
   limit?: number;
@@ -13,8 +16,24 @@ interface RecentRidesListProps {
  * Component to display recent rides with bike information
  */
 export default function RecentRidesList({ limit = 10, bikeId }: RecentRidesListProps) {
-  const { rides, isLoading } = useRides({ bikeId, limit });
+  const { rides, isLoading, refetch, isFetching } = useRides({ bikeId, limit });
   const { bikes } = useBikes();
+  const queryClient = useQueryClient();
+  const [isSyncing, setIsSyncing] = useState(false);
+  
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await queryClient.invalidateQueries({ queryKey: ['rides'] });
+      await refetch();
+      apexToast.success('Rides synced');
+    } catch (error) {
+      console.error('Error syncing rides:', error);
+      apexToast.error('Failed to sync rides');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Create a map of bike IDs to bike objects for quick lookup
   const bikeMap = new Map(bikes.map((bike) => [bike.id, bike]));
@@ -51,7 +70,8 @@ export default function RecentRidesList({ limit = 10, bikeId }: RecentRidesListP
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  if (isLoading) {
+  // Show loading state only on initial load, not during refetch
+  if (isLoading && !rides) {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
@@ -80,21 +100,49 @@ export default function RecentRidesList({ limit = 10, bikeId }: RecentRidesListP
     return (
       <div className="mt-4 text-center py-8">
         <Calendar className="mx-auto mb-3 text-apex-white/20" size={32} />
-        <p className="text-sm text-apex-white/40">
+        <p className="text-sm text-apex-white/40 mb-4">
           No rides recorded yet. Start tracking your rides to see them here.
         </p>
+        <motion.button
+          onClick={handleSync}
+          disabled={isSyncing}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/40 rounded-lg text-apex-green hover:bg-apex-green/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          {...buttonHoverProps}
+        >
+          <RefreshCw size={16} className={isSyncing ? 'animate-spin' : ''} />
+          <span className="text-sm font-medium">{isSyncing ? 'Syncing...' : 'Sync'}</span>
+        </motion.button>
       </div>
     );
   }
 
   return (
-    <motion.div
-      className="space-y-3"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {rides.map((ride) => {
+    <div>
+      <div className="flex items-center justify-end mb-3">
+        <motion.button
+          onClick={handleSync}
+          disabled={isSyncing || isFetching}
+          className="inline-flex items-center gap-2 px-3 py-1.5 bg-apex-green/10 border border-apex-green/40 rounded-lg text-apex-green hover:bg-apex-green/20 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          {...buttonHoverProps}
+        >
+          <RefreshCw size={14} className={(isSyncing || isFetching) ? 'animate-spin' : ''} />
+          <span>{isSyncing || isFetching ? 'Syncing...' : 'Sync'}</span>
+        </motion.button>
+      </div>
+      {/* Show subtle loading indicator during refetch without hiding content */}
+      {isFetching && rides && rides.length > 0 && (
+        <div className="mb-2 text-xs text-apex-green/60 text-center">
+          Updating...
+        </div>
+      )}
+      <motion.div
+        className="space-y-3"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        key={rides?.length || 0} // Force re-animation when rides change
+      >
+        {rides.map((ride) => {
         const bike = bikeMap.get(ride.bike_id);
         const bikeName = bike?.nick_name || bike ? `${bike.make} ${bike.model}` : 'Unknown Bike';
         const maxLean = Math.max(ride.max_lean_left, ride.max_lean_right);
@@ -135,6 +183,7 @@ export default function RecentRidesList({ limit = 10, bikeId }: RecentRidesListP
           </motion.div>
         );
       })}
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }

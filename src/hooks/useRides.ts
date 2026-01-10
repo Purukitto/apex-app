@@ -2,6 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
 import type { Ride } from '../types/database';
 
+// React Query configuration for rides
+const RIDES_STALE_TIME = 0; // Always consider data stale, refetch when needed
+const RIDES_CACHE_TIME = 5 * 60 * 1000; // Keep in cache for 5 minutes
+
 interface UseRidesOptions {
   bikeId?: string;
   limit?: number;
@@ -16,7 +20,7 @@ interface UseRidesOptions {
 export function useRides(options: UseRidesOptions = {}) {
   const { bikeId, limit = 10 } = options;
 
-  const { data: rides, isLoading, error } = useQuery({
+  const { data: rides, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['rides', bikeId, limit],
     queryFn: async () => {
       const {
@@ -41,7 +45,10 @@ export function useRides(options: UseRidesOptions = {}) {
       if (queryError) throw queryError;
       return (data as Ride[]) || [];
     },
+    staleTime: RIDES_STALE_TIME,
+    gcTime: RIDES_CACHE_TIME, // Previously cacheTime
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
-  return { rides, isLoading, error };
+  return { rides, isLoading, error, refetch, isFetching };
 }

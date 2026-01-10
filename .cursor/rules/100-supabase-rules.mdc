@@ -37,8 +37,8 @@ alwaysApply: false
 - `start_time` (timestamptz)
 - `end_time` (timestamptz, nullable)
 - `distance_km` (numeric)
-- `max_lean_left` (int4)
-- `max_lean_right` (int4)
+- `max_lean_left` (numeric) - Stores lean angle in degrees with 1 decimal precision
+- `max_lean_right` (numeric) - Stores lean angle in degrees with 1 decimal precision
 - `route_path` (geography, LineString, nullable)
 - `created_at` (timestamptz)
 

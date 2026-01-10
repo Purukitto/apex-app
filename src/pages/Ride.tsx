@@ -178,7 +178,7 @@ const BikeSelectionModal = ({
             onClick={onClose}
           >
             <motion.div
-              className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-6 max-w-md w-full max-h-[80vh] overflow-y-auto"
+              className="bg-apex-black border border-apex-white/20 rounded-lg p-6 max-w-md w-full max-h-[80vh] overflow-y-auto"
               variants={containerVariants}
               initial="hidden"
               animate="visible"

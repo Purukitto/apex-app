@@ -6,28 +6,37 @@ on:
 
 jobs:
   release:
-    # Check 1: Must be a merge (not just closed) 
-    # Check 2: The branch name or commit must indicate a release version
-    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/') || contains(github.event.pull_request.labels.*.name, 'release')
+    # Trigger only if merged into main
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions: { contents: write }
     
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Fetches all tags and history
 
       - name: Get Version from package.json
-        id: package_version
+        id: pkg
         run: echo "VERSION=v$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
+      - name: Check if Release Exists
+        id: check_tag
+        shell: bash
+        run: |
+          if git rev-parse "${{ steps.pkg.outputs.VERSION }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build and Sync
+        if: steps.check_tag.outputs.exists == 'false'
         run: |
           npm install
           npm run build
           npx cap sync android
 
       - name: Sign & Build APK
+        if: steps.check_tag.outputs.exists == 'false'
         run: |
           echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > android/app/release.jks
           cd android && ./gradlew assembleRelease \
@@ -37,8 +46,9 @@ jobs:
             -Pandroid.injected.signing.key.password=${{ secrets.RELEASE_KEY_PASSWORD }}
 
       - name: Create Release & Tag
+        if: steps.check_tag.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.package_version.outputs.VERSION }}
+          tag_name: ${{ steps.pkg.outputs.VERSION }}
           files: android/app/build/outputs/apk/release/app-release.apk
           generate_release_notes: true

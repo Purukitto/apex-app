@@ -593,7 +593,8 @@ export const useRideTracking = () => {
         }
       });
     }
-  }, []); // Only run on mount - checkPermissions is stable and doesn't need to be in deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount - checkPermissions is stable (useCallback), state values checked conditionally
 
   // GPS Tracking Effect
   useEffect(() => {
@@ -715,6 +716,7 @@ export const useRideTracking = () => {
     isMobile,
     state.permissionsGranted.location,
     calculateDistance,
+    checkPermissions,
   ]);
 
   // Motion Tracking Effect (Lean Angle)

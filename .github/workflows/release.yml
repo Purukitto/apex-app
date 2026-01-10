@@ -1,0 +1,44 @@
+name: Production Release
+on:
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+jobs:
+  release:
+    # Check 1: Must be a merge (not just closed) 
+    # Check 2: The branch name or commit must indicate a release version
+    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/') || contains(github.event.pull_request.labels.*.name, 'release')
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches all tags and history
+
+      - name: Get Version from package.json
+        id: package_version
+        run: echo "VERSION=v$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Build and Sync
+        run: |
+          npm install
+          npm run build
+          npx cap sync android
+
+      - name: Sign & Build APK
+        run: |
+          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > android/app/release.jks
+          cd android && ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=release.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.RELEASE_KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.RELEASE_KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.RELEASE_KEY_PASSWORD }}
+
+      - name: Create Release & Tag
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.package_version.outputs.VERSION }}
+          files: android/app/build/outputs/apk/release/app-release.apk
+          generate_release_notes: true

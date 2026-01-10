@@ -68,17 +68,24 @@ jobs:
       - name: Sign & Build APK
         if: steps.check_release.outputs.exists == 'false'
         run: |
-          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > android/release.jks
+          mkdir -p android/app
+          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > android/app/release.jks
+          chmod 600 android/app/release.jks
+          echo "Keystore created at: $(pwd)/android/app/release.jks"
+          ls -lh android/app/release.jks
           cd android
+          KEYSTORE_PATH="$GITHUB_WORKSPACE/android/app/release.jks"
+          echo "Using keystore absolute path: $KEYSTORE_PATH"
+          test -f "$KEYSTORE_PATH" && echo "Keystore file exists!" || echo "ERROR: Keystore file missing!"
           ./gradlew assembleRelease \
-            -Pandroid.injected.signing.store.file=release.jks \
+            -Pandroid.injected.signing.store.file="$KEYSTORE_PATH" \
             -Pandroid.injected.signing.store.password=${{ secrets.RELEASE_KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.RELEASE_KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.RELEASE_KEY_PASSWORD }}
 
       - name: Cleanup keystore
         if: always() && steps.check_release.outputs.exists == 'false'
-        run: rm -f android/release.jks
+        run: rm -f android/app/release.jks
 
       - name: Create Release & Tag
         if: steps.check_release.outputs.exists == 'false'

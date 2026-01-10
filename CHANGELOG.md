@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.1](https://github.com/Purukitto/apex-app/compare/v0.4.0...v0.4.1) (2026-01-10)
+
+
+### Code Refactoring
+
+* update icons for better visual consistency ([7fab88d](https://github.com/Purukitto/apex-app/commit/7fab88d0efbd736d44bd0fbe933742b754561837))
+
 ## [0.4.0](https://github.com/Purukitto/apex-app/compare/v0.3.3...v0.4.0) (2026-01-10)
 
 

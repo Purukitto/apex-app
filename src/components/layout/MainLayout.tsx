@@ -1,220 +1,99 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Motorbike, Activity, User, Bell, Radio } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import NotificationPane from './NotificationPane';
-import { motion, AnimatePresence } from 'framer-motion';
-import { buttonHoverProps } from '../../lib/animations';
-import ApexTelemetryIcon from '../ui/ApexTelemetryIcon';
+import BottomPillNav from './BottomPillNav';
+import PageHeader from './PageHeader';
+import { NotificationContext } from './NotificationContext';
+import { AnimatePresence, motion } from 'framer-motion';
+import { containerVariants } from '../../lib/animations';
 
 interface MainLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
-
-interface SidebarProps {
-  unreadCount: number;
-  onNotificationClick: () => void;
-  navItems: Array<{ path: string; icon: React.ComponentType<{ size?: number }>; label: string }>;
-  isActive: (path: string) => boolean;
-}
-
-interface BottomNavProps {
-  navItems: Array<{ path: string; icon: React.ComponentType<{ size?: number }>; label: string }>;
-  isActive: (path: string) => boolean;
-}
-
-interface MobileTopBarProps {
-  unreadCount: number;
-  onNotificationClick: () => void;
-}
-
-// Desktop Sidebar
-const Sidebar = ({ unreadCount, onNotificationClick, navItems, isActive }: SidebarProps) => (
-  <aside className="w-64 bg-apex-black border-r border-apex-white/10 h-screen fixed left-0 top-0 flex flex-col">
-    <div className="p-6 border-b border-apex-white/10 flex items-center justify-between">
-      <ApexTelemetryIcon size={32} static />
-      <motion.button
-        onClick={onNotificationClick}
-        className="relative p-2 text-apex-white/60 hover:text-apex-green transition-colors"
-        aria-label="Notifications"
-        {...buttonHoverProps}
-      >
-        <Bell size={20} />
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-apex-green text-apex-black text-[10px] font-mono font-bold rounded-full flex items-center justify-center">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </motion.button>
-    </div>
-    <nav className="flex-1 p-4 space-y-2">
-      {navItems.map((item) => {
-        const Icon = item.icon;
-        const active = isActive(item.path);
-        return (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              active
-                ? 'bg-apex-green/20 text-apex-green'
-                : 'text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5'
-            }`}
-          >
-            <Icon size={20} />
-            <span>{item.label}</span>
-          </Link>
-        );
-      })}
-    </nav>
-  </aside>
-);
-
-// Mobile Bottom Navigation
-const BottomNav = ({ navItems, isActive }: BottomNavProps) => (
-  <nav 
-    className="fixed bottom-0 left-0 right-0 bg-apex-black border-t border-apex-white/10 flex justify-around items-center h-16 z-50"
-  >
-    {navItems.map((item) => {
-      const Icon = item.icon;
-      const active = isActive(item.path);
-      return (
-        <Link
-          key={item.path}
-          to={item.path}
-          className={`relative flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors ${
-            active
-              ? 'text-apex-green'
-              : 'text-apex-white/60 hover:text-apex-white'
-          }`}
-        >
-          <Icon size={24} />
-          <span className="text-xs">{item.label}</span>
-          {active && (
-            <motion.div
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-apex-green rounded-full"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            />
-          )}
-        </Link>
-      );
-    })}
-  </nav>
-);
-
-// Mobile Top Bar (for notifications only)
-const MobileTopBar = ({ unreadCount, onNotificationClick }: MobileTopBarProps) => (
-  <div 
-    className="fixed top-0 left-0 right-0 bg-apex-black border-b border-apex-white/10 z-40 md:hidden"
-  >
-    <div className="px-4 py-3 flex items-center justify-between">
-      <ApexTelemetryIcon size={28} static />
-      <motion.button
-        onClick={onNotificationClick}
-        className="relative p-2 text-apex-white/60 hover:text-apex-green transition-colors"
-        aria-label="Notifications"
-        {...buttonHoverProps}
-      >
-        <Bell size={20} />
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-apex-green text-apex-black text-[10px] font-mono font-bold rounded-full flex items-center justify-center">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </motion.button>
-    </div>
-  </div>
-);
 
 export default function MainLayout({ children }: MainLayoutProps) {
-  const location = useLocation();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [notificationPaneOpen, setNotificationPaneOpen] = useState(false);
   const { getUnreadCount } = useNotificationStore();
+  const location = useLocation();
+  const mainRef = useRef<HTMLElement>(null);
   
   const unreadCount = getUnreadCount();
 
+  // Reset scroll position on route change
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+  }, [location.pathname]);
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const navItems = [
-    { path: '/dashboard', icon: Activity, label: 'Dashboard' },
-    { path: '/garage', icon: Motorbike, label: 'Garage' },
-    { path: '/ride', icon: Radio, label: 'Ride' },
-    { path: '/profile', icon: User, label: 'Profile' },
-  ];
-
-  const isActive = (path: string) => location.pathname === path;
+  // Get page title from route
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path === '/dashboard') return 'Dashboard';
+    if (path === '/garage') return 'Garage';
+    if (path === '/profile') return 'Profile';
+    if (path === '/ride') return 'Ride';
+    return 'Apex';
+  };
 
   return (
-    <div className="min-h-screen bg-apex-black">
-      {/* Desktop Sidebar */}
-      {!isMobile && (
-        <Sidebar
-          unreadCount={unreadCount}
-          onNotificationClick={() => setNotificationPaneOpen(true)}
-          navItems={navItems}
-          isActive={isActive}
+    <NotificationContext.Provider
+      value={{
+        openNotifications: () => setNotificationPaneOpen(true),
+        unreadCount,
+      }}
+    >
+      <div className="min-h-screen bg-zinc-950 flex flex-col">
+        {/* Sticky Page Header */}
+        <div className="sticky top-0 z-40 bg-zinc-950 border-b border-white/5">
+          <motion.div
+            className="p-6"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <PageHeader title={getPageTitle()} />
+          </motion.div>
+        </div>
+
+        {/* Main Content */}
+        <main ref={mainRef} className="flex-1 min-h-0 pb-32 transition-all overflow-y-auto">
+          <AnimatePresence mode="wait" key={location.pathname}>
+            {children}
+          </AnimatePresence>
+        </main>
+
+        {/* Floating Bottom Pill Navigation - All Platforms */}
+        <BottomPillNav />
+
+        {/* Toast Notifications */}
+        <Toaster
+          theme="dark"
+          position="top-center"
+          expand={false}
+          visibleToasts={5}
+          gap={8}
+          richColors={false}
+          toastOptions={{
+            className: 'apex-toast',
+            style: {
+              background: '#0A0A0A',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              color: '#E2E2E2',
+              fontFamily: 'inherit',
+            },
+          }}
         />
-      )}
 
-      {/* Mobile Top Bar */}
-      {isMobile && (
-        <MobileTopBar
-          unreadCount={unreadCount}
-          onNotificationClick={() => setNotificationPaneOpen(true)}
+        {/* Notification Pane */}
+        <NotificationPane
+          isOpen={notificationPaneOpen}
+          onClose={() => setNotificationPaneOpen(false)}
         />
-      )}
-
-      {/* Main Content */}
-      <main
-        className={`${
-          isMobile ? 'pb-16' : 'ml-64'
-        } min-h-screen transition-all`}
-        style={isMobile ? { paddingTop: '3.5rem' } : {}}
-      >
-        <AnimatePresence mode="wait">
-          {children}
-        </AnimatePresence>
-      </main>
-
-      {/* Mobile Bottom Navigation */}
-      {isMobile && <BottomNav navItems={navItems} isActive={isActive} />}
-
-      {/* Toast Notifications */}
-      <Toaster
-        theme="dark"
-        position="top-center"
-        expand={false}
-        toastOptions={{
-          className: 'apex-toast',
-          style: {
-            background: '#0A0A0A',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            color: '#E2E2E2',
-            fontFamily: 'inherit',
-            marginTop: isMobile ? 'calc(3.5rem + max(env(safe-area-inset-top), 24px))' : '0',
-            zIndex: 9999,
-          },
-        }}
-      />
-
-      {/* Notification Pane */}
-      <NotificationPane
-        isOpen={notificationPaneOpen}
-        onClose={() => setNotificationPaneOpen(false)}
-      />
-    </div>
+      </div>
+    </NotificationContext.Provider>
   );
 }
-

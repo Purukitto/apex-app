@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import type { Ride } from '../types/database';
 
 // React Query configuration for rides
-const RIDES_STALE_TIME = 0; // Always consider data stale, refetch when needed
+const RIDES_STALE_TIME = Infinity; // Never consider stale - only refetch manually
 const RIDES_CACHE_TIME = 5 * 60 * 1000; // Keep in cache for 5 minutes
 
 interface UseRidesOptions {
@@ -47,7 +47,9 @@ export function useRides(options: UseRidesOptions = {}) {
     },
     staleTime: RIDES_STALE_TIME,
     gcTime: RIDES_CACHE_TIME, // Previously cacheTime
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchOnWindowFocus: false, // Only refetch on manual refresh
+    refetchOnMount: true, // Fetch on mount if no cached data (first load)
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 
   return { rides, isLoading, error, refetch, isFetching };

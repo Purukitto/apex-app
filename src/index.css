@@ -8,6 +8,18 @@
   /* Data Accent Colors */
   --color-apex-green: #00FF41;
   --color-apex-red: #FF3B30;
+  
+  /* Bento Grid Design Tokens */
+  --spacing-apex: 1.5rem;
+  --radius-apex: 2.5rem;
+}
+
+/* Global dark background */
+html,
+body {
+  background-color: #09090b; /* zinc-950 */
+  margin: 0;
+  padding: 0;
 }
 
 /* Sonner Toast Styling for Apex */
@@ -16,8 +28,24 @@
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   color: #E2E2E2 !important;
   font-family: inherit !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  margin-bottom: 0 !important;
+  opacity: 1 !important;
+  transform: translateX(0) !important;
 }
 
+/* Ensure stacked toasts maintain visibility with proper spacing */
+[data-sonner-toaster] {
+  --width: 356px;
+  --toast-gap: 8px;
+}
+
+/* Stacking behavior - ensure each toast is visible and properly spaced */
+[data-sonner-toast] + [data-sonner-toast] {
+  margin-top: 8px !important;
+}
+
+/* Type-specific border colors */
 [data-sonner-toast][data-type="success"] {
   border-color: #00FF41 !important;
 }
@@ -28,6 +56,17 @@
 
 [data-sonner-toast] [data-description] {
   color: #E2E2E2 !important;
+}
+
+/* Ensure toasts maintain their individual styling when stacked */
+[data-sonner-toast] {
+  position: relative !important;
+  isolation: isolate !important;
+}
+
+/* Prevent toasts from merging visually when stacked */
+[data-sonner-toaster] [data-sonner-toast] {
+  backdrop-filter: none !important;
 }
 
 /* Ensure numbers use font-mono in toasts */

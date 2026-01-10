@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.3](https://github.com/Purukitto/apex-app/compare/v0.4.2...v0.4.3) (2026-01-10)
+
+
+### Bug Fixes
+
+* **release:** add error handling and use changelog in release workflow ([536b590](https://github.com/Purukitto/apex-app/commit/536b59036b9821705b6da788a67bff846829e052))
+
 ### [0.4.2](https://github.com/Purukitto/apex-app/compare/v0.4.1...v0.4.2) (2026-01-10)
 
 

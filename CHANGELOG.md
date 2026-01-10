@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.0](https://github.com/Purukitto/apex-app/compare/v0.3.3...v0.4.0) (2026-01-10)
+
+
+### Features
+
+* add sensor calibration with localStorage persistence ([34c3983](https://github.com/Purukitto/apex-app/commit/34c3983d5e92ce17bc5ab3eae56e2a72272b8e4f))
+* **android:** add fullscreen mode and location permissions ([29cbe3e](https://github.com/Purukitto/apex-app/commit/29cbe3e7a8fc47357e6df58f30c46411698e9d64))
+* **android:** add native accelerometer support for lean angle tracking ([019615a](https://github.com/Purukitto/apex-app/commit/019615ae52beddba22d0d4a08b741ecee1392ed8))
+* **dashboard:** add recent rides display component ([27390b9](https://github.com/Purukitto/apex-app/commit/27390b99ba7c7b850a396263628a89cc18d544b3))
+* **mobile:** configure fullscreen and status bar for native platforms ([93022d4](https://github.com/Purukitto/apex-app/commit/93022d4cd95457948ce7f00b57466ce61753d3b4))
+* redesign web fallback page with QR code and copy link ([8496b70](https://github.com/Purukitto/apex-app/commit/8496b703c997471153f76a9d9d7f2136148e1efe))
+* **ride:** add ride tracking with GPS and motion sensors ([634f941](https://github.com/Purukitto/apex-app/commit/634f94198827c16e0e2f888dd2b89f8e5ba65e5c))
+
+
+### Bug Fixes
+
+* resolve linting warnings and add release workflow ([e943689](https://github.com/Purukitto/apex-app/commit/e94368998c1a8c62ce29409eb974ab5cf678d353))
+* **ride:** change lean angle to decimal precision and fix sync issues ([33c8c3f](https://github.com/Purukitto/apex-app/commit/33c8c3f3ef66d8b278e27342cec712745726abc9))
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump the development-dependencies group with 6 updates ([0f15e4c](https://github.com/Purukitto/apex-app/commit/0f15e4ca213b5b605ff42eff6275154d6764173c))
+* **deps:** bump the production-dependencies group with 3 updates ([4bf9efa](https://github.com/Purukitto/apex-app/commit/4bf9efaedd6a619f86220bc3a68ab502edd35825))
+
+
+### Styles
+
+* use type-only imports for TypeScript types ([c35108b](https://github.com/Purukitto/apex-app/commit/c35108bb6bd451be5d97d663e1778f8230d809b0))
+
+
+### Build System
+
+* update capacitor android configuration for sensors plugin ([e9c1090](https://github.com/Purukitto/apex-app/commit/e9c1090395afd5a5029f8367a467a02b6bc036e8))
+* update dependencies and capacitor configuration ([5d82ba9](https://github.com/Purukitto/apex-app/commit/5d82ba92feffd579ac71180c4abcbc44e328ccca))
+
+
+### Documentation
+
+* add Android log viewing guide for debugging ([c60cf08](https://github.com/Purukitto/apex-app/commit/c60cf084836947a0124d47bac16975a851d3acd4))
+* **rules:** add mobile-only logic guidelines ([65c886a](https://github.com/Purukitto/apex-app/commit/65c886ae6d2cbe89de480066da896d2680e23254))
+
 ### [0.3.3](https://github.com/Purukitto/apex-app/compare/v0.3.2...v0.3.3) (2026-01-08)
 
 

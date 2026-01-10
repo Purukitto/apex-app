@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.6.0](https://github.com/Purukitto/apex-app/compare/v0.5.0...v0.6.0) (2026-01-10)
+
+
+### Features
+
+* **ui:** update notification pane and layout to match Bento Grid design system ([2eddc18](https://github.com/Purukitto/apex-app/commit/2eddc1887382d57ffd55013c1a9f47f1ae3be4d9))
+
+### [0.5.1](https://github.com/Purukitto/apex-app/compare/v0.5.0...v0.5.1) (2026-01-10)
+
+
+### Features
+
+* **ui:** update notification pane and layout to match Bento Grid design system ([2eddc18](https://github.com/Purukitto/apex-app/commit/2eddc1887382d57ffd55013c1a9f47f1ae3be4d9))
+
 ## [0.5.0](https://github.com/Purukitto/apex-app/compare/v0.4.3...v0.5.0) (2026-01-10)
 
 

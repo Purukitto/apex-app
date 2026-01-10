@@ -114,7 +114,7 @@ const WebFallback = () => {
           </div>
           
           <p className="text-[10px] md:text-xs text-apex-white/50 text-center font-normal tracking-wider uppercase">
-            Scan to download the latest Flight Recorder (APK)
+            Scan to download the latest build (APK)
           </p>
         </motion.div>
 
@@ -602,7 +602,7 @@ export default function Ride() {
 
   return (
     <motion.div
-      className="min-h-screen bg-apex-black p-6"
+      className="h-full bg-apex-black p-4 md:p-6 overflow-y-auto"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -637,7 +637,7 @@ export default function Ride() {
       {!isRecording ? (
         /* Start Ride View */
         <motion.div
-          className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] space-y-8"
+          className="flex flex-col items-center justify-center py-8 space-y-6"
           variants={itemVariants}
         >
           <motion.div
@@ -702,10 +702,10 @@ export default function Ride() {
         </motion.div>
       ) : (
         /* Recording View - Dark Cockpit */
-        <div className="flex flex-col min-h-[calc(100vh-8rem)]">
+        <div className="flex flex-col">
           {/* Header */}
           <motion.div
-            className="text-center mb-8"
+            className="text-center mb-4"
             variants={itemVariants}
           >
             <h2 className="text-xl font-bold text-apex-white mb-2">
@@ -719,7 +719,7 @@ export default function Ride() {
           </motion.div>
 
           {/* Telemetry Display */}
-          <div className="flex-1 flex flex-col items-center justify-center space-y-12">
+          <div className="flex-1 flex flex-col items-center justify-center space-y-6 py-4">
             {/* Lean Angle Gauges */}
             <div className="w-full max-w-2xl flex items-center justify-between gap-8">
               {/* Left Lean */}
@@ -846,7 +846,7 @@ export default function Ride() {
 
             {/* Calibrate Button */}
             <motion.div
-              className="mt-6"
+              className="mt-4"
               variants={itemVariants}
             >
               <motion.button
@@ -914,7 +914,7 @@ export default function Ride() {
 
             {/* Stop Button */}
             <motion.div
-              className="mt-8"
+              className="mt-6"
               variants={itemVariants}
             >
               <LongPressStopButton

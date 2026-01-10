@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Timer, MapPin, TrendingUp, RefreshCw } from 'lucide-react';
+import { Timer, MapPin, TrendingUp, RefreshCw, ChartNoAxesGantt } from 'lucide-react';
 import { useBikes } from '../hooks/useBikes';
 import { useRides } from '../hooks/useRides';
 import { useQueryClient } from '@tanstack/react-query';
@@ -10,12 +10,13 @@ import { apexToast } from '../lib/toast';
 interface RecentRidesListProps {
   limit?: number;
   bikeId?: string;
+  showHeader?: boolean; // If true, show title and refresh button in header
 }
 
 /**
  * Component to display recent rides with bike information
  */
-export default function RecentRidesList({ limit = 10, bikeId }: RecentRidesListProps) {
+export default function RecentRidesList({ limit = 10, bikeId, showHeader = false }: RecentRidesListProps) {
   const { rides, isLoading, refetch, isFetching } = useRides({ bikeId, limit });
   const { bikes } = useBikes();
   const queryClient = useQueryClient();
@@ -118,16 +119,36 @@ export default function RecentRidesList({ limit = 10, bikeId }: RecentRidesListP
 
   return (
     <div>
-      <div className="flex items-center justify-end mb-3">
-        <motion.button
-          onClick={handleSync}
-          disabled={isSyncing || isFetching}
-          className="inline-flex items-center gap-2 px-3 py-1.5 bg-apex-green/10 border border-apex-green/40 rounded-lg text-apex-green hover:bg-apex-green/20 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-          {...buttonHoverProps}
-        >
-          <RefreshCw size={14} className={(isSyncing || isFetching) ? 'animate-spin' : ''} />
-        </motion.button>
-      </div>
+      {showHeader && (
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-apex-green/10 rounded-lg">
+              <ChartNoAxesGantt size={20} className="text-apex-green" />
+            </div>
+            <h2 className="text-lg font-semibold text-apex-white">Recent Rides</h2>
+          </div>
+          <motion.button
+            onClick={handleSync}
+            disabled={isSyncing || isFetching}
+            className="inline-flex items-center gap-2 px-3 py-1.5 bg-apex-green/10 border border-apex-green/40 rounded-lg text-apex-green hover:bg-apex-green/20 disabled:opacity-50 disabled:cursor-not-allowed text-sm shrink-0"
+            {...buttonHoverProps}
+          >
+            <RefreshCw size={14} className={(isSyncing || isFetching) ? 'animate-spin' : ''} />
+          </motion.button>
+        </div>
+      )}
+      {!showHeader && (
+        <div className="flex items-center justify-end mb-3">
+          <motion.button
+            onClick={handleSync}
+            disabled={isSyncing || isFetching}
+            className="inline-flex items-center gap-2 px-3 py-1.5 bg-apex-green/10 border border-apex-green/40 rounded-lg text-apex-green hover:bg-apex-green/20 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            {...buttonHoverProps}
+          >
+            <RefreshCw size={14} className={(isSyncing || isFetching) ? 'animate-spin' : ''} />
+          </motion.button>
+        </div>
+      )}
       {/* Show subtle loading indicator during refetch without hiding content */}
       {isFetching && rides && rides.length > 0 && (
         <div className="mb-2 text-xs text-apex-green/60 text-center">

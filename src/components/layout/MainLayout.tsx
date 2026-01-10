@@ -6,6 +6,7 @@ import { useNotificationStore } from '../../stores/useNotificationStore';
 import NotificationPane from './NotificationPane';
 import { motion, AnimatePresence } from 'framer-motion';
 import { buttonHoverProps } from '../../lib/animations';
+import ApexTelemetryIcon from '../ui/ApexTelemetryIcon';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -32,7 +33,7 @@ interface MobileTopBarProps {
 const Sidebar = ({ unreadCount, onNotificationClick, navItems, isActive }: SidebarProps) => (
   <aside className="w-64 bg-apex-black border-r border-apex-white/10 h-screen fixed left-0 top-0 flex flex-col">
     <div className="p-6 border-b border-apex-white/10 flex items-center justify-between">
-      <h1 className="text-xl font-bold text-apex-white">Apex</h1>
+      <ApexTelemetryIcon size={32} static />
       <motion.button
         onClick={onNotificationClick}
         className="relative p-2 text-apex-white/60 hover:text-apex-green transition-colors"
@@ -111,7 +112,7 @@ const MobileTopBar = ({ unreadCount, onNotificationClick }: MobileTopBarProps) =
     className="fixed top-0 left-0 right-0 bg-apex-black border-b border-apex-white/10 z-40 md:hidden"
   >
     <div className="px-4 py-3 flex items-center justify-between">
-      <h1 className="text-lg font-bold text-apex-white">Apex</h1>
+      <ApexTelemetryIcon size={28} static />
       <motion.button
         onClick={onNotificationClick}
         className="relative p-2 text-apex-white/60 hover:text-apex-green transition-colors"

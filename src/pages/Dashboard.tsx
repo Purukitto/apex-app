@@ -1,24 +1,17 @@
 import { useBikes } from '../hooks/useBikes';
 import { useMaintenanceChecker } from '../hooks/useMaintenanceChecker';
-import { useNotificationStore } from '../stores/useNotificationStore';
-import { Motorbike, Activity, AlertTriangle, Bell, ChartNoAxesGantt } from 'lucide-react';
-import { useState } from 'react';
-import NotificationPane from '../components/layout/NotificationPane';
+import { Motorbike, Activity, AlertTriangle } from 'lucide-react';
 import RecentRidesList from '../components/RecentRidesList';
 import { motion } from 'framer-motion';
-import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
+import { containerVariants, itemVariants } from '../lib/animations';
 
 const SERVICE_INTERVAL_KM = 5000;
 
 export default function Dashboard() {
   const { bikes, isLoading } = useBikes();
-  const { getUnreadCount } = useNotificationStore();
-  const [notificationPaneOpen, setNotificationPaneOpen] = useState(false);
   
   // Run maintenance checker on Dashboard load
   useMaintenanceChecker();
-
-  const unreadCount = getUnreadCount();
 
   if (isLoading) {
     return (
@@ -54,27 +47,6 @@ export default function Dashboard() {
       initial="hidden"
       animate="visible"
     >
-      {/* Header with Notifications */}
-      <motion.div
-        className="flex items-center justify-between mb-4"
-        variants={itemVariants}
-      >
-        <h1 className="text-2xl font-bold text-apex-white">Dashboard</h1>
-        <motion.button
-          onClick={() => setNotificationPaneOpen(true)}
-          className="relative p-2 text-apex-white/60 hover:text-apex-green transition-colors"
-          aria-label="Notifications"
-          {...buttonHoverProps}
-        >
-          <Bell size={24} />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-apex-green text-apex-black text-xs font-mono font-bold rounded-full flex items-center justify-center">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </motion.button>
-      </motion.div>
-
       {/* Status Header */}
       <motion.div
         className="grid grid-cols-1 md:grid-cols-2 gap-4"
@@ -93,10 +65,7 @@ export default function Dashboard() {
               Total Distance
             </h2>
           </div>
-          <p
-            className="text-3xl font-mono font-bold text-apex-green drop-shadow-[0_0_8px_rgba(0,255,65,0.3)]"
-            style={{ textShadow: '0 0 8px rgba(0, 255, 65, 0.3)' }}
-          >
+          <p className="text-3xl font-mono font-bold text-apex-green">
             {totalMiles.toLocaleString()}
           </p>
           <p className="text-sm text-apex-white/40 mt-1">kilometers</p>
@@ -171,23 +140,8 @@ export default function Dashboard() {
         className="border border-apex-white/20 rounded-lg p-6 bg-apex-black"
         variants={itemVariants}
       >
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-apex-green/10 rounded-lg">
-              <ChartNoAxesGantt size={20} className="text-apex-green" />
-            </div>
-            <h2 className="text-lg font-semibold text-apex-white">Recent Rides</h2>
-          </div>
-        </div>
-
-        <RecentRidesList limit={10} />
+        <RecentRidesList limit={10} showHeader />
       </motion.div>
-
-      {/* Notification Pane */}
-      <NotificationPane
-        isOpen={notificationPaneOpen}
-        onClose={() => setNotificationPaneOpen(false)}
-      />
     </motion.div>
   );
 }

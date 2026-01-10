@@ -1,147 +1,346 @@
+import { useState, useEffect } from 'react';
 import { useBikes } from '../hooks/useBikes';
 import { useMaintenanceChecker } from '../hooks/useMaintenanceChecker';
-import { Motorbike, Activity, AlertTriangle } from 'lucide-react';
-import RecentRidesList from '../components/RecentRidesList';
+import { useUserProfile } from '../hooks/useUserProfile';
+import { useRides } from '../hooks/useRides';
+import { useNavigate } from 'react-router-dom';
+import { User, Bell, MapPin, Timer, TrendingUp, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { containerVariants, itemVariants } from '../lib/animations';
+import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
+import { useNotificationHandler } from '../components/layout/NotificationContext';
 
-const SERVICE_INTERVAL_KM = 5000;
+const NEON_LIME = '#bef264';
 
 export default function Dashboard() {
   const { bikes, isLoading } = useBikes();
+  const { profile } = useUserProfile();
+  const { rides, isLoading: ridesLoading, refetch: refetchRides } = useRides({ limit: 10 });
+  const navigate = useNavigate();
+  const { openNotifications, unreadCount } = useNotificationHandler();
+  const [pullDistance, setPullDistance] = useState(0);
   
   // Run maintenance checker on Dashboard load
   useMaintenanceChecker();
 
+  // Pull-to-refresh handler - refreshes all data including rides
+  const handleRefresh = async () => {
+    try {
+      await refetchRides();
+      // Note: No toast here - pull-to-refresh is a standard gesture, no need to notify
+    } catch (error) {
+      console.error('Error refreshing rides:', error);
+      // Silent failure for pull-to-refresh
+    }
+  };
+
+  // Pull-to-refresh touch handlers
+  useEffect(() => {
+    // Find the main scroll container (from MainLayout)
+    const mainContainer = document.querySelector('main');
+    if (!mainContainer) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let isPulling = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (mainContainer.scrollTop === 0) {
+        startY = e.touches[0].clientY;
+        isPulling = true;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isPulling) return;
+      currentY = e.touches[0].clientY;
+      const distance = Math.max(0, currentY - startY);
+      setPullDistance(distance);
+    };
+
+    const handleTouchEnd = () => {
+      if (isPulling && pullDistance > 80) {
+        handleRefresh();
+      }
+      isPulling = false;
+      setPullDistance(0);
+    };
+
+    mainContainer.addEventListener('touchstart', handleTouchStart);
+    mainContainer.addEventListener('touchmove', handleTouchMove);
+    mainContainer.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      mainContainer.removeEventListener('touchstart', handleTouchStart);
+      mainContainer.removeEventListener('touchmove', handleTouchMove);
+      mainContainer.removeEventListener('touchend', handleTouchEnd);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pullDistance]);
+
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="text-apex-white/60">Loading...</div>
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="text-white/60">Loading...</div>
       </div>
     );
   }
 
-  // Calculate total miles across all bikes
-  const totalMiles = bikes.reduce((sum, bike) => sum + bike.current_odo, 0);
+  // Calculate total distance across all bikes
+  const totalKm = bikes.reduce((sum, bike) => sum + bike.current_odo, 0);
   const bikeCount = bikes.length;
+  const totalRides = rides?.length || 0;
 
-  // Check for maintenance alerts (within 500km of service interval)
-  const maintenanceAlerts = bikes
-    .map((bike) => {
-      const nextService = Math.ceil(bike.current_odo / SERVICE_INTERVAL_KM) * SERVICE_INTERVAL_KM;
-      const kmUntilService = nextService - bike.current_odo;
-      return {
-        bike,
-        nextService,
-        kmUntilService,
-      };
-    })
-    .filter((alert) => alert.kmUntilService <= 500 && alert.kmUntilService > 0)
-    .sort((a, b) => a.kmUntilService - b.kmUntilService);
+  // Format duration from start_time and end_time
+  const formatDuration = (startTime: string, endTime?: string): string => {
+    if (!endTime) return 'In progress';
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const seconds = Math.floor((end.getTime() - start.getTime()) / 1000);
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
 
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Format date
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    }
+    if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    }
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  // Create a map of bike IDs to bike objects for quick lookup
+  const bikeMap = new Map(bikes.map((bike) => [bike.id, bike]));
+
+  const riderName = profile?.riderName || 'Rider';
 
   return (
-    <motion.div
-      className="p-6 space-y-6"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {/* Status Header */}
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 gap-4"
-        variants={containerVariants}
-      >
-        {/* Odometer Widget */}
-        <motion.div
-          className="border border-apex-white/20 rounded-lg p-6 bg-apex-black"
-          variants={itemVariants}
+    <div className="h-full bg-zinc-950 flex flex-col">
+      {/* Pull-to-refresh indicator */}
+      {pullDistance > 0 && (
+        <div
+          className="fixed top-0 left-0 right-0 z-50 bg-zinc-950 flex items-center justify-center pt-4 pb-2"
+          style={{
+            transform: `translateY(${Math.min(pullDistance, 80)}px)`,
+            opacity: Math.min(pullDistance / 80, 1),
+            minHeight: `${Math.min(pullDistance, 80) + 60}px`,
+          }}
         >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-apex-green/10 rounded-lg">
-              <Activity size={20} className="text-apex-green" />
-            </div>
-            <h2 className="text-sm text-apex-white/60 uppercase tracking-wide">
-              Total Distance
-            </h2>
+          <div className="bg-zinc-900 border border-white/5 rounded-full px-4 py-2 flex items-center gap-2">
+            <RefreshCw
+              size={16}
+              className="text-white"
+              style={{
+                transform: `rotate(${pullDistance * 4}deg)`,
+                color: pullDistance > 80 ? NEON_LIME : 'white',
+              }}
+            />
+            <span className="text-xs text-white">
+              {pullDistance > 80 ? 'Release to refresh' : 'Pull to refresh'}
+            </span>
           </div>
-          <p className="text-3xl font-mono font-bold text-apex-green">
-            {totalMiles.toLocaleString()}
-          </p>
-          <p className="text-sm text-apex-white/40 mt-1">kilometers</p>
-        </motion.div>
-
-        <motion.div
-          className="border border-apex-white/20 rounded-lg p-6 bg-apex-black"
-          variants={itemVariants}
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-apex-green/10 rounded-lg">
-              <Motorbike size={20} className="text-apex-green" />
-            </div>
-            <h2 className="text-sm text-apex-white/60 uppercase tracking-wide">
-              Bikes in Garage
-            </h2>
-          </div>
-          <p className="text-3xl font-mono font-bold text-apex-white">
-            {bikeCount}
-          </p>
-          <p className="text-sm text-apex-white/40 mt-1">
-            {bikeCount === 1 ? 'machine' : 'machines'}
-          </p>
-        </motion.div>
-      </motion.div>
-
-      {/* Maintenance Alerts */}
-      {maintenanceAlerts.length > 0 && (
-        <motion.div
-          className="border border-apex-green/40 rounded-lg p-6 bg-apex-green/5"
-          variants={itemVariants}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle size={20} className="text-apex-green" />
-            <h2 className="text-lg font-semibold text-apex-white">
-              Service Due Soon
-            </h2>
-          </div>
-          <motion.div
-            className="space-y-3"
-            variants={containerVariants}
-          >
-            {maintenanceAlerts.map((alert) => (
-              <motion.div
-                key={alert.bike.id}
-                className="flex items-center justify-between p-3 bg-gradient-to-br from-white/5 to-transparent rounded-lg border border-apex-green/20 hover:border-apex-green/40 transition-colors"
-                variants={itemVariants}
-                whileHover={{ borderColor: 'rgba(0, 255, 65, 0.4)' }}
-              >
-                <div>
-                  <p className="text-apex-white font-medium">
-                    {alert.bike.nick_name || `${alert.bike.make} ${alert.bike.model}`}
-                  </p>
-                  <p className="text-sm text-apex-white/60">
-                    Service due at {alert.nextService.toLocaleString()} km
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-apex-green font-mono font-semibold">
-                    {alert.kmUntilService.toLocaleString()} km
-                  </p>
-                  <p className="text-xs text-apex-white/40">remaining</p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
+        </div>
       )}
 
-      {/* Recent Rides */}
+      {/* Dashboard-specific Greeting Section */}
+      <div className="p-6 pb-0">
+        <motion.div
+          className="flex items-center justify-between"
+          variants={itemVariants}
+        >
+          <div className="flex flex-col">
+            <span className="text-sm md:text-base text-white/60 font-normal">
+              Hi,
+            </span>
+            <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+              {riderName}!
+            </h2>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Profile Button */}
+            <motion.button
+              onClick={() => navigate('/profile')}
+              className="w-10 h-10 rounded-full border-2 border-white/20 flex items-center justify-center text-white/60 hover:border-white/40 transition-colors"
+              {...buttonHoverProps}
+            >
+              <User size={20} />
+            </motion.button>
+            {/* Notifications Button */}
+            <motion.button
+              onClick={openNotifications}
+              className="relative w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
+              style={{ backgroundColor: NEON_LIME }}
+              {...buttonHoverProps}
+            >
+              <Bell size={20} className="text-zinc-950" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-zinc-950 text-white text-[10px] font-mono font-bold rounded-full flex items-center justify-center border-2 border-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </motion.button>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Scrollable Content */}
       <motion.div
-        className="border border-apex-white/20 rounded-lg p-6 bg-apex-black"
-        variants={itemVariants}
+        className="p-6 pb-32 space-y-6"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
       >
-        <RecentRidesList limit={10} showHeader />
+
+        {/* Top Grid: Hero Card + Stat Tiles */}
+        <motion.div
+          className="grid grid-cols-2 md:grid-cols-3 gap-4"
+          variants={containerVariants}
+        >
+          {/* Hero Card - Distance */}
+          <motion.div
+            className="col-span-2 md:col-span-2 bg-zinc-900 border border-white/5 rounded-apex p-6"
+            variants={itemVariants}
+            {...cardHoverProps}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h2 className="text-sm text-white/60 uppercase tracking-wide mb-2">
+                  Distance
+                </h2>
+                <p className="text-5xl font-mono font-bold text-white mb-2">
+                  {totalKm.toLocaleString()}
+                </p>
+                <p className="text-sm font-mono" style={{ color: NEON_LIME }}>km</p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Stat Tiles - Bento Grid */}
+          <motion.div
+            className="col-span-2 md:col-span-1 grid grid-cols-2 gap-4 md:flex md:flex-col md:space-y-4"
+            variants={containerVariants}
+          >
+            {/* Bikes in Garage Tile */}
+            <motion.div
+              className="bg-zinc-900 border border-white/5 rounded-apex p-5"
+              variants={itemVariants}
+              {...cardHoverProps}
+            >
+              <h3 className="text-xs text-white/60 uppercase tracking-wide mb-2">
+                Bikes in Garage
+              </h3>
+              <p className="text-3xl md:text-4xl font-mono font-bold text-white">
+                {bikeCount}
+              </p>
+              <p className="text-xs md:text-sm mt-1" style={{ color: NEON_LIME }}>
+                {bikeCount === 1 ? 'machine' : 'machines'}
+              </p>
+            </motion.div>
+
+            {/* Total Rides Tile */}
+            <motion.div
+              className="bg-zinc-900 border border-white/5 rounded-apex p-5"
+              variants={itemVariants}
+              {...cardHoverProps}
+            >
+              <h3 className="text-xs text-white/60 uppercase tracking-wide mb-2">
+                Total Rides
+              </h3>
+              <p className="text-3xl md:text-4xl font-mono font-bold text-white">
+                {totalRides}
+              </p>
+              <p className="text-xs md:text-sm mt-1" style={{ color: NEON_LIME }}>
+                {totalRides === 1 ? 'ride' : 'rides'}
+              </p>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+
+        {/* Recent Rides Section */}
+        <motion.div
+          className="space-y-4"
+          variants={itemVariants}
+        >
+          <h2 className="text-xl font-semibold text-white">Recent Rides</h2>
+          {ridesLoading ? (
+            <div className="bg-zinc-900 border border-white/5 rounded-apex p-8 text-center">
+              <div className="animate-spin mx-auto mb-3">
+                <RefreshCw size={32} className="text-white/20" />
+              </div>
+              <p className="text-sm text-white/40">Loading rides...</p>
+            </div>
+          ) : rides && rides.length > 0 ? (
+            <motion.div
+              className="space-y-3"
+              variants={containerVariants}
+            >
+              {rides.map((ride) => {
+                const bike = bikeMap.get(ride.bike_id);
+                const bikeName = bike?.nick_name || bike ? `${bike.make} ${bike.model}` : 'Unknown Bike';
+                const maxLean = Math.max(ride.max_lean_left, ride.max_lean_right);
+
+                return (
+                  <motion.div
+                    key={ride.id}
+                    className="bg-zinc-900 border border-white/5 rounded-apex p-5"
+                    variants={fastItemVariants}
+                    {...cardHoverProps}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="text-lg font-semibold text-white">{bikeName}</h3>
+                      <span className="text-xs text-white/40 font-mono">
+                        {formatDate(ride.start_time)}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <MapPin size={16} style={{ color: NEON_LIME }} />
+                        <span className="text-sm text-white/80 font-mono">
+                          {ride.distance_km.toFixed(1)} km
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Timer size={16} style={{ color: NEON_LIME }} />
+                        <span className="text-sm text-white/80">
+                          {formatDuration(ride.start_time, ride.end_time)}
+                        </span>
+                      </div>
+                      {maxLean > 0 && (
+                        <div className="flex items-center gap-2">
+                          <TrendingUp size={16} style={{ color: NEON_LIME }} />
+                          <span className="text-sm text-white/80 font-mono">
+                            {maxLean.toFixed(1)}°
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          ) : (
+            <div className="bg-zinc-900 border border-white/5 rounded-apex p-8 text-center">
+              <Timer className="mx-auto mb-3 text-white/20" size={32} />
+              <p className="text-sm text-white/40">
+                No rides recorded yet. Start tracking your rides to see them here.
+              </p>
+            </div>
+          )}
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }

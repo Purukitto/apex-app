@@ -115,7 +115,6 @@ export default function Garage() {
   if (isLoading) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-bold text-apex-white mb-4">Garage</h1>
         <div className="text-apex-white/60">Loading...</div>
       </div>
     );
@@ -129,10 +128,9 @@ export default function Garage() {
       animate="visible"
     >
       <motion.div
-        className="flex items-center justify-between mb-6"
+        className="flex items-center justify-end mb-6"
         variants={itemVariants}
       >
-        <h1 className="text-2xl font-bold text-apex-white">Garage</h1>
         <motion.button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 transition-colors"

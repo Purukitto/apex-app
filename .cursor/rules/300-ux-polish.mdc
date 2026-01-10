@@ -90,6 +90,33 @@ alwaysApply: true
 - **Empty States:** Never show a blank screen. Use minimalist line-art or subtle Lucide icons with "muted" text.
 - **Skeleton Loaders:** Use "Shimmer" effects (`.animate-shimmer`) for data fetching instead of generic loading spinners.
 
+## 3.1 Color Theming Standards
+- **MANDATORY**: Never use hardcoded hex colors in components. Always use theme colors from CSS variables.
+- **Theme Colors Available:**
+  - `apex-black`: `#0A0A0A` - Primary background
+  - `apex-white`: `#E2E2E2` - Primary text
+  - `apex-green`: `#00FF41` - Primary accent (data, success, active states)
+  - `apex-red`: `#FF3B30` - Error, warning, danger states
+- **Usage:**
+  - **Tailwind Classes:** Prefer `text-apex-green`, `bg-apex-red`, etc. when possible.
+  - **CSS Variables:** For SVG or inline styles, use `getComputedStyle(document.documentElement).getPropertyValue('--color-apex-green')` or access via `var(--color-apex-green)`.
+  - **SVG Elements:** Use CSS variables or `currentColor` with Tailwind classes on parent.
+- **Color Transitions:** When colors change based on state (e.g., lean angle), use smooth transitions (0.3s ease-in-out).
+
+## 3.2 Icon Standards
+- **ApexTelemetryIcon:**
+  - **MANDATORY**: Use `ApexTelemetryIcon` as the primary app logo/icon throughout the application.
+  - **Visibility:** Icon is optimized for small sizes with responsive stroke width and dot size.
+  - **Static Mode:** Use `static` prop for navigation/headers where tracking animations aren't needed.
+  - **Animated Mode:** Use without `static` prop in Recorder/Ride pages for live telemetry feedback.
+  - **Sizing:** Icon automatically scales stroke width and dot size based on `size` prop for optimal visibility.
+  - **Background:** Always includes rounded background (`#0A0A0A`) for contrast, especially important at small sizes.
+- **Icon Visibility Guidelines:**
+  - Minimum stroke width: 2.5px (scales with icon size)
+  - Minimum dot radius: 3.5px (scales with icon size)
+  - Background always rendered for contrast
+  - Subtle border on very small sizes (< 40px) for definition
+
 ## 4. QoL (Quality of Life)
 - **Haptic Feedback:** On mobile (Capacitor), trigger light haptics for "Start Ride" or "Save" actions.
 - **Pull-to-Refresh:** Implement standard mobile refresh gestures for the Garage and Dashboard feeds.

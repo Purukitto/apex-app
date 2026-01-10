@@ -51,7 +51,6 @@ export default function Profile() {
   if (isLoading) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-bold text-apex-white mb-4">Profile</h1>
         <div className="text-apex-white/60">Loading...</div>
       </div>
     );
@@ -65,12 +64,6 @@ export default function Profile() {
       initial="hidden"
       animate="visible"
     >
-      <motion.h1
-        className="text-2xl font-bold text-apex-white mb-6"
-        variants={itemVariants}
-      >
-        Profile
-      </motion.h1>
 
       <motion.div className="space-y-6" variants={containerVariants}>
         {/* Email Section */}

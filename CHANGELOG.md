@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.5.0](https://github.com/Purukitto/apex-app/compare/v0.4.3...v0.5.0) (2026-01-10)
+
+
+### Features
+
+* implement ApexTelemetryIcon and improve UI consistency ([ac39061](https://github.com/Purukitto/apex-app/commit/ac390610b8f2b30d5177244a4311d303f17dca96))
+
+
+### Bug Fixes
+
+* make bike selector modal background opaque ([b61be1b](https://github.com/Purukitto/apex-app/commit/b61be1bd6d5caddfaf4bfc5a8d7ae20128224137))
+
+
+### Miscellaneous Chores
+
+* add assets directory with logo.svg ([1ed6e25](https://github.com/Purukitto/apex-app/commit/1ed6e2557069a94a32518a6fe340f663f0e70569))
+* add build config updates and remove Recorder page ([a636a72](https://github.com/Purukitto/apex-app/commit/a636a72baeb3de90d54e0c014d480d801240dbf2))
+* update Android and iOS app icons and splash screens ([6e67888](https://github.com/Purukitto/apex-app/commit/6e67888804750faf9c050aad3e467cf0160c51d9))
+
 ### [0.4.3](https://github.com/Purukitto/apex-app/compare/v0.4.2...v0.4.3) (2026-01-10)
 
 

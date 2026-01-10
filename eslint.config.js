@@ -6,7 +6,14 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores([
+    'dist',
+    '**/android/app/build/**',
+    '**/android/app/capacitor.build.gradle',
+    '**/android/capacitor.settings.gradle',
+    '**/*.min.js',
+    '**/*.bundle.js',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

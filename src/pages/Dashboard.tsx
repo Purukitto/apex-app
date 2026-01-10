@@ -1,7 +1,7 @@
 import { useBikes } from '../hooks/useBikes';
 import { useMaintenanceChecker } from '../hooks/useMaintenanceChecker';
 import { useNotificationStore } from '../stores/useNotificationStore';
-import { Bike, Activity, AlertTriangle, Calendar, Bell } from 'lucide-react';
+import { Motorbike, Activity, AlertTriangle, Bell, ChartNoAxesGantt } from 'lucide-react';
 import { useState } from 'react';
 import NotificationPane from '../components/layout/NotificationPane';
 import RecentRidesList from '../components/RecentRidesList';
@@ -108,7 +108,7 @@ export default function Dashboard() {
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-apex-green/10 rounded-lg">
-              <Bike size={20} className="text-apex-green" />
+              <Motorbike size={20} className="text-apex-green" />
             </div>
             <h2 className="text-sm text-apex-white/60 uppercase tracking-wide">
               Bikes in Garage
@@ -174,7 +174,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-apex-green/10 rounded-lg">
-              <Calendar size={20} className="text-apex-green" />
+              <ChartNoAxesGantt size={20} className="text-apex-green" />
             </div>
             <h2 className="text-lg font-semibold text-apex-white">Recent Rides</h2>
           </div>

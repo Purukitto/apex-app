@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bike, Activity, User, Bell, Radio } from 'lucide-react';
+import { Motorbike, Activity, User, Bell, Radio } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import NotificationPane from './NotificationPane';
@@ -148,7 +148,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   const navItems = [
     { path: '/dashboard', icon: Activity, label: 'Dashboard' },
-    { path: '/garage', icon: Bike, label: 'Garage' },
+    { path: '/garage', icon: Motorbike, label: 'Garage' },
     { path: '/ride', icon: Radio, label: 'Ride' },
     { path: '/profile', icon: User, label: 'Profile' },
   ];

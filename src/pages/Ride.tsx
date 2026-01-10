@@ -6,7 +6,7 @@ import { useBikes } from '../hooks/useBikes';
 import { useRideStore } from '../stores/useRideStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
-import { Bike, Gauge, Copy, Check } from 'lucide-react';
+import { Motorbike, Gauge, Copy, Check } from 'lucide-react';
 import { apexToast } from '../lib/toast';
 import type { Bike as BikeType } from '../types/database';
 import QRCode from 'react-qr-code';
@@ -209,7 +209,7 @@ const BikeSelectionModal = ({
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-apex-green/10 rounded-lg">
-                          <Bike size={20} className="text-apex-green" />
+                          <Motorbike size={20} className="text-apex-green" />
                         </div>
                         <div className="flex-1">
                           <p className="font-semibold text-apex-white">
@@ -588,7 +588,7 @@ export default function Ride() {
           className="text-center space-y-4"
           variants={itemVariants}
         >
-          <Bike size={64} className="text-apex-white/20 mx-auto" />
+          <Motorbike size={64} className="text-apex-white/20 mx-auto" />
           <h2 className="text-xl font-bold text-apex-white">
             No bikes in garage
           </h2>
@@ -658,7 +658,7 @@ export default function Ride() {
             {selectedBike ? (
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-apex-green/10 rounded-lg">
-                  <Bike size={20} className="text-apex-green" />
+                  <Motorbike size={20} className="text-apex-green" />
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-apex-white">

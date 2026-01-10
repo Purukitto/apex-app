@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Bike, X } from 'lucide-react';
+import { Plus, Motorbike, X } from 'lucide-react';
 import { useBikes } from '../hooks/useBikes';
 import { useMaintenanceLogs } from '../hooks/useMaintenanceLogs';
 import BikeCard from '../components/BikeCard';
@@ -149,7 +149,7 @@ export default function Garage() {
           variants={itemVariants}
         >
           <div className="p-4 bg-apex-green/10 rounded-full mb-4">
-            <Bike size={48} className="text-apex-green" />
+            <Motorbike size={48} className="text-apex-green" />
           </div>
           <h2 className="text-xl font-semibold text-apex-white mb-2">
             No bikes yet

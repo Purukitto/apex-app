@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, MapPin, TrendingUp, RefreshCw } from 'lucide-react';
+import { Timer, MapPin, TrendingUp, RefreshCw } from 'lucide-react';
 import { useBikes } from '../hooks/useBikes';
 import { useRides } from '../hooks/useRides';
 import { useQueryClient } from '@tanstack/react-query';
@@ -99,7 +99,7 @@ export default function RecentRidesList({ limit = 10, bikeId }: RecentRidesListP
   if (!rides || rides.length === 0) {
     return (
       <div className="mt-4 text-center py-8">
-        <Calendar className="mx-auto mb-3 text-apex-white/20" size={32} />
+        <Timer className="mx-auto mb-3 text-apex-white/20" size={32} />
         <p className="text-sm text-apex-white/40 mb-4">
           No rides recorded yet. Start tracking your rides to see them here.
         </p>
@@ -126,7 +126,6 @@ export default function RecentRidesList({ limit = 10, bikeId }: RecentRidesListP
           {...buttonHoverProps}
         >
           <RefreshCw size={14} className={(isSyncing || isFetching) ? 'animate-spin' : ''} />
-          <span>{isSyncing || isFetching ? 'Syncing...' : 'Sync'}</span>
         </motion.button>
       </div>
       {/* Show subtle loading indicator during refetch without hiding content */}
@@ -168,7 +167,7 @@ export default function RecentRidesList({ limit = 10, bikeId }: RecentRidesListP
                     <span className="font-mono">{ride.distance_km.toFixed(1)} km</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Calendar size={14} className="text-apex-green/60" />
+                    <Timer size={14} className="text-apex-green/60" />
                     <span>{formatDuration(ride.start_time, ride.end_time)}</span>
                   </div>
                   {maxLean > 0 && (

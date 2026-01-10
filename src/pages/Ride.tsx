@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { useRideTracking } from '../hooks/useRideTracking';
 import { useBikes } from '../hooks/useBikes';
 import { useRideStore } from '../stores/useRideStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
-import { Bike, Smartphone, Download, QrCode } from 'lucide-react';
+import { Bike, Smartphone, Download, QrCode, Gauge } from 'lucide-react';
 import { apexToast } from '../lib/toast';
 import type { Bike as BikeType } from '../types/database';
 
@@ -273,6 +274,7 @@ export default function Ride() {
     startRide,
     stopRide,
     saveRide,
+    calibrate,
   } = useRideTracking();
 
   // Use Zustand store for persistent state
@@ -284,6 +286,7 @@ export default function Ride() {
   const [showSafetyWarning, setShowSafetyWarning] = useState(true);
   const [previousSpeed, setPreviousSpeed] = useState(0);
   const [currentDuration, setCurrentDuration] = useState(0);
+  const [isCalibrating, setIsCalibrating] = useState(false);
 
   // Restore state from Zustand store on mount
   useEffect(() => {
@@ -465,6 +468,32 @@ export default function Ride() {
         // The mutation's onError will handle the toast
         apexToast.error(errorMessage);
       }
+  };
+
+  const handleCalibrate = async () => {
+    if (isCalibrating) return;
+    
+    setIsCalibrating(true);
+    
+    // Trigger haptic feedback
+    if (isNative) {
+      try {
+        await Haptics.impact({ style: ImpactStyle.Light });
+      } catch (error) {
+        console.warn('Haptic feedback not available:', error);
+      }
+    }
+    
+    // Perform calibration
+    calibrate();
+    
+    // Show toast
+    apexToast.success('Sensors Zeroed. Ready to lean.');
+    
+    // Reset calibration animation after a short delay
+    setTimeout(() => {
+      setIsCalibrating(false);
+    }, 1000);
   };
 
   // Web fallback
@@ -748,6 +777,74 @@ export default function Ride() {
                   {currentDuration >= 3600 ? 'hrs' : 'min'}
                 </p>
               </motion.div>
+            </motion.div>
+
+            {/* Calibrate Button */}
+            <motion.div
+              className="mt-6"
+              variants={itemVariants}
+            >
+              <motion.button
+                onClick={handleCalibrate}
+                disabled={isCalibrating}
+                className="relative w-full max-w-xs mx-auto py-3 px-6 bg-apex-white/10 border border-apex-white/20 rounded-lg font-semibold text-apex-white text-sm disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+                {...buttonHoverProps}
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  <Gauge size={18} />
+                  {isCalibrating ? 'Recalibrating...' : 'Calibrate'}
+                </span>
+                {isCalibrating && (
+                  <>
+                    {/* Ripple effect */}
+                    <motion.div
+                      className="absolute inset-0 bg-apex-green/20"
+                      initial={{ scale: 0, opacity: 1 }}
+                      animate={{
+                        scale: [0, 2, 2.5],
+                        opacity: [1, 0.5, 0],
+                      }}
+                      transition={{
+                        duration: 1,
+                        ease: 'easeOut',
+                        repeat: Infinity,
+                      }}
+                      style={{
+                        borderRadius: '50%',
+                        left: '50%',
+                        top: '50%',
+                        x: '-50%',
+                        y: '-50%',
+                        width: '100%',
+                        height: '100%',
+                      }}
+                    />
+                    <motion.div
+                      className="absolute inset-0 bg-apex-green/20"
+                      initial={{ scale: 0, opacity: 1 }}
+                      animate={{
+                        scale: [0, 2, 2.5],
+                        opacity: [1, 0.5, 0],
+                      }}
+                      transition={{
+                        duration: 1,
+                        ease: 'easeOut',
+                        delay: 0.3,
+                        repeat: Infinity,
+                      }}
+                      style={{
+                        borderRadius: '50%',
+                        left: '50%',
+                        top: '50%',
+                        x: '-50%',
+                        y: '-50%',
+                        width: '100%',
+                        height: '100%',
+                      }}
+                    />
+                  </>
+                )}
+              </motion.button>
             </motion.div>
 
             {/* Stop Button */}

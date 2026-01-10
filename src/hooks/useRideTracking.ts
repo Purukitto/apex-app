@@ -64,6 +64,18 @@ export const useRideTracking = () => {
   const motionListenerRef = useRef<Awaited<ReturnType<typeof Motion.addListener>> | undefined>(undefined);
   const lastNonZeroSpeedTimeRef = useRef<number | null>(null);
   const autoPauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rawRotationRef = useRef<number>(0); // Track current raw rotation for calibration
+  const CALIBRATION_STORAGE_KEY = 'apex-calibration-offset';
+  
+  // Load calibration offset from localStorage on mount
+  const [calibrationOffset, setCalibrationOffset] = useState<number>(() => {
+    try {
+      const stored = localStorage.getItem(CALIBRATION_STORAGE_KEY);
+      return stored ? parseFloat(stored) : 0;
+    } catch {
+      return 0;
+    }
+  });
 
   /**
    * Calculate distance between two coordinates using Haversine formula
@@ -816,7 +828,12 @@ export const useRideTracking = () => {
             // Values are in m/s², including gravity
             const rollRad = Math.atan2(x, Math.sqrt(y * y + z * z));
             const rollDeg = rollRad * (180 / Math.PI);
-            const leanAngle = Math.abs(rollDeg);
+            
+            // Store raw rotation for calibration
+            rawRotationRef.current = rollDeg;
+            
+            // Apply calibration offset
+            const leanAngle = Math.abs(rollDeg - calibrationOffset);
             
             if (shouldLog) {
               console.log(`[Accel ${callbackCallCount}] Calculated:`, {
@@ -931,9 +948,13 @@ export const useRideTracking = () => {
           const rollRad = Math.atan2(x, Math.sqrt(y * y + z * z));
           const rollDeg = rollRad * (180 / Math.PI);
           
-          // The lean angle is the absolute value of roll
+          // Store raw rotation for calibration
+          rawRotationRef.current = rollDeg;
+          
+          // Apply calibration offset
+          // The lean angle is the absolute value of roll minus calibration
           // Negative roll = leaning left, Positive roll = leaning right
-          const leanAngle = Math.abs(rollDeg);
+          const leanAngle = Math.abs(rollDeg - calibrationOffset);
           
           // Log every callback for first 10, then every 10th
           const shouldLog = callbackCallCount <= 10 || callbackCallCount % 10 === 0;
@@ -1024,7 +1045,20 @@ export const useRideTracking = () => {
         }
       }
     };
-  }, [state.isRecording, state.isPaused, isMobile]);
+  }, [state.isRecording, state.isPaused, isMobile, calibrationOffset]);
+
+  /**
+   * Calibrate the lean angle sensor by setting offset to current raw rotation
+   */
+  const calibrate = useCallback(() => {
+    const currentRawRotation = rawRotationRef.current;
+    setCalibrationOffset(currentRawRotation);
+    try {
+      localStorage.setItem(CALIBRATION_STORAGE_KEY, currentRawRotation.toString());
+    } catch (error) {
+      console.warn('Failed to save calibration offset to localStorage:', error);
+    }
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -1056,5 +1090,6 @@ export const useRideTracking = () => {
     togglePause,
     saveRide,
     checkPermissions,
+    calibrate,
   };
 };

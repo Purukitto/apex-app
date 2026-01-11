@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 import { Browser } from '@capacitor/browser';
+import packageJson from '../../package.json';
 
 const GITHUB_REPO = 'Purukitto/apex-app';
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
-const CURRENT_VERSION = '0.8.0'; // Should match package.json version
+const CURRENT_VERSION = packageJson.version;
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const LAST_CHECK_KEY = 'app_update_last_check';
 const LAST_VERSION_KEY = 'app_update_last_version';
@@ -188,7 +189,10 @@ export function useAppUpdate() {
 
       // Compare versions
       const latestVersion = release.tag_name;
-      const hasUpdate = compareVersions(latestVersion, CURRENT_VERSION) > 0;
+      const versionComparison = compareVersions(latestVersion, CURRENT_VERSION);
+      const hasUpdate = versionComparison > 0;
+
+      console.log(`Update check: Current=${CURRENT_VERSION}, Latest=${latestVersion}, Comparison=${versionComparison}, HasUpdate=${hasUpdate}`);
 
       // Check if we've already shown this version
       const lastShown = await getLastShownVersion();
@@ -236,6 +240,7 @@ export function useAppUpdate() {
         return info;
       } else {
         // No update available
+        console.log(`No update available. Current version (${CURRENT_VERSION}) is up to date with latest (${latestVersion})`);
         setIsChecking(false);
         return null;
       }

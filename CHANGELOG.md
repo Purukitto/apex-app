@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.10.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.10.0) (2026-01-11)
+
+
+### Features
+
+* **theme:** add dynamic theming system with background and primary color options ([a5ea282](https://github.com/Purukitto/apex-app/commit/a5ea2826027fd5c5912c593946ed4d7fa64bf4da))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+
+
+### Styles
+
+* **Garage:** update maintenance view styles for improved UI consistency ([7379119](https://github.com/Purukitto/apex-app/commit/7379119897ee0c6de1cfc12e3a3bfccd6f5d0fad))
+* **UX:** add guidelines for deprecated colors and usage of apex-themed colors ([71d40a5](https://github.com/Purukitto/apex-app/commit/71d40a5ee9587b7f1126a5663971a270478f3b9e))
+
 ## [0.9.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.9.0) (2026-01-11)
 
 

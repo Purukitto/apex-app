@@ -11,10 +11,10 @@ import type { Bike as BikeType, MaintenanceLog } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
-
-const NEON_LIME = '#bef264';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 export default function Garage() {
+  const { primary } = useThemeColors();
   const { bikes, isLoading, createBike, updateBike, deleteBike } = useBikes();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBike, setEditingBike] = useState<BikeType | null>(null);
@@ -146,7 +146,7 @@ export default function Garage() {
             variants={itemVariants}
           >
             <div className="p-4 bg-zinc-900 rounded-apex mb-4">
-              <Motorbike size={48} style={{ color: NEON_LIME }} />
+              <Motorbike size={48} style={{ color: primary }} />
             </div>
             <h2 className="text-xl font-semibold text-white mb-2">
               No bikes yet
@@ -157,7 +157,7 @@ export default function Garage() {
             <motion.button
               onClick={() => setIsModalOpen(true)}
               className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-zinc-950"
-              style={{ backgroundColor: NEON_LIME }}
+              style={{ backgroundColor: primary }}
               {...buttonHoverProps}
             >
               <Plus size={20} />
@@ -306,7 +306,7 @@ export default function Garage() {
               <motion.button
                 onClick={() => setIsModalOpen(true)}
                 className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-zinc-950"
-                style={{ backgroundColor: NEON_LIME }}
+                style={{ backgroundColor: primary }}
                 {...buttonHoverProps}
               >
                 <Plus size={20} />

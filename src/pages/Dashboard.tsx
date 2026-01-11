@@ -8,8 +8,7 @@ import { User, Bell, MapPin, Timer, TrendingUp, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps } from '../lib/animations';
 import { useNotificationHandler } from '../components/layout/NotificationContext';
-
-const NEON_LIME = '#bef264';
+import { useThemeColors } from '../hooks/useThemeColors';
 
 export default function Dashboard() {
   const { bikes, isLoading } = useBikes();
@@ -18,6 +17,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { openNotifications, unreadCount } = useNotificationHandler();
   const [pullDistance, setPullDistance] = useState(0);
+  const { primary, highlight } = useThemeColors();
   
   // Run maintenance checker on Dashboard load
   useMaintenanceChecker();
@@ -145,7 +145,7 @@ export default function Dashboard() {
               className="text-white"
               style={{
                 transform: `rotate(${pullDistance * 4}deg)`,
-                color: pullDistance > 80 ? NEON_LIME : 'white',
+                color: pullDistance > 80 ? primary : 'white',
               }}
             />
             <span className="text-xs text-white">
@@ -182,7 +182,7 @@ export default function Dashboard() {
             <motion.button
               onClick={openNotifications}
               className="relative w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
-              style={{ backgroundColor: NEON_LIME }}
+              style={{ backgroundColor: primary }}
               {...buttonHoverProps}
             >
               <Bell size={20} className="text-zinc-950" />
@@ -222,7 +222,7 @@ export default function Dashboard() {
                 <p className="text-5xl font-mono font-bold text-white mb-2">
                   {totalKm.toLocaleString()}
                 </p>
-                <p className="text-sm font-mono" style={{ color: NEON_LIME }}>km</p>
+                <p className="text-sm font-mono" style={{ color: primary }}>km</p>
               </div>
             </div>
           </motion.div>
@@ -237,7 +237,7 @@ export default function Dashboard() {
               className="bg-zinc-900 border border-white/5 rounded-apex p-5 cursor-pointer transition-all"
               variants={itemVariants}
               onClick={() => navigate('/garage')}
-              whileHover={{ borderColor: 'rgba(0, 255, 65, 0.4)', scale: 1.02 }}
+              whileHover={{ borderColor: highlight, scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <h3 className="text-xs text-white/60 uppercase tracking-wide mb-2">
@@ -246,7 +246,7 @@ export default function Dashboard() {
               <p className="text-3xl md:text-4xl font-mono font-bold text-white">
                 {bikeCount}
               </p>
-              <p className="text-xs md:text-sm mt-1" style={{ color: NEON_LIME }}>
+              <p className="text-xs md:text-sm mt-1" style={{ color: primary }}>
                 {bikeCount === 1 ? 'machine' : 'machines'}
               </p>
             </motion.div>
@@ -256,7 +256,7 @@ export default function Dashboard() {
               className="bg-zinc-900 border border-white/5 rounded-apex p-5 cursor-pointer transition-all"
               variants={itemVariants}
               onClick={() => navigate('/rides')}
-              whileHover={{ borderColor: 'rgba(0, 255, 65, 0.4)', scale: 1.02 }}
+              whileHover={{ borderColor: highlight, scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <h3 className="text-xs text-white/60 uppercase tracking-wide mb-2">
@@ -265,7 +265,7 @@ export default function Dashboard() {
               <p className="text-3xl md:text-4xl font-mono font-bold text-white">
                 {totalRides}
               </p>
-              <p className="text-xs md:text-sm mt-1" style={{ color: NEON_LIME }}>
+              <p className="text-xs md:text-sm mt-1" style={{ color: primary }}>
                 {totalRides === 1 ? 'ride' : 'rides'}
               </p>
             </motion.div>
@@ -301,7 +301,7 @@ export default function Dashboard() {
                     className="bg-zinc-900 border border-white/5 rounded-apex p-5 cursor-pointer transition-all"
                     variants={fastItemVariants}
                     onClick={() => navigate(`/rides?rideId=${ride.id}`)}
-                    whileHover={{ borderColor: 'rgba(0, 255, 65, 0.4)', scale: 1.01 }}
+                    whileHover={{ borderColor: highlight, scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                   >
                     <div className="flex items-start justify-between mb-3">
@@ -312,20 +312,20 @@ export default function Dashboard() {
                     </div>
                     <div className="flex flex-wrap items-center gap-4">
                       <div className="flex items-center gap-2">
-                        <MapPin size={16} style={{ color: NEON_LIME }} />
+                        <MapPin size={16} style={{ color: primary }} />
                         <span className="text-sm text-white/80 font-mono">
                           {ride.distance_km.toFixed(1)} km
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Timer size={16} style={{ color: NEON_LIME }} />
+                        <Timer size={16} style={{ color: primary }} />
                         <span className="text-sm text-white/80">
                           {formatDuration(ride.start_time, ride.end_time)}
                         </span>
                       </div>
                       {maxLean > 0 && (
                         <div className="flex items-center gap-2">
-                          <TrendingUp size={16} style={{ color: NEON_LIME }} />
+                          <TrendingUp size={16} style={{ color: primary }} />
                           <span className="text-sm text-white/80 font-mono">
                             {maxLean.toFixed(1)}°
                           </span>

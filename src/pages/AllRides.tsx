@@ -20,12 +20,13 @@ import {
   buttonHoverProps,
 } from '../lib/animations';
 import ConfirmModal from '../components/ConfirmModal';
+import { useThemeColors } from '../hooks/useThemeColors';
 import type { Ride } from '../types/database';
 
-const NEON_LIME = '#bef264';
 const PAGE_SIZE = 20;
 
 export default function AllRides() {
+  const { primary } = useThemeColors();
   const { bikes } = useBikes();
   const [searchParams, setSearchParams] = useSearchParams();
   const rideIdFromUrl = searchParams.get('rideId');
@@ -340,20 +341,20 @@ export default function AllRides() {
                     </div>
                     <div className="flex flex-wrap items-center gap-4">
                       <div className="flex items-center gap-2">
-                        <MapPin size={16} style={{ color: NEON_LIME }} />
+                        <MapPin size={16} style={{ color: primary }} />
                         <span className="text-sm text-white/80 font-mono">
                           {ride.distance_km.toFixed(1)} km
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Timer size={16} style={{ color: NEON_LIME }} />
+                        <Timer size={16} style={{ color: primary }} />
                         <span className="text-sm text-white/80">
                           {formatDuration(ride.start_time, ride.end_time)}
                         </span>
                       </div>
                       {maxLean > 0 && (
                         <div className="flex items-center gap-2">
-                          <TrendingUp size={16} style={{ color: NEON_LIME }} />
+                          <TrendingUp size={16} style={{ color: primary }} />
                           <span className="text-sm text-white/80 font-mono">
                             {maxLean.toFixed(1)}°
                           </span>

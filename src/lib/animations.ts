@@ -51,6 +51,35 @@ export const listContainerVariants: Variants = {
 };
 
 /**
+ * Get current theme highlight color from CSS variable
+ * Returns rgba string for use in framer-motion
+ */
+const getThemeHighlightColor = (): string => {
+  if (typeof window === 'undefined') {
+    // Default darker shade of apex-green (60% brightness)
+    return 'rgba(114, 145, 60, 0.4)';
+  }
+  
+  const root = document.documentElement;
+  const highlightColor = getComputedStyle(root)
+    .getPropertyValue('--color-apex-green-highlight')
+    .trim();
+  
+  if (!highlightColor) {
+    // Fallback to darker shade of apex-green (60% brightness)
+    return 'rgba(114, 145, 60, 0.4)';
+  }
+  
+  // Convert hex to rgba with 0.4 opacity
+  const hex = highlightColor.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  
+  return `rgba(${r}, ${g}, ${b}, 0.4)`;
+};
+
+/**
  * Standard button animation props
  */
 export const buttonHoverProps = {
@@ -59,8 +88,15 @@ export const buttonHoverProps = {
 };
 
 /**
- * Standard card hover props
+ * Standard card hover props - uses theme highlight color
+ * This is a function to get fresh color on each render
  */
-export const cardHoverProps = {
-  whileHover: { borderColor: 'rgba(0, 255, 65, 0.4)' },
-};
+export const getCardHoverProps = () => ({
+  whileHover: { borderColor: getThemeHighlightColor() },
+});
+
+/**
+ * Legacy cardHoverProps for backward compatibility
+ * @deprecated Use getCardHoverProps() instead for theme-aware hover
+ */
+export const cardHoverProps = getCardHoverProps();

@@ -2,12 +2,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Activity, Motorbike, Radio } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { buttonHoverProps } from '../../lib/animations';
-
-const NEON_LIME = '#bef264';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 export default function BottomPillNav() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { primary } = useThemeColors();
 
   const navItems = [
     { path: '/dashboard', icon: Activity, label: 'Dashboard' },
@@ -35,7 +35,7 @@ export default function BottomPillNav() {
               key={item.path}
               onClick={() => navigate(item.path)}
               className="px-8 py-3 rounded-full font-semibold text-zinc-950 flex items-center gap-2 shadow-lg"
-              style={{ backgroundColor: NEON_LIME }}
+              style={{ backgroundColor: primary }}
               {...buttonHoverProps}
             >
               <Radio size={20} />

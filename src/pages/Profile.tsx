@@ -10,7 +10,7 @@ import { containerVariants, itemVariants, buttonHoverProps, cardHoverProps } fro
 import UpdateModal from '../components/UpdateModal';
 import { useThemeStore, PRIMARY_COLORS, BACKGROUND_COLORS, type BackgroundTheme, type PrimaryTheme } from '../stores/useThemeStore';
 import { applyTheme } from '../lib/theme';
-import packageJson from '../../package.json';
+import { getAppVersion } from '../lib/version';
 
 const DISCORD_BLURPLE = '#5865F2';
 
@@ -426,7 +426,7 @@ export default function Profile() {
               </a>
             </p>
             <p className="text-sm text-apex-white/40 font-mono">
-              v{packageJson.version}
+              v{getAppVersion()}
             </p>
           </motion.div>
         </motion.div>

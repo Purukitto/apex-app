@@ -7,10 +7,12 @@ import Ride from './pages/Ride';
 import AllRides from './pages/AllRides';
 import MainLayout from './components/layout/MainLayout';
 import AuthGuard from './components/AuthGuard';
+import AppUpdateChecker from './components/AppUpdateChecker';
 
 function App() {
   return (
     <BrowserRouter>
+      <AppUpdateChecker />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route

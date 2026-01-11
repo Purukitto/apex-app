@@ -1,22 +1,28 @@
 import { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useDiscord } from '../hooks/useDiscord';
+import { useAppUpdate } from '../hooks/useAppUpdate';
 import { useNavigate } from 'react-router-dom';
-import { Mail, LogOut, Save, User, MessageCircle, Link2, Unlink } from 'lucide-react';
+import { Mail, LogOut, Save, User, MessageCircle, Link2, Unlink, Download, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
+import UpdateModal from '../components/UpdateModal';
 
 const NEON_LIME = '#bef264';
 const DISCORD_BLURPLE = '#5865F2';
 
 export default function Profile() {
+  const isNative = Capacitor.isNativePlatform();
   const { profile, isLoading, updateRiderName, signOut } = useUserProfile();
   const { isConnected, isLoading: isDiscordLoading, linkDiscord, unlinkDiscord } = useDiscord();
+  const { updateInfo, isChecking, checkForUpdate, openReleasePage, dismissUpdate } = useAppUpdate();
   const navigate = useNavigate();
   const [riderName, setRiderName] = useState(profile?.riderName || '');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
   
 
   // Update local state when profile changes
@@ -71,6 +77,28 @@ export default function Profile() {
       console.error('Failed to unlink Discord:', err);
     }
   };
+
+  const handleCheckForUpdate = async () => {
+    const result = await checkForUpdate(true);
+    if (result?.isAvailable) {
+      setShowUpdateModal(true);
+    }
+  };
+
+  const handleUpdateDownload = () => {
+    if (updateInfo?.downloadUrl) {
+      openReleasePage();
+    } else {
+      openReleasePage();
+    }
+  };
+
+  // Show update modal when update becomes available
+  useEffect(() => {
+    if (updateInfo?.isAvailable) {
+      setShowUpdateModal(true);
+    }
+  }, [updateInfo]);
 
   if (isLoading) {
     return (
@@ -234,6 +262,44 @@ export default function Profile() {
             )}
           </motion.div>
 
+          {/* App Updates Section - Only show on native platforms */}
+          {isNative && (
+            <motion.div
+              className="bg-zinc-900 rounded-apex p-6 border border-white/5"
+              variants={itemVariants}
+              {...cardHoverProps}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg" style={{ backgroundColor: `${NEON_LIME}20` }}>
+                  <Download size={20} style={{ color: NEON_LIME }} />
+                </div>
+                <h2 className="text-lg font-semibold text-white">App Updates</h2>
+              </div>
+              <div className="space-y-4">
+                <p className="text-sm text-white/60">
+                  Check for the latest version of Apex.
+                </p>
+                <motion.button
+                  onClick={handleCheckForUpdate}
+                  disabled={isChecking}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-white transition-colors w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: NEON_LIME, color: '#0A0A0A' }}
+                  {...(isChecking ? {} : buttonHoverProps)}
+                >
+                  <RefreshCw size={18} className={isChecking ? 'animate-spin' : ''} />
+                  {isChecking ? 'Checking...' : 'Check for Updates'}
+                </motion.button>
+                {updateInfo?.isAvailable && (
+                  <div className="p-3 bg-apex-green/10 border border-apex-green/20 rounded-lg">
+                    <p className="text-sm text-apex-green font-mono">
+                      Update available: {updateInfo.latestVersion}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
           {/* Sign Out Section */}
           <motion.div
             className="bg-zinc-900 rounded-apex p-6 border border-white/5"
@@ -252,6 +318,19 @@ export default function Profile() {
           </motion.div>
         </motion.div>
       </motion.div>
+
+      {/* Update Modal */}
+      {updateInfo && (
+        <UpdateModal
+          isOpen={showUpdateModal}
+          onClose={() => {
+            setShowUpdateModal(false);
+            dismissUpdate();
+          }}
+          onDownload={handleUpdateDownload}
+          updateInfo={updateInfo}
+        />
+      )}
     </div>
   );
 }

@@ -33,7 +33,7 @@ export type Ride = {
 export type MaintenanceLog = {
   id: string;
   bike_id: string;
-  service_type?: string;
+  service_type: string; // Required by database constraint
   odo_at_service: number;
   date_performed: string; // date format
   notes?: string;

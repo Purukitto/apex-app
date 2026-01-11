@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.10.2](https://github.com/Purukitto/apex-app/compare/v0.10.1...v0.10.2) (2026-01-11)
+
+
+### Features
+
+* **Profile:** add footer displaying app version with a heart icon ([b9ed40f](https://github.com/Purukitto/apex-app/commit/b9ed40fc62d306076dc2df0c3885886bd99fc1e7))
+* **Profile:** update footer to include developer attribution and separate version display ([833b793](https://github.com/Purukitto/apex-app/commit/833b793947d1d04420f65b5dc4e839a9e3203ed9))
+* **version:** implement version management system and update version display across components ([a6a5870](https://github.com/Purukitto/apex-app/commit/a6a5870e1f1bc02c87efef71a89db82070098c4b))
+
+
+### Miscellaneous Chores
+
+* **package:** add author, license, homepage, repository, and bugs information to package.json ([76f38b8](https://github.com/Purukitto/apex-app/commit/76f38b8d9c4fa9f56ee5a8c30908ecd09b2d63d4))
+
+### [0.10.1](https://github.com/Purukitto/apex-app/compare/v0.10.0...v0.10.1) (2026-01-11)
+
+
+### Bug Fixes
+
+* **Dashboard:** reduce ride limit from 10 to 5 for improved performance ([2b5fc37](https://github.com/Purukitto/apex-app/commit/2b5fc370a45671727984d66d355becc178912333))
+* **useAppUpdate:** dynamically set current version from package.json for update checks ([c5f3127](https://github.com/Purukitto/apex-app/commit/c5f312713cf457d28f49fc81b7ad0b9b8be933d6))
+
+## [0.10.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.10.0) (2026-01-11)
+
+
+### Features
+
+* **theme:** add dynamic theming system with background and primary color options ([a5ea282](https://github.com/Purukitto/apex-app/commit/a5ea2826027fd5c5912c593946ed4d7fa64bf4da))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+
+
+### Styles
+
+* **Garage:** update maintenance view styles for improved UI consistency ([7379119](https://github.com/Purukitto/apex-app/commit/7379119897ee0c6de1cfc12e3a3bfccd6f5d0fad))
+* **UX:** add guidelines for deprecated colors and usage of apex-themed colors ([71d40a5](https://github.com/Purukitto/apex-app/commit/71d40a5ee9587b7f1126a5663971a270478f3b9e))
+
 ## [0.9.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.9.0) (2026-01-11)
 
 

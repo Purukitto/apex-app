@@ -203,7 +203,7 @@ const BikeSelectionModal = ({
                     <motion.button
                       key={bike.id}
                       onClick={() => onSelect(bike)}
-                      className="w-full text-left p-4 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg hover:border-apex-green/40 transition-colors"
+                      className="w-full text-left p-4 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg hover-border-theme transition-colors"
                       variants={itemVariants}
                       {...buttonHoverProps}
                     >

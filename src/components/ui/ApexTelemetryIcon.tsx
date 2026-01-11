@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useRideTracking } from '../../hooks/useRideTracking';
-import { useMemo } from 'react';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 interface ApexTelemetryIconProps {
   size?: number;
@@ -25,16 +25,17 @@ export default function ApexTelemetryIcon({
   static: isStatic = false,
 }: ApexTelemetryIconProps) {
   const tracking = useRideTracking();
+  const { primary } = useThemeColors();
   
   // Only use tracking values if not in static mode
   const currentLean = isStatic ? 0 : tracking.currentLean;
   const isRecording = isStatic ? false : tracking.isRecording;
 
-  // Get theme colors from CSS variables (computed once per render)
-  const themeColors = useMemo(() => {
+  // Get theme colors - use reactive hook for primary, read others from CSS variables
+  const getThemeColors = () => {
     if (typeof window === 'undefined') {
       return {
-        green: '#00FF41',
+        green: '#bef264',
         red: '#FF3B30',
         black: '#0A0A0A',
       };
@@ -42,11 +43,13 @@ export default function ApexTelemetryIcon({
     const root = document.documentElement;
     const computedStyle = getComputedStyle(root);
     return {
-      green: computedStyle.getPropertyValue('--color-apex-green').trim() || '#00FF41',
+      green: primary, // Use reactive primary color from hook
       red: computedStyle.getPropertyValue('--color-apex-red').trim() || '#FF3B30',
       black: computedStyle.getPropertyValue('--color-apex-black').trim() || '#0A0A0A',
     };
-  }, []);
+  };
+  
+  const themeColors = getThemeColors();
 
   // Determine path color based on lean angle (only when not static)
   // < 15°: green, > 35°: red

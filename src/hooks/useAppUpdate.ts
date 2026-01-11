@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 import { Browser } from '@capacitor/browser';
+import { getAppVersion } from '../lib/version';
 
 const GITHUB_REPO = 'Purukitto/apex-app';
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
-const CURRENT_VERSION = '0.8.0'; // Should match package.json version
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const LAST_CHECK_KEY = 'app_update_last_check';
 const LAST_VERSION_KEY = 'app_update_last_version';
@@ -188,7 +188,11 @@ export function useAppUpdate() {
 
       // Compare versions
       const latestVersion = release.tag_name;
-      const hasUpdate = compareVersions(latestVersion, CURRENT_VERSION) > 0;
+      const currentVersion = getAppVersion();
+      const versionComparison = compareVersions(latestVersion, currentVersion);
+      const hasUpdate = versionComparison > 0;
+
+      console.log(`Update check: Current=${currentVersion}, Latest=${latestVersion}, Comparison=${versionComparison}, HasUpdate=${hasUpdate}`);
 
       // Check if we've already shown this version
       const lastShown = await getLastShownVersion();
@@ -225,7 +229,7 @@ export function useAppUpdate() {
         const info: UpdateInfo = {
           isAvailable: true,
           latestVersion,
-          currentVersion: CURRENT_VERSION,
+          currentVersion: getAppVersion(),
           releaseNotes: release.body || 'No release notes available.',
           releaseUrl: release.html_url,
           downloadUrl,
@@ -236,6 +240,8 @@ export function useAppUpdate() {
         return info;
       } else {
         // No update available
+        const currentVersion = getAppVersion();
+        console.log(`No update available. Current version (${currentVersion}) is up to date with latest (${latestVersion})`);
         setIsChecking(false);
         return null;
       }

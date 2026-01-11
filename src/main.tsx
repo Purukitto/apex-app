@@ -7,6 +7,8 @@ import './index.css'
 import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary.tsx'
 import { isSupabaseConfigured } from './lib/supabaseClient.ts'
+import { initializeTheme } from './lib/theme.ts'
+import { initializeVersion } from './lib/version.ts'
 
 // Configure StatusBar for fullscreen on native platforms
 if (Capacitor.isNativePlatform()) {
@@ -19,6 +21,12 @@ if (Capacitor.isNativePlatform()) {
 if (!isSupabaseConfigured()) {
   console.error('⚠️ Supabase environment variables are missing! The app may not work correctly.');
 }
+
+// Initialize version system (caches version in localStorage)
+initializeVersion();
+
+// Initialize theme system
+initializeTheme();
 
 const queryClient = new QueryClient({
   defaultOptions: {

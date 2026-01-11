@@ -11,7 +11,7 @@ export const apexToast = {
       className: 'apex-toast-success',
       style: {
         background: '#0A0A0A',
-        border: '1px solid #00FF41',
+        border: '1px solid var(--color-apex-green, #bef264)',
         color: '#E2E2E2',
       },
     });

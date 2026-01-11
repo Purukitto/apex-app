@@ -102,6 +102,10 @@ alwaysApply: true
   - **CSS Variables:** For SVG or inline styles, use `getComputedStyle(document.documentElement).getPropertyValue('--color-apex-green')` or access via `var(--color-apex-green)`.
   - **SVG Elements:** Use CSS variables or `currentColor` with Tailwind classes on parent.
 - **Color Transitions:** When colors change based on state (e.g., lean angle), use smooth transitions (0.3s ease-in-out).
+- **Deprecated Colors:**
+  - **DO NOT** use `NEON_LIME` (`#bef264`) or any other hardcoded green colors. Always use `apex-green` (`#00FF41`) instead.
+  - **DO NOT** use `zinc-*` or other Tailwind color utilities for backgrounds/borders. Use `apex-black`, `apex-white`, `apex-green`, or `apex-red` with appropriate opacity modifiers.
+  - **DO NOT** use generic `white`, `black`, `red-*`, `green-*` classes. Always use the `apex-*` prefixed theme colors.
 
 ## 3.2 Icon Standards
 - **ApexTelemetryIcon:**

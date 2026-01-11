@@ -3,7 +3,8 @@ import type { MaintenanceLog, Bike } from '../types/database';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { listContainerVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
+import { listContainerVariants, fastItemVariants, buttonHoverProps, getCardHoverProps } from '../lib/animations';
+import { useThemeColors } from '../hooks/useThemeColors';
 import ConfirmModal from './ConfirmModal';
 
 interface MaintenanceLogListProps {
@@ -20,6 +21,7 @@ export default function MaintenanceLogList({
   onDelete,
   isLoading,
 }: MaintenanceLogListProps) {
+  const { primary } = useThemeColors();
   const [deletingLogId, setDeletingLogId] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [logToDelete, setLogToDelete] = useState<MaintenanceLog | null>(null);
@@ -51,15 +53,18 @@ export default function MaintenanceLogList({
       {logs.map((log) => (
         <motion.div
           key={log.id}
-          className="border border-apex-white/20 rounded-lg p-4 bg-gradient-to-br from-white/5 to-transparent hover:border-apex-green/40 transition-colors group"
+          className="border border-apex-white/20 rounded-lg p-4 bg-gradient-to-br from-white/5 to-transparent hover-border-theme transition-colors group"
           variants={fastItemVariants}
-          {...cardHoverProps}
+          {...getCardHoverProps()}
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-3">
-                <div className="p-1.5 bg-apex-green/10 rounded-lg group-hover:bg-apex-green/20 transition-colors">
-                  <Wrench size={16} className="text-apex-green" />
+                <div 
+                  className="p-1.5 rounded-lg transition-colors group-hover:opacity-80" 
+                  style={{ backgroundColor: `${primary}1A` }}
+                >
+                  <Wrench size={16} style={{ color: primary }} />
                 </div>
                 <h4 className="text-apex-white font-semibold truncate">
                   {log.service_type || 'General Service'}

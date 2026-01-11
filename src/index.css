@@ -6,7 +6,7 @@
   --color-apex-white: #E2E2E2;
   
   /* Data Accent Colors */
-  --color-apex-green: #00FF41;
+  --color-apex-green: #bef264;
   --color-apex-red: #FF3B30;
   
   /* Bento Grid Design Tokens */
@@ -14,19 +14,19 @@
   --radius-apex: 2.5rem;
 }
 
-/* Global dark background */
+/* Global dark background - will be overridden by theme */
 html,
 body {
-  background-color: #09090b; /* zinc-950 */
+  background-color: var(--color-apex-black, #0A0A0A);
   margin: 0;
   padding: 0;
 }
 
 /* Sonner Toast Styling for Apex */
 [data-sonner-toast] {
-  background: #0A0A0A !important;
+  background: var(--color-apex-black, #0A0A0A) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  color: #E2E2E2 !important;
+  color: var(--color-apex-white, #E2E2E2) !important;
   font-family: inherit !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
   margin-bottom: 0 !important;
@@ -47,15 +47,15 @@ body {
 
 /* Type-specific border colors */
 [data-sonner-toast][data-type="success"] {
-  border-color: #00FF41 !important;
+  border-color: var(--color-apex-green, #bef264) !important;
 }
 
 [data-sonner-toast][data-type="error"] {
-  border-color: #FF3B30 !important;
+  border-color: var(--color-apex-red, #FF3B30) !important;
 }
 
 [data-sonner-toast] [data-description] {
-  color: #E2E2E2 !important;
+  color: var(--color-apex-white, #E2E2E2) !important;
 }
 
 /* Ensure toasts maintain their individual styling when stacked */
@@ -86,4 +86,13 @@ body {
 
 .animate-shimmer {
   animation: shimmer 2s infinite;
+}
+
+/* Theme-aware hover border using highlight color */
+.hover-border-theme {
+  transition: border-color 0.2s ease;
+}
+
+.hover-border-theme:hover {
+  border-color: var(--color-apex-green-highlight, rgba(114, 145, 60, 0.4)) !important;
 }

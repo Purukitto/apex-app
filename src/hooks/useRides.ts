@@ -121,6 +121,18 @@ export function useRides(options: UseRidesOptions = {}) {
       } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // First verify the ride exists and belongs to the user
+      const { data: existingRide, error: fetchError } = await supabase
+        .from('rides')
+        .select('id')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (fetchError || !existingRide) {
+        throw new Error('Ride not found or you do not have permission to update it');
+      }
+
       const { data, error } = await supabase
         .from('rides')
         .update(updates)
@@ -129,7 +141,21 @@ export function useRides(options: UseRidesOptions = {}) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Provide more helpful error messages
+        if (error.code === 'PGRST116' || error.message?.includes('0 rows')) {
+          throw new Error('Ride not found or you do not have permission to update it');
+        }
+        if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+          throw new Error('Database columns not found. Please run the migration to add ride_name and notes columns.');
+        }
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('Update succeeded but no data was returned');
+      }
+
       return data as Ride;
     },
     onSuccess: () => {

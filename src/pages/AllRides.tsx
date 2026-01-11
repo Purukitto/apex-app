@@ -1,17 +1,14 @@
 import { useState } from 'react';
 import { useBikes } from '../hooks/useBikes';
 import { useRides } from '../hooks/useRides';
-import { useNavigate } from 'react-router-dom';
 import {
   MapPin,
   Timer,
   TrendingUp,
   ChevronDown,
-  ChevronUp,
   Edit2,
   Trash2,
   X,
-  RefreshCw,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -19,7 +16,6 @@ import {
   itemVariants,
   fastItemVariants,
   buttonHoverProps,
-  cardHoverProps,
 } from '../lib/animations';
 import ConfirmModal from '../components/ConfirmModal';
 import type { Ride } from '../types/database';
@@ -42,7 +38,6 @@ export default function AllRides() {
     isLoading,
     updateRide,
     deleteRide,
-    refetch,
   } = useRides({
     page,
     pageSize: PAGE_SIZE,

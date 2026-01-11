@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.9.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.9.0) (2026-01-11)
+
+
+### Features
+
+* **android:** add capacitor-preferences module to project dependencies ([dc12e85](https://github.com/Purukitto/apex-app/commit/dc12e8500bebf66059618808f6b753c9b0245c60))
+* **Profile:** add app update checker and modal for native platforms ([8480b25](https://github.com/Purukitto/apex-app/commit/8480b251d410d8a9e6841c5d6fb6eb9f493ff960))
+
+
+### Bug Fixes
+
+* **hooks:** export UpdateInfo interface for app update functionality ([b7919a4](https://github.com/Purukitto/apex-app/commit/b7919a4ba37a0eb2278b97395353dec3d60a1816))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+
 ## [0.8.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.8.0) (2026-01-11)
 
 

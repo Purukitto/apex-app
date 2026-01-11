@@ -342,16 +342,16 @@ export default function Garage() {
         {selectedBikeForMaintenance && isMaintenanceViewOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-              className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm"
+              className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm"
               onClick={handleCloseMaintenanceView}
             />
-            <div className="relative bg-zinc-900 border border-white/5 rounded-apex p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto z-10">
+            <div className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto z-10">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-xl font-bold text-apex-white">
                     Maintenance Logs
                   </h2>
-                  <p className="text-sm text-white/60 mt-1">
+                  <p className="text-sm text-apex-white/60 mt-1">
                     {selectedBikeForMaintenance.nick_name ||
                       `${selectedBikeForMaintenance.make} ${selectedBikeForMaintenance.model}`}
                   </p>
@@ -363,8 +363,7 @@ export default function Garage() {
                       setIsMaintenanceViewOpen(false);
                       setIsMaintenanceModalOpen(true);
                     }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-zinc-950"
-                    style={{ backgroundColor: NEON_LIME }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full font-semibold bg-apex-green text-apex-black hover:bg-apex-green/90 transition-colors"
                     {...buttonHoverProps}
                   >
                     <Plus size={18} />
@@ -372,7 +371,7 @@ export default function Garage() {
                   </motion.button>
                   <motion.button
                     onClick={handleCloseMaintenanceView}
-                    className="p-2 text-white/60 hover:text-white transition-colors"
+                    className="p-2 text-apex-white/60 hover:text-apex-white transition-colors"
                     aria-label="Close"
                     {...buttonHoverProps}
                   >

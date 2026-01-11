@@ -25,6 +25,8 @@ export type Ride = {
   max_lean_left: number;
   max_lean_right: number;
   route_path?: GeoJSONLineString;
+  ride_name?: string;
+  notes?: string;
   created_at: string;
 };
 

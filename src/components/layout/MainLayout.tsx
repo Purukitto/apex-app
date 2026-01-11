@@ -36,6 +36,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     if (path === '/garage') return 'Garage';
     if (path === '/profile') return 'Profile';
     if (path === '/ride') return 'Ride';
+    if (path === '/rides') return 'All Rides';
     return 'Apex';
   };
 

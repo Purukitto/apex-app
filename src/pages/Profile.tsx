@@ -410,11 +410,23 @@ export default function Profile() {
 
           {/* Made with Love Footer */}
           <motion.div
-            className="flex items-center justify-center gap-2 py-6"
+            className="flex flex-col items-center justify-center gap-2 py-6"
             variants={itemVariants}
           >
             <p className="text-sm text-apex-white/40 font-mono">
-              Made with <span className="text-apex-red">❤️</span> v{packageJson.version}
+              Made with <span className="text-apex-red">❤️</span> by{' '}
+              <a
+                href="https://github.com/Purukitto"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline transition-colors"
+                style={{ color: PRIMARY_COLORS[primary] }}
+              >
+                Purukitto
+              </a>
+            </p>
+            <p className="text-sm text-apex-white/40 font-mono">
+              v{packageJson.version}
             </p>
           </motion.div>
         </motion.div>

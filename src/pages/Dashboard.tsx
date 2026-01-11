@@ -13,7 +13,7 @@ import { useThemeColors } from '../hooks/useThemeColors';
 export default function Dashboard() {
   const { bikes, isLoading } = useBikes();
   const { profile } = useUserProfile();
-  const { rides, isLoading: ridesLoading, refetch: refetchRides } = useRides({ limit: 10 });
+  const { rides, isLoading: ridesLoading, refetch: refetchRides } = useRides({ limit: 5 });
   const navigate = useNavigate();
   const { openNotifications, unreadCount } = useNotificationHandler();
   const [pullDistance, setPullDistance] = useState(0);

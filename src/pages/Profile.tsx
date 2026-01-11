@@ -1,19 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { useDiscord } from '../hooks/useDiscord';
 import { useNavigate } from 'react-router-dom';
-import { Mail, LogOut, Save, User } from 'lucide-react';
+import { Mail, LogOut, Save, User, MessageCircle, Link2, Unlink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
 
 const NEON_LIME = '#bef264';
+const DISCORD_BLURPLE = '#5865F2';
 
 export default function Profile() {
   const { profile, isLoading, updateRiderName, signOut } = useUserProfile();
+  const { isConnected, isLoading: isDiscordLoading, linkDiscord, unlinkDiscord } = useDiscord();
   const navigate = useNavigate();
   const [riderName, setRiderName] = useState(profile?.riderName || '');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
 
   // Update local state when profile changes
   useEffect(() => {
@@ -47,6 +51,24 @@ export default function Profile() {
       navigate('/login');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign out');
+    }
+  };
+
+  const handleLinkDiscord = async () => {
+    try {
+      await linkDiscord.mutateAsync();
+    } catch (err) {
+      // Error is handled by the hook's onError
+      console.error('Failed to link Discord:', err);
+    }
+  };
+
+  const handleUnlinkDiscord = async () => {
+    try {
+      await unlinkDiscord.mutateAsync();
+    } catch (err) {
+      // Error is handled by the hook's onError
+      console.error('Failed to unlink Discord:', err);
     }
   };
 
@@ -151,6 +173,63 @@ export default function Profile() {
                 >
                   Edit
                 </motion.button>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Discord Integration Section */}
+          <motion.div
+            className="bg-zinc-900 rounded-apex p-6 border border-white/5"
+            variants={itemVariants}
+            {...cardHoverProps}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-lg" style={{ backgroundColor: `${DISCORD_BLURPLE}20` }}>
+                <MessageCircle size={20} style={{ color: DISCORD_BLURPLE }} />
+              </div>
+              <h2 className="text-lg font-semibold text-white">Discord Integration</h2>
+            </div>
+
+            {isDiscordLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="text-white/60">Loading...</div>
+              </div>
+            ) : !isConnected ? (
+              <div className="space-y-4">
+                <p className="text-sm text-white/60">
+                  Connect your Discord account to share your ride data.
+                </p>
+                <motion.button
+                  onClick={handleLinkDiscord}
+                  disabled={linkDiscord.isPending}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-white transition-colors w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: DISCORD_BLURPLE }}
+                  {...(linkDiscord.isPending ? {} : buttonHoverProps)}
+                >
+                  <Link2 size={18} />
+                  {linkDiscord.isPending ? 'Connecting...' : 'Link Discord'}
+                </motion.button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: DISCORD_BLURPLE }} />
+                    <span className="text-sm text-white">Discord Connected</span>
+                  </div>
+                  <motion.button
+                    onClick={handleUnlinkDiscord}
+                    disabled={unlinkDiscord.isPending}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm border border-white/5 text-white/60 hover:bg-zinc-800 hover:text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    {...(unlinkDiscord.isPending ? {} : buttonHoverProps)}
+                  >
+                    <Unlink size={16} />
+                    {unlinkDiscord.isPending ? 'Unlinking...' : 'Unlink'}
+                  </motion.button>
+                </div>
+                <p className="text-xs text-white/40 pt-2 border-t border-white/5">
+                  Your Discord account is connected. Rich Presence features will be available in a future update.
+                </p>
               </div>
             )}
           </motion.div>

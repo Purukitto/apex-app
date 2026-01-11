@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.8.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.8.0) (2026-01-11)
+
+
+### Features
+
+* **android:** add capacitor-browser module to project dependencies ([2807fa4](https://github.com/Purukitto/apex-app/commit/2807fa4837ff796804d1889b6b233afe69b03328))
+* **architecture:** expand documentation to include Discord integration details ([6c464b4](https://github.com/Purukitto/apex-app/commit/6c464b4e267e7c449106df601b53d92590a36d10))
+* **Discord:** integrate Discord OAuth with connection management and UI updates in Profile ([37fb4f2](https://github.com/Purukitto/apex-app/commit/37fb4f2508f0e43fd56da80eb65e6ec4acaf002f))
+* **Profile:** add Discord integration with link/unlink functionality and display options ([2011e6f](https://github.com/Purukitto/apex-app/commit/2011e6f691ad567dd2507b4ce6b7cf1ffbc74af0))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+
+
+### Code Refactoring
+
+* **Ride:** remove console log from component mount for cleaner output ([0d59c50](https://github.com/Purukitto/apex-app/commit/0d59c5058cb53e64e1be4bcfbfa3df0e1f013be0))
+
 ### [0.7.1](https://github.com/Purukitto/apex-app/compare/v0.7.0...v0.7.1) (2026-01-11)
 
 

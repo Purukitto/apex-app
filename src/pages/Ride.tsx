@@ -356,12 +356,6 @@ export default function Ride() {
   // Restore state from Zustand store on mount
   useEffect(() => {
     const store = useRideStore.getState();
-    console.log('Ride component mounted, store state:', {
-      isRecording: store.isRecording,
-      selectedBike: store.selectedBike?.nick_name,
-      coordsCount: store.coords.length,
-      distance: store.distanceKm,
-    });
     
     // Restore selected bike if it exists in store
     if (store.selectedBike && !selectedBike) {

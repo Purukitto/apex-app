@@ -1,7 +1,7 @@
 {
   "name": "apex-app",
   "private": true,
-  "version": "0.8.0",
+  "version": "0.9.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
@@ -28,6 +28,7 @@
     "@capacitor/haptics": "^8.0.0",
     "@capacitor/ios": "^8.0.0",
     "@capacitor/motion": "^8.0.0",
+    "@capacitor/preferences": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
     "@danyalwe/capacitor-sensors": "^1.0.1",
     "@supabase/supabase-js": "^2.90.1",

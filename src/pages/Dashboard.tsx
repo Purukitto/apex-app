@@ -6,7 +6,7 @@ import { useRides } from '../hooks/useRides';
 import { useNavigate } from 'react-router-dom';
 import { User, Bell, MapPin, Timer, TrendingUp, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
+import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps } from '../lib/animations';
 import { useNotificationHandler } from '../components/layout/NotificationContext';
 
 const NEON_LIME = '#bef264';
@@ -209,11 +209,10 @@ export default function Dashboard() {
           className="grid grid-cols-2 md:grid-cols-3 gap-4"
           variants={containerVariants}
         >
-          {/* Hero Card - Distance */}
+          {/* Hero Card - Distance (Non-clickable) */}
           <motion.div
             className="col-span-2 md:col-span-2 bg-zinc-900 border border-white/5 rounded-apex p-6"
             variants={itemVariants}
-            {...cardHoverProps}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -233,11 +232,13 @@ export default function Dashboard() {
             className="col-span-2 md:col-span-1 grid grid-cols-2 gap-4 md:flex md:flex-col md:space-y-4"
             variants={containerVariants}
           >
-            {/* Bikes in Garage Tile */}
+            {/* Bikes in Garage Tile (Clickable) */}
             <motion.div
-              className="bg-zinc-900 border border-white/5 rounded-apex p-5"
+              className="bg-zinc-900 border border-white/5 rounded-apex p-5 cursor-pointer transition-all"
               variants={itemVariants}
-              {...cardHoverProps}
+              onClick={() => navigate('/garage')}
+              whileHover={{ borderColor: 'rgba(0, 255, 65, 0.4)', scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               <h3 className="text-xs text-white/60 uppercase tracking-wide mb-2">
                 Bikes in Garage
@@ -250,11 +251,13 @@ export default function Dashboard() {
               </p>
             </motion.div>
 
-            {/* Total Rides Tile */}
+            {/* Total Rides Tile (Clickable) */}
             <motion.div
-              className="bg-zinc-900 border border-white/5 rounded-apex p-5"
+              className="bg-zinc-900 border border-white/5 rounded-apex p-5 cursor-pointer transition-all"
               variants={itemVariants}
-              {...cardHoverProps}
+              onClick={() => navigate('/rides')}
+              whileHover={{ borderColor: 'rgba(0, 255, 65, 0.4)', scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               <h3 className="text-xs text-white/60 uppercase tracking-wide mb-2">
                 Total Rides
@@ -295,9 +298,11 @@ export default function Dashboard() {
                 return (
                   <motion.div
                     key={ride.id}
-                    className="bg-zinc-900 border border-white/5 rounded-apex p-5"
+                    className="bg-zinc-900 border border-white/5 rounded-apex p-5 cursor-pointer transition-all"
                     variants={fastItemVariants}
-                    {...cardHoverProps}
+                    onClick={() => navigate(`/rides?rideId=${ride.id}`)}
+                    whileHover={{ borderColor: 'rgba(0, 255, 65, 0.4)', scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="text-lg font-semibold text-white">{bikeName}</h3>

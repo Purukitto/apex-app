@@ -721,13 +721,6 @@ export const useRideTracking = () => {
 
   // Motion Tracking Effect (Lean Angle)
   useEffect(() => {
-    console.log('Motion effect triggered:', {
-      isRecording: state.isRecording,
-      isPaused: state.isPaused,
-      isMobile,
-      hasListener: !!motionListenerRef.current,
-    });
-
     if (!state.isRecording || state.isPaused || !isMobile) {
       // Clean up listener if recording stops
       if (motionListenerRef.current) {

@@ -1,13 +1,17 @@
 import { X, Bell, Check } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { useNotificationStore } from '../../stores/useNotificationStore';
 import { formatDistanceToNow } from 'date-fns';
-import { containerVariants, fastItemVariants, buttonHoverProps } from '../../lib/animations';
+import { containerVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../../lib/animations';
+import { useState, useRef, useEffect } from 'react';
 
 interface NotificationPaneProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const SHEET_MAX_HEIGHT = '85vh';
+const DRAG_THRESHOLD = 100; // pixels to drag before closing
 
 export default function NotificationPane({
   isOpen,
@@ -18,46 +22,137 @@ export default function NotificationPane({
     markAsRead,
     markAllAsRead,
     removeNotification,
+    clearAll,
     getUnreadCount,
   } = useNotificationStore();
 
   const unreadCount = getUnreadCount();
+  const y = useMotionValue(0);
+  const opacity = useTransform(y, [0, 200], [1, 0.3]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [shouldUseMotionValue, setShouldUseMotionValue] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const prevIsOpenRef = useRef(isOpen);
 
-  const NEON_LIME = '#bef264';
+  // Reset position when opening - only update motion value, not state
+  useEffect(() => {
+    if (isOpen && !prevIsOpenRef.current) {
+      // Pane just opened - reset motion value
+      y.set(0);
+    }
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen, y]);
+
+  // Reset state when pane opens - use setTimeout to avoid setState in effect
+  useEffect(() => {
+    if (isOpen && !prevIsOpenRef.current) {
+      // Reset all states when opening - defer to avoid setState in effect
+      setTimeout(() => {
+        setIsClosing(false);
+        setShouldUseMotionValue(false);
+        setIsDragging(false);
+      }, 0);
+    }
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen]);
+
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    setIsDragging(false);
+    const shouldClose = info.offset.y > DRAG_THRESHOLD || info.velocity.y > 500;
+    
+    if (shouldClose) {
+      // Close immediately - AnimatePresence will handle exit animation
+      setShouldUseMotionValue(false);
+      handleClose();
+    } else {
+      // Spring back to original position
+      setShouldUseMotionValue(true);
+      animate(y, 0, {
+        type: 'spring',
+        damping: 30,
+        stiffness: 300,
+        mass: 0.8,
+      }).then(() => {
+        setShouldUseMotionValue(false);
+      });
+    }
+  };
+
+  const handleClose = () => {
+    // Always allow closing - reset state if needed
+    if (isClosing) {
+      // If already closing, force close anyway
+      setIsClosing(false);
+    }
+    setIsClosing(true);
+    setShouldUseMotionValue(false);
+    setIsDragging(false);
+    onClose();
+  };
+
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={() => {
+      setIsClosing(false);
+      setShouldUseMotionValue(false);
+      setIsDragging(false);
+    }}>
       {isOpen && (
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm z-40"
-            onClick={onClose}
+            className="fixed inset-0 bg-apex-black/60 backdrop-blur-sm z-40"
+            onClick={handleClose}
+            style={{ pointerEvents: isClosing ? 'none' : 'auto' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
           />
 
-          {/* Slide-over Panel */}
+          {/* Bottom Sheet */}
           <motion.div
-            className="fixed right-0 top-0 h-full w-full max-w-md bg-zinc-950 border-l border-white/5 z-50 flex flex-col"
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-apex-black border-t border-apex-white/20 rounded-t-2xl shadow-2xl"
+            style={{
+              maxHeight: SHEET_MAX_HEIGHT,
+              ...(shouldUseMotionValue || isDragging ? { y, opacity: isDragging ? opacity : 1 } : {}),
+            }}
+            drag="y"
+            dragConstraints={{ top: 0 }}
+            dragElastic={0.1}
+            dragDirectionLock
+            onDragStart={() => {
+              setIsDragging(true);
+              setShouldUseMotionValue(true);
+            }}
+            onDragEnd={handleDragEnd}
+            initial={{ y: '100%' }}
+            animate={shouldUseMotionValue || isDragging ? undefined : { y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{
+              type: 'spring',
+              damping: 30,
+              stiffness: 300,
+              mass: 0.8,
+            }}
+            onClick={(e) => e.stopPropagation()}
           >
+            {/* Drag Handle */}
+            <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
+              <div className="w-12 h-1.5 rounded-full bg-apex-white/30" />
+            </div>
+
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/5">
+            <div className="flex items-center justify-between px-6 pb-4 border-b border-apex-white/10">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-white/5">
-                  <Bell size={20} className="text-white" />
+                <div className="p-2 rounded-lg bg-apex-green/10">
+                  <Bell size={20} className="text-apex-green" />
                 </div>
-                <h2 className="text-lg font-semibold text-white">
+                <h2 className="text-lg font-semibold text-apex-white font-sans tracking-tight">
                   Notifications
                 </h2>
                 {unreadCount > 0 && (
-                  <span className="px-2 py-1 rounded-full text-zinc-950 text-xs font-mono font-semibold" style={{ backgroundColor: NEON_LIME }}>
+                  <span className="px-2 py-1 rounded-full bg-apex-green text-apex-black text-xs font-mono font-semibold">
                     {unreadCount}
                   </span>
                 )}
@@ -65,19 +160,29 @@ export default function NotificationPane({
               <div className="flex items-center gap-2">
                 {unreadCount > 0 && (
                   <motion.button
-                    onClick={markAllAsRead}
-                    className="p-2 rounded-full text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      markAllAsRead();
+                    }}
+                    className="p-2 rounded-lg text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5 transition-colors"
                     aria-label="Mark all as read"
                     {...buttonHoverProps}
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
                   >
                     <Check size={18} />
                   </motion.button>
                 )}
                 <motion.button
-                  onClick={onClose}
-                  className="p-2 rounded-full text-white/60 hover:text-white hover:bg-white/5 transition-colors"
-                  aria-label="Close notifications"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearAll();
+                  }}
+                  className="p-2 rounded-lg text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5 transition-colors"
+                  aria-label="Dismiss all notifications"
                   {...buttonHoverProps}
+                  type="button"
+                  onPointerDown={(e) => e.stopPropagation()}
                 >
                   <X size={20} />
                 </motion.button>
@@ -85,11 +190,11 @@ export default function NotificationPane({
             </div>
 
             {/* Notifications List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
               {notifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                  <Bell size={48} className="text-white/20 mb-4" />
-                  <p className="text-white/60">No notifications</p>
+                  <Bell size={48} className="text-apex-white/20 mb-4" />
+                  <p className="text-apex-white/60">No notifications</p>
                 </div>
               ) : (
                 <motion.div
@@ -101,12 +206,13 @@ export default function NotificationPane({
                   {notifications.map((notification) => (
                     <motion.div
                       key={notification.id}
-                      className={`bg-zinc-900 border rounded-apex p-4 ${
+                      className={`bg-gradient-to-br from-apex-white/5 to-transparent border rounded-lg p-4 ${
                         !notification.read_status
-                          ? 'border-white/20'
-                          : 'border-white/5'
+                          ? 'border-apex-white/20'
+                          : 'border-apex-white/10'
                       }`}
                       variants={fastItemVariants}
+                      {...cardHoverProps}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
@@ -114,20 +220,20 @@ export default function NotificationPane({
                             <span
                               className={`text-xs font-semibold uppercase tracking-wide ${
                                 notification.type === 'warning'
-                                  ? 'text-white/60'
+                                  ? 'text-apex-white/60'
                                   : notification.type === 'error'
-                                    ? 'text-red-500'
-                                    : 'text-white/60'
+                                    ? 'text-apex-red'
+                                    : 'text-apex-white/60'
                               }`}
                             >
                               {notification.type}
                             </span>
                             {!notification.read_status && (
-                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: NEON_LIME }} />
+                              <span className="w-2 h-2 rounded-full bg-apex-green" />
                             )}
                           </div>
-                          <p className="text-white text-sm mb-2">{notification.message}</p>
-                          <p className="text-xs text-white/40 font-mono">
+                          <p className="text-apex-white text-sm mb-2">{notification.message}</p>
+                          <p className="text-xs text-apex-white/40 font-mono">
                             {formatDistanceToNow(notification.created_at, {
                               addSuffix: true,
                             })}
@@ -136,19 +242,29 @@ export default function NotificationPane({
                         <div className="flex items-center gap-1">
                           {!notification.read_status && (
                             <motion.button
-                              onClick={() => markAsRead(notification.id)}
-                              className="p-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(notification.id);
+                              }}
+                              className="p-1.5 rounded-lg text-apex-white/40 hover:text-apex-green hover:bg-apex-white/5 transition-colors"
                               aria-label="Mark as read"
                               {...buttonHoverProps}
+                              type="button"
+                              onPointerDown={(e) => e.stopPropagation()}
                             >
                               <Check size={16} />
                             </motion.button>
                           )}
                           <motion.button
-                            onClick={() => removeNotification(notification.id)}
-                            className="p-1.5 rounded-full text-white/40 hover:text-red-500 hover:bg-white/5 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeNotification(notification.id);
+                            }}
+                            className="p-1.5 rounded-lg text-apex-white/40 hover:text-apex-red hover:bg-apex-white/5 transition-colors"
                             aria-label="Remove notification"
                             {...buttonHoverProps}
+                            type="button"
+                            onPointerDown={(e) => e.stopPropagation()}
                           >
                             <X size={16} />
                           </motion.button>

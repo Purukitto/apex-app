@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Garage from './pages/Garage';
 import Profile from './pages/Profile';
 import Ride from './pages/Ride';
+import AllRides from './pages/AllRides';
 import MainLayout from './components/layout/MainLayout';
 import AuthGuard from './components/AuthGuard';
 
@@ -48,6 +49,16 @@ function App() {
             <AuthGuard>
               <MainLayout>
                 <Ride />
+              </MainLayout>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/rides"
+          element={
+            <AuthGuard>
+              <MainLayout>
+                <AllRides />
               </MainLayout>
             </AuthGuard>
           }

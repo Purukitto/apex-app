@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.10.1](https://github.com/Purukitto/apex-app/compare/v0.10.0...v0.10.1) (2026-01-11)
+
+
+### Bug Fixes
+
+* **Dashboard:** reduce ride limit from 10 to 5 for improved performance ([2b5fc37](https://github.com/Purukitto/apex-app/commit/2b5fc370a45671727984d66d355becc178912333))
+* **useAppUpdate:** dynamically set current version from package.json for update checks ([c5f3127](https://github.com/Purukitto/apex-app/commit/c5f312713cf457d28f49fc81b7ad0b9b8be933d6))
+
 ## [0.10.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.10.0) (2026-01-11)
 
 

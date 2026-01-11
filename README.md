@@ -24,6 +24,11 @@ Apex combines real-time ride tracking with comprehensive maintenance management,
 - **Last Ride Summary**: Quick access to recent ride data
 - **Maintenance Alerts**: Warnings for upcoming service intervals
 
+### Discord Integration
+- **OAuth Connection**: Link your Discord account to Apex
+- **Status**: Basic connection implemented, Rich Presence coming soon
+- **Future Features**: Ride status sharing, maintenance reminders via Discord
+
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 19 + TypeScript
@@ -78,6 +83,12 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 You can find these values in your Supabase project settings under API.
 
+**For Discord Integration (Optional):**
+- Create a Discord application at https://discord.com/developers/applications
+- Set redirect URI to: `https://YOUR_PROJECT.supabase.co/functions/v1/discord-oauth`
+- Add `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` to Supabase Edge Function secrets
+- Add `APP_BASE_URL` to Edge Function secrets for production (e.g., `https://yourapp.com`)
+
 ### 4. Database Setup
 
 Ensure your Supabase database has the following tables with PostGIS enabled:
@@ -85,6 +96,14 @@ Ensure your Supabase database has the following tables with PostGIS enabled:
 - `bikes` - Motorcycle profiles
 - `rides` - Ride records with GPS paths (PostGIS LineString)
 - `maintenance_logs` - Service history
+- `user_discord_connections` - Discord OAuth tokens (optional, for Discord integration)
+- `discord_oauth_states` - OAuth state management (optional, for Discord integration)
+
+**PostgreSQL Functions (RPC):**
+The app uses secure Postgres functions with `SECURITY DEFINER` for Discord OAuth:
+- `get_oauth_state(state_token_param TEXT)` - Validates and retrieves OAuth state
+- `save_discord_tokens(user_id_param UUID, access_token_param TEXT, refresh_token_param TEXT, expires_at_param TIMESTAMPTZ)` - Securely stores Discord tokens
+- `cleanup_expired_oauth_states()` - Cleans up expired OAuth states (can be run via cron)
 
 See `ARCHITECTURE.md` for detailed schema information.
 
@@ -244,6 +263,11 @@ Automated dependency updates are configured via `.github/dependabot.yml`:
 - All queries filter by `user_id` matching `auth.uid()`
 - Environment variables are never committed to version control
 - Authentication handled by Supabase Auth
+- **Discord OAuth**: Uses Postgres functions with `SECURITY DEFINER` for secure token storage
+  - OAuth state tokens are cryptographically secure (UUID v4)
+  - Tokens are stored encrypted in the database
+  - State tokens expire after 10 minutes
+  - No service_role key required - uses RLS and Postgres functions
 
 ## 🧪 Development Guidelines
 

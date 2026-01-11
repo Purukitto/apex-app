@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.7.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.7.0) (2026-01-11)
+
+
+### Features
+
+* **AllRides:** implement ride expansion from URL and improve ride navigation ([9548fc0](https://github.com/Purukitto/apex-app/commit/9548fc01ccd5c75a75371d840e596f51de11256e))
+* **hooks:** enhance useRides with improved error handling and ride existence verification ([3d77324](https://github.com/Purukitto/apex-app/commit/3d7732446c2e7be8fc2a7c078191aed883704d9a))
+* **hooks:** refactor useRideTracking for improved GPS and motion tracking functionality ([d66a1f7](https://github.com/Purukitto/apex-app/commit/d66a1f73ca8acca0655b0a19ae2ad4927ffdfdf3))
+* **routing:** add AllRides page and update routing for improved ride management ([533c242](https://github.com/Purukitto/apex-app/commit/533c242960cf3668542b04c72b0e9e863264862a))
+* **ui:** enhance NotificationPane with drag-to-close functionality and improved animations ([d73abca](https://github.com/Purukitto/apex-app/commit/d73abca9708a2d0c52a34d1d583cfac82cc41a29))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+
+
+### Styles
+
+* update BottomPillNav background color for improved visibility ([b39855e](https://github.com/Purukitto/apex-app/commit/b39855eb2a765f9c15c6e0fe95ef7534c6ed3a1c))
+
 ## [0.6.0](https://github.com/Purukitto/apex-app/compare/v0.5.0...v0.6.0) (2026-01-10)
 
 

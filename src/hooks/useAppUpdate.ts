@@ -22,7 +22,7 @@ interface GitHubRelease {
   }>;
 }
 
-interface UpdateInfo {
+export interface UpdateInfo {
   isAvailable: boolean;
   latestVersion: string;
   currentVersion: string;

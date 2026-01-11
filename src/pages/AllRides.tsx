@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useBikes } from '../hooks/useBikes';
 import { useRides } from '../hooks/useRides';
+import { supabase } from '../lib/supabaseClient';
 import {
   MapPin,
   Timer,
@@ -25,12 +27,15 @@ const PAGE_SIZE = 20;
 
 export default function AllRides() {
   const { bikes } = useBikes();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rideIdFromUrl = searchParams.get('rideId');
   const [page, setPage] = useState(0);
   const [expandedRideId, setExpandedRideId] = useState<string | null>(null);
   const [editingRide, setEditingRide] = useState<Ride | null>(null);
   const [rideToDelete, setRideToDelete] = useState<Ride | null>(null);
   const [editRideName, setEditRideName] = useState('');
   const [editRideNotes, setEditRideNotes] = useState('');
+  const [isFindingRide, setIsFindingRide] = useState(false);
 
   const {
     rides,
@@ -44,6 +49,105 @@ export default function AllRides() {
   });
 
   const totalPages = total ? Math.ceil(total / PAGE_SIZE) : 0;
+
+  // Handle rideId from URL - find and expand the ride
+  useEffect(() => {
+    if (!rideIdFromUrl || isLoading) return;
+
+    // Check if the ride is in the current page
+    const rideInCurrentPage = rides.find((r) => r.id === rideIdFromUrl);
+    
+    if (rideInCurrentPage) {
+      // Ride is on current page, expand it
+      if (expandedRideId !== rideIdFromUrl) {
+        setExpandedRideId(rideIdFromUrl);
+      }
+      // Clear the URL param
+      setSearchParams({}, { replace: true });
+      // Scroll to the ride after a brief delay to ensure it's rendered
+      setTimeout(() => {
+        const element = document.querySelector(`[data-ride-id="${rideIdFromUrl}"]`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+      return;
+    }
+
+    // Ride is not on current page, need to find which page it's on
+    if (isFindingRide) return; // Already searching
+    
+    setIsFindingRide(true);
+    
+    const findRidePage = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          setIsFindingRide(false);
+          return;
+        }
+
+        // Fetch the ride to get its start_time
+        const { data: ride, error } = await supabase
+          .from('rides')
+          .select('start_time')
+          .eq('id', rideIdFromUrl)
+          .eq('user_id', user.id)
+          .single();
+
+        if (error || !ride) {
+          console.error('Error finding ride:', error);
+          setIsFindingRide(false);
+          setSearchParams({}, { replace: true });
+          return;
+        }
+
+        // Count how many rides come before this one (ordered by start_time DESC)
+        const { count } = await supabase
+          .from('rides')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .gt('start_time', ride.start_time);
+
+        if (count !== null) {
+          // Calculate which page this ride is on
+          const targetPage = Math.floor(count / PAGE_SIZE);
+          setPage(targetPage);
+          // The expansion will happen when the ride loads on the new page
+        }
+      } catch (error) {
+        console.error('Error finding ride page:', error);
+        setIsFindingRide(false);
+        setSearchParams({}, { replace: true });
+      } finally {
+        // Don't set isFindingRide to false here - let it stay true until the ride is found
+        // It will be reset when the ride is found and expanded
+      }
+    };
+
+    findRidePage();
+  }, [rideIdFromUrl, rides, isLoading, isFindingRide, expandedRideId, setSearchParams]);
+
+  // Expand the ride once it's loaded on the correct page (after page change)
+  useEffect(() => {
+    if (rideIdFromUrl && !isLoading && rides.length > 0 && expandedRideId !== rideIdFromUrl) {
+      const rideInCurrentPage = rides.find((r) => r.id === rideIdFromUrl);
+      if (rideInCurrentPage) {
+        setExpandedRideId(rideIdFromUrl);
+        setIsFindingRide(false); // Reset finding state
+        setSearchParams({}, { replace: true });
+        // Scroll to the ride
+        setTimeout(() => {
+          const element = document.querySelector(`[data-ride-id="${rideIdFromUrl}"]`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 300);
+      }
+    }
+  }, [rideIdFromUrl, rides, isLoading, expandedRideId, setSearchParams]);
 
   // Create a map of bike IDs to bike objects for quick lookup
   const bikeMap = new Map(bikes.map((bike) => [bike.id, bike]));
@@ -203,6 +307,7 @@ export default function AllRides() {
               return (
                 <motion.div
                   key={ride.id}
+                  data-ride-id={ride.id}
                   className="bg-zinc-900 border border-white/5 rounded-apex overflow-hidden"
                   variants={fastItemVariants}
                   layout

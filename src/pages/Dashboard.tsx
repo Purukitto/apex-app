@@ -6,7 +6,7 @@ import { useRides } from '../hooks/useRides';
 import { useNavigate } from 'react-router-dom';
 import { User, Bell, MapPin, Timer, TrendingUp, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
+import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps } from '../lib/animations';
 import { useNotificationHandler } from '../components/layout/NotificationContext';
 
 const NEON_LIME = '#bef264';
@@ -298,9 +298,11 @@ export default function Dashboard() {
                 return (
                   <motion.div
                     key={ride.id}
-                    className="bg-zinc-900 border border-white/5 rounded-apex p-5"
+                    className="bg-zinc-900 border border-white/5 rounded-apex p-5 cursor-pointer transition-all"
                     variants={fastItemVariants}
-                    {...cardHoverProps}
+                    onClick={() => navigate(`/rides?rideId=${ride.id}`)}
+                    whileHover={{ borderColor: 'rgba(0, 255, 65, 0.4)', scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="text-lg font-semibold text-white">{bikeName}</h3>

@@ -10,6 +10,7 @@ import { containerVariants, itemVariants, buttonHoverProps, cardHoverProps } fro
 import UpdateModal from '../components/UpdateModal';
 import { useThemeStore, PRIMARY_COLORS, BACKGROUND_COLORS, type BackgroundTheme, type PrimaryTheme } from '../stores/useThemeStore';
 import { applyTheme } from '../lib/theme';
+import packageJson from '../../package.json';
 
 const DISCORD_BLURPLE = '#5865F2';
 
@@ -405,6 +406,16 @@ export default function Profile() {
               <LogOut size={18} />
               {signOut.isPending ? 'Signing out...' : 'Sign Out'}
             </motion.button>
+          </motion.div>
+
+          {/* Made with Love Footer */}
+          <motion.div
+            className="flex items-center justify-center gap-2 py-6"
+            variants={itemVariants}
+          >
+            <p className="text-sm text-apex-white/40 font-mono">
+              Made with <span className="text-apex-red">❤️</span> v{packageJson.version}
+            </p>
           </motion.div>
         </motion.div>
       </motion.div>

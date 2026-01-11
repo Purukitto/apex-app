@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useNavigate } from 'react-router-dom';
-import { Mail, LogOut, Save, User } from 'lucide-react';
+import { Mail, LogOut, Save, User, MessageCircle, Link2, Unlink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
 
 const NEON_LIME = '#bef264';
+const DISCORD_BLURPLE = '#5865F2';
 
 export default function Profile() {
   const { profile, isLoading, updateRiderName, signOut } = useUserProfile();
@@ -14,6 +15,11 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Discord integration state (placeholder - will be connected to backend later)
+  const [discordToken, setDiscordToken] = useState<string | null>(null);
+  const [showBikeModel, setShowBikeModel] = useState(false);
+  const [showCurrentCity, setShowCurrentCity] = useState(false);
 
   // Update local state when profile changes
   useEffect(() => {
@@ -48,6 +54,18 @@ export default function Profile() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign out');
     }
+  };
+
+  const handleLinkDiscord = () => {
+    // Placeholder - will initiate OAuth2 flow later
+    console.log('Link Discord clicked - OAuth2 flow will be implemented');
+  };
+
+  const handleUnlinkDiscord = () => {
+    // Placeholder - will unlink Discord account later
+    setDiscordToken(null);
+    setShowBikeModel(false);
+    setShowCurrentCity(false);
   };
 
   if (isLoading) {
@@ -151,6 +169,88 @@ export default function Profile() {
                 >
                   Edit
                 </motion.button>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Discord Integration Section */}
+          <motion.div
+            className="bg-zinc-900 rounded-apex p-6 border border-white/5"
+            variants={itemVariants}
+            {...cardHoverProps}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-lg" style={{ backgroundColor: `${DISCORD_BLURPLE}20` }}>
+                <MessageCircle size={20} style={{ color: DISCORD_BLURPLE }} />
+              </div>
+              <h2 className="text-lg font-semibold text-white">Discord Integration</h2>
+            </div>
+
+            {!discordToken ? (
+              <div className="space-y-4">
+                <p className="text-sm text-white/60">
+                  Connect your Discord account to share your ride data.
+                </p>
+                <motion.button
+                  onClick={handleLinkDiscord}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-white transition-colors w-full justify-center"
+                  style={{ backgroundColor: DISCORD_BLURPLE }}
+                  {...buttonHoverProps}
+                >
+                  <Link2 size={18} />
+                  Link Discord
+                </motion.button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: DISCORD_BLURPLE }} />
+                    <span className="text-sm text-white">Discord Connected</span>
+                  </div>
+                  <motion.button
+                    onClick={handleUnlinkDiscord}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm border border-white/5 text-white/60 hover:bg-zinc-800 hover:text-white rounded-lg transition-colors"
+                    {...buttonHoverProps}
+                  >
+                    <Unlink size={16} />
+                    Unlink
+                  </motion.button>
+                </div>
+
+                <div className="pt-2 space-y-3 border-t border-white/5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white">Show Bike Model</p>
+                      <p className="text-xs text-white/40">Display your bike model in Discord status</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showBikeModel}
+                        onChange={(e) => setShowBikeModel(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#5865F2]"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white">Show Current City</p>
+                      <p className="text-xs text-white/40">Display your current city in Discord status</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showCurrentCity}
+                        onChange={(e) => setShowCurrentCity(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#5865F2]"></div>
+                    </label>
+                  </div>
+                </div>
               </div>
             )}
           </motion.div>

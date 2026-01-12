@@ -28,6 +28,7 @@ export default function BackButtonHandler() {
     const isAtRootRoute = rootRoutes.includes(location.pathname);
 
     let listenerHandle: Awaited<ReturnType<typeof App.addListener>> | null = null;
+    let isMounted = true;
 
     // Set up the listener asynchronously
     App.addListener('backButton', ({ canGoBack }) => {
@@ -48,11 +49,17 @@ export default function BackButtonHandler() {
         navigate('/dashboard', { replace: true });
       }
     }).then((handle) => {
-      listenerHandle = handle;
+      if (isMounted) {
+        listenerHandle = handle;
+      } else {
+        // Component unmounted before listener was set up, remove it immediately
+        handle.remove();
+      }
     });
 
     // Cleanup listener on unmount
     return () => {
+      isMounted = false;
       if (listenerHandle) {
         listenerHandle.remove();
       }

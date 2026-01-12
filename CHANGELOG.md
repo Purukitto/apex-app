@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.11.3](https://github.com/Purukitto/apex-app/compare/v0.11.2...v0.11.3) (2026-01-12)
+
+
+### Bug Fixes
+
+* **BackButtonHandler:** ensure proper listener cleanup on component unmount ([0785539](https://github.com/Purukitto/apex-app/commit/0785539c494e4b6869c92dfc07bfd6c8e42db191))
+* **BackButtonHandler:** improve back button listener management with proper cleanup ([0e83624](https://github.com/Purukitto/apex-app/commit/0e836242138c4aa79453e3ee52537a15af5f7a3c))
+
+
+### Code Refactoring
+
+* **UpdateModal:** filter release notes to include only specified sections ([cdc3f63](https://github.com/Purukitto/apex-app/commit/cdc3f639790961636a17ed9f2697e9efc55a2b7a))
+
 ### [0.11.2](https://github.com/Purukitto/apex-app/compare/v0.11.1...v0.11.2) (2026-01-12)
 
 

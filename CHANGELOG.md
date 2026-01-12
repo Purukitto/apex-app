@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.11.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.11.0) (2026-01-12)
+
+
+### Features
+
+* **android:** add capacitor-filesystem and capacitor-share modules to project dependencies ([f76949b](https://github.com/Purukitto/apex-app/commit/f76949ba479edb601e236cdce386a3418977af6d))
+* **shareRide:** implement ride image sharing functionality with clipboard and download options ([c0acc75](https://github.com/Purukitto/apex-app/commit/c0acc7591c00a5aba8caa254f96fc5e5e4bfde26))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+* **dependencies:** update package-lock and package.json to include new dependencies and licenses ([977727f](https://github.com/Purukitto/apex-app/commit/977727f021621580c82002d40e198162fec35b14))
+
 ### [0.10.2](https://github.com/Purukitto/apex-app/compare/v0.10.1...v0.10.2) (2026-01-11)
 
 

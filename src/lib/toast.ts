@@ -30,8 +30,8 @@ export const apexToast = {
     promise: Promise<T>,
     messages: {
       loading: string;
-      success: string;
-      error: string;
+      success: string | ((data: T) => string);
+      error: string | ((error: unknown) => string);
     }
   ) => {
     return toast.promise(promise, {

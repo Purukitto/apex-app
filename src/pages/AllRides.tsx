@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { useBikes } from '../hooks/useBikes';
 import { useRides } from '../hooks/useRides';
 import { supabase } from '../lib/supabaseClient';
+import { shareRideImage } from '../lib/shareRide';
+import { apexToast } from '../lib/toast';
 import {
   MapPin,
   Timer,
@@ -11,6 +14,7 @@ import {
   Edit2,
   Trash2,
   X,
+  Share2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -255,6 +259,44 @@ export default function AllRides() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleShareClick = async (ride: Ride) => {
+    const bike = bikeMap.get(ride.bike_id);
+    
+    try {
+      if (Capacitor.isNativePlatform()) {
+        // Native: Use promise toast for share
+        apexToast.promise(
+          shareRideImage(ride, bike),
+          {
+            loading: 'Generating share image...',
+            success: 'Ride shared',
+            error: 'Failed to share ride',
+          }
+        );
+      } else {
+        // Web: Show loading, then appropriate success message based on method
+        const sharePromise = shareRideImage(ride, bike).then((method) => {
+          // Return success message based on method
+          return method === 'clipboard' 
+            ? 'Image copied to clipboard' 
+            : 'Image downloaded';
+        });
+        
+        apexToast.promise(
+          sharePromise,
+          {
+            loading: 'Generating share image...',
+            success: (message) => message,
+            error: 'Failed to share ride',
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Error sharing ride:', error);
+      apexToast.error('Failed to share ride');
+    }
+  };
+
   if (isLoading && rides.length === 0) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
@@ -406,6 +448,17 @@ export default function AllRides() {
 
                           {/* Action Buttons */}
                           <div className="flex gap-2 pt-2">
+                            <motion.button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleShareClick(ride);
+                              }}
+                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-apex-green text-sm hover:bg-apex-green/20 transition-colors"
+                              {...buttonHoverProps}
+                            >
+                              <Share2 size={16} />
+                              Share
+                            </motion.button>
                             <motion.button
                               onClick={(e) => {
                                 e.stopPropagation();

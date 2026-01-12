@@ -22,7 +22,32 @@ export default function UpdateModal({
   const formatReleaseNotes = (notes: string): string => {
     if (!notes) return 'No release notes available.';
     
-    return notes
+    // Remove "Miscellaneous Chores" section (case-insensitive, handles variations)
+    // Split by sections and filter out Miscellaneous Chores
+    const lines = notes.split('\n');
+    const filteredLines: string[] = [];
+    let skipSection = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      // Check if this is a Miscellaneous Chores header
+      if (/^###\s+Misc(ellaneous)?\s+Chores\s*$/i.test(line)) {
+        skipSection = true;
+        continue;
+      }
+      // Check if we hit a new section header (stop skipping)
+      if (/^###\s+/.test(line) || /^##\s+/.test(line)) {
+        skipSection = false;
+      }
+      // Only add line if we're not skipping
+      if (!skipSection) {
+        filteredLines.push(line);
+      }
+    }
+    
+    const cleaned = filteredLines.join('\n');
+    
+    return cleaned
       // Remove markdown headers
       .replace(/^###\s+/gm, '')
       .replace(/^##\s+/gm, '')

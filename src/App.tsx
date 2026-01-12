@@ -8,10 +8,12 @@ import AllRides from './pages/AllRides';
 import MainLayout from './components/layout/MainLayout';
 import AuthGuard from './components/AuthGuard';
 import AppUpdateChecker from './components/AppUpdateChecker';
+import BackButtonHandler from './components/BackButtonHandler';
 
 function App() {
   return (
     <BrowserRouter>
+      <BackButtonHandler />
       <AppUpdateChecker />
       <Routes>
         <Route path="/login" element={<Login />} />

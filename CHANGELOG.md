@@ -2,6 +2,49 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.11.3](https://github.com/Purukitto/apex-app/compare/v0.11.2...v0.11.3) (2026-01-12)
+
+
+### Bug Fixes
+
+* **BackButtonHandler:** ensure proper listener cleanup on component unmount ([0785539](https://github.com/Purukitto/apex-app/commit/0785539c494e4b6869c92dfc07bfd6c8e42db191))
+* **BackButtonHandler:** improve back button listener management with proper cleanup ([0e83624](https://github.com/Purukitto/apex-app/commit/0e836242138c4aa79453e3ee52537a15af5f7a3c))
+
+
+### Code Refactoring
+
+* **UpdateModal:** filter release notes to include only specified sections ([cdc3f63](https://github.com/Purukitto/apex-app/commit/cdc3f639790961636a17ed9f2697e9efc55a2b7a))
+
+### [0.11.2](https://github.com/Purukitto/apex-app/compare/v0.11.1...v0.11.2) (2026-01-12)
+
+
+### Features
+
+* add BackButtonHandler component to App for improved navigation management ([1fbdd9d](https://github.com/Purukitto/apex-app/commit/1fbdd9dd349dcb289f7e2c9197620c04983f593e))
+
+
+### Bug Fixes
+
+* remove Miscellaneous Chores section from update modal changelog ([9de4d45](https://github.com/Purukitto/apex-app/commit/9de4d4586b5953a4757ea3ee505e42561ee81608))
+
+
+### Miscellaneous Chores
+
+* add capacitor-app and update dependencies in Android and iOS projects ([4106a72](https://github.com/Purukitto/apex-app/commit/4106a72713a7f01a40e4d614824822e0ad23a530))
+* **dependencies:** add @capacitor/app version 8.0.0 to package.json and package-lock.json ([9d0ae55](https://github.com/Purukitto/apex-app/commit/9d0ae55c29ab9527f46b6bfaea5600a97489ba4c))
+
+### [0.11.1](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.11.1) (2026-01-12)
+
+
+### Bug Fixes
+
+* update checker auto-run, markdown formatting, and button visibility ([0f3aa17](https://github.com/Purukitto/apex-app/commit/0f3aa176e7857d5ac2271767cafbc8735f9aa263))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+
 ## [0.11.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.11.0) (2026-01-12)
 
 

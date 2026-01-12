@@ -20,13 +20,73 @@ export default function UpdateModal({
 
   // Parse release notes (markdown-like formatting)
   const formatReleaseNotes = (notes: string): string => {
-    // Convert markdown headers to readable format
-    return notes
+    if (!notes) return 'No release notes available.';
+    
+    // Only keep Features, Bug Fixes, Styles, Performance, and Security sections
+    // All other sections (Miscellaneous Chores, Code Refactoring, Build System, etc.) are filtered out
+    const allowedSections = ['Features', 'Bug Fixes', 'Styles', 'Performance', 'Security'];
+    const lines = notes.split('\n');
+    const filteredLines: string[] = [];
+    let includeSection = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Check if this is a section header (### Section Name)
+      const sectionMatch = line.match(/^###\s+(.+?)\s*$/);
+      if (sectionMatch) {
+        const sectionName = sectionMatch[1].trim();
+        // Check if this section should be included
+        includeSection = allowedSections.some(
+          allowed => sectionName.toLowerCase() === allowed.toLowerCase()
+        );
+        // Only add the header if it's an allowed section
+        if (includeSection) {
+          filteredLines.push(line);
+        }
+        continue;
+      }
+      
+      // Check if we hit a version header (## or ### at start of version)
+      if (/^##\s+/.test(line) || /^###\s+\[/.test(line)) {
+        // Version headers are always included
+        includeSection = false;
+        filteredLines.push(line);
+        continue;
+      }
+      
+      // Only add line if we're in an allowed section
+      if (includeSection) {
+        filteredLines.push(line);
+      }
+    }
+    
+    const cleaned = filteredLines.join('\n');
+    
+    return cleaned
+      // Remove markdown headers
       .replace(/^###\s+/gm, '')
       .replace(/^##\s+/gm, '')
       .replace(/^#\s+/gm, '')
+      // Remove bold/italic markdown
       .replace(/\*\*(.*?)\*\*/g, '$1')
       .replace(/\*(.*?)\*/g, '$1')
+      // Remove GitHub commit links like ([f76949b]) or ([3ddecd5])
+      .replace(/\(\[[a-f0-9]{7,}\]\)/gi, '')
+      // Remove full GitHub URLs (both markdown links and plain URLs)
+      .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1') // Markdown links [text](url)
+      .replace(/https?:\/\/github\.com\/[^\s)]+/gi, '') // Plain GitHub URLs
+      // Remove commit hash references at end of lines
+      .replace(/\s+\([a-f0-9]{7,}\)\s*$/gm, '')
+      // Clean up multiple spaces
+      .replace(/\s{2,}/g, ' ')
+      // Clean up multiple newlines (keep max 2)
+      .replace(/\n{3,}/g, '\n\n')
+      // Trim each line
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .join('\n')
       .trim();
   };
 
@@ -38,7 +98,7 @@ export default function UpdateModal({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-[100]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -46,9 +106,9 @@ export default function UpdateModal({
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pb-24">
             <motion.div
-              className="bg-apex-black border border-apex-green/40 rounded-lg p-6 w-full max-w-lg relative z-50 max-h-[90vh] flex flex-col"
+              className="bg-apex-black border border-apex-green/40 rounded-lg p-6 w-full max-w-lg relative z-[100] max-h-[85vh] flex flex-col"
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -83,19 +143,19 @@ export default function UpdateModal({
               </div>
 
               {/* Release Notes */}
-              <div className="flex-1 overflow-y-auto mb-6">
+              <div className="flex-1 overflow-y-auto mb-6 min-h-0">
                 <div className="bg-apex-white/5 rounded-lg p-4 border border-apex-white/10">
                   <h4 className="text-sm font-semibold text-apex-white mb-3 uppercase tracking-wide">
                     What's New
                   </h4>
-                  <div className="text-sm text-apex-white/80 whitespace-pre-wrap leading-relaxed">
+                  <div className="text-sm text-apex-white/80 whitespace-pre-wrap leading-relaxed break-words overflow-wrap-anywhere">
                     {formattedNotes || 'No release notes available.'}
                   </div>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3">
+              <div className="flex gap-3 mt-auto pt-4 border-t border-apex-white/10">
                 <motion.button
                   onClick={onClose}
                   className="flex-1 px-4 py-2.5 text-apex-white/60 hover:text-apex-white border border-apex-white/10 hover:border-apex-white/20 rounded-lg transition-colors"

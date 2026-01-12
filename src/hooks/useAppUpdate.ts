@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 import { Browser } from '@capacitor/browser';
@@ -153,7 +153,6 @@ export function useAppUpdate() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const hasCheckedOnMount = useRef(false);
 
   const checkForUpdate = useCallback(async (force = false): Promise<UpdateInfo | null> => {
     // Only check on native platforms
@@ -271,21 +270,8 @@ export function useAppUpdate() {
     setUpdateInfo(null);
   }, [updateInfo]);
 
-  // Auto-check on mount (only on native platforms)
-  useEffect(() => {
-    if (Capacitor.isNativePlatform() && !hasCheckedOnMount.current) {
-      hasCheckedOnMount.current = true;
-      // Defer the check to avoid calling setState synchronously in effect
-      const timerId = setTimeout(() => {
-        checkForUpdate(false).catch((error) => {
-          // Silently fail for background checks
-          console.log('Background update check failed:', error);
-        });
-      }, 0);
-      
-      return () => clearTimeout(timerId);
-    }
-  }, [checkForUpdate]);
+  // Note: Auto-check on mount is handled by AppUpdateChecker component
+  // This hook only provides the checkForUpdate function
 
   return {
     updateInfo,

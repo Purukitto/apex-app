@@ -22,25 +22,41 @@ export default function UpdateModal({
   const formatReleaseNotes = (notes: string): string => {
     if (!notes) return 'No release notes available.';
     
-    // Remove "Miscellaneous Chores" section (case-insensitive, handles variations)
-    // Split by sections and filter out Miscellaneous Chores
+    // Only keep Features, Bug Fixes, Styles, Performance, and Security sections
+    // All other sections (Miscellaneous Chores, Code Refactoring, Build System, etc.) are filtered out
+    const allowedSections = ['Features', 'Bug Fixes', 'Styles', 'Performance', 'Security'];
     const lines = notes.split('\n');
     const filteredLines: string[] = [];
-    let skipSection = false;
+    let includeSection = false;
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      // Check if this is a Miscellaneous Chores header
-      if (/^###\s+Misc(ellaneous)?\s+Chores\s*$/i.test(line)) {
-        skipSection = true;
+      
+      // Check if this is a section header (### Section Name)
+      const sectionMatch = line.match(/^###\s+(.+?)\s*$/);
+      if (sectionMatch) {
+        const sectionName = sectionMatch[1].trim();
+        // Check if this section should be included
+        includeSection = allowedSections.some(
+          allowed => sectionName.toLowerCase() === allowed.toLowerCase()
+        );
+        // Only add the header if it's an allowed section
+        if (includeSection) {
+          filteredLines.push(line);
+        }
         continue;
       }
-      // Check if we hit a new section header (stop skipping)
-      if (/^###\s+/.test(line) || /^##\s+/.test(line)) {
-        skipSection = false;
+      
+      // Check if we hit a version header (## or ### at start of version)
+      if (/^##\s+/.test(line) || /^###\s+\[/.test(line)) {
+        // Version headers are always included
+        includeSection = false;
+        filteredLines.push(line);
+        continue;
       }
-      // Only add line if we're not skipping
-      if (!skipSection) {
+      
+      // Only add line if we're in an allowed section
+      if (includeSection) {
         filteredLines.push(line);
       }
     }

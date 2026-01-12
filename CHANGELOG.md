@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.11.1](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.11.1) (2026-01-12)
+
+
+### Bug Fixes
+
+* update checker auto-run, markdown formatting, and button visibility ([0f3aa17](https://github.com/Purukitto/apex-app/commit/0f3aa176e7857d5ac2271767cafbc8735f9aa263))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+
 ## [0.11.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.11.0) (2026-01-12)
 
 

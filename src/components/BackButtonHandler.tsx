@@ -27,7 +27,10 @@ export default function BackButtonHandler() {
     const rootRoutes = ['/dashboard', '/garage', '/ride', '/profile', '/login'];
     const isAtRootRoute = rootRoutes.includes(location.pathname);
 
-    const backButtonListener = App.addListener('backButton', ({ canGoBack }) => {
+    let listenerHandle: Awaited<ReturnType<typeof App.addListener>> | null = null;
+
+    // Set up the listener asynchronously
+    App.addListener('backButton', ({ canGoBack }) => {
       // Check if we can navigate back in browser history
       // window.history.length > 1 means there's at least one previous entry
       const hasHistory = window.history.length > 1;
@@ -44,11 +47,15 @@ export default function BackButtonHandler() {
         // Not at root route but no history - navigate to dashboard as fallback
         navigate('/dashboard', { replace: true });
       }
+    }).then((handle) => {
+      listenerHandle = handle;
     });
 
     // Cleanup listener on unmount
     return () => {
-      backButtonListener.remove();
+      if (listenerHandle) {
+        listenerHandle.remove();
+      }
     };
   }, [navigate, location.pathname]);
 

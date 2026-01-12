@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.11.2](https://github.com/Purukitto/apex-app/compare/v0.11.1...v0.11.2) (2026-01-12)
+
+
+### Features
+
+* add BackButtonHandler component to App for improved navigation management ([1fbdd9d](https://github.com/Purukitto/apex-app/commit/1fbdd9dd349dcb289f7e2c9197620c04983f593e))
+
+
+### Bug Fixes
+
+* remove Miscellaneous Chores section from update modal changelog ([9de4d45](https://github.com/Purukitto/apex-app/commit/9de4d4586b5953a4757ea3ee505e42561ee81608))
+
+
+### Miscellaneous Chores
+
+* add capacitor-app and update dependencies in Android and iOS projects ([4106a72](https://github.com/Purukitto/apex-app/commit/4106a72713a7f01a40e4d614824822e0ad23a530))
+* **dependencies:** add @capacitor/app version 8.0.0 to package.json and package-lock.json ([9d0ae55](https://github.com/Purukitto/apex-app/commit/9d0ae55c29ab9527f46b6bfaea5600a97489ba4c))
+
 ### [0.11.1](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.11.1) (2026-01-12)
 
 

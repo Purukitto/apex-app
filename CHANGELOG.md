@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.12.2](https://github.com/Purukitto/apex-app/compare/v0.12.1...v0.12.2) (2026-01-13)
+
+
+### Features
+
+* add 'All Rides' navigation item to BottomPillNav ([37d9a47](https://github.com/Purukitto/apex-app/commit/37d9a47d3ba045f8b6867e3efa3700d9d461ec1c))
+* enhance BackButtonHandler and BottomPillNav for improved navigation ([ccbd549](https://github.com/Purukitto/apex-app/commit/ccbd54901e544522073905cd94089f116a61d7b5))
+
 ### [0.12.1](https://github.com/Purukitto/apex-app/compare/v0.12.0...v0.12.1) (2026-01-13)
 
 

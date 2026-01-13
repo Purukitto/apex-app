@@ -47,5 +47,25 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>upi</string>
+		<string>phonepe</string>
+		<string>paytm</string>
+		<string>tez</string>
+		<string>bhim</string>
+		<string>gpay</string>
+		<string>amazonpay</string>
+		<string>credpay</string>
+		<string>freecharge</string>
+		<string>icici</string>
+		<string>myairtel</string>
+		<string>payzapp</string>
+		<string>axismobile</string>
+		<string>slice-upi</string>
+		<string>olamoney</string>
+		<string>sbiyono</string>
+		<string>kmb</string>
+	</array>
 </dict>
 </plist>

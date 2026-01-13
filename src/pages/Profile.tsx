@@ -8,6 +8,7 @@ import { Mail, LogOut, Save, User, MessageCircle, Link2, Unlink, Download, Refre
 import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
 import UpdateModal from '../components/UpdateModal';
+import DonationCard from '../components/profile/DonationCard';
 import { useThemeStore, PRIMARY_COLORS, BACKGROUND_COLORS, type BackgroundTheme, type PrimaryTheme } from '../stores/useThemeStore';
 import { applyTheme } from '../lib/theme';
 import { getAppVersion } from '../lib/version';
@@ -407,6 +408,9 @@ export default function Profile() {
               {signOut.isPending ? 'Signing out...' : 'Sign Out'}
             </motion.button>
           </motion.div>
+
+          {/* Support Development Section */}
+          <DonationCard />
 
           {/* Made with Love Footer */}
           <motion.div

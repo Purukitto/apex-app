@@ -10,8 +10,11 @@ import { Capacitor } from '@capacitor/core';
  * On iOS: Handles swipe-back gesture (if needed)
  * 
  * Behavior:
- * - If there's navigation history, navigates back using React Router
- * - If at root route with no history, exits the app (Android only)
+ * - If the current path is NOT /dashboard, navigate to /dashboard (replace: true)
+ * - If the current path IS /dashboard, exit the app
+ * 
+ * This ensures the Back button always brings the user "Home" first, then exits,
+ * rather than cycling through random tabs.
  */
 export default function BackButtonHandler() {
   const navigate = useNavigate();
@@ -23,30 +26,17 @@ export default function BackButtonHandler() {
       return;
     }
 
-    // Define root routes where we might want to exit the app
-    const rootRoutes = ['/dashboard', '/garage', '/ride', '/profile', '/login'];
-    const isAtRootRoute = rootRoutes.includes(location.pathname);
-
     let listenerHandle: Awaited<ReturnType<typeof App.addListener>> | null = null;
     let isMounted = true;
 
     // Set up the listener asynchronously
-    App.addListener('backButton', ({ canGoBack }) => {
-      // Check if we can navigate back in browser history
-      // window.history.length > 1 means there's at least one previous entry
-      const hasHistory = window.history.length > 1;
-
-      // Prioritize React Router navigation if we have history
-      if (canGoBack || hasHistory) {
-        // Navigate back using React Router
-        navigate(-1);
-      } else if (isAtRootRoute) {
-        // At root route with no history - exit the app
-        // Note: iOS doesn't have a hardware back button, so this is mainly for Android
-        App.exitApp();
-      } else {
-        // Not at root route but no history - navigate to dashboard as fallback
+    App.addListener('backButton', () => {
+      // If the current path is NOT /dashboard, navigate to /dashboard (replace: true)
+      if (location.pathname !== '/dashboard') {
         navigate('/dashboard', { replace: true });
+      } else {
+        // If the current path IS /dashboard, exit the app
+        App.exitApp();
       }
     }).then((handle) => {
       if (isMounted) {

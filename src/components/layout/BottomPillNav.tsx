@@ -34,7 +34,7 @@ export default function BottomPillNav() {
           return (
             <motion.button
               key={item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() => navigate(item.path, { replace: true })}
               className="px-8 py-3 rounded-full font-semibold text-zinc-950 flex items-center gap-2 shadow-lg"
               style={{ backgroundColor: primary }}
               {...buttonHoverProps}
@@ -48,7 +48,7 @@ export default function BottomPillNav() {
         return (
           <motion.button
             key={item.path}
-            onClick={() => navigate(item.path)}
+            onClick={() => navigate(item.path, { replace: true })}
             className={`p-2 rounded-full transition-colors ${
               active
                 ? 'text-white bg-white/10'

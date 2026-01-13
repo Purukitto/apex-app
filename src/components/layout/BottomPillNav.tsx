@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Activity, Motorbike, Radio } from 'lucide-react';
+import { Activity, Motorbike, Radio, List } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { buttonHoverProps } from '../../lib/animations';
 import { useThemeColors } from '../../hooks/useThemeColors';
@@ -12,6 +12,7 @@ export default function BottomPillNav() {
   const navItems = [
     { path: '/dashboard', icon: Activity, label: 'Dashboard' },
     { path: '/garage', icon: Motorbike, label: 'Garage' },
+    { path: '/rides', icon: List, label: 'All Rides' },
     { path: '/ride', icon: Radio, label: 'Ride' },
   ];
 

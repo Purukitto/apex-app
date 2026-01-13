@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.12.2](https://github.com/Purukitto/apex-app/compare/v0.12.1...v0.12.2) (2026-01-13)
+
+
+### Features
+
+* add 'All Rides' navigation item to BottomPillNav ([37d9a47](https://github.com/Purukitto/apex-app/commit/37d9a47d3ba045f8b6867e3efa3700d9d461ec1c))
+* enhance BackButtonHandler and BottomPillNav for improved navigation ([ccbd549](https://github.com/Purukitto/apex-app/commit/ccbd54901e544522073905cd94089f116a61d7b5))
+
+### [0.12.1](https://github.com/Purukitto/apex-app/compare/v0.12.0...v0.12.1) (2026-01-13)
+
+
+### Features
+
+* add signal processing and pocket mode detection ([24b5880](https://github.com/Purukitto/apex-app/commit/24b5880d982dd0a3ea8d4d191a0f5f98a6de046e))
+
+## [0.12.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.12.0) (2026-01-13)
+
+
+### Features
+
+* add Support Development donation module to Profile page ([7d54571](https://github.com/Purukitto/apex-app/commit/7d545711cd1a8a201af8102bb05d0af86ceab29d))
+* enhance DonationCard with UPI modal and clipboard functionality ([2db6f20](https://github.com/Purukitto/apex-app/commit/2db6f20aa79df2dfcf981ad523bc99a6227a13f8))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+* **deps-dev:** bump the development-dependencies group with 3 updates ([#44](https://github.com/Purukitto/apex-app/issues/44)) ([75640f6](https://github.com/Purukitto/apex-app/commit/75640f6bb151a7d0522fcd8e1afa37cc9e474ce5))
+* **deps:** bump the production-dependencies group with 2 updates ([#43](https://github.com/Purukitto/apex-app/issues/43)) ([9f4ee8d](https://github.com/Purukitto/apex-app/commit/9f4ee8dc9773a144873681c5ffee24d4f9e9ce58))
+
 ### [0.11.3](https://github.com/Purukitto/apex-app/compare/v0.11.2...v0.11.3) (2026-01-12)
 
 

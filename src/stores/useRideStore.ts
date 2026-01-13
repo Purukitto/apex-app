@@ -14,6 +14,7 @@ interface RideStore {
   isPaused: boolean;
   selectedBike: Bike | null;
   startTime: Date | null;
+  isPocketMode: boolean;
   
   // Telemetry
   coords: Coordinate[];
@@ -27,6 +28,7 @@ interface RideStore {
   setPaused: (paused: boolean) => void;
   setSelectedBike: (bike: Bike | null) => void;
   setStartTime: (time: Date | null) => void;
+  setPocketMode: (pocketMode: boolean) => void;
   addCoord: (coord: Coordinate) => void;
   setCurrentLean: (lean: number) => void;
   updateMaxLean: (left: number, right: number) => void;
@@ -40,6 +42,7 @@ export const useRideStore = create<RideStore>((set) => ({
   isPaused: false,
   selectedBike: null,
   startTime: null,
+  isPocketMode: false,
   coords: [],
   currentLean: 0,
   maxLeanLeft: 0,
@@ -51,6 +54,7 @@ export const useRideStore = create<RideStore>((set) => ({
   setPaused: (paused) => set({ isPaused: paused }),
   setSelectedBike: (bike) => set({ selectedBike: bike }),
   setStartTime: (time) => set({ startTime: time }),
+  setPocketMode: (pocketMode) => set({ isPocketMode: pocketMode }),
   addCoord: (coord) => set((state) => ({ coords: [...state.coords, coord] })),
   setCurrentLean: (lean) => set({ currentLean: lean }),
   updateMaxLean: (left, right) => set({ maxLeanLeft: left, maxLeanRight: right }),
@@ -58,6 +62,7 @@ export const useRideStore = create<RideStore>((set) => ({
   resetRide: () => set({
     isRecording: false,
     isPaused: false,
+    isPocketMode: false,
     coords: [],
     currentLean: 0,
     maxLeanLeft: 0,

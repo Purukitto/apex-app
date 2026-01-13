@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation, type Position } from '@capacitor/geolocation';
 import { Motion, type AccelListenerEvent } from '@capacitor/motion';
@@ -65,7 +65,15 @@ export const useRideTracking = () => {
   const lastNonZeroSpeedTimeRef = useRef<number | null>(null);
   const autoPauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rawRotationRef = useRef<number>(0); // Track current raw rotation for calibration
+  const prevSmoothRollRef = useRef<number>(0); // Track previous smoothed roll for EMA
+  const currentSpeedRef = useRef<number>(0); // Track current speed in m/s for motion lock
   const CALIBRATION_STORAGE_KEY = 'apex-calibration-offset';
+  
+  // Signal processing constants
+  const ALPHA = 0.15; // Exponential smoothing factor
+  const MAX_LEAN = 70; // Maximum realistic lean angle in degrees
+  const MOTION_LOCK_SPEED_KMH = 10; // Speed threshold for motion lock (km/h)
+  const MOTION_LOCK_SPEED_MS = useMemo(() => MOTION_LOCK_SPEED_KMH / 3.6, []); // Convert to m/s (~2.78 m/s)
   
   // Load calibration offset from localStorage on mount
   const [calibrationOffset, setCalibrationOffset] = useState<number>(() => {
@@ -76,6 +84,35 @@ export const useRideTracking = () => {
       return 0;
     }
   });
+
+  /**
+   * Apply signal processing to raw roll angle:
+   * Processing order:
+   * 1. Motion lock (stationary filter) - Check first to avoid unnecessary smoothing
+   * 2. Exponential smoothing (EMA) - Smooth the signal
+   * 3. Reality clamping - Cap at maximum realistic lean angle
+   */
+  const processLeanAngle = useCallback((rawRollDeg: number): number => {
+    // Step 1: Motion Lock (Stationary Filter)
+    // If speed < 10 km/h, force lean to 0 and reset smoothing
+    // This prevents recording "handling noise" while walking or mounting
+    const currentSpeed = currentSpeedRef.current;
+    if (currentSpeed < MOTION_LOCK_SPEED_MS) {
+      prevSmoothRollRef.current = 0; // Reset smoothing when stationary
+      return 0;
+    }
+    
+    // Step 2: Exponential Smoothing (EMA)
+    // Makes the needle move fluidly like a physical gauge instead of jittering
+    const smoothRoll = (rawRollDeg * ALPHA) + (prevSmoothRollRef.current * (1 - ALPHA));
+    prevSmoothRollRef.current = smoothRoll;
+    
+    // Step 3: Reality Clamping
+    // Prevent graph distortion from garbage data (like 98° readings)
+    const finalLean = Math.min(Math.abs(smoothRoll), MAX_LEAN);
+    
+    return finalLean;
+  }, [MOTION_LOCK_SPEED_MS]);
 
   /**
    * Calculate distance between two coordinates using Haversine formula
@@ -410,6 +447,11 @@ export const useRideTracking = () => {
 
       console.log('Starting ride tracking...');
       const startTimeNow = new Date();
+      
+      // Reset signal processing state
+      prevSmoothRollRef.current = 0;
+      currentSpeedRef.current = 0;
+      
       setState((prev) => ({
         ...prev,
         isRecording: true,
@@ -625,6 +667,9 @@ export const useRideTracking = () => {
         if (position?.coords) {
           const speed = position.coords.speed ?? 0; // m/s, null if unavailable
           const now = Date.now();
+          
+          // Update current speed ref for motion lock filter
+          currentSpeedRef.current = speed && speed > 0 ? speed : 0;
 
           setState((prev) => {
             const newCoord: Coordinate = {
@@ -719,15 +764,18 @@ export const useRideTracking = () => {
     checkPermissions,
   ]);
 
+  // Track pocket mode state for effect dependencies
+  const isPocketMode = useRideStore((state) => state.isPocketMode);
+
   // Motion Tracking Effect (Lean Angle)
   useEffect(() => {
-    if (!state.isRecording || state.isPaused || !isMobile) {
-      // Clean up listener if recording stops
+    if (!state.isRecording || state.isPaused || !isMobile || isPocketMode) {
+      // Clean up listener if recording stops or pocket mode is active
       if (motionListenerRef.current) {
         try {
           motionListenerRef.current.remove();
           motionListenerRef.current = undefined;
-          console.log('Motion listener removed (recording stopped)');
+          console.log('Motion listener removed (recording stopped or pocket mode active)');
         } catch (error) {
           console.warn('Error removing motion listener:', error);
           motionListenerRef.current = undefined;
@@ -828,34 +876,51 @@ export const useRideTracking = () => {
             rawRotationRef.current = rollDeg;
             
             // Apply calibration offset
-            const leanAngle = Math.abs(rollDeg - calibrationOffset);
+            const rawRollWithCalibration = rollDeg - calibrationOffset;
+            
+            // Defensive check: If pocket mode is active, don't update lean angle
+            // Note: The effect should have stopped this listener when pocket mode activated,
+            // but this check provides defense-in-depth against race conditions
+            const isPocketMode = useRideStore.getState().isPocketMode;
+            if (isPocketMode) {
+              // Hold last valid lean angle, don't update
+              return;
+            }
+            
+            // Apply signal processing: smoothing, motion lock, and clamping
+            const processedLeanAngle = processLeanAngle(rawRollWithCalibration);
             
             if (shouldLog) {
               console.log(`[Accel ${callbackCallCount}] Calculated:`, {
                 rollDeg: rollDeg.toFixed(2),
-                leanAngle: leanAngle.toFixed(2),
+                rawRollWithCalibration: rawRollWithCalibration.toFixed(2),
+                processedLeanAngle: processedLeanAngle.toFixed(2),
+                currentSpeed: currentSpeedRef.current.toFixed(2),
               });
             }
             
             setState((prev) => {
-              const newCurrentLean = Math.round(leanAngle * 10) / 10;
+              const newCurrentLean = Math.round(processedLeanAngle * 10) / 10;
               let newMaxLeanLeft = prev.maxLeanLeft;
               let newMaxLeanRight = prev.maxLeanRight;
               
-              if (rollDeg < 0) {
-                // Leaning left
-                if (leanAngle > prev.maxLeanLeft) {
-                  newMaxLeanLeft = newCurrentLean;
-                  if (shouldLog) {
-                    console.log(`[Accel ${callbackCallCount}] New max lean left: ${newMaxLeanLeft.toFixed(1)}°`);
+              // Only update max lean if we have a valid processed angle (not zero from motion lock)
+              if (processedLeanAngle > 0) {
+                if (rawRollWithCalibration < 0) {
+                  // Leaning left
+                  if (processedLeanAngle > prev.maxLeanLeft) {
+                    newMaxLeanLeft = newCurrentLean;
+                    if (shouldLog) {
+                      console.log(`[Accel ${callbackCallCount}] New max lean left: ${newMaxLeanLeft.toFixed(1)}°`);
+                    }
                   }
-                }
-              } else {
-                // Leaning right
-                if (leanAngle > prev.maxLeanRight) {
-                  newMaxLeanRight = newCurrentLean;
-                  if (shouldLog) {
-                    console.log(`[Accel ${callbackCallCount}] New max lean right: ${newMaxLeanRight.toFixed(1)}°`);
+                } else {
+                  // Leaning right
+                  if (processedLeanAngle > prev.maxLeanRight) {
+                    newMaxLeanRight = newCurrentLean;
+                    if (shouldLog) {
+                      console.log(`[Accel ${callbackCallCount}] New max lean right: ${newMaxLeanRight.toFixed(1)}°`);
+                    }
                   }
                 }
               }
@@ -947,9 +1012,20 @@ export const useRideTracking = () => {
           rawRotationRef.current = rollDeg;
           
           // Apply calibration offset
-          // The lean angle is the absolute value of roll minus calibration
           // Negative roll = leaning left, Positive roll = leaning right
-          const leanAngle = Math.abs(rollDeg - calibrationOffset);
+          const rawRollWithCalibration = rollDeg - calibrationOffset;
+          
+          // Defensive check: If pocket mode is active, don't update lean angle
+          // Note: The effect should have stopped this listener when pocket mode activated,
+          // but this check provides defense-in-depth against race conditions
+          const isPocketMode = useRideStore.getState().isPocketMode;
+          if (isPocketMode) {
+            // Hold last valid lean angle, don't update
+            return;
+          }
+          
+          // Apply signal processing: smoothing, motion lock, and clamping
+          const processedLeanAngle = processLeanAngle(rawRollWithCalibration);
           
           // Log every callback for first 10, then every 10th
           const shouldLog = callbackCallCount <= 10 || callbackCallCount % 10 === 0;
@@ -959,32 +1035,37 @@ export const useRideTracking = () => {
               y: y.toFixed(3),
               z: z.toFixed(3),
               rollDeg: rollDeg.toFixed(2),
-              leanAngle: leanAngle.toFixed(2),
+              rawRollWithCalibration: rawRollWithCalibration.toFixed(2),
+              processedLeanAngle: processedLeanAngle.toFixed(2),
+              currentSpeed: currentSpeedRef.current.toFixed(2),
             });
           }
 
           setState((prev) => {
             // Update current lean
-            const newCurrentLean = Math.round(leanAngle * 10) / 10; // Round to 1 decimal
+            const newCurrentLean = Math.round(processedLeanAngle * 10) / 10; // Round to 1 decimal
 
             // Peak filter: Only update max if new value is higher
             let newMaxLeanLeft = prev.maxLeanLeft;
             let newMaxLeanRight = prev.maxLeanRight;
 
-            if (rollDeg < 0) {
-              // Leaning left (negative roll)
-              if (leanAngle > prev.maxLeanLeft) {
-                newMaxLeanLeft = newCurrentLean;
-                if (shouldLog) {
-                  console.log(`[Motion ${callbackCallCount}] New max lean left: ${newMaxLeanLeft.toFixed(1)}°`);
+            // Only update max lean if we have a valid processed angle (not zero from motion lock)
+            if (processedLeanAngle > 0) {
+              if (rawRollWithCalibration < 0) {
+                // Leaning left (negative roll)
+                if (processedLeanAngle > prev.maxLeanLeft) {
+                  newMaxLeanLeft = newCurrentLean;
+                  if (shouldLog) {
+                    console.log(`[Motion ${callbackCallCount}] New max lean left: ${newMaxLeanLeft.toFixed(1)}°`);
+                  }
                 }
-              }
-            } else {
-              // Leaning right (positive roll)
-              if (leanAngle > prev.maxLeanRight) {
-                newMaxLeanRight = newCurrentLean;
-                if (shouldLog) {
-                  console.log(`[Motion ${callbackCallCount}] New max lean right: ${newMaxLeanRight.toFixed(1)}°`);
+              } else {
+                // Leaning right (positive roll)
+                if (processedLeanAngle > prev.maxLeanRight) {
+                  newMaxLeanRight = newCurrentLean;
+                  if (shouldLog) {
+                    console.log(`[Motion ${callbackCallCount}] New max lean right: ${newMaxLeanRight.toFixed(1)}°`);
+                  }
                 }
               }
             }
@@ -1040,7 +1121,7 @@ export const useRideTracking = () => {
         }
       }
     };
-  }, [state.isRecording, state.isPaused, isMobile, calibrationOffset]);
+  }, [state.isRecording, state.isPaused, isMobile, calibrationOffset, isPocketMode, processLeanAngle]);
 
   /**
    * Calibrate the lean angle sensor by setting offset to current raw rotation

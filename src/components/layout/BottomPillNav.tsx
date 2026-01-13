@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Activity, Motorbike, Radio } from 'lucide-react';
+import { Activity, Motorbike, Radio, List } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { buttonHoverProps } from '../../lib/animations';
 import { useThemeColors } from '../../hooks/useThemeColors';
@@ -12,6 +12,7 @@ export default function BottomPillNav() {
   const navItems = [
     { path: '/dashboard', icon: Activity, label: 'Dashboard' },
     { path: '/garage', icon: Motorbike, label: 'Garage' },
+    { path: '/rides', icon: List, label: 'All Rides' },
     { path: '/ride', icon: Radio, label: 'Ride' },
   ];
 
@@ -33,7 +34,7 @@ export default function BottomPillNav() {
           return (
             <motion.button
               key={item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() => navigate(item.path, { replace: true })}
               className="px-8 py-3 rounded-full font-semibold text-zinc-950 flex items-center gap-2 shadow-lg"
               style={{ backgroundColor: primary }}
               {...buttonHoverProps}
@@ -47,7 +48,7 @@ export default function BottomPillNav() {
         return (
           <motion.button
             key={item.path}
-            onClick={() => navigate(item.path)}
+            onClick={() => navigate(item.path, { replace: true })}
             className={`p-2 rounded-full transition-colors ${
               active
                 ? 'text-white bg-white/10'

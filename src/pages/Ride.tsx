@@ -10,6 +10,8 @@ import { Motorbike, Gauge, Copy, Check } from 'lucide-react';
 import { apexToast } from '../lib/toast';
 import type { Bike as BikeType } from '../types/database';
 import QRCode from 'react-qr-code';
+import { PocketCurtain } from '../components/PocketCurtain';
+import { usePocketModeDetection } from '../hooks/usePocketModeDetection';
 
 /**
  * Web Fallback Component
@@ -346,6 +348,11 @@ export default function Ride() {
   const selectedBike = useRideStore((state) => state.selectedBike);
   const setSelectedBike = useRideStore((state) => state.setSelectedBike);
   const resetRide = useRideStore((state) => state.resetRide);
+  const isPocketMode = useRideStore((state) => state.isPocketMode);
+  const setPocketMode = useRideStore((state) => state.setPocketMode);
+
+  // Detect proximity sensor for pocket mode
+  usePocketModeDetection();
 
   const [showBikeSelection, setShowBikeSelection] = useState(false);
   const [showSafetyWarning, setShowSafetyWarning] = useState(true);
@@ -595,30 +602,37 @@ export default function Ride() {
   }
 
   return (
-    <motion.div
-      className="h-full bg-apex-black p-4 md:p-6 overflow-y-auto"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      key={isRecording ? 'recording' : 'ready'}
-    >
-      {/* Safety Warning */}
-      <AnimatePresence>
-        {showSafetyWarning && isRecording && (
-          <motion.div
-            className="fixed left-1/2 -translate-x-1/2 z-50 bg-apex-green/10 border border-apex-green/40 rounded-lg px-6 py-3 max-w-md"
-            style={{ top: 'calc(3.5rem + max(env(safe-area-inset-top), 24px))' }}
-            initial={{ opacity: 1, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <p className="text-apex-green text-center font-semibold text-sm">
-              Keep your eyes on the road
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <>
+      {/* Pocket Mode Overlay */}
+      <PocketCurtain
+        isActive={isPocketMode}
+        onDismiss={() => setPocketMode(false)}
+      />
+
+      <motion.div
+        className="h-full bg-apex-black p-4 md:p-6 overflow-y-auto"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        key={isRecording ? 'recording' : 'ready'}
+      >
+        {/* Safety Warning */}
+        <AnimatePresence>
+          {showSafetyWarning && isRecording && (
+            <motion.div
+              className="fixed left-1/2 -translate-x-1/2 z-50 bg-apex-green/10 border border-apex-green/40 rounded-lg px-6 py-3 max-w-md"
+              style={{ top: 'calc(3.5rem + max(env(safe-area-inset-top), 24px))' }}
+              initial={{ opacity: 1, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <p className="text-apex-green text-center font-semibold text-sm">
+                Keep your eyes on the road
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       {/* Bike Selection Modal */}
       <BikeSelectionModal
@@ -923,5 +937,6 @@ export default function Ride() {
         </div>
       )}
     </motion.div>
+    </>
   );
 }

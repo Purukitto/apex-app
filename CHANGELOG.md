@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.12.1](https://github.com/Purukitto/apex-app/compare/v0.12.0...v0.12.1) (2026-01-13)
+
+
+### Features
+
+* add signal processing and pocket mode detection ([24b5880](https://github.com/Purukitto/apex-app/commit/24b5880d982dd0a3ea8d4d191a0f5f98a6de046e))
+
 ## [0.12.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.12.0) (2026-01-13)
 
 

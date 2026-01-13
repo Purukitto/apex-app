@@ -49,7 +49,7 @@
     "@supabase/supabase-js": "^2.90.1",
     "@tanstack/react-query": "^5.90.16",
     "date-fns": "^4.1.0",
-    "framer-motion": "^12.24.12",
+    "framer-motion": "^12.26.1",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
@@ -57,7 +57,7 @@
     "react-qr-code": "^2.0.18",
     "react-router-dom": "^7.12.0",
     "sonner": "^2.0.7",
-    "zustand": "^5.0.9"
+    "zustand": "^5.0.10"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",

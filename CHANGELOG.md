@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.12.3](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.12.3) (2026-01-14)
+
+
+### Features
+
+* enhance app update functionality with modal support ([a4a3df1](https://github.com/Purukitto/apex-app/commit/a4a3df18d621c862b45517755c1afb9ad4cc95a6))
+
+
+### Bug Fixes
+
+* **useAppUpdate:** update dependencies in useEffect for improved state management ([f7f508c](https://github.com/Purukitto/apex-app/commit/f7f508c8d52a53c4b016d9fd1b18beebc9c2afb6))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+* **deps-dev:** bump the development-dependencies group with 3 updates ([#44](https://github.com/Purukitto/apex-app/issues/44)) ([75640f6](https://github.com/Purukitto/apex-app/commit/75640f6bb151a7d0522fcd8e1afa37cc9e474ce5))
+* **deps:** bump the production-dependencies group with 2 updates ([#43](https://github.com/Purukitto/apex-app/issues/43)) ([9f4ee8d](https://github.com/Purukitto/apex-app/commit/9f4ee8dc9773a144873681c5ffee24d4f9e9ce58))
+* **release:** update APK naming convention to include version ([83df481](https://github.com/Purukitto/apex-app/commit/83df4819d30e1c878b92b856b610f29a12f56dd2))
+
 ### [0.12.2](https://github.com/Purukitto/apex-app/compare/v0.12.1...v0.12.2) (2026-01-13)
 
 

@@ -3,10 +3,13 @@ import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useNotificationStore } from '../../stores/useNotificationStore';
+import { useAppUpdateStore } from '../../stores/useAppUpdateStore';
 import NotificationPane from './NotificationPane';
 import BottomPillNav from './BottomPillNav';
 import PageHeader from './PageHeader';
 import { NotificationContext } from './NotificationContext';
+import UpdateModal from '../UpdateModal';
+import { useAppUpdate } from '../../hooks/useAppUpdate';
 import { AnimatePresence, motion } from 'framer-motion';
 import { containerVariants } from '../../lib/animations';
 
@@ -17,10 +20,20 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
   const [notificationPaneOpen, setNotificationPaneOpen] = useState(false);
   const { getUnreadCount } = useNotificationStore();
+  const { updateInfo, showModal, setShowModal, dismissUpdate } = useAppUpdateStore();
+  const { openReleasePage } = useAppUpdate();
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
   
   const unreadCount = getUnreadCount();
+
+  const handleUpdateDownload = () => {
+    if (updateInfo?.downloadUrl) {
+      openReleasePage();
+    } else {
+      openReleasePage();
+    }
+  };
 
   // Reset scroll position on route change
   useEffect(() => {
@@ -94,6 +107,19 @@ export default function MainLayout({ children }: MainLayoutProps) {
           isOpen={notificationPaneOpen}
           onClose={() => setNotificationPaneOpen(false)}
         />
+
+        {/* Update Modal - Global */}
+        {updateInfo && (
+          <UpdateModal
+            isOpen={showModal}
+            onClose={async () => {
+              setShowModal(false);
+              await dismissUpdate();
+            }}
+            onDownload={handleUpdateDownload}
+            updateInfo={updateInfo}
+          />
+        )}
       </div>
     </NotificationContext.Provider>
   );

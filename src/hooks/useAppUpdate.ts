@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 import { Browser } from '@capacitor/browser';
 import { getAppVersion } from '../lib/version';
+import { useAppUpdateStore } from '../stores/useAppUpdateStore';
 
 const GITHUB_REPO = 'Purukitto/apex-app';
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
@@ -132,7 +133,7 @@ async function getLastShownVersion(): Promise<string | null> {
 /**
  * Stores last version that was shown to user
  */
-async function setLastShownVersion(version: string): Promise<void> {
+export async function setLastShownVersion(version: string): Promise<void> {
   if (!Capacitor.isNativePlatform()) {
     localStorage.setItem(LAST_VERSION_KEY, version);
     return;
@@ -150,11 +151,17 @@ async function setLastShownVersion(version: string): Promise<void> {
  * Only runs on native platforms (iOS/Android)
  */
 export function useAppUpdate() {
-  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
-  const [isChecking, setIsChecking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    updateInfo,
+    isChecking,
+    error,
+    setUpdateInfo,
+    setIsChecking,
+    setError,
+    setShowModal,
+  } = useAppUpdateStore();
 
-  const checkForUpdate = useCallback(async (force = false): Promise<UpdateInfo | null> => {
+  const checkForUpdate = useCallback(async (force = false, showModalOnUpdate = false): Promise<UpdateInfo | null> => {
     // Only check on native platforms
     if (!Capacitor.isNativePlatform()) {
       return null;
@@ -164,8 +171,13 @@ export function useAppUpdate() {
     setError(null);
 
     try {
-      // Check if we should skip (not forced and checked recently)
-      if (!force) {
+      // For auto-checks (showModalOnUpdate=true), always check for new versions
+      // but still respect the "already shown" check
+      // For manual checks (force=true), bypass all checks
+      // For other cases, respect the 24h interval
+      const shouldSkipTimeCheck = force || showModalOnUpdate;
+      
+      if (!shouldSkipTimeCheck) {
         const lastCheck = await getLastCheckTime();
         const now = Date.now();
         
@@ -193,7 +205,7 @@ export function useAppUpdate() {
 
       console.log(`Update check: Current=${currentVersion}, Latest=${latestVersion}, Comparison=${versionComparison}, HasUpdate=${hasUpdate}`);
 
-      // Check if we've already shown this version
+      // Check if we've already shown this version (only skip if not forced and already shown)
       const lastShown = await getLastShownVersion();
       if (lastShown === latestVersion && !force) {
         console.log('Update already shown for this version');
@@ -236,6 +248,12 @@ export function useAppUpdate() {
 
         setUpdateInfo(info);
         setIsChecking(false);
+        
+        // Show modal if requested (for auto-checks)
+        if (showModalOnUpdate) {
+          setShowModal(true);
+        }
+        
         return info;
       } else {
         // No update available
@@ -254,21 +272,24 @@ export function useAppUpdate() {
   }, []);
 
   const openReleasePage = useCallback(async () => {
-    if (!updateInfo?.releaseUrl) return;
+    const currentUpdateInfo = useAppUpdateStore.getState().updateInfo;
+    if (!currentUpdateInfo?.releaseUrl) return;
 
     try {
-      await Browser.open({ url: updateInfo.releaseUrl });
+      await Browser.open({ url: currentUpdateInfo.releaseUrl });
     } catch (error) {
       console.error('Error opening browser:', error);
     }
-  }, [updateInfo]);
+  }, []);
 
   const dismissUpdate = useCallback(async () => {
-    if (updateInfo?.latestVersion) {
-      await setLastShownVersion(updateInfo.latestVersion);
+    const currentUpdateInfo = useAppUpdateStore.getState().updateInfo;
+    if (currentUpdateInfo?.latestVersion) {
+      await setLastShownVersion(currentUpdateInfo.latestVersion);
     }
-    setUpdateInfo(null);
-  }, [updateInfo]);
+    useAppUpdateStore.getState().setUpdateInfo(null);
+    useAppUpdateStore.getState().setShowModal(false);
+  }, []);
 
   // Note: Auto-check on mount is handled by AppUpdateChecker component
   // This hook only provides the checkForUpdate function

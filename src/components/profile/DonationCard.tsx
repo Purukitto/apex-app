@@ -22,25 +22,102 @@ export default function DonationCard() {
       return;
     }
 
-    // On native platforms, try to open UPI deep link using App.openUrl
-    // This properly handles deep links on Android/iOS
+    // On native platforms, try to open UPI deep link
+    // Only show QR modal on explicit errors, not when user cancels
+    const platform = Capacitor.getPlatform();
+    
     try {
-      await App.openUrl({ url: upiUrl });
-      // If openUrl succeeds, it means the deep link was handled
-      // We don't show the modal in this case as the UPI app should open
+      if (platform === 'android') {
+        // On Android, use window.location (more reliable for UPI deep links in webview)
+        window.location.href = upiUrl;
+        // If this succeeds, the app picker will show
+        // If user cancels or selects an app, we don't interfere
+      } else {
+        // On iOS, use App.openUrl
+        await App.openUrl({ url: upiUrl });
+        // If this succeeds, UPI app should open
+      }
+      // Don't show modal - let the user choose or cancel naturally
     } catch (error) {
-      // Fallback: Show modal with QR code if deep link fails
+      // Only show QR modal if there's an explicit error
       console.error('Failed to open UPI app:', error);
       setShowUPIModal(true);
     }
   };
 
   const handleCopyUPI = async () => {
+    const upiId = DONATION_CONFIG.UPI_VPA;
+    
     try {
-      await navigator.clipboard.writeText(DONATION_CONFIG.UPI_VPA);
-      setCopied(true);
-      apexToast.success('UPI ID copied to clipboard');
-      setTimeout(() => setCopied(false), 2000);
+      // Try modern Clipboard API first (works on web and modern mobile webviews)
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(upiId);
+          setCopied(true);
+          apexToast.success('UPI ID copied to clipboard');
+          setTimeout(() => setCopied(false), 2000);
+          return;
+        } catch (clipboardError) {
+          // Clipboard API might fail due to permissions or security context
+          // Fall through to fallback method
+          console.log('Clipboard API failed, trying fallback:', clipboardError);
+        }
+      }
+      
+      // Fallback: Use execCommand for older browsers, webviews, or when clipboard API fails
+      // This works in both web and Capacitor webviews
+      const textArea = document.createElement('textarea');
+      textArea.value = upiId;
+      // Position off-screen but visible to the browser (some webviews need this)
+      textArea.style.position = 'fixed';
+      textArea.style.left = '0';
+      textArea.style.top = '0';
+      textArea.style.width = '2em';
+      textArea.style.height = '2em';
+      textArea.style.padding = '0';
+      textArea.style.border = 'none';
+      textArea.style.outline = 'none';
+      textArea.style.boxShadow = 'none';
+      textArea.style.background = 'transparent';
+      textArea.style.opacity = '0';
+      textArea.setAttribute('readonly', '');
+      textArea.setAttribute('aria-hidden', 'true');
+      
+      document.body.appendChild(textArea);
+      
+      // For mobile webviews, we need to ensure the element is selectable
+      if (Capacitor.isNativePlatform()) {
+        textArea.contentEditable = 'true';
+        textArea.readOnly = false;
+      }
+      
+      // Select the text
+      const range = document.createRange();
+      range.selectNodeContents(textArea);
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      textArea.setSelectionRange(0, 99999); // For mobile devices
+      textArea.focus();
+      
+      // Execute copy command
+      const successful = document.execCommand('copy');
+      
+      // Clean up
+      document.body.removeChild(textArea);
+      if (selection) {
+        selection.removeAllRanges();
+      }
+      
+      if (successful) {
+        setCopied(true);
+        apexToast.success('UPI ID copied to clipboard');
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        throw new Error('execCommand copy failed');
+      }
     } catch (error) {
       console.error('Failed to copy UPI ID:', error);
       apexToast.error('Failed to copy UPI ID');

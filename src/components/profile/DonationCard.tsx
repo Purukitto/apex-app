@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Browser } from '@capacitor/browser';
+import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Coffee, IndianRupee, X, Copy, Check } from 'lucide-react';
 import { itemVariants, buttonHoverProps, cardHoverProps } from '../../lib/animations';
@@ -21,12 +22,12 @@ export default function DonationCard() {
       return;
     }
 
-    // On native platforms, try to open UPI deep link
+    // On native platforms, try to open UPI deep link using App.openUrl
+    // This properly handles deep links on Android/iOS
     try {
-      await Browser.open({
-        url: upiUrl,
-        windowName: '_self',
-      });
+      await App.openUrl({ url: upiUrl });
+      // If openUrl succeeds, it means the deep link was handled
+      // We don't show the modal in this case as the UPI app should open
     } catch (error) {
       // Fallback: Show modal with QR code if deep link fails
       console.error('Failed to open UPI app:', error);
@@ -110,7 +111,7 @@ export default function DonationCard() {
           <>
             {/* Backdrop */}
             <motion.div
-              className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-[100]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -118,17 +119,21 @@ export default function DonationCard() {
             />
 
             {/* Modal */}
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div 
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none"
+              onClick={() => setShowUPIModal(false)}
+            >
               <motion.div
-                className="bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md relative z-50"
+                className="bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md relative z-[100] pointer-events-auto"
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
               >
                 {/* Close Button */}
                 <motion.button
                   onClick={() => setShowUPIModal(false)}
-                  className="absolute top-4 right-4 p-2 text-apex-white/60 hover:text-apex-white transition-colors"
+                  className="absolute top-4 right-4 p-2 text-apex-white/60 hover:text-apex-white transition-colors z-10"
                   aria-label="Close"
                   {...buttonHoverProps}
                 >

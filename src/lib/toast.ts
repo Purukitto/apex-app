@@ -11,9 +11,10 @@ export const apexToast = {
       className: 'apex-toast-success',
       style: {
         background: '#0A0A0A',
-        border: '1px solid var(--color-apex-green, #bef264)',
+        border: '1px solid var(--color-apex-green, #00FF41)',
         color: '#E2E2E2',
       },
+      duration: 3000,
     });
   },
   error: (message: string) => {
@@ -24,6 +25,7 @@ export const apexToast = {
         border: '1px solid #FF3B30',
         color: '#E2E2E2',
       },
+      duration: 4000,
     });
   },
   promise: <T,>(

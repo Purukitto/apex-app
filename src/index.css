@@ -47,7 +47,7 @@ body {
 
 /* Type-specific border colors */
 [data-sonner-toast][data-type="success"] {
-  border-color: var(--color-apex-green, #bef264) !important;
+  border-color: var(--color-apex-green, #00FF41) !important;
 }
 
 [data-sonner-toast][data-type="error"] {
@@ -56,6 +56,37 @@ body {
 
 [data-sonner-toast] [data-description] {
   color: var(--color-apex-white, #E2E2E2) !important;
+}
+
+/* Ensure toast content is visible and properly styled */
+[data-sonner-toast] [data-title] {
+  color: var(--color-apex-white, #E2E2E2) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+[data-sonner-toast] [data-content] {
+  color: var(--color-apex-white, #E2E2E2) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure toast text content is visible - target all possible content containers */
+[data-sonner-toast] > div,
+[data-sonner-toast] > div > div,
+[data-sonner-toast] [data-content] > *,
+[data-sonner-toast] [data-title] > * {
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: inherit !important;
+}
+
+/* Ensure toast message text is visible */
+[data-sonner-toast] p,
+[data-sonner-toast] span,
+[data-sonner-toast] div {
+  color: var(--color-apex-white, #E2E2E2) !important;
+  opacity: 1 !important;
 }
 
 /* Ensure toasts maintain their individual styling when stacked */

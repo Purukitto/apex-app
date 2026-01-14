@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.12.4](https://github.com/Purukitto/apex-app/compare/v0.12.3...v0.12.4) (2026-01-14)
+
+
+### Features
+
+* **devtools:** add in-app devtools panel with floating button and triple tap gesture ([eee4d05](https://github.com/Purukitto/apex-app/commit/eee4d057afa995c35c3e4a4c46603fe61bfcdeb9))
+* **DonationCard:** enhance UPI deep link handling and modal interactions ([7f68417](https://github.com/Purukitto/apex-app/commit/7f68417b53cfe6c3d8b3a48e76c2167db87e5d39))
+* **DonationCard:** improve UPI deep link handling and clipboard functionality ([f1f822d](https://github.com/Purukitto/apex-app/commit/f1f822d65123bf4d455524bfd7cf2e2c5c41d6a9))
+
+
+### Bug Fixes
+
+* **toast:** update border color for success toast and enhance visibility styles ([7febad5](https://github.com/Purukitto/apex-app/commit/7febad580b412d0dffe8c371b1e687eaaca6e6cb))
+
 ### [0.12.3](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.12.3) (2026-01-14)
 
 

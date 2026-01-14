@@ -9,6 +9,8 @@ import BottomPillNav from './BottomPillNav';
 import PageHeader from './PageHeader';
 import { NotificationContext } from './NotificationContext';
 import UpdateModal from '../UpdateModal';
+import DevToolsPanel from '../DevToolsPanel';
+import DevToolsButton from '../DevToolsButton';
 import { useAppUpdate } from '../../hooks/useAppUpdate';
 import { AnimatePresence, motion } from 'framer-motion';
 import { containerVariants } from '../../lib/animations';
@@ -19,6 +21,7 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const [notificationPaneOpen, setNotificationPaneOpen] = useState(false);
+  const [devToolsOpen, setDevToolsOpen] = useState(false);
   const { getUnreadCount } = useNotificationStore();
   const { updateInfo, showModal, setShowModal, dismissUpdate } = useAppUpdateStore();
   const { openReleasePage } = useAppUpdate();
@@ -120,6 +123,13 @@ export default function MainLayout({ children }: MainLayoutProps) {
             updateInfo={updateInfo}
           />
         )}
+
+        {/* DevTools - Development Only */}
+        <DevToolsPanel
+          isOpen={devToolsOpen}
+          onClose={() => setDevToolsOpen(false)}
+        />
+        <DevToolsButton onToggle={() => setDevToolsOpen(prev => !prev)} />
       </div>
     </NotificationContext.Provider>
   );

@@ -48,6 +48,8 @@ body {
   --toast-gap: 8px;
   /* Respect safe area insets for top-center positioning */
   top: calc(1rem + env(safe-area-inset-top, 0px)) !important;
+  /* Ensure toasts are always on top of all content */
+  z-index: 10000 !important;
 }
 
 /* Stacking behavior - ensure each toast is visible and properly spaced */
@@ -103,6 +105,8 @@ body {
 [data-sonner-toast] {
   position: relative !important;
   isolation: isolate !important;
+  /* Ensure individual toasts also have high z-index */
+  z-index: 10000 !important;
 }
 
 /* Prevent toasts from merging visually when stacked */

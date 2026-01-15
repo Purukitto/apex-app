@@ -170,3 +170,10 @@ body {
 .leaflet-control-attribution {
   display: none !important;
 }
+
+/* Allow page scrolling through non-interactive maps */
+.map-non-interactive,
+.map-non-interactive * {
+  pointer-events: none !important;
+  touch-action: pan-y !important;
+}

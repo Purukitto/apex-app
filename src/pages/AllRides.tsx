@@ -458,6 +458,8 @@ export default function AllRides() {
                                     ([lng, lat]: [number, number]) => [lat, lng] as [number, number]
                                   )}
                                   className="w-full"
+                                  interactive={false}
+                                  height="250px"
                                 />
                               ) : (
                                 <div className="p-4 bg-apex-black/30 border border-apex-white/10 rounded-lg text-center">

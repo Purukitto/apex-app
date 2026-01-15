@@ -6,6 +6,8 @@ import 'leaflet/dist/leaflet.css';
 interface RideMapProps {
   coordinates: [number, number][]; // Array of [lat, lng]
   className?: string;
+  interactive?: boolean; // If false, map is static and won't capture scroll events
+  height?: string; // Map height (default: '400px')
 }
 
 /**
@@ -63,7 +65,12 @@ function MapBoundsFitter({ coordinates }: { coordinates: [number, number][] }) {
  * - Route polyline in apex-green theme color
  * - Auto-zoom to fit route bounds
  */
-export default function RideMap({ coordinates, className = '' }: RideMapProps) {
+export default function RideMap({ 
+  coordinates, 
+  className = '', 
+  interactive = false,
+  height = '300px'
+}: RideMapProps) {
   // Get theme color for polyline
   const getPolylineColor = (): string => {
     if (typeof window === 'undefined') {
@@ -101,18 +108,31 @@ export default function RideMap({ coordinates, className = '' }: RideMapProps) {
   }
 
   return (
-    <div className={`rounded-lg overflow-hidden border border-apex-white/20 ${className}`} style={{ isolation: 'isolate', position: 'relative', zIndex: 1 }}>
+    <div 
+      className={`rounded-lg overflow-hidden border border-apex-white/20 ${className} ${!interactive ? 'map-non-interactive' : ''}`}
+      style={{ 
+        isolation: 'isolate', 
+        position: 'relative', 
+        zIndex: 1
+      }}
+    >
       <MapContainer
         center={defaultCenter}
         zoom={13}
-        scrollWheelZoom={true}
+        scrollWheelZoom={interactive}
+        dragging={interactive}
+        touchZoom={interactive}
+        doubleClickZoom={interactive}
+        boxZoom={interactive}
+        keyboard={interactive}
         className="w-full h-full"
         style={{ 
-          height: '400px', 
+          height, 
           width: '100%', 
           backgroundColor: 'var(--color-apex-black, #0A0A0A)',
           position: 'relative',
-          zIndex: 1
+          zIndex: 1,
+          pointerEvents: interactive ? 'auto' : 'none'
         }}
       >
         <TileLayer

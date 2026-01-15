@@ -69,16 +69,20 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
         return String(arg);
       }).join(' ');
 
-      setConsoleLogs(prev => [
-        ...prev.slice(-99), // Keep last 100 logs
-        {
-          id: `${Date.now()}-${Math.random()}`,
-          type,
-          message,
-          timestamp: new Date(),
-          args,
-        },
-      ]);
+      // Use setTimeout to defer setState call and avoid "setState during render" error
+      // This ensures setState is called outside of the render phase
+      setTimeout(() => {
+        setConsoleLogs(prev => [
+          ...prev.slice(-99), // Keep last 100 logs
+          {
+            id: `${Date.now()}-${Math.random()}`,
+            type,
+            message,
+            timestamp: new Date(),
+            args,
+          },
+        ]);
+      }, 0);
     };
 
     console.log = (...args: unknown[]) => {

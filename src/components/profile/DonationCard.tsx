@@ -33,8 +33,8 @@ export default function DonationCard() {
         // If this succeeds, the app picker will show
         // If user cancels or selects an app, we don't interfere
       } else {
-        // On iOS, use App.openUrl
-        await App.openUrl({ url: upiUrl });
+        // On iOS, use Browser.open (same as Android, but with windowName)
+        await Browser.open({ url: upiUrl, windowName: '_blank' });
         // If this succeeds, UPI app should open
       }
       // Don't show modal - let the user choose or cancel naturally

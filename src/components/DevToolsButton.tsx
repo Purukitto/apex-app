@@ -59,7 +59,7 @@ export default function DevToolsButton({ onToggle }: DevToolsButtonProps) {
         return;
       }
 
-      handleTap(e);
+      handleTap();
     };
 
     document.addEventListener('touchstart', handleDocumentTap);

@@ -12,6 +12,7 @@ import type { Bike as BikeType } from '../types/database';
 import QRCode from 'react-qr-code';
 import { PocketCurtain } from '../components/PocketCurtain';
 import { usePocketModeDetection } from '../hooks/usePocketModeDetection';
+import { RideStartupAnimation } from '../components/RideStartupAnimation';
 
 /**
  * Web Fallback Component
@@ -359,6 +360,7 @@ export default function Ride() {
   const [previousSpeed, setPreviousSpeed] = useState(0);
   const [currentDuration, setCurrentDuration] = useState(0);
   const [isCalibrating, setIsCalibrating] = useState(false);
+  const [showStartupAnimation, setShowStartupAnimation] = useState(false);
 
   // Restore state from Zustand store on mount
   useEffect(() => {
@@ -470,9 +472,9 @@ export default function Ride() {
     // Bike is selected, start the ride
     try {
       console.log('Starting ride with bike:', selectedBike.id);
-      await startRide();
-      // Success - no toast needed, UI will update to show recording state
-      // Permission request dialog will show automatically if needed
+      // Show startup animation first
+      setShowStartupAnimation(true);
+      // Start ride will be triggered after animation completes
     } catch (error) {
       // Log technical details for debugging
       console.error('Error starting ride:', error);
@@ -509,6 +511,7 @@ export default function Ride() {
       resetRide();
       setShowSafetyWarning(true);
       setPreviousSpeed(0);
+      setShowStartupAnimation(false);
       } catch (error) {
         // Log technical details for debugging
         console.error('Error stopping ride:', error);
@@ -603,6 +606,29 @@ export default function Ride() {
 
   return (
     <>
+      {/* Startup Animation */}
+      {showStartupAnimation && (
+        <RideStartupAnimation
+          onComplete={async () => {
+            setShowStartupAnimation(false);
+            // Start ride after animation completes
+            try {
+              await startRide();
+            } catch (error) {
+              // Log technical details for debugging
+              console.error('Error starting ride:', error);
+              console.error('Start ride error details:', JSON.stringify(error, null, 2));
+              
+              // Show user-friendly error (permission errors are already handled by checkPermissions)
+              const errorMessage = error instanceof Error ? error.message : String(error);
+              if (!errorMessage.toLowerCase().includes('permission')) {
+                apexToast.error('Failed to start ride. Please try again.');
+              }
+            }
+          }}
+        />
+      )}
+
       {/* Pocket Mode Overlay */}
       <PocketCurtain
         isActive={isPocketMode}
@@ -610,7 +636,7 @@ export default function Ride() {
       />
 
       <motion.div
-        className="h-full bg-apex-black p-4 md:p-6 overflow-y-auto"
+        className={`bg-apex-black ${isRecording ? 'fixed inset-0 p-0 overflow-hidden' : 'h-full p-4 md:p-6 overflow-y-auto'}`}
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -709,11 +735,11 @@ export default function Ride() {
           </motion.button>
         </motion.div>
       ) : (
-        /* Recording View - Dark Cockpit */
-        <div className="flex flex-col">
+        /* Recording View - Dark Cockpit - Full Screen */
+        <div className="flex flex-col h-screen w-full p-6 overflow-y-auto">
           {/* Header */}
           <motion.div
-            className="text-center mb-4"
+            className="text-center mb-6 mt-4"
             variants={itemVariants}
           >
             <h2 className="text-xl font-bold text-apex-white mb-2">
@@ -920,17 +946,44 @@ export default function Ride() {
               </motion.button>
             </motion.div>
 
-            {/* Stop Button */}
+            {/* Stop Buttons */}
             <motion.div
-              className="mt-6"
+              className="mt-6 space-y-3"
               variants={itemVariants}
             >
+              {/* Save and Stop Button */}
               <LongPressStopButton
                 onLongPress={handleStopRide}
                 disabled={saveRide.isPending}
               />
-              <p className="text-xs text-apex-white/40 text-center mt-2">
-                Hold for 3 seconds to stop
+              <p className="text-xs text-apex-white/40 text-center">
+                Hold for 3 seconds to stop and save
+              </p>
+              
+              {/* Discard Button */}
+              <motion.button
+                onClick={async () => {
+                  try {
+                    await stopRide(undefined, false);
+                    setSelectedBike(null);
+                    resetRide();
+                    setShowSafetyWarning(true);
+                    setPreviousSpeed(0);
+                    setShowStartupAnimation(false);
+                    apexToast.success('Ride discarded');
+                  } catch (error) {
+                    console.error('Error discarding ride:', error);
+                    apexToast.error('Failed to discard ride');
+                  }
+                }}
+                disabled={saveRide.isPending}
+                className="w-full max-w-xs mx-auto py-3 px-6 bg-apex-white/5 border border-apex-white/20 rounded-lg font-semibold text-apex-white/60 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-white/10 hover:border-apex-white/30 hover:text-apex-white transition-colors"
+                {...buttonHoverProps}
+              >
+                Discard Ride
+              </motion.button>
+              <p className="text-xs text-apex-white/30 text-center">
+                Discard without saving
               </p>
             </motion.div>
           </div>

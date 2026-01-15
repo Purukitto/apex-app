@@ -14,6 +14,7 @@ import DevToolsButton from '../DevToolsButton';
 import { useAppUpdate } from '../../hooks/useAppUpdate';
 import { AnimatePresence, motion } from 'framer-motion';
 import { containerVariants } from '../../lib/animations';
+import { useRideStore } from '../../stores/useRideStore';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -27,8 +28,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const { openReleasePage } = useAppUpdate();
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
+  const isRecording = useRideStore((state) => state.isRecording);
   
   const unreadCount = getUnreadCount();
+  
+  // Hide navigation when recording (full-screen ride mode)
+  const isRideMode = isRecording && location.pathname === '/ride';
 
   const handleUpdateDownload = () => {
     if (updateInfo?.downloadUrl) {
@@ -63,28 +68,30 @@ export default function MainLayout({ children }: MainLayoutProps) {
         unreadCount,
       }}
     >
-      <div className="min-h-screen bg-zinc-950 flex flex-col">
-        {/* Sticky Page Header */}
-        <div className="sticky top-0 z-40 bg-zinc-950 border-b border-white/5">
-          <motion.div
-            className="p-6"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <PageHeader title={getPageTitle()} />
-          </motion.div>
-        </div>
+      <div className={`min-h-screen bg-zinc-950 flex flex-col ${isRideMode ? 'fixed inset-0 overflow-hidden' : ''}`}>
+        {/* Sticky Page Header - Hidden in ride mode */}
+        {!isRideMode && (
+          <div className="sticky top-0 z-40 bg-zinc-950 border-b border-white/5">
+            <motion.div
+              className="p-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <PageHeader title={getPageTitle()} />
+            </motion.div>
+          </div>
+        )}
 
         {/* Main Content */}
-        <main ref={mainRef} className="flex-1 min-h-0 pb-32 transition-all overflow-y-auto">
+        <main ref={mainRef} className={`flex-1 min-h-0 transition-all overflow-y-auto ${isRideMode ? 'pb-0' : 'pb-32'}`}>
           <AnimatePresence mode="wait" key={location.pathname}>
             {children}
           </AnimatePresence>
         </main>
 
-        {/* Floating Bottom Pill Navigation - All Platforms */}
-        <BottomPillNav />
+        {/* Floating Bottom Pill Navigation - Hidden in ride mode */}
+        {!isRideMode && <BottomPillNav />}
 
         {/* Toast Notifications */}
         <Toaster

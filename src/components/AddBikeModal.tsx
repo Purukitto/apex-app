@@ -36,6 +36,7 @@ export default function AddBikeModal({
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [globalBikeResults, setGlobalBikeResults] = useState<GlobalBikeSpec[]>([]);
+  const [selectedBike, setSelectedBike] = useState<GlobalBikeSpec | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [reportingBikeId, setReportingBikeId] = useState<string | null>(null);
@@ -73,6 +74,7 @@ export default function AddBikeModal({
     setError(null);
     setSearchQuery('');
     setGlobalBikeResults([]);
+    setSelectedBike(null);
   }, [editingBike, isOpen]);
 
   // Debounced search: Search global bike database
@@ -114,21 +116,35 @@ export default function AddBikeModal({
       specs_engine: bike.displacement || prev.specs_engine,
       specs_power: bike.power || prev.specs_power,
     }));
+    setSelectedBike(bike); // Store selected bike for reporting
     setShowManualEntry(true);
+    // Clear search results since bike has been selected and form is auto-filled
+    setGlobalBikeResults([]);
   };
 
   // Handle reporting bad data
-  const handleReportBike = async (bikeId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent selecting the bike when clicking report
+  const handleReportBike = async (bikeId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation(); // Prevent selecting the bike when clicking report from list
+    }
     setReportingBikeId(bikeId);
     try {
       const success = await reportBikeSpec(bikeId);
       if (success) {
         apexToast.success('Bike reported');
-        // Refresh results to show updated report_count
-        const results = await searchGlobalBikesMultiple({ query: searchQuery }, 5);
-        if (results) {
-          setGlobalBikeResults(results);
+        // If reporting from search results, refresh the list
+        if (globalBikeResults.length > 0) {
+          const results = await searchGlobalBikesMultiple({ query: searchQuery }, 5);
+          if (results) {
+            setGlobalBikeResults(results);
+          }
+        }
+        // If reporting selected bike, update its report_count
+        if (selectedBike && selectedBike.id === bikeId) {
+          setSelectedBike({
+            ...selectedBike,
+            report_count: selectedBike.report_count + 1,
+          });
         }
       } else {
         apexToast.error('Failed to report bike');
@@ -319,8 +335,8 @@ export default function AddBikeModal({
                 )}
               </div>
               
-              {/* Global Database Results List */}
-              {globalBikeResults.length > 0 && (
+              {/* Global Database Results List - only show when not in manual entry mode */}
+              {globalBikeResults.length > 0 && !showManualEntry && (
                 <div className="mt-2 space-y-2 max-h-64 overflow-y-auto">
                   {globalBikeResults.map((bike) => (
                     <motion.div
@@ -416,6 +432,7 @@ export default function AddBikeModal({
                   type="button"
                   onClick={() => {
                     setShowManualEntry(false);
+                    setSelectedBike(null); // Clear selected bike when going back
                   }}
                   className="mt-2 text-xs text-apex-white/60 hover:text-apex-white transition-colors"
                   {...buttonHoverProps}
@@ -423,6 +440,66 @@ export default function AddBikeModal({
                   ← Back to search results
                 </motion.button>
               )}
+            </div>
+          )}
+
+          {/* Selected Bike Display - show when a bike was selected from search */}
+          {selectedBike && showManualEntry && (
+            <div className="p-3 bg-gradient-to-br from-white/5 to-transparent border border-apex-green/40 rounded-lg">
+              <div className="flex items-start gap-3">
+                {selectedBike.image_url && (
+                  <img
+                    src={selectedBike.image_url}
+                    alt={`${selectedBike.make} ${selectedBike.model}`}
+                    className="w-12 h-12 object-cover rounded border border-apex-white/20 shrink-0"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-apex-white font-semibold text-sm">
+                      {selectedBike.make} {selectedBike.model}
+                    </p>
+                    {selectedBike.is_verified && (
+                      <div title="Verified">
+                        <CheckCircle2 className="text-apex-green shrink-0" size={14} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    {selectedBike.category && (
+                      <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded">
+                        {selectedBike.category}
+                        {selectedBike.year && ` • ${selectedBike.year}`}
+                      </span>
+                    )}
+                    {!selectedBike.category && selectedBike.year && (
+                      <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded font-mono">
+                        {selectedBike.year}
+                      </span>
+                    )}
+                    {selectedBike.report_count > 0 && (
+                      <span className="text-apex-white/40 text-xs flex items-center gap-1">
+                        <AlertTriangle size={12} />
+                        {selectedBike.report_count} report{selectedBike.report_count !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <motion.button
+                  type="button"
+                  onClick={() => handleReportBike(selectedBike.id)}
+                  disabled={reportingBikeId === selectedBike.id}
+                  className="p-2 text-apex-white/60 hover:text-apex-red rounded hover:bg-apex-red/10 shrink-0 transition-colors"
+                  title="Report incorrect data"
+                  {...buttonHoverProps}
+                >
+                  {reportingBikeId === selectedBike.id ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Flag size={16} />
+                  )}
+                </motion.button>
+              </div>
             </div>
           )}
 

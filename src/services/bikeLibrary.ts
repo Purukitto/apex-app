@@ -64,14 +64,19 @@ async function searchGlobalBikesInternal(
   }
 
   try {
+    // Important: Verified bikes always appear, even if report_count >= 3
+    // Non-verified bikes are filtered if report_count >= 3
+    // Use PostgREST OR syntax: (is_verified=true) OR (report_count<3 AND is_verified=false)
     let dbQuery = supabase
       .from('global_bike_specs')
       .select('*')
-      .lt('report_count', 3);
+      .or('is_verified.eq.true,report_count.lt.3');
 
     dbQuery = dbQuery.ilike('search_text', `%${searchQueryString.trim()}%`);
 
+    // Order by verified first (verified bikes on top), then by make/model
     const { data, error } = await dbQuery
+      .order('is_verified', { ascending: false }) // Verified first (true before false)
       .order('make', { ascending: true })
       .order('model', { ascending: true })
       .limit(limit);
@@ -109,8 +114,9 @@ async function searchGlobalBikesInternal(
       }
       score += wordsMatched * 20;
 
+      // Prefer verified bikes (highest priority - they always appear and are on top)
       if (bike.is_verified) {
-        score += 10;
+        score += 1000; // Very high score to ensure verified bikes are always first
       }
 
       if (bike.year) {

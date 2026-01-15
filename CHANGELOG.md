@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.13.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.13.0) (2026-01-15)
+
+
+### Features
+
+* add themed loading components and optimize loading performance ([bbd3093](https://github.com/Purukitto/apex-app/commit/bbd3093a552fc9cc2f3cc48f1fe825d611ffe386))
+* integrate RideMap component in AllRides and fix coordinate saving ([3a77f20](https://github.com/Purukitto/apex-app/commit/3a77f207b88e68fabe7ca935a6de996b04a8e0be))
+* **RideMap:** add RideMap component for displaying routes on a map ([4b2fb6b](https://github.com/Purukitto/apex-app/commit/4b2fb6b4878a37692b634ea8f4bb4ac204aceac4))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+* **deps-dev:** bump the development-dependencies group with 3 updates ([#44](https://github.com/Purukitto/apex-app/issues/44)) ([75640f6](https://github.com/Purukitto/apex-app/commit/75640f6bb151a7d0522fcd8e1afa37cc9e474ce5))
+* **deps:** bump the production-dependencies group with 2 updates ([#43](https://github.com/Purukitto/apex-app/issues/43)) ([9f4ee8d](https://github.com/Purukitto/apex-app/commit/9f4ee8dc9773a144873681c5ffee24d4f9e9ce58))
+* update dependencies in package.json and package-lock.json ([9b8cf38](https://github.com/Purukitto/apex-app/commit/9b8cf38bce7c2c6c96a962d366cc9dd63221c30f))
+
+### [0.12.6](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.12.6) (2026-01-15)
+
+
+### Features
+
+* add themed loading components and optimize loading performance ([bbd3093](https://github.com/Purukitto/apex-app/commit/bbd3093a552fc9cc2f3cc48f1fe825d611ffe386))
+* integrate RideMap component in AllRides and fix coordinate saving ([3a77f20](https://github.com/Purukitto/apex-app/commit/3a77f207b88e68fabe7ca935a6de996b04a8e0be))
+* **RideMap:** add RideMap component for displaying routes on a map ([4b2fb6b](https://github.com/Purukitto/apex-app/commit/4b2fb6b4878a37692b634ea8f4bb4ac204aceac4))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+* **deps-dev:** bump the development-dependencies group with 3 updates ([#44](https://github.com/Purukitto/apex-app/issues/44)) ([75640f6](https://github.com/Purukitto/apex-app/commit/75640f6bb151a7d0522fcd8e1afa37cc9e474ce5))
+* **deps:** bump the production-dependencies group with 2 updates ([#43](https://github.com/Purukitto/apex-app/issues/43)) ([9f4ee8d](https://github.com/Purukitto/apex-app/commit/9f4ee8dc9773a144873681c5ffee24d4f9e9ce58))
+* update dependencies in package.json and package-lock.json ([9b8cf38](https://github.com/Purukitto/apex-app/commit/9b8cf38bce7c2c6c96a962d366cc9dd63221c30f))
+
 ### [0.12.5](https://github.com/Purukitto/apex-app/compare/v0.12.4...v0.12.5) (2026-01-15)
 
 

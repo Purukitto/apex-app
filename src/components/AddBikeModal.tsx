@@ -178,14 +178,17 @@ export default function AddBikeModal({
     }
   };
 
-  // Handle input focus to scroll into view
+  // Handle input focus to scroll into view when keyboard appears
   useEffect(() => {
+    if (!isKeyboardVisible) return;
+
     const handleInputFocus = (e: FocusEvent) => {
       const target = e.target as HTMLElement;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        // Wait for keyboard animation to complete
         setTimeout(() => {
           scrollInputIntoView(target);
-        }, 300);
+        }, 400);
       }
     };
 
@@ -194,24 +197,38 @@ export default function AddBikeModal({
       
       const formContainer = formRef.current;
       const inputRect = input.getBoundingClientRect();
-      const formRect = formContainer.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)') || '0', 10) || 0;
       
-      // Calculate position relative to form container
-      const inputTopRelativeToForm = inputRect.top - formRect.top + formContainer.scrollTop;
-      const headerHeight = 100; // Header + padding
-      const padding = 20;
+      // Calculate available space above keyboard
+      // Leave some padding at top (for header) and bottom (above keyboard)
+      const topPadding = safeAreaTop + 120; // Header + safe area + padding
+      const bottomPadding = 20; // Padding above keyboard
+      const availableHeight = viewportHeight - keyboardHeight;
+      const visibleTop = topPadding;
+      const visibleBottom = availableHeight - bottomPadding;
       
-      // Calculate desired scroll position
-      const desiredScrollTop = inputTopRelativeToForm - headerHeight - padding;
+      const inputTop = inputRect.top;
+      const inputBottom = inputRect.bottom;
       
-      // Ensure input is visible above buttons
-      const maxScroll = formContainer.scrollHeight - formContainer.clientHeight;
-      const scrollPosition = Math.max(0, Math.min(desiredScrollTop, maxScroll));
-      
-      formContainer.scrollTo({
-        top: scrollPosition,
-        behavior: 'smooth'
-      });
+      // Check if input needs to be scrolled into view
+      if (inputBottom > visibleBottom) {
+        // Input is below visible area - scroll down
+        const scrollNeeded = inputBottom - visibleBottom + 30; // Extra padding
+        const currentScroll = formContainer.scrollTop;
+        formContainer.scrollTo({
+          top: currentScroll + scrollNeeded,
+          behavior: 'smooth'
+        });
+      } else if (inputTop < visibleTop) {
+        // Input is above visible area (behind header) - scroll up
+        const scrollNeeded = visibleTop - inputTop + 30; // Extra padding
+        const currentScroll = formContainer.scrollTop;
+        formContainer.scrollTo({
+          top: Math.max(0, currentScroll - scrollNeeded),
+          behavior: 'smooth'
+        });
+      }
     };
 
     const form = formRef.current;
@@ -221,7 +238,7 @@ export default function AddBikeModal({
         form.removeEventListener('focusin', handleInputFocus);
       };
     }
-  }, [isKeyboardVisible]);
+  }, [isKeyboardVisible, keyboardHeight]);
 
   // Check if required fields are filled
   const canSubmit = formData.make.trim() && formData.model.trim();
@@ -253,15 +270,14 @@ export default function AddBikeModal({
       />
       <div 
         ref={modalContentRef}
-        className={`relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10 flex flex-col ${
-          isKeyboardVisible 
-            ? 'max-h-[calc(100vh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-2rem-80px)]' 
-            : 'max-h-[90vh]'
-        }`}
+        className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10 flex flex-col"
         style={isKeyboardVisible ? {
           marginTop: '0',
-          maxHeight: `calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - ${keyboardHeight}px - 2rem)`
-        } : {}}
+          maxHeight: `calc(100vh - env(safe-area-inset-top, 0px) - ${keyboardHeight}px - 2rem)`,
+          height: `calc(100vh - env(safe-area-inset-top, 0px) - ${keyboardHeight}px - 2rem)`,
+        } : {
+          maxHeight: '90vh',
+        }}
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-apex-white">
@@ -284,7 +300,7 @@ export default function AddBikeModal({
           className="space-y-4 overflow-y-auto flex-1 pr-2 min-h-0 scroll-smooth" 
           style={{ 
             maxHeight: isKeyboardVisible 
-              ? `calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - ${keyboardHeight}px - 12rem)` 
+              ? `calc(100vh - env(safe-area-inset-top, 0px) - ${keyboardHeight}px - 10rem)` 
               : 'calc(90vh - 8rem)'
           }}
         >

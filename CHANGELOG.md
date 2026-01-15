@@ -2,6 +2,58 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.12.5](https://github.com/Purukitto/apex-app/compare/v0.12.4...v0.12.5) (2026-01-15)
+
+
+### Features
+
+* **layout:** add safe area insets for better compatibility with notches and punch-holes ([477a1e3](https://github.com/Purukitto/apex-app/commit/477a1e389d6c48019534708a186d0c99941e866c))
+* **Ride:** implement startup animation and enhance back button handling ([0b0ea7e](https://github.com/Purukitto/apex-app/commit/0b0ea7e378e29ac4eb8a8b63ce2063500f69f257))
+
+
+### Bug Fixes
+
+* **usePocketModeDetection:** correct proximity sensor logic for pocket mode detection ([3faa1e7](https://github.com/Purukitto/apex-app/commit/3faa1e7462fdc293e21f1d21b9393e073783bf45))
+
+
+### Code Refactoring
+
+* **DonationCard:** remove unused App import to clean up code ([18ec85d](https://github.com/Purukitto/apex-app/commit/18ec85db319a97d482a0c9b730a054fa179cf837))
+
+### [0.12.4](https://github.com/Purukitto/apex-app/compare/v0.12.3...v0.12.4) (2026-01-14)
+
+
+### Features
+
+* **devtools:** add in-app devtools panel with floating button and triple tap gesture ([eee4d05](https://github.com/Purukitto/apex-app/commit/eee4d057afa995c35c3e4a4c46603fe61bfcdeb9))
+* **DonationCard:** enhance UPI deep link handling and modal interactions ([7f68417](https://github.com/Purukitto/apex-app/commit/7f68417b53cfe6c3d8b3a48e76c2167db87e5d39))
+* **DonationCard:** improve UPI deep link handling and clipboard functionality ([f1f822d](https://github.com/Purukitto/apex-app/commit/f1f822d65123bf4d455524bfd7cf2e2c5c41d6a9))
+
+
+### Bug Fixes
+
+* **toast:** update border color for success toast and enhance visibility styles ([7febad5](https://github.com/Purukitto/apex-app/commit/7febad580b412d0dffe8c371b1e687eaaca6e6cb))
+
+### [0.12.3](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.12.3) (2026-01-14)
+
+
+### Features
+
+* enhance app update functionality with modal support ([a4a3df1](https://github.com/Purukitto/apex-app/commit/a4a3df18d621c862b45517755c1afb9ad4cc95a6))
+
+
+### Bug Fixes
+
+* **useAppUpdate:** update dependencies in useEffect for improved state management ([f7f508c](https://github.com/Purukitto/apex-app/commit/f7f508c8d52a53c4b016d9fd1b18beebc9c2afb6))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+* **deps-dev:** bump the development-dependencies group with 3 updates ([#44](https://github.com/Purukitto/apex-app/issues/44)) ([75640f6](https://github.com/Purukitto/apex-app/commit/75640f6bb151a7d0522fcd8e1afa37cc9e474ce5))
+* **deps:** bump the production-dependencies group with 2 updates ([#43](https://github.com/Purukitto/apex-app/issues/43)) ([9f4ee8d](https://github.com/Purukitto/apex-app/commit/9f4ee8dc9773a144873681c5ffee24d4f9e9ce58))
+* **release:** update APK naming convention to include version ([83df481](https://github.com/Purukitto/apex-app/commit/83df4819d30e1c878b92b856b610f29a12f56dd2))
+
 ### [0.12.2](https://github.com/Purukitto/apex-app/compare/v0.12.1...v0.12.2) (2026-01-13)
 
 

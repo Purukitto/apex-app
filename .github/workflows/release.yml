@@ -90,13 +90,15 @@ jobs:
         if: always() && steps.check_release.outputs.exists == 'false'
         run: rm -f android/app/release.jks
 
-      - name: Rename APK to apex
+      - name: Rename APK to apex with version
         if: steps.check_release.outputs.exists == 'false'
         run: |
           APK_PATH="android/app/build/outputs/apk/release/app-release.apk"
+          VERSION="${{ steps.pkg.outputs.VERSION }}"
+          APK_NAME="apex-${VERSION}.apk"
           if [ -f "$APK_PATH" ]; then
-            mv "$APK_PATH" "android/app/build/outputs/apk/release/apex.apk"
-            echo "✓ APK renamed to apex.apk"
+            mv "$APK_PATH" "android/app/build/outputs/apk/release/${APK_NAME}"
+            echo "✓ APK renamed to ${APK_NAME}"
           else
             echo "ERROR: APK file not found at $APK_PATH"
             exit 1
@@ -147,7 +149,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.pkg.outputs.VERSION }}
-          files: android/app/build/outputs/apk/release/apex.apk
+          files: android/app/build/outputs/apk/release/apex-${{ steps.pkg.outputs.VERSION }}.apk
           body_path: release_notes.md
           draft: false
           prerelease: false

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
+import { useRideStore } from '../stores/useRideStore';
 
 /**
  * Handles native back button behavior in Capacitor apps.
@@ -19,6 +20,7 @@ import { Capacitor } from '@capacitor/core';
 export default function BackButtonHandler() {
   const navigate = useNavigate();
   const location = useLocation();
+  const isRecording = useRideStore((state) => state.isRecording);
 
   useEffect(() => {
     // Only handle back button on native platforms
@@ -31,6 +33,12 @@ export default function BackButtonHandler() {
 
     // Set up the listener asynchronously
     App.addListener('backButton', () => {
+      // Prevent navigation during ride recording (full-screen mode)
+      if (isRecording && location.pathname === '/ride') {
+        // Do nothing - ride mode is all-consuming
+        return;
+      }
+
       // If the current path is NOT /dashboard, navigate to /dashboard (replace: true)
       if (location.pathname !== '/dashboard') {
         navigate('/dashboard', { replace: true });
@@ -54,7 +62,7 @@ export default function BackButtonHandler() {
         listenerHandle.remove();
       }
     };
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, isRecording]);
 
   // This component doesn't render anything
   return null;

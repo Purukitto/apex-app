@@ -14,6 +14,14 @@
   --radius-apex: 2.5rem;
 }
 
+/* Safe Area Insets - for notches and punch-holes */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+}
+
 /* Global dark background - will be overridden by theme */
 html,
 body {
@@ -38,6 +46,8 @@ body {
 [data-sonner-toaster] {
   --width: 356px;
   --toast-gap: 8px;
+  /* Respect safe area insets for top-center positioning */
+  top: calc(1rem + env(safe-area-inset-top, 0px)) !important;
 }
 
 /* Stacking behavior - ensure each toast is visible and properly spaced */
@@ -47,7 +57,7 @@ body {
 
 /* Type-specific border colors */
 [data-sonner-toast][data-type="success"] {
-  border-color: var(--color-apex-green, #bef264) !important;
+  border-color: var(--color-apex-green, #00FF41) !important;
 }
 
 [data-sonner-toast][data-type="error"] {
@@ -56,6 +66,37 @@ body {
 
 [data-sonner-toast] [data-description] {
   color: var(--color-apex-white, #E2E2E2) !important;
+}
+
+/* Ensure toast content is visible and properly styled */
+[data-sonner-toast] [data-title] {
+  color: var(--color-apex-white, #E2E2E2) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+[data-sonner-toast] [data-content] {
+  color: var(--color-apex-white, #E2E2E2) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure toast text content is visible - target all possible content containers */
+[data-sonner-toast] > div,
+[data-sonner-toast] > div > div,
+[data-sonner-toast] [data-content] > *,
+[data-sonner-toast] [data-title] > * {
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: inherit !important;
+}
+
+/* Ensure toast message text is visible */
+[data-sonner-toast] p,
+[data-sonner-toast] span,
+[data-sonner-toast] div {
+  color: var(--color-apex-white, #E2E2E2) !important;
+  opacity: 1 !important;
 }
 
 /* Ensure toasts maintain their individual styling when stacked */

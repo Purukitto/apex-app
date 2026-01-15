@@ -3,11 +3,11 @@ import { Capacitor } from '@capacitor/core';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useDiscord } from '../hooks/useDiscord';
 import { useAppUpdate } from '../hooks/useAppUpdate';
+import { useAppUpdateStore } from '../stores/useAppUpdateStore';
 import { useNavigate } from 'react-router-dom';
 import { Mail, LogOut, Save, User, MessageCircle, Link2, Unlink, Download, RefreshCw, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
-import UpdateModal from '../components/UpdateModal';
 import DonationCard from '../components/profile/DonationCard';
 import { useThemeStore, PRIMARY_COLORS, BACKGROUND_COLORS, type BackgroundTheme, type PrimaryTheme } from '../stores/useThemeStore';
 import { applyTheme } from '../lib/theme';
@@ -19,13 +19,13 @@ export default function Profile() {
   const isNative = Capacitor.isNativePlatform();
   const { profile, isLoading, updateRiderName, signOut } = useUserProfile();
   const { isConnected, isLoading: isDiscordLoading, linkDiscord, unlinkDiscord } = useDiscord();
-  const { updateInfo, isChecking, checkForUpdate, openReleasePage, dismissUpdate } = useAppUpdate();
+  const { isChecking, checkForUpdate } = useAppUpdate();
+  const { updateInfo, setShowModal } = useAppUpdateStore();
   const navigate = useNavigate();
   const [riderName, setRiderName] = useState(profile?.riderName || '');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const { background, primary, setBackground, setPrimary } = useThemeStore();
   
 
@@ -83,26 +83,11 @@ export default function Profile() {
   };
 
   const handleCheckForUpdate = async () => {
-    const result = await checkForUpdate(true);
+    const result = await checkForUpdate(true, true);
     if (result?.isAvailable) {
-      setShowUpdateModal(true);
+      setShowModal(true);
     }
   };
-
-  const handleUpdateDownload = () => {
-    if (updateInfo?.downloadUrl) {
-      openReleasePage();
-    } else {
-      openReleasePage();
-    }
-  };
-
-  // Show update modal when update becomes available
-  useEffect(() => {
-    if (updateInfo?.isAvailable) {
-      setShowUpdateModal(true);
-    }
-  }, [updateInfo]);
 
   // Handle theme changes
   const handleBackgroundChange = (bg: BackgroundTheme) => {
@@ -436,18 +421,6 @@ export default function Profile() {
         </motion.div>
       </motion.div>
 
-      {/* Update Modal */}
-      {updateInfo && (
-        <UpdateModal
-          isOpen={showUpdateModal}
-          onClose={() => {
-            setShowUpdateModal(false);
-            dismissUpdate();
-          }}
-          onDownload={handleUpdateDownload}
-          updateInfo={updateInfo}
-        />
-      )}
     </div>
   );
 }

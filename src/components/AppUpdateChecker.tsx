@@ -25,7 +25,8 @@ export default function AppUpdateChecker() {
 
     // Defer the check slightly to ensure app is fully initialized
     const timerId = setTimeout(() => {
-      checkForUpdate(false).catch((error) => {
+      // Pass true for showModalOnUpdate to automatically show modal when update is found
+      checkForUpdate(false, true).catch((error) => {
         // Silently fail - don't show errors for background checks
         console.log('Background update check failed:', error);
       });

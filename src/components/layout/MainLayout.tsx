@@ -3,12 +3,18 @@ import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useNotificationStore } from '../../stores/useNotificationStore';
+import { useAppUpdateStore } from '../../stores/useAppUpdateStore';
 import NotificationPane from './NotificationPane';
 import BottomPillNav from './BottomPillNav';
 import PageHeader from './PageHeader';
 import { NotificationContext } from './NotificationContext';
+import UpdateModal from '../UpdateModal';
+import DevToolsPanel from '../DevToolsPanel';
+import DevToolsButton from '../DevToolsButton';
+import { useAppUpdate } from '../../hooks/useAppUpdate';
 import { AnimatePresence, motion } from 'framer-motion';
 import { containerVariants } from '../../lib/animations';
+import { useRideStore } from '../../stores/useRideStore';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -16,11 +22,26 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const [notificationPaneOpen, setNotificationPaneOpen] = useState(false);
+  const [devToolsOpen, setDevToolsOpen] = useState(false);
   const { getUnreadCount } = useNotificationStore();
+  const { updateInfo, showModal, setShowModal, dismissUpdate } = useAppUpdateStore();
+  const { openReleasePage } = useAppUpdate();
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
+  const isRecording = useRideStore((state) => state.isRecording);
   
   const unreadCount = getUnreadCount();
+  
+  // Hide navigation when recording (full-screen ride mode)
+  const isRideMode = isRecording && location.pathname === '/ride';
+
+  const handleUpdateDownload = () => {
+    if (updateInfo?.downloadUrl) {
+      openReleasePage();
+    } else {
+      openReleasePage();
+    }
+  };
 
   // Reset scroll position on route change
   useEffect(() => {
@@ -47,28 +68,35 @@ export default function MainLayout({ children }: MainLayoutProps) {
         unreadCount,
       }}
     >
-      <div className="min-h-screen bg-zinc-950 flex flex-col">
-        {/* Sticky Page Header */}
-        <div className="sticky top-0 z-40 bg-zinc-950 border-b border-white/5">
-          <motion.div
-            className="p-6"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
+      <div className={`min-h-screen bg-zinc-950 flex flex-col ${isRideMode ? 'fixed inset-0 overflow-hidden' : ''}`}>
+        {/* Sticky Page Header - Hidden in ride mode */}
+        {!isRideMode && (
+          <div 
+            className="sticky top-0 z-40 bg-zinc-950 border-b border-white/5"
+            style={{
+              paddingTop: 'env(safe-area-inset-top, 0px)',
+            }}
           >
-            <PageHeader title={getPageTitle()} />
-          </motion.div>
-        </div>
+            <motion.div
+              className="p-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <PageHeader title={getPageTitle()} />
+            </motion.div>
+          </div>
+        )}
 
         {/* Main Content */}
-        <main ref={mainRef} className="flex-1 min-h-0 pb-32 transition-all overflow-y-auto">
+        <main ref={mainRef} className={`flex-1 min-h-0 transition-all overflow-y-auto ${isRideMode ? 'pb-0' : 'pb-32'}`}>
           <AnimatePresence mode="wait" key={location.pathname}>
             {children}
           </AnimatePresence>
         </main>
 
-        {/* Floating Bottom Pill Navigation - All Platforms */}
-        <BottomPillNav />
+        {/* Floating Bottom Pill Navigation - Hidden in ride mode */}
+        {!isRideMode && <BottomPillNav />}
 
         {/* Toast Notifications */}
         <Toaster
@@ -94,6 +122,26 @@ export default function MainLayout({ children }: MainLayoutProps) {
           isOpen={notificationPaneOpen}
           onClose={() => setNotificationPaneOpen(false)}
         />
+
+        {/* Update Modal - Global */}
+        {updateInfo && (
+          <UpdateModal
+            isOpen={showModal}
+            onClose={async () => {
+              setShowModal(false);
+              await dismissUpdate();
+            }}
+            onDownload={handleUpdateDownload}
+            updateInfo={updateInfo}
+          />
+        )}
+
+        {/* DevTools - Development Only */}
+        <DevToolsPanel
+          isOpen={devToolsOpen}
+          onClose={() => setDevToolsOpen(false)}
+        />
+        <DevToolsButton onToggle={() => setDevToolsOpen(prev => !prev)} />
       </div>
     </NotificationContext.Provider>
   );

@@ -8,6 +8,7 @@ import { buttonHoverProps, cardHoverProps } from '../lib/animations';
 import { searchGlobalBikesMultiple, reportBikeSpec } from '../services/bikeLibrary';
 import { logger } from '../lib/logger';
 import { useKeyboard } from '../hooks/useKeyboard';
+import { toTitleCase } from '../lib/capitalize';
 
 interface AddBikeModalProps {
   isOpen: boolean;
@@ -109,8 +110,8 @@ export default function AddBikeModal({
   const handleSelectBike = (bike: GlobalBikeSpec) => {
     setFormData((prev) => ({
       ...prev,
-      make: bike.make,
-      model: bike.model,
+      make: toTitleCase(bike.make), // Capitalize make
+      model: toTitleCase(bike.model), // Capitalize model
       year: bike.year?.toString() || prev.year,
       image_url: bike.image_url || prev.image_url,
       specs_engine: bike.displacement || prev.specs_engine,
@@ -356,7 +357,7 @@ export default function AddBikeModal({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <p className="text-apex-white font-semibold text-sm truncate">
-                              {bike.make} {bike.model}
+                              {toTitleCase(bike.make)} {toTitleCase(bike.model)}
                             </p>
                             {bike.is_verified && (
                               <div title="Verified">
@@ -367,7 +368,7 @@ export default function AddBikeModal({
                           <div className="flex flex-wrap items-center gap-2 mt-1">
                             {bike.category && (
                               <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded">
-                                {bike.category}
+                                {toTitleCase(bike.category)}
                                 {bike.year && ` • ${bike.year}`}
                               </span>
                             )}
@@ -457,7 +458,7 @@ export default function AddBikeModal({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-apex-white font-semibold text-sm">
-                      {selectedBike.make} {selectedBike.model}
+                      {toTitleCase(selectedBike.make)} {toTitleCase(selectedBike.model)}
                     </p>
                     {selectedBike.is_verified && (
                       <div title="Verified">
@@ -468,7 +469,7 @@ export default function AddBikeModal({
                   <div className="flex flex-wrap items-center gap-2 mt-1">
                     {selectedBike.category && (
                       <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded">
-                        {selectedBike.category}
+                        {toTitleCase(selectedBike.category)}
                         {selectedBike.year && ` • ${selectedBike.year}`}
                       </span>
                     )}

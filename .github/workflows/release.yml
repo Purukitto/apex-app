@@ -110,25 +110,53 @@ jobs:
           VERSION="${{ steps.pkg.outputs.VERSION }}"
           VERSION_NUM="${VERSION#v}"
           
-          # Extract changelog section for this version
-          # Find the line with the version, then extract until next version header
-          awk -v version="$VERSION_NUM" '
+          # Extract changelog sections for this version and all patch versions in the same minor release
+          # Strategy: Extract from current version until we hit a different minor version (e.g., 0.13.x -> stop at 0.12.x or 0.14.x)
+          # Parse version to get major.minor parts
+          VERSION_PARTS=$(echo "$VERSION_NUM" | sed 's/\./ /g')
+          MAJOR=$(echo $VERSION_PARTS | awk '{print $1}')
+          MINOR=$(echo $VERSION_PARTS | awk '{print $2}')
+          MINOR_PREFIX="${MAJOR}.${MINOR}"
+          
+          awk -v target_version="$VERSION_NUM" -v minor_prefix="$MINOR_PREFIX" '
             BEGIN { 
               in_section = 0
-              found = 0
+              found_target = 0
+              collecting = 0
             }
+            # Match version headers: ### [0.13.4] or ## [0.13.0]
             /^###? \[.*\]/ || /^## \[.*\]/ {
-              if (found) exit  # Stop at next version
-              if ($0 ~ version) {
-                in_section = 1
-                found = 1
-                print
-                next
-              } else if (in_section) {
-                exit  # Hit different version while in section
+              # Extract version from header (e.g., "0.13.4" from "### [0.13.4]")
+              match($0, /\[([0-9]+\.[0-9]+\.[0-9]+)\]/, version_match)
+              if (version_match[1]) {
+                current_version = version_match[1]
+                # Check if this is our target version or a patch version in the same minor release
+                if (current_version == target_version) {
+                  # Found the target version - start collecting
+                  found_target = 1
+                  collecting = 1
+                  in_section = 1
+                  print
+                  next
+                } else if (found_target && collecting) {
+                  # Check if this is still in the same minor version (e.g., 0.13.x)
+                  if (current_version ~ "^" minor_prefix "\\.") {
+                    # Same minor version, continue collecting
+                    print
+                    next
+                  } else {
+                    # Different minor version, stop collecting
+                    exit
+                  }
+                } else if (!found_target) {
+                  # Haven't found target yet, keep looking
+                  in_section = 0
+                  next
+                }
               }
             }
-            in_section { print }
+            # If we're collecting, print all lines
+            collecting && in_section { print }
           ' CHANGELOG.md > release_notes.md || true
           
           # If extraction failed or empty, create fallback with link to full changelog
@@ -140,9 +168,9 @@ jobs:
           EOF
           fi
           
-          echo "✓ Extracted changelog for version $VERSION_NUM"
+          echo "✓ Extracted changelog for version $VERSION_NUM (and patch versions in $MINOR_PREFIX.x)"
           echo "Preview:"
-          head -20 release_notes.md
+          head -30 release_notes.md
 
       - name: Create Release & Tag
         if: steps.check_release.outputs.exists == 'false'

@@ -481,12 +481,18 @@ export const useRideTracking = () => {
             errorMessage = 'Database function missing. Please contact support.';
           } else if (msg.includes('violates') || msg.includes('constraint')) {
             errorMessage = 'Invalid data. Please check your ride information.';
+          } else if (msg.includes('best candidate') || msg.includes('geolocation') || msg.includes('location')) {
+            // Geolocation-related errors during save (shouldn't happen, but handle gracefully)
+            errorMessage = 'Failed to save ride. Please try again.';
+          } else if (msg.includes('watchid') || msg.includes('watch id')) {
+            // WatchId errors are expected if watch was already cleared
+            errorMessage = 'Failed to save ride. Please try again.';
           } else {
             // Show the actual error message if it's user-friendly
             // But truncate if it's too long (might contain JSON or technical details)
             const rawMessage = errorObj.message as string;
-            if (rawMessage.length > 100) {
-              // If message is too long, it's likely technical - use generic message
+            if (rawMessage.length > 100 || rawMessage.includes('{') || rawMessage.includes('[')) {
+              // If message is too long or contains JSON, it's likely technical - use generic message
               errorMessage = 'Failed to save ride. Please try again.';
             } else {
               errorMessage = rawMessage;
@@ -600,8 +606,18 @@ export const useRideTracking = () => {
             await Geolocation.clearWatch({ id: watchIdRef.current });
             watchIdRef.current = undefined;
           } catch (error) {
-            logger.warn('Error clearing GPS watch (may already be cleared):', error);
-            // Watch might already be cleared, continue anyway
+            // WatchId not found is expected if watch was already cleared or never started
+            const errorMessage = error && typeof error === 'object' && 'message' in error
+              ? String((error as { message?: string }).message || '')
+              : '';
+            
+            if (errorMessage.includes('WatchId not found') || errorMessage.includes('OS-PLUG-GLOC-0012')) {
+              // This is expected - watch was already cleared or never started
+              logger.debug('GPS watch already cleared or not found (expected)');
+            } else {
+              logger.warn('Error clearing GPS watch:', error);
+            }
+            // Always clear the ref even if clearWatch failed
             watchIdRef.current = undefined;
           }
         }
@@ -784,7 +800,19 @@ export const useRideTracking = () => {
       },
       (position: Position | null, err?: Error) => {
         if (err) {
-          logger.error('Geolocation error:', err);
+          // Log geolocation errors but don't spam - some errors are expected (e.g., no GPS signal)
+          const errorMessage = err.message || String(err);
+          const isExpectedError = 
+            errorMessage.toLowerCase().includes('timeout') ||
+            errorMessage.toLowerCase().includes('best candidate') ||
+            errorMessage.toLowerCase().includes('unavailable') ||
+            errorMessage.toLowerCase().includes('permission');
+          
+          if (!isExpectedError) {
+            logger.error('Geolocation error:', err);
+          } else {
+            logger.debug('Geolocation warning (expected):', errorMessage);
+          }
           return;
         }
 

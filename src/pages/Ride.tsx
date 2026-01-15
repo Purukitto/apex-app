@@ -509,37 +509,41 @@ export default function Ride() {
       await stopRide(selectedBike.id, true);
       // Don't show toast here - saveRide mutation handles it via onSuccess/onError
       
-      // Reset UI state
+      // Reset UI state only if save succeeded (stopRide will throw if save fails)
       setSelectedBike(null);
       resetRide();
       setShowSafetyWarning(true);
       setPreviousSpeed(0);
       setShowStartupAnimation(false);
-      } catch (error) {
-        // Log technical details for debugging
-        logger.error('Error stopping ride:', error);
-        logger.error('Stop ride error details:', JSON.stringify(error, null, 2));
-        
-        // Extract user-friendly error message
+    } catch (error) {
+      // Log technical details for debugging
+      logger.error('Error stopping ride:', error);
+      logger.error('Stop ride error details:', JSON.stringify(error, null, 2));
+      
+      // Check if this is a save error - if so, the mutation's onError already showed a toast
+      const isSaveError = error instanceof Error && 
+        (error.message.toLowerCase().includes('save') ||
+         error.message.toLowerCase().includes('failed to save') ||
+         error.message.toLowerCase().includes('permission') ||
+         error.message.toLowerCase().includes('network') ||
+         error.message.toLowerCase().includes('authenticated'));
+      
+      // Only show toast for non-save errors (save errors are handled by mutation's onError)
+      if (!isSaveError) {
         let errorMessage = 'Failed to stop ride. Please try again.';
         if (error instanceof Error) {
           const msg = error.message.toLowerCase();
           // Map technical errors to user-friendly messages
           if (msg.includes('watchid') || msg.includes('not found')) {
             errorMessage = 'Ride tracking was already stopped.';
-          } else if (!msg.includes('ride saved')) {
-            // Use the error message if it's already user-friendly
-            errorMessage = error.message;
           } else {
-            // Don't show error if ride was saved successfully
-            return;
+            errorMessage = error.message;
           }
         }
-        
-        // Only show error if saveRide mutation didn't already show one
-        // The mutation's onError will handle the toast
         apexToast.error(errorMessage);
       }
+      // Don't reset UI state if save failed - keep ride data visible so user can retry
+    }
   };
 
   const handleCalibrate = async () => {

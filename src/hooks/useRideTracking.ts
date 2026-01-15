@@ -619,27 +619,41 @@ export const useRideTracking = () => {
             maxLeanRight: maxLeanRightToUse,
           });
 
-          await saveRide.mutateAsync({
-            bikeId,
-            coords: coordsToSave,
-            startTime: startTimeToUse,
-            endTime: new Date(),
-            maxLeanLeft: maxLeanLeftToUse,
-            maxLeanRight: maxLeanRightToUse,
-          });
+          try {
+            await saveRide.mutateAsync({
+              bikeId,
+              coords: coordsToSave,
+              startTime: startTimeToUse,
+              endTime: new Date(),
+              maxLeanLeft: maxLeanLeftToUse,
+              maxLeanRight: maxLeanRightToUse,
+            });
 
-          // Reset state after save
-          setState((prev) => ({
-            ...prev,
-            coords: [],
-            startTime: null,
-            distanceKm: 0,
-            maxLeanLeft: 0,
-            maxLeanRight: 0,
-          }));
+            // Reset state after successful save
+            setState((prev) => ({
+              ...prev,
+              coords: [],
+              startTime: null,
+              distanceKm: 0,
+              maxLeanLeft: 0,
+              maxLeanRight: 0,
+            }));
 
-          // Reset store
-          useRideStore.getState().resetRide();
+            // Reset store
+            useRideStore.getState().resetRide();
+          } catch (saveError: unknown) {
+            // Log technical details for debugging
+            logger.error('Error saving ride:', saveError);
+            logger.error('Save ride error details:', JSON.stringify(saveError, null, 2));
+            
+            // The mutation's onError handler will show a toast, so we don't need to show another one here
+            // But we should still reset the recording state so the UI updates
+            // Don't reset coords/startTime in case user wants to retry
+            
+            // Re-throw the error so the caller knows the save failed
+            // The error message will already be user-friendly from the mutation's onError handler
+            throw saveError;
+          }
         } else {
           logger.debug('Not saving ride:', {
             shouldSave,
@@ -647,32 +661,58 @@ export const useRideTracking = () => {
             hasCoords: coordsToSave.length > 0,
             hasStartTime: !!startTimeToUse,
           });
+          
+          // Reset state even if not saving (discard case)
+          if (!shouldSave) {
+            setState((prev) => ({
+              ...prev,
+              coords: [],
+              startTime: null,
+              distanceKm: 0,
+              maxLeanLeft: 0,
+              maxLeanRight: 0,
+            }));
+            useRideStore.getState().resetRide();
+          }
         }
       } catch (error: unknown) {
         // Log technical details for debugging
         logger.error('Error in stopRide:', error);
         logger.error('Stop ride error details:', JSON.stringify(error, null, 2));
         
-        // Show user-friendly error message
-        let errorMessage = 'Failed to stop ride. Please try again.';
+        // Only show error toast if it's not a save error (save errors are handled by mutation's onError)
+        const isSaveError = error && typeof error === 'object' && 
+          ('message' in (error as Record<string, unknown>) && 
+           typeof (error as Record<string, unknown>).message === 'string' &&
+           ((error as Record<string, unknown>).message as string).toLowerCase().includes('save'));
         
-        if (error && typeof error === 'object') {
-          const errorObj = error as Record<string, unknown>;
-          if ('message' in errorObj && typeof errorObj.message === 'string') {
-            const msg = errorObj.message.toLowerCase();
-            // Map technical errors to user-friendly messages
-            if (msg.includes('watchid') || msg.includes('not found')) {
-              errorMessage = 'Ride tracking was already stopped.';
-            } else if (msg.includes('permission') || msg.includes('denied')) {
-              errorMessage = 'Permission denied. Please check your account settings.';
-            } else if (msg.includes('network') || msg.includes('fetch')) {
-              errorMessage = 'Network error. Please check your connection and try again.';
+        if (!isSaveError) {
+          // Show user-friendly error message for non-save errors
+          let errorMessage = 'Failed to stop ride. Please try again.';
+          
+          if (error && typeof error === 'object') {
+            const errorObj = error as Record<string, unknown>;
+            if ('message' in errorObj && typeof errorObj.message === 'string') {
+              const msg = errorObj.message.toLowerCase();
+              // Map technical errors to user-friendly messages
+              if (msg.includes('watchid') || msg.includes('not found')) {
+                errorMessage = 'Ride tracking was already stopped.';
+              } else if (msg.includes('permission') || msg.includes('denied')) {
+                errorMessage = 'Permission denied. Please check your account settings.';
+              } else if (msg.includes('network') || msg.includes('fetch')) {
+                errorMessage = 'Network error. Please check your connection and try again.';
+              } else {
+                errorMessage = errorObj.message as string;
+              }
             }
           }
+          
+          // Show toast for non-save errors
+          apexToast.error(errorMessage);
         }
         
-        // Re-throw with user-friendly error message
-        throw new Error(errorMessage);
+        // Re-throw the error so caller can handle it
+        throw error;
       }
     },
     [state.coords, state.startTime, state.maxLeanLeft, state.maxLeanRight, saveRide]

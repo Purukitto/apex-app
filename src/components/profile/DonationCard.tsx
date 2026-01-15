@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Browser } from '@capacitor/browser';
-import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Coffee, IndianRupee, X, Copy, Check } from 'lucide-react';
 import { itemVariants, buttonHoverProps, cardHoverProps } from '../../lib/animations';

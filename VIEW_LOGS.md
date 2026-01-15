@@ -1,6 +1,25 @@
-# Viewing Android Logs for Motion Sensor Debugging
+# Viewing Logs in Apex App
 
-## Quick Commands
+## DevTools Panel Export (Recommended)
+
+The easiest way to view and export logs is through the DevTools panel:
+
+1. **Open DevTools**: Press the dev tools shortcut (usually configured in your app)
+2. **Navigate to Console tab**: View all captured logs in real-time
+3. **Filter logs**: Use the search box to filter logs (e.g., `-[vite]` to exclude Vite logs)
+4. **Change log level**: Use the log level buttons to filter by severity
+5. **Export logs**:
+   - **Native (Android/iOS)**: Click the download button to share logs via system share dialog
+   - **Web**: Click the download button to download logs as a `.txt` file
+
+The exported log file includes:
+- Session ID
+- Export timestamp
+- All log entries with timestamps and levels
+
+## Android Logcat Commands (Advanced)
+
+For low-level debugging, you can use Android logcat:
 
 ### View all motion-related logs:
 ```powershell

@@ -278,9 +278,49 @@ class ApexLogger {
         directory: Directory.Cache,
       });
       return uri.uri;
-    } catch {
+    } catch (error) {
+      // Use console.error to avoid circular reference
+      console.error('Failed to get log file path:', error);
       return null;
     }
+  }
+
+  /**
+   * Read log file content (native platforms only)
+   */
+  async getLogFileContent(): Promise<string | null> {
+    if (!this.isNative || !this.fileLoggingEnabled) {
+      return null;
+    }
+
+    try {
+      // Flush any buffered logs first
+      await this.flushLogs();
+
+      const { Filesystem, Directory } = await import('@capacitor/filesystem');
+      const logPath = `apex-logs/${this.sessionId}.log`;
+      const result = await Filesystem.readFile({
+        path: logPath,
+        directory: Directory.Cache,
+      });
+      return result.data as string;
+    } catch (error) {
+      // Use console.error to avoid circular reference
+      console.error('Failed to read log file:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Export all console logs as text (for web or when file reading fails)
+   */
+  exportLogsAsText(logs: Array<{ type: string; message: string; timestamp: Date }>): string {
+    const header = `# Apex Log Export\n# Session ID: ${this.sessionId}\n# Exported: ${new Date().toISOString()}\n# Total Logs: ${logs.length}\n\n`;
+    const logLines = logs.map((log) => {
+      const timestamp = log.timestamp.toISOString();
+      return `[${timestamp}] ${log.type.toUpperCase()}: ${log.message}`;
+    });
+    return header + logLines.join('\n');
   }
 
   /**
@@ -299,7 +339,7 @@ class ApexLogger {
 export const logger = new ApexLogger();
 
 // Export convenience methods
-export const { trace, debug, info, warn, error, setLevel, getLevel } = logger;
+export const { trace, debug, info, warn, error, setLevel, getLevel, exportLogsAsText } = logger;
 
 // Export default logger instance
 export default logger;

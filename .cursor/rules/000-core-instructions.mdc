@@ -31,6 +31,7 @@ alwaysApply: true
   - `logger.warn()` - Warnings
   - `logger.error()` - Errors (always flushed immediately)
 - **Benefits**: All logs are captured in devtools console AND persisted to session files on native platforms.
+- **Exporting Logs**: Use DevTools panel download button to export logs (native: share, web: download).
 - **Exceptions**: Only `logger.ts` itself may use console.* as fallback when file logging fails.
 
 ## Mobile-Only Logic

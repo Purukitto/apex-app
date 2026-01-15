@@ -20,6 +20,19 @@ alwaysApply: true
 - Fetch data using **TanStack Query** (React Query).
 - Logic for "Ride Recording" must check for mobile platform using Capacitor.
 
+## Logging Standards
+- **MANDATORY**: Always use `logger` from `src/lib/logger.ts` instead of `console.*` methods.
+- **NEVER** use `console.log`, `console.error`, `console.warn`, `console.info`, `console.debug`, or `console.trace` directly.
+- **Import**: `import { logger } from '../lib/logger'` or `import logger from '../lib/logger'`
+- **Usage**:
+  - `logger.trace()` - Very detailed debugging (rarely used)
+  - `logger.debug()` - Debug information (development)
+  - `logger.info()` - General information
+  - `logger.warn()` - Warnings
+  - `logger.error()` - Errors (always flushed immediately)
+- **Benefits**: All logs are captured in devtools console AND persisted to session files on native platforms.
+- **Exceptions**: Only `logger.ts` itself may use console.* as fallback when file logging fails.
+
 ## Mobile-Only Logic
 - All components in `src/pages/Recorder.tsx` must be wrapped in a platform check.
 - Use `Capacitor.getPlatform()` to detect 'ios' or 'android'.

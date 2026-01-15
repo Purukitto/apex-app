@@ -38,8 +38,10 @@ function calculateHealth(
       timeUsed = Math.max(0, monthsDiff);
       timeRemaining = Math.max(0, schedule.interval_months - timeUsed);
     } else {
-      // No last service date, assume 0 time used
-      timeRemaining = schedule.interval_months;
+      // No last service date - service has never been done
+      // For display purposes, show 0.0 months used (not undefined)
+      timeUsed = 0;
+      timeRemaining = 0; // Can't calculate remaining without a start date
     }
   }
 
@@ -50,10 +52,15 @@ function calculateHealth(
     health = Math.min(health, kmHealth);
   }
   if (schedule.interval_months > 0) {
-    const timeHealth = lastServiceDate
-      ? 100 - (timeUsed / schedule.interval_months) * 100
-      : 100;
-    health = Math.min(health, timeHealth);
+    if (lastServiceDate) {
+      // Service has been done before - calculate health based on time elapsed
+      const timeHealth = 100 - (timeUsed / schedule.interval_months) * 100;
+      health = Math.min(health, timeHealth);
+    } else {
+      // No service date means service has never been done - health should be 0%
+      // This applies to items like Insurance that require an initial setup
+      health = 0;
+    }
   }
 
   // Clamp health between 0 and 100

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Search, Loader2 } from 'lucide-react';
 import type { Bike } from '../types/database';
 import { apexToast } from '../lib/toast';
@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { buttonHoverProps } from '../lib/animations';
 import { searchBike, extractEngineSpecs, extractPowerSpecs } from '../services/bikeData';
 import { logger } from '../lib/logger';
+import { useKeyboard } from '../hooks/useKeyboard';
 
 interface AddBikeModalProps {
   isOpen: boolean;
@@ -36,6 +37,9 @@ export default function AddBikeModal({
   const [wikiSearchResult, setWikiSearchResult] = useState<Awaited<ReturnType<typeof searchBike>> | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showManualEntry, setShowManualEntry] = useState(false);
+  const { isKeyboardVisible, keyboardHeight } = useKeyboard();
+  const formRef = useRef<HTMLFormElement>(null);
+  const modalContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (editingBike) {
@@ -174,15 +178,35 @@ export default function AddBikeModal({
     }
   };
 
+  // Scroll focused input into view when keyboard appears
+  useEffect(() => {
+    if (isKeyboardVisible && formRef.current) {
+      const activeElement = document.activeElement as HTMLElement;
+      if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+        setTimeout(() => {
+          activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      }
+    }
+  }, [isKeyboardVisible]);
+
+  // Check if required fields are filled
+  const canSubmit = formData.make.trim() && formData.model.trim();
+
   if (!isOpen) return null;
+
+  // Calculate bottom padding to account for bottom pill nav (when keyboard is not visible)
+  const bottomPadding = isKeyboardVisible 
+    ? `calc(1rem + env(safe-area-inset-bottom, 0px) + ${keyboardHeight}px)`
+    : `calc(6rem + env(safe-area-inset-bottom, 0px))`; // Extra space for bottom pill nav
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-[100] flex items-center justify-center"
       style={{
         padding: '1rem',
         paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
-        paddingBottom: `calc(1rem + env(safe-area-inset-bottom, 0px))`,
+        paddingBottom: bottomPadding,
         paddingLeft: `calc(1rem + env(safe-area-inset-left, 0px))`,
         paddingRight: `calc(1rem + env(safe-area-inset-right, 0px))`,
       }}
@@ -191,7 +215,10 @@ export default function AddBikeModal({
         className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10">
+      <div 
+        ref={modalContentRef}
+        className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10 max-h-[90vh] flex flex-col"
+      >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-apex-white">
             {editingBike ? 'Edit Bike' : 'Add Bike'}
@@ -206,7 +233,13 @@ export default function AddBikeModal({
           </motion.button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form 
+          id="add-bike-form"
+          ref={formRef} 
+          onSubmit={handleSubmit} 
+          className="space-y-4 overflow-y-auto flex-1 pr-2" 
+          style={{ maxHeight: 'calc(90vh - 8rem)' }}
+        >
           {/* Wikipedia Search - Only show when adding (not editing) */}
           {!editingBike && (
             <div>
@@ -252,24 +285,39 @@ export default function AddBikeModal({
                   No results found. You can still enter bike details manually.
                 </p>
               )}
-              {wikiSearchQuery && (
+              {wikiSearchQuery && !showManualEntry && (
                 <motion.button
                   type="button"
                   onClick={() => {
                     setShowManualEntry(true);
-                    setWikiSearchQuery('');
-                    setWikiSearchResult(null);
+                    // Don't clear search query - let user see what they searched for
+                    // They can still edit the auto-filled fields
                   }}
-                  className="mt-2 text-xs text-apex-green hover:text-apex-green/80 transition-colors"
+                  className="mt-3 w-full px-4 py-2 border border-apex-green/40 text-apex-green rounded-lg hover:bg-apex-green/10 transition-colors text-sm font-medium"
                   {...buttonHoverProps}
                 >
-                  Enter details manually instead
+                  {wikiSearchResult 
+                    ? 'Edit details manually' 
+                    : 'Enter details manually instead'}
+                </motion.button>
+              )}
+              {wikiSearchQuery && showManualEntry && (
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setShowManualEntry(false);
+                  }}
+                  className="mt-2 text-xs text-apex-white/60 hover:text-apex-white transition-colors"
+                  {...buttonHoverProps}
+                >
+                  ← Back to search results
                 </motion.button>
               )}
             </div>
           )}
 
           {/* Manual entry fields - always show when editing, or when no search query, or when search result found (so user can edit), or when user wants manual entry */}
+          {/* Only show Add Bike button when required fields are visible and filled */}
           {(editingBike || !wikiSearchQuery || wikiSearchResult || showManualEntry) && (
             <>
               <div>
@@ -392,8 +440,12 @@ export default function AddBikeModal({
           {error && (
             <div className="text-apex-red text-sm">{error}</div>
           )}
+        </form>
 
-          <div className="flex gap-3 pt-4">
+        {/* Action buttons - sticky at bottom of modal */}
+        {/* Only show buttons when manual entry is visible or editing */}
+        {(editingBike || !wikiSearchQuery || wikiSearchResult || showManualEntry) && (
+          <div className="flex gap-3 pt-4 mt-4 border-t border-apex-white/10 shrink-0">
             <motion.button
               type="button"
               onClick={onClose}
@@ -403,8 +455,24 @@ export default function AddBikeModal({
               Cancel
             </motion.button>
             <motion.button
-              type="submit"
-              disabled={isSubmitting}
+              type="button"
+              onClick={(e) => {
+                if (!canSubmit && !editingBike) {
+                  apexToast.error('Please fill in Make and Model fields');
+                  return;
+                }
+                // Create a synthetic submit event
+                const form = formRef.current;
+                if (form) {
+                  const syntheticEvent = {
+                    preventDefault: () => {},
+                    currentTarget: form,
+                    target: form,
+                  } as React.FormEvent<HTMLFormElement>;
+                  handleSubmit(syntheticEvent);
+                }
+              }}
+              disabled={isSubmitting || (!canSubmit && !editingBike)}
               className="flex-1 px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               {...(isSubmitting ? {} : buttonHoverProps)}
             >
@@ -415,7 +483,7 @@ export default function AddBikeModal({
                   : 'Add Bike'}
             </motion.button>
           </div>
-        </form>
+        )}
       </div>
     </div>
   );

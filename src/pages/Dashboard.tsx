@@ -343,40 +343,55 @@ export default function Dashboard() {
                 return (
                   <motion.div
                     key={ride.id}
-                    className="bg-zinc-900 border border-white/5 rounded-apex p-5 cursor-pointer transition-all"
+                    className="bg-zinc-900 border border-white/5 rounded-apex overflow-hidden"
                     variants={fastItemVariants}
-                    onClick={() => navigate(`/rides?rideId=${ride.id}`)}
-                    whileHover={{ borderColor: highlight, scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
+                    layout
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-lg font-semibold text-white">{bikeName}</h3>
-                      <span className="text-xs text-white/40 font-mono">
-                        {formatDate(ride.start_time)}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <MapPin size={16} style={{ color: primary }} />
-                        <span className="text-sm text-white/80 font-mono">
-                          {ride.distance_km.toFixed(1)} km
-                        </span>
+                    {/* Card Header - Same as AllRides but navigates on click */}
+                    <motion.div
+                      className="p-5 cursor-pointer"
+                      onClick={() => navigate(`/rides?rideId=${ride.id}`)}
+                      whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}
+                      whileTap={{ backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-semibold text-white truncate">
+                            {ride.ride_name || bikeName}
+                          </h3>
+                          {ride.ride_name && (
+                            <p className="text-sm text-white/40 truncate mt-1">
+                              {bikeName}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Timer size={16} style={{ color: primary }} />
-                        <span className="text-sm text-white/80">
-                          {formatDuration(ride.start_time, ride.end_time)}
-                        </span>
-                      </div>
-                      {maxLean > 0 && (
+                      <div className="flex flex-wrap items-center gap-4">
                         <div className="flex items-center gap-2">
-                          <TrendingUp size={16} style={{ color: primary }} />
+                          <MapPin size={16} style={{ color: primary }} />
                           <span className="text-sm text-white/80 font-mono">
-                            {maxLean.toFixed(1)}°
+                            {ride.distance_km.toFixed(1)} km
                           </span>
                         </div>
-                      )}
-                    </div>
+                        <div className="flex items-center gap-2">
+                          <Timer size={16} style={{ color: primary }} />
+                          <span className="text-sm text-white/80">
+                            {formatDuration(ride.start_time, ride.end_time)}
+                          </span>
+                        </div>
+                        {maxLean > 0 && (
+                          <div className="flex items-center gap-2">
+                            <TrendingUp size={16} style={{ color: primary }} />
+                            <span className="text-sm text-white/80 font-mono">
+                              {maxLean.toFixed(1)}°
+                            </span>
+                          </div>
+                        )}
+                        <span className="text-xs text-white/40 font-mono">
+                          {formatDate(ride.start_time)}
+                        </span>
+                      </div>
+                    </motion.div>
                   </motion.div>
                 );
               })}

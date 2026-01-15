@@ -439,6 +439,93 @@ export const useRideTracking = () => {
         
         throw detailedError;
       }
+
+      // Update bike current_odo (odometer) after successfully saving the ride
+      // Calculate tripDist (totalDistance in km)
+      const tripDist = Math.round(totalDistance * 100) / 100;
+      
+      if (tripDist > 0) {
+        try {
+          logger.debug('Updating bike current_odo:', {
+            bikeId,
+            tripDist,
+            currentOdometer: 'will be fetched and incremented',
+          });
+
+          // Update current_odo: SET current_odo = current_odo + tripDist WHERE id = bikeId
+          // Use RPC or direct update with increment
+          const { error: updateError } = await supabase.rpc('increment_bike_odometer', {
+            p_bike_id: bikeId,
+            p_distance_km: tripDist,
+            p_user_id: user.id, // For RLS security
+          });
+
+          if (updateError) {
+            // If RPC function doesn't exist, fall back to direct update
+            const isFunctionNotFound = 
+              updateError.message?.includes('function') && 
+              (updateError.message?.includes('does not exist') || updateError.message?.includes('not found'));
+            
+            if (isFunctionNotFound) {
+              logger.warn('RPC function increment_bike_odometer not found. Using direct update.');
+              
+              // Fallback: Direct update with SQL increment
+              // First, get current odometer value
+              const { data: bikeData, error: fetchError } = await supabase
+                .from('bikes')
+                .select('current_odo')
+                .eq('id', bikeId)
+                .eq('user_id', user.id)
+                .single();
+
+              if (fetchError) {
+                logger.error('Error fetching bike for odometer update:', fetchError);
+                // Don't throw - ride is already saved, just log the error
+              } else {
+                // Calculate new odometer value (round to integer to match current_odo type)
+                const currentOdometer = bikeData.current_odo ?? 0;
+                const newOdometer = Math.round(currentOdometer + tripDist);
+
+                // Update current_odo
+                const { error: directUpdateError } = await supabase
+                  .from('bikes')
+                  .update({ current_odo: newOdometer })
+                  .eq('id', bikeId)
+                  .eq('user_id', user.id);
+
+                if (directUpdateError) {
+                  logger.error('Error updating bike current_odo:', directUpdateError);
+                  // Don't throw - ride is already saved, just log the error
+                } else {
+                  logger.debug('Bike current_odo updated successfully:', {
+                    bikeId,
+                    oldOdometer: currentOdometer,
+                    tripDist,
+                    newOdometer,
+                  });
+                  // Invalidate bikes query to refresh odometer in UI
+                  await queryClient.invalidateQueries({ queryKey: ['bikes'] });
+                }
+              }
+            } else {
+              logger.error('Error updating bike current_odo via RPC:', updateError);
+              // Don't throw - ride is already saved, just log the error
+            }
+          } else {
+            logger.debug('Bike current_odo updated successfully via RPC:', {
+              bikeId,
+              tripDist,
+            });
+            // Invalidate bikes query to refresh odometer in UI
+            await queryClient.invalidateQueries({ queryKey: ['bikes'] });
+          }
+        } catch (odometerError) {
+          // Log error but don't fail the ride save
+          logger.error('Unexpected error updating current_odo:', odometerError);
+          // Ride is already saved, so we don't throw
+        }
+      }
+
       return data;
     },
     onSuccess: async () => {

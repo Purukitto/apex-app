@@ -4,9 +4,11 @@ export type Bike = {
   make: string;
   model: string;
   year?: number;
-  current_odo: number;
+  current_odo: number; // Odometer reading in kilometers (integer)
   nick_name?: string;
   image_url?: string;
+  specs_engine?: string;
+  specs_power?: string;
   created_at: string;
 };
 

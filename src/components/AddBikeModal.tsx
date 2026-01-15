@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Search, Loader2 } from 'lucide-react';
 import type { Bike } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
 import { buttonHoverProps } from '../lib/animations';
+import { searchBike, extractEngineSpecs, extractPowerSpecs } from '../services/bikeData';
+import { logger } from '../lib/logger';
 
 interface AddBikeModalProps {
   isOpen: boolean;
@@ -24,9 +26,16 @@ export default function AddBikeModal({
     year: '',
     nick_name: '',
     current_odo: '',
+    image_url: '',
+    specs_engine: '',
+    specs_power: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [wikiSearchQuery, setWikiSearchQuery] = useState('');
+  const [wikiSearchResult, setWikiSearchResult] = useState<Awaited<ReturnType<typeof searchBike>> | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showManualEntry, setShowManualEntry] = useState(false);
 
   useEffect(() => {
     if (editingBike) {
@@ -36,7 +45,11 @@ export default function AddBikeModal({
         year: editingBike.year?.toString() || '',
         nick_name: editingBike.nick_name || '',
         current_odo: editingBike.current_odo.toString(),
+        image_url: editingBike.image_url || '',
+        specs_engine: editingBike.specs_engine || '',
+        specs_power: editingBike.specs_power || '',
       });
+      setShowManualEntry(true);
     } else {
       setFormData({
         make: '',
@@ -44,10 +57,63 @@ export default function AddBikeModal({
         year: '',
         nick_name: '',
         current_odo: '',
+        image_url: '',
+        specs_engine: '',
+        specs_power: '',
       });
+      setShowManualEntry(false);
     }
     setError(null);
+    setWikiSearchQuery('');
+    setWikiSearchResult(null);
   }, [editingBike, isOpen]);
+
+  // Debounced Wikipedia search
+  useEffect(() => {
+    if (editingBike || !wikiSearchQuery.trim() || wikiSearchQuery.length < 3) {
+      setWikiSearchResult(null);
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const result = await searchBike(wikiSearchQuery);
+        setWikiSearchResult(result);
+        if (result) {
+          // Auto-fill form data from Wikipedia result
+          // Parse title to extract make and model (e.g., "Bajaj Dominar 400" -> make: "Bajaj", model: "Dominar 400")
+          const titleParts = result.title.split(' ');
+          if (titleParts.length >= 2) {
+            setFormData((prev) => ({
+              ...prev,
+              make: titleParts[0],
+              model: titleParts.slice(1).join(' '),
+              image_url: result.imageUrl || prev.image_url,
+              specs_engine: extractEngineSpecs(result.extract) || prev.specs_engine,
+              specs_power: extractPowerSpecs(result.extract) || prev.specs_power,
+            }));
+          } else {
+            // If title is single word, use it as model
+            setFormData((prev) => ({
+              ...prev,
+              model: result.title,
+              image_url: result.imageUrl || prev.image_url,
+              specs_engine: extractEngineSpecs(result.extract) || prev.specs_engine,
+              specs_power: extractPowerSpecs(result.extract) || prev.specs_power,
+            }));
+          }
+        }
+      } catch (error) {
+        logger.error('Wikipedia search error:', error);
+        setWikiSearchResult(null);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [wikiSearchQuery, editingBike]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +126,10 @@ export default function AddBikeModal({
         model: formData.model.trim(),
         year: formData.year ? parseInt(formData.year, 10) : undefined,
         nick_name: formData.nick_name.trim() || undefined,
-        current_odo: parseFloat(formData.current_odo) || 0,
+        current_odo: Math.round(parseFloat(formData.current_odo) || 0), // Round to integer to match int4 type
+        image_url: formData.image_url.trim() || undefined,
+        specs_engine: formData.specs_engine.trim() || undefined,
+        specs_power: formData.specs_power.trim() || undefined,
       };
 
       if (!bikeData.make || !bikeData.model) {
@@ -138,10 +207,75 @@ export default function AddBikeModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-apex-white/60 mb-2">
-              Make *
-            </label>
+          {/* Wikipedia Search - Only show when adding (not editing) */}
+          {!editingBike && (
+            <div>
+              <label className="block text-sm text-apex-white/60 mb-2">
+                Search Wikipedia (optional)
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-apex-white/40" size={18} />
+                <input
+                  type="text"
+                  value={wikiSearchQuery}
+                  onChange={(e) => setWikiSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-apex-black border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
+                  placeholder="e.g., Dominar 400, Yamaha MT-07"
+                />
+                {isSearching && (
+                  <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-apex-green animate-spin" size={18} />
+                )}
+              </div>
+              {wikiSearchResult && (
+                <div className="mt-2 p-3 bg-gradient-to-br from-white/5 to-transparent border border-apex-green/40 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    {wikiSearchResult.imageUrl && (
+                      <img
+                        src={wikiSearchResult.imageUrl}
+                        alt={wikiSearchResult.title}
+                        className="w-16 h-16 object-cover rounded border border-apex-white/20"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <p className="text-apex-white font-semibold text-sm">{wikiSearchResult.title}</p>
+                      {wikiSearchResult.extract && (
+                        <p className="text-apex-white/60 text-xs mt-1 line-clamp-2">
+                          {wikiSearchResult.extract.substring(0, 100)}...
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {wikiSearchQuery.length >= 3 && !isSearching && !wikiSearchResult && (
+                <p className="mt-2 text-apex-white/40 text-xs">
+                  No results found. You can still enter bike details manually.
+                </p>
+              )}
+              {wikiSearchQuery && (
+                <motion.button
+                  type="button"
+                  onClick={() => {
+                    setShowManualEntry(true);
+                    setWikiSearchQuery('');
+                    setWikiSearchResult(null);
+                  }}
+                  className="mt-2 text-xs text-apex-green hover:text-apex-green/80 transition-colors"
+                  {...buttonHoverProps}
+                >
+                  Enter details manually instead
+                </motion.button>
+              )}
+            </div>
+          )}
+
+          {/* Manual entry fields - always show when editing, or when no search query, or when search result found (so user can edit), or when user wants manual entry */}
+          {(editingBike || !wikiSearchQuery || wikiSearchResult || showManualEntry) && (
+            <>
+              <div>
+                <label className="block text-sm text-apex-white/60 mb-2">
+                  Make *
+                </label>
             <input
               type="text"
               value={formData.make}
@@ -211,6 +345,49 @@ export default function AddBikeModal({
               placeholder="0"
             />
           </div>
+
+          {/* Additional fields for rich data */}
+          <div>
+            <label className="block text-sm text-apex-white/60 mb-2">
+              Image URL
+            </label>
+            <input
+              type="url"
+              value={formData.image_url}
+              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+              className="w-full px-4 py-2 bg-apex-black border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors text-sm"
+              placeholder="https://..."
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-apex-white/60 mb-2">
+                Engine Specs
+              </label>
+              <input
+                type="text"
+                value={formData.specs_engine}
+                onChange={(e) => setFormData({ ...formData, specs_engine: e.target.value })}
+                className="w-full px-4 py-2 bg-apex-black border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors text-sm"
+                placeholder="e.g., 373cc"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-apex-white/60 mb-2">
+                Power Specs
+              </label>
+              <input
+                type="text"
+                value={formData.specs_power}
+                onChange={(e) => setFormData({ ...formData, specs_power: e.target.value })}
+                className="w-full px-4 py-2 bg-apex-black border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors text-sm"
+                placeholder="e.g., 40 PS"
+              />
+            </div>
+          </div>
+            </>
+          )}
 
           {error && (
             <div className="text-apex-red text-sm">{error}</div>

@@ -64,10 +64,12 @@ export function usePocketModeDetection() {
 
         // Add listener for proximity sensor data
         // SensorResult.values[0] is the proximity value
-        // 0 = FAR (not covered), > 0 = NEAR (covered)
+        // 0 = NEAR (covered), > 0 = FAR (not covered)
+        // Note: Some sensors return 0 when covered and positive values when uncovered
         const listener = await Sensors.addListener('PROXIMITY', (result) => {
           const proximityValue = result.values[0];
-          const isNear = proximityValue > 0;
+          // Inverted logic: 0 means NEAR (covered), > 0 means FAR (uncovered)
+          const isNear = proximityValue === 0;
           const currentPocketMode = useRideStore.getState().isPocketMode;
 
           console.log('[Proximity] Value:', proximityValue, 'Near:', isNear);

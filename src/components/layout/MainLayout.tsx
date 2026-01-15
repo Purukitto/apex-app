@@ -90,7 +90,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
         )}
 
         {/* Main Content */}
-        <main ref={mainRef} className={`flex-1 min-h-0 transition-all overflow-y-auto ${isRideMode ? 'pb-0' : 'pb-32'}`}>
+        <main 
+          ref={mainRef} 
+          className={`flex-1 min-h-0 transition-all overflow-y-auto ${isRideMode ? 'pb-0' : 'pb-32'}`}
+          style={{ overscrollBehaviorY: 'contain' }}
+        >
           <AnimatePresence mode="wait" key={location.pathname}>
             {children}
           </AnimatePresence>

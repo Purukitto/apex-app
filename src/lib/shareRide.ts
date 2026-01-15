@@ -4,7 +4,8 @@ import { Capacitor } from '@capacitor/core';
 import type { Ride } from '../types/database';
 import type { Bike } from '../types/database';
 import { logger } from './logger';
-import { createRoot, Root } from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
 import React from 'react';
 import RideMap from '../components/RideMap';
 
@@ -104,7 +105,7 @@ export async function generateRideShareImage(
                    ride.route_path.coordinates.length > 0;
 
   // Convert route coordinates from [lng, lat] to [lat, lng] for RideMap
-  const routeCoordinates: [number, number][] = hasRoute
+  const routeCoordinates: [number, number][] = hasRoute && ride.route_path
     ? ride.route_path.coordinates.map(([lng, lat]: [number, number]) => [lat, lng] as [number, number])
     : [];
 

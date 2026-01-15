@@ -20,7 +20,7 @@ export function useKeyboard() {
     const isNative = Capacitor.isNativePlatform();
     let showListener: Awaited<ReturnType<typeof Keyboard.addListener>> | null = null;
     let hideListener: Awaited<ReturnType<typeof Keyboard.addListener>> | null = null;
-    let blurTimeout: NodeJS.Timeout | null = null;
+    let blurTimeout: ReturnType<typeof setTimeout> | null = null;
 
     // Native platforms (iOS & Android): Use Capacitor Keyboard plugin
     if (isNative) {

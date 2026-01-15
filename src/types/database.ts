@@ -56,3 +56,26 @@ export type FuelLog = {
   date: string; // date format
   created_at: string;
 };
+
+export type MaintenanceSchedule = {
+  id: string;
+  bike_id: string;
+  part_name: string;
+  interval_km: number;
+  interval_months: number;
+  last_service_date?: string; // date format, nullable
+  last_service_odo?: number; // nullable
+  is_active: boolean;
+  created_at: string;
+};
+
+export type ServiceHistory = {
+  id: string;
+  bike_id: string;
+  schedule_id: string;
+  service_date: string; // date format
+  service_odo: number;
+  cost?: number; // nullable
+  notes?: string; // nullable
+  created_at: string;
+};

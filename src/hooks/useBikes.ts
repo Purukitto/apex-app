@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { apexToast } from '../lib/toast';
 import type { Bike } from '../types/database';
 import { logger } from '../lib/logger';
+import { initializeDefaultSchedules } from './useMaintenanceSchedules';
 
 export function useBikes() {
   const queryClient = useQueryClient();
@@ -45,10 +46,22 @@ export function useBikes() {
         .single();
 
       if (error) throw error;
-      return data as Bike;
+      const newBike = data as Bike;
+      
+      // Initialize default maintenance schedules for the new bike
+      try {
+        await initializeDefaultSchedules(newBike.id);
+        logger.debug('Default maintenance schedules initialized for new bike');
+      } catch (scheduleError) {
+        // Log but don't fail bike creation if schedule init fails
+        logger.warn('Failed to initialize default schedules:', scheduleError);
+      }
+      
+      return newBike;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
+      queryClient.invalidateQueries({ queryKey: ['maintenanceSchedules'] });
       apexToast.success('Bike Added');
     },
     onError: (error) => {

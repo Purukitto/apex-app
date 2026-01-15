@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useBikes } from '../hooks/useBikes';
-import { useMaintenanceChecker } from '../hooks/useMaintenanceChecker';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useRides } from '../hooks/useRides';
 import { useNavigate } from 'react-router-dom';
@@ -27,9 +26,6 @@ export default function Dashboard() {
   const touchStartY = useRef(0);
   const isPullingRef = useRef(false);
   const currentPullDistanceRef = useRef(0);
-  
-  // Run maintenance checker on Dashboard load
-  useMaintenanceChecker();
 
   // Pull-to-refresh handler - refreshes all data
   const handleRefresh = useCallback(async () => {

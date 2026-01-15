@@ -8,6 +8,8 @@ import { supabase } from '../lib/supabaseClient';
 import { apexToast } from '../lib/toast';
 import { useRideStore } from '../stores/useRideStore';
 import { logger } from '../lib/logger';
+import { triggerDistanceBasedNotification } from '../lib/notifications';
+import type { MaintenanceSchedule } from '../types/database';
 
 interface Coordinate {
   longitude: number;
@@ -487,6 +489,57 @@ export const useRideTracking = () => {
               });
               // Invalidate bikes query to refresh odometer in UI
               await queryClient.invalidateQueries({ queryKey: ['bikes'] });
+
+              // Check for distance-based maintenance notifications
+              try {
+                const { data: schedules, error: schedulesError } = await supabase
+                  .from('maintenance_schedules')
+                  .select('*')
+                  .eq('bike_id', bikeId)
+                  .eq('is_active', true)
+                  .gt('interval_km', 0); // Only check schedules with km intervals
+
+                if (!schedulesError && schedules) {
+                  // Get bike name for notifications
+                  const { data: bikeInfo } = await supabase
+                    .from('bikes')
+                    .select('nick_name, make, model')
+                    .eq('id', bikeId)
+                    .single();
+
+                  const bikeName = bikeInfo
+                    ? bikeInfo.nick_name || `${bikeInfo.make} ${bikeInfo.model}`
+                    : 'Your bike';
+
+                  // Check each schedule
+                  for (const schedule of schedules as MaintenanceSchedule[]) {
+                    const lastServiceOdo = schedule.last_service_odo || 0;
+                    const kmSinceService = newOdometer - lastServiceOdo;
+
+                    // If current_odo > (last_service_odo + interval_km), trigger notification
+                    if (kmSinceService >= schedule.interval_km) {
+                      logger.debug('Distance-based maintenance due:', {
+                        partName: schedule.part_name,
+                        kmSinceService,
+                        intervalKm: schedule.interval_km,
+                      });
+
+                      try {
+                        await triggerDistanceBasedNotification(
+                          schedule.part_name,
+                          bikeName
+                        );
+                      } catch (notifError) {
+                        // Log but don't fail ride save
+                        logger.warn('Failed to trigger distance notification:', notifError);
+                      }
+                    }
+                  }
+                }
+              } catch (maintenanceError) {
+                // Log but don't fail ride save
+                logger.warn('Error checking maintenance schedules:', maintenanceError);
+              }
             }
           }
         } catch (odometerError) {

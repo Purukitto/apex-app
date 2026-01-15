@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Garage from './pages/Garage';
+import Service from './pages/Service';
 import Profile from './pages/Profile';
 import Ride from './pages/Ride';
 import AllRides from './pages/AllRides';
@@ -33,6 +34,16 @@ function App() {
             <AuthGuard>
               <MainLayout>
                 <Garage />
+              </MainLayout>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/service/:bikeId"
+          element={
+            <AuthGuard>
+              <MainLayout>
+                <Service />
               </MainLayout>
             </AuthGuard>
           }

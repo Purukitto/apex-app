@@ -1,17 +1,15 @@
 import { useState } from 'react';
 import { Plus, Motorbike, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useBikes } from '../hooks/useBikes';
-import { useMaintenanceLogs } from '../hooks/useMaintenanceLogs';
 import { useFuelLogs } from '../hooks/useFuelLogs';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AddBikeModal from '../components/AddBikeModal';
-import MaintenanceLogModal from '../components/MaintenanceLogModal';
-import MaintenanceLogList from '../components/MaintenanceLogList';
 import AddRefuelModal from '../components/AddRefuelModal';
 import FuelLogList from '../components/FuelLogList';
 import ConfirmModal from '../components/ConfirmModal';
 import ApexTelemetryIcon from '../components/ui/ApexTelemetryIcon';
-import type { Bike as BikeType, MaintenanceLog, FuelLog } from '../types/database';
+import type { Bike as BikeType, FuelLog } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
@@ -19,15 +17,11 @@ import { useThemeColors } from '../hooks/useThemeColors';
 import { logger } from '../lib/logger';
 
 export default function Garage() {
+  const navigate = useNavigate();
   const { primary } = useThemeColors();
   const { bikes, isLoading, createBike, updateBike, deleteBike, getBikeRelatedDataCounts } = useBikes();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBike, setEditingBike] = useState<BikeType | null>(null);
-  const [selectedBikeForMaintenance, setSelectedBikeForMaintenance] =
-    useState<BikeType | null>(null);
-  const [isMaintenanceViewOpen, setIsMaintenanceViewOpen] = useState(false);
-  const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
-  const [editingLog, setEditingLog] = useState<MaintenanceLog | null>(null);
   
   const [selectedBikeForFuel, setSelectedBikeForFuel] =
     useState<BikeType | null>(null);
@@ -43,9 +37,6 @@ export default function Garage() {
   } | null>(null);
   const [isLoadingRelatedData, setIsLoadingRelatedData] = useState(false);
 
-  const { maintenanceLogs, isLoading: logsLoading, createMaintenanceLog, updateMaintenanceLog, deleteMaintenanceLog } =
-    useMaintenanceLogs(selectedBikeForMaintenance?.id);
-  
   const { fuelLogs, isLoading: fuelLogsLoading, createFuelLog, updateFuelLog, deleteFuelLog } =
     useFuelLogs(selectedBikeForFuel?.id);
 
@@ -106,51 +97,7 @@ export default function Garage() {
   };
 
   const handleViewMaintenance = (bike: BikeType) => {
-    setSelectedBikeForMaintenance(bike);
-    setIsMaintenanceViewOpen(true);
-  };
-
-  const handleCloseMaintenanceView = () => {
-    setIsMaintenanceViewOpen(false);
-    setSelectedBikeForMaintenance(null);
-    setEditingLog(null);
-  };
-
-  const handleAddMaintenanceLog = async (
-    logData: Omit<MaintenanceLog, 'id' | 'created_at'>
-  ) => {
-    await createMaintenanceLog.mutateAsync(logData);
-  };
-
-  const handleUpdateMaintenanceLog = async (
-    logData: Omit<MaintenanceLog, 'id' | 'created_at'>
-  ) => {
-    if (editingLog) {
-      await updateMaintenanceLog.mutateAsync({
-        id: editingLog.id,
-        updates: logData,
-      });
-      setEditingLog(null);
-    }
-  };
-
-  const handleEditMaintenanceLog = (log: MaintenanceLog) => {
-    setEditingLog(log);
-    setIsMaintenanceViewOpen(false);
-    setIsMaintenanceModalOpen(true);
-  };
-
-  const handleDeleteMaintenanceLog = async (id: string) => {
-    try {
-      await deleteMaintenanceLog.mutateAsync(id);
-      apexToast.success('Maintenance log deleted');
-    } catch (error) {
-      apexToast.error(
-        error instanceof Error
-          ? error.message
-          : 'Failed to delete maintenance log'
-      );
-    }
+    navigate(`/service/${bike.id}`);
   };
 
   const handleViewFuel = (bike: BikeType) => {
@@ -488,76 +435,6 @@ export default function Garage() {
             variant="danger"
             isLoading={deleteBike.isPending || isLoadingRelatedData}
             disabled={relatedDataCounts ? relatedDataCounts.rides > 0 : false}
-          />
-        )}
-
-        {/* Maintenance Logs View Modal */}
-        {selectedBikeForMaintenance && isMaintenanceViewOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div
-              className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm"
-              onClick={handleCloseMaintenanceView}
-            />
-            <div className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto z-10">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-bold text-apex-white">
-                    Maintenance Logs
-                  </h2>
-                  <p className="text-sm text-apex-white/60 mt-1">
-                    {selectedBikeForMaintenance.nick_name ||
-                      `${selectedBikeForMaintenance.make} ${selectedBikeForMaintenance.model}`}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <motion.button
-                    onClick={() => {
-                      setEditingLog(null);
-                      setIsMaintenanceViewOpen(false);
-                      setIsMaintenanceModalOpen(true);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full font-semibold bg-apex-green text-apex-black hover:bg-apex-green/90 transition-colors"
-                    {...buttonHoverProps}
-                  >
-                    <Plus size={18} />
-                    Add Log
-                  </motion.button>
-                  <motion.button
-                    onClick={handleCloseMaintenanceView}
-                    className="p-2 text-apex-white/60 hover:text-apex-white transition-colors"
-                    aria-label="Close"
-                    {...buttonHoverProps}
-                  >
-                    <X size={24} />
-                  </motion.button>
-                </div>
-              </div>
-
-              <MaintenanceLogList
-                logs={maintenanceLogs}
-                bike={selectedBikeForMaintenance}
-                onEdit={handleEditMaintenanceLog}
-                onDelete={handleDeleteMaintenanceLog}
-                isLoading={logsLoading}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Add/Edit Maintenance Log Modal */}
-        {selectedBikeForMaintenance && (
-          <MaintenanceLogModal
-            isOpen={isMaintenanceModalOpen}
-            onClose={() => {
-              setIsMaintenanceModalOpen(false);
-              setEditingLog(null);
-              setIsMaintenanceViewOpen(true);
-            }}
-            onSubmit={
-              editingLog ? handleUpdateMaintenanceLog : handleAddMaintenanceLog
-            }
-            editingLog={editingLog}
-            bike={selectedBikeForMaintenance}
           />
         )}
 

@@ -108,6 +108,21 @@ The `DevToolsPanel` component (`src/components/DevToolsPanel.tsx`) respects safe
 - **Group related data** - combine multiple values into a single debug panel when appropriate
 - **Remove debug panels** before production (they auto-hide, but consider removing code)
 
+## Production Safety
+
+All devtools components are automatically disabled in production builds:
+- **DevToolsPanel**: Returns `null` if `!isDev()`
+- **DevToolsButton**: Returns `null` if `!isDev()`
+- **DebugPanel**: Returns `null` if `!isDev()`
+- **Console interception**: Only active if `isDev()` returns true
+- **MainLayout**: Conditionally renders devtools only if `isDev()` returns true
+
+The `isDev()` function uses `import.meta.env.DEV`, which Vite replaces with `false` at build time in production builds. This ensures:
+- ✅ No devtools code executes in production
+- ✅ No devtools UI renders in production
+- ✅ No console interception in production
+- ✅ Smaller bundle size (dead code elimination)
+
 ## Anti-Patterns
 
 - ❌ **DON'T**: Use inline `<details>` elements for debug data - use `DebugPanel` component
@@ -115,3 +130,4 @@ The `DevToolsPanel` component (`src/components/DevToolsPanel.tsx`) respects safe
 - ❌ **DON'T**: Create custom debug UI - use the shared `DebugPanel` component
 - ❌ **DON'T**: Show debug panels in production - they auto-hide, but don't add them unnecessarily
 - ❌ **DON'T**: Forget safe area insets on fixed/overlay components (especially headers/footers)
+- ❌ **DON'T**: Render devtools components without checking `isDev()` first - always gate at render level

@@ -365,8 +365,16 @@ export const useRideTracking = () => {
             error.message?.includes('function') && 
             (error.message?.includes('does not exist') || error.message?.includes('not found'));
           
-          if (isFunctionNotFound) {
-            logger.warn('RPC function not found. Inserting ride without route path. Please create the RPC function in Supabase (see supabase_rpc_insert_ride_with_geometry.sql).');
+          const isFunctionOverloadError = 
+            error.code === 'PGRST203' || 
+            (error.message?.includes('best candidate') || error.message?.includes('function overloading'));
+          
+          if (isFunctionNotFound || isFunctionOverloadError) {
+            if (isFunctionOverloadError) {
+              logger.warn('RPC function has ambiguous overloads. Inserting ride without route path. Please fix function overloading in Supabase.');
+            } else {
+              logger.warn('RPC function not found. Inserting ride without route path. Please create the RPC function in Supabase (see supabase_rpc_insert_ride_with_geometry.sql).');
+            }
             
             // Fallback: insert without route_path
             const directResult = await supabase
@@ -379,7 +387,7 @@ export const useRideTracking = () => {
                 distance_km: Math.round(totalDistance * 100) / 100,
                 max_lean_left: Math.round(maxLeanLeft * 10) / 10,
                 max_lean_right: Math.round(maxLeanRight * 10) / 10,
-                route_path: null, // Can't insert geometry without RPC function
+                route_path: null, // Can't insert geometry without working RPC function
               })
               .select()
               .single();
@@ -479,9 +487,12 @@ export const useRideTracking = () => {
             errorMessage = 'Session expired. Please sign in again.';
           } else if (msg.includes('function') && msg.includes('does not exist')) {
             errorMessage = 'Database function missing. Please contact support.';
+          } else if (msg.includes('best candidate') || msg.includes('function overloading') || errorObj.code === 'PGRST203') {
+            // Function overloading error - ride should have been saved without route path
+            errorMessage = 'Ride saved without route path. Database configuration issue.';
           } else if (msg.includes('violates') || msg.includes('constraint')) {
             errorMessage = 'Invalid data. Please check your ride information.';
-          } else if (msg.includes('best candidate') || msg.includes('geolocation') || msg.includes('location')) {
+          } else if (msg.includes('geolocation') || msg.includes('location')) {
             // Geolocation-related errors during save (shouldn't happen, but handle gracefully)
             errorMessage = 'Failed to save ride. Please try again.';
           } else if (msg.includes('watchid') || msg.includes('watch id')) {

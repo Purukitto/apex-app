@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.14.2](https://github.com/Purukitto/apex-app/compare/v0.14.1...v0.14.2) (2026-01-15)
+
+
+### Features
+
+* implement optimistic updates for state mutations ([68f8313](https://github.com/Purukitto/apex-app/commit/68f831386f4f8052964887e9496a6f3c820fc6ff))
+
+
+### Bug Fixes
+
+* **CompleteServiceModal:** clarify odometer reading labels and pre-fill information ([2297ef2](https://github.com/Purukitto/apex-app/commit/2297ef2bc4f152848d3bb39cc374b4b8ed32215c))
+
 ### [0.14.1](https://github.com/Purukitto/apex-app/compare/v0.14.0...v0.14.1) (2026-01-15)
 
 

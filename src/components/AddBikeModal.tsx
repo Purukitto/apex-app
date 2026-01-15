@@ -178,15 +178,48 @@ export default function AddBikeModal({
     }
   };
 
-  // Scroll focused input into view when keyboard appears
+  // Handle input focus to scroll into view
   useEffect(() => {
-    if (isKeyboardVisible && formRef.current) {
-      const activeElement = document.activeElement as HTMLElement;
-      if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+    const handleInputFocus = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
         setTimeout(() => {
-          activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
+          scrollInputIntoView(target);
+        }, 300);
       }
+    };
+
+    const scrollInputIntoView = (input: HTMLElement) => {
+      if (!formRef.current || !modalContentRef.current) return;
+      
+      const formContainer = formRef.current;
+      const inputRect = input.getBoundingClientRect();
+      const formRect = formContainer.getBoundingClientRect();
+      
+      // Calculate position relative to form container
+      const inputTopRelativeToForm = inputRect.top - formRect.top + formContainer.scrollTop;
+      const headerHeight = 100; // Header + padding
+      const padding = 20;
+      
+      // Calculate desired scroll position
+      const desiredScrollTop = inputTopRelativeToForm - headerHeight - padding;
+      
+      // Ensure input is visible above buttons
+      const maxScroll = formContainer.scrollHeight - formContainer.clientHeight;
+      const scrollPosition = Math.max(0, Math.min(desiredScrollTop, maxScroll));
+      
+      formContainer.scrollTo({
+        top: scrollPosition,
+        behavior: 'smooth'
+      });
+    };
+
+    const form = formRef.current;
+    if (form) {
+      form.addEventListener('focusin', handleInputFocus);
+      return () => {
+        form.removeEventListener('focusin', handleInputFocus);
+      };
     }
   }, [isKeyboardVisible]);
 
@@ -200,9 +233,12 @@ export default function AddBikeModal({
     ? `calc(1rem + env(safe-area-inset-bottom, 0px) + ${keyboardHeight}px)`
     : `calc(6rem + env(safe-area-inset-bottom, 0px))`; // Extra space for bottom pill nav
 
+  // When keyboard is visible, align modal to top; otherwise center it
+  const modalAlignment = isKeyboardVisible ? 'items-start' : 'items-center';
+
   return (
     <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center"
+      className={`fixed inset-0 z-[100] flex ${modalAlignment} justify-center overflow-hidden`}
       style={{
         padding: '1rem',
         paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
@@ -217,7 +253,15 @@ export default function AddBikeModal({
       />
       <div 
         ref={modalContentRef}
-        className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10 max-h-[90vh] flex flex-col"
+        className={`relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10 flex flex-col ${
+          isKeyboardVisible 
+            ? 'max-h-[calc(100vh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-2rem-80px)]' 
+            : 'max-h-[90vh]'
+        }`}
+        style={isKeyboardVisible ? {
+          marginTop: '0',
+          maxHeight: `calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - ${keyboardHeight}px - 2rem)`
+        } : {}}
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-apex-white">
@@ -237,8 +281,12 @@ export default function AddBikeModal({
           id="add-bike-form"
           ref={formRef} 
           onSubmit={handleSubmit} 
-          className="space-y-4 overflow-y-auto flex-1 pr-2" 
-          style={{ maxHeight: 'calc(90vh - 8rem)' }}
+          className="space-y-4 overflow-y-auto flex-1 pr-2 min-h-0 scroll-smooth" 
+          style={{ 
+            maxHeight: isKeyboardVisible 
+              ? `calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - ${keyboardHeight}px - 12rem)` 
+              : 'calc(90vh - 8rem)'
+          }}
         >
           {/* Wikipedia Search - Only show when adding (not editing) */}
           {!editingBike && (
@@ -456,7 +504,7 @@ export default function AddBikeModal({
             </motion.button>
             <motion.button
               type="button"
-              onClick={(e) => {
+              onClick={() => {
                 if (!canSubmit && !editingBike) {
                   apexToast.error('Please fill in Make and Model fields');
                   return;
@@ -464,11 +512,13 @@ export default function AddBikeModal({
                 // Create a synthetic submit event
                 const form = formRef.current;
                 if (form) {
+                  // Create a minimal event object that satisfies the type
+                  // Using double cast through 'unknown' as TypeScript requires
                   const syntheticEvent = {
                     preventDefault: () => {},
                     currentTarget: form,
                     target: form,
-                  } as React.FormEvent<HTMLFormElement>;
+                  } as unknown as React.FormEvent<HTMLFormElement>;
                   handleSubmit(syntheticEvent);
                 }
               }}

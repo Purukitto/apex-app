@@ -14,6 +14,7 @@ import QRCode from 'react-qr-code';
 import { PocketCurtain } from '../components/PocketCurtain';
 import { usePocketModeDetection } from '../hooks/usePocketModeDetection';
 import { RideStartupAnimation } from '../components/RideStartupAnimation';
+import DebugPanel from '../components/DebugPanel';
 
 /**
  * Web Fallback Component
@@ -880,6 +881,27 @@ export default function Ride() {
                 </p>
               </motion.div>
             </motion.div>
+
+            {/* Debug Panels */}
+            <div className="w-full max-w-md space-y-2">
+              <DebugPanel 
+                title="coordinates" 
+                data={{ count: coords.length, lastCoord: coords[coords.length - 1] || null }}
+                maxHeight="max-h-24"
+              />
+              <DebugPanel 
+                title="telemetry" 
+                data={{ 
+                  currentLean, 
+                  maxLeanLeft, 
+                  maxLeanRight, 
+                  currentSpeed, 
+                  distanceKm,
+                  duration: currentDuration 
+                }}
+                maxHeight="max-h-24"
+              />
+            </div>
 
             {/* Calibrate Button */}
             <motion.div

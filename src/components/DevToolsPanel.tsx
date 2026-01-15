@@ -161,7 +161,12 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-apex-white/20">
+            <div 
+              className="flex items-center justify-between p-4 border-b border-apex-white/20"
+              style={{
+                paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
+              }}
+            >
               <h2 className="text-lg font-semibold text-apex-white font-mono">
                 DevTools
               </h2>

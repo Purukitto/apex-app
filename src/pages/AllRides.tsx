@@ -26,6 +26,7 @@ import {
 import ConfirmModal from '../components/ConfirmModal';
 import RideMap from '../components/RideMap';
 import LoadingSpinner from '../components/LoadingSpinner';
+import DebugPanel from '../components/DebugPanel';
 import { useThemeColors } from '../hooks/useThemeColors';
 import type { Ride } from '../types/database';
 
@@ -448,15 +449,7 @@ export default function AllRides() {
                           {ride.route_path && (
                             <div>
                               <p className="text-xs text-white/60 mb-2">Route</p>
-                              {/* Debug: Show route_path structure */}
-                              {process.env.NODE_ENV === 'development' && (
-                                <details className="mb-2 text-xs text-white/40">
-                                  <summary>Debug: route_path</summary>
-                                  <pre className="mt-1 p-2 bg-apex-black/50 rounded text-xs overflow-auto max-h-32">
-                                    {JSON.stringify(ride.route_path, null, 2)}
-                                  </pre>
-                                </details>
-                              )}
+                              <DebugPanel title="route_path" data={ride.route_path} />
                               {ride.route_path.coordinates && 
                                Array.isArray(ride.route_path.coordinates) && 
                                ride.route_path.coordinates.length > 0 ? (

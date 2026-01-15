@@ -15,6 +15,7 @@ import { useAppUpdate } from '../../hooks/useAppUpdate';
 import { AnimatePresence, motion } from 'framer-motion';
 import { containerVariants } from '../../lib/animations';
 import { useRideStore } from '../../stores/useRideStore';
+import { isDev } from '../../lib/devtools';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -137,11 +138,15 @@ export default function MainLayout({ children }: MainLayoutProps) {
         )}
 
         {/* DevTools - Development Only */}
-        <DevToolsPanel
-          isOpen={devToolsOpen}
-          onClose={() => setDevToolsOpen(false)}
-        />
-        <DevToolsButton onToggle={() => setDevToolsOpen(prev => !prev)} />
+        {isDev() && (
+          <>
+            <DevToolsPanel
+              isOpen={devToolsOpen}
+              onClose={() => setDevToolsOpen(false)}
+            />
+            <DevToolsButton onToggle={() => setDevToolsOpen(prev => !prev)} />
+          </>
+        )}
       </div>
     </NotificationContext.Provider>
   );

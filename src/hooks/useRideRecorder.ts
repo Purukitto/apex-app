@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation, type Position } from '@capacitor/geolocation';
 import { Motion, type AccelListenerEvent } from '@capacitor/motion';
+import { logger } from '../lib/logger';
 
 export const useRideRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -16,10 +17,10 @@ export const useRideRecorder = () => {
     if (isRecording && isMobile) {
       Geolocation.watchPosition(
         { enableHighAccuracy: true },
-        (position: Position | null, err?: Error) => {
+          (position: Position | null, err?: Error) => {
           if (err) {
             // Log for debugging
-            console.error('Geolocation error:', err);
+            logger.error('Geolocation error:', err);
             // Show user-friendly error for critical geolocation failures
             // Note: This would need to be imported, but since this is a hook,
             // we'll let the component handle user-facing errors

@@ -1,0 +1,133 @@
+# Debug Panels & Development Tools
+
+## DebugPanel Component
+
+### Overview
+The `DebugPanel` component provides a consistent, reusable way to display debug information in development mode. It automatically hides in production builds.
+
+### Location
+- Component: `src/components/DebugPanel.tsx`
+- Uses: `isDev()` utility from `src/lib/devtools.ts`
+
+### Usage
+
+```tsx
+import DebugPanel from '../components/DebugPanel';
+
+// Basic usage
+<DebugPanel title="route_path" data={ride.route_path} />
+
+// With custom styling
+<DebugPanel 
+  title="coordinates" 
+  data={coords} 
+  className="mb-4"
+  maxHeight="max-h-48"
+/>
+```
+
+### Props
+- `title` (string, required): Label shown in the collapsible summary
+- `data` (unknown, required): Data to display (will be JSON stringified)
+- `className` (string, optional): Additional CSS classes for the wrapper
+- `maxHeight` (string, optional): Max height for the pre element (default: `max-h-32`)
+
+### Features
+- **Development-only**: Automatically hidden in production using `isDev()`
+- **Collapsible**: Uses HTML `<details>` element for expand/collapse
+- **Consistent styling**: Matches Apex theme (apex-black background, apex-white text)
+- **JSON formatting**: Automatically formats data with 2-space indentation
+- **Scrollable**: Pre element scrolls when content exceeds max height
+
+## When to Use Debug Panels
+
+### Suitable Locations
+- **Route/Path Data**: Display `route_path` GeoJSON data (e.g., in AllRides page)
+- **Telemetry Data**: Show coordinate arrays, lean angles, speed data (e.g., in Ride page)
+- **Complex Objects**: Display nested data structures that need inspection
+- **API Responses**: Debug API response structures during development
+- **State Objects**: Inspect Zustand store state or component state
+
+### Examples
+
+#### Route Path Data
+```tsx
+{ride.route_path && (
+  <div>
+    <p className="text-xs text-white/60 mb-2">Route</p>
+    <DebugPanel title="route_path" data={ride.route_path} />
+    <RideMap coordinates={ride.route_path.coordinates} />
+  </div>
+)}
+```
+
+#### Telemetry Data
+```tsx
+<DebugPanel 
+  title="telemetry" 
+  data={{ 
+    currentLean, 
+    maxLeanLeft, 
+    maxLeanRight, 
+    currentSpeed, 
+    distanceKm 
+  }}
+/>
+```
+
+#### Coordinate Arrays
+```tsx
+<DebugPanel 
+  title="coordinates" 
+  data={{ 
+    count: coords.length, 
+    lastCoord: coords[coords.length - 1] || null 
+  }}
+  maxHeight="max-h-24"
+/>
+```
+
+## DevTools Panel
+
+### Safe Area Support
+The `DevToolsPanel` component (`src/components/DevToolsPanel.tsx`) respects safe area insets for mobile devices:
+
+```tsx
+<div 
+  className="flex items-center justify-between p-4 border-b border-apex-white/20"
+  style={{
+    paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
+  }}
+>
+```
+
+### Best Practices
+- **Always use safe area insets** for fixed/overlay components on mobile
+- **Use DebugPanel** instead of inline debug code for consistency
+- **Keep debug panels minimal** - use `maxHeight` to limit vertical space
+- **Group related data** - combine multiple values into a single debug panel when appropriate
+- **Remove debug panels** before production (they auto-hide, but consider removing code)
+
+## Production Safety
+
+All devtools components are automatically disabled in production builds:
+- **DevToolsPanel**: Returns `null` if `!isDev()`
+- **DevToolsButton**: Returns `null` if `!isDev()`
+- **DebugPanel**: Returns `null` if `!isDev()`
+- **Console interception**: Only active if `isDev()` returns true
+- **MainLayout**: Conditionally renders devtools only if `isDev()` returns true
+
+The `isDev()` function uses `import.meta.env.DEV`, which Vite replaces with `false` at build time in production builds. This ensures:
+- ✅ No devtools code executes in production
+- ✅ No devtools UI renders in production
+- ✅ No console interception in production
+- ✅ Smaller bundle size (dead code elimination)
+
+## Anti-Patterns
+
+- ❌ **DON'T**: Use inline `<details>` elements for debug data - use `DebugPanel` component
+- ❌ **DON'T**: Check `process.env.NODE_ENV === 'development'` - use `isDev()` utility
+- ❌ **DON'T**: Create custom debug UI - use the shared `DebugPanel` component
+- ❌ **DON'T**: Show debug panels in production - they auto-hide, but don't add them unnecessarily
+- ❌ **DON'T**: Forget safe area insets on fixed/overlay components (especially headers/footers)
+- ❌ **DON'T**: Render devtools components without checking `isDev()` first - always gate at render level

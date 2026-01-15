@@ -2,6 +2,117 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.13.4](https://github.com/Purukitto/apex-app/compare/v0.13.3...v0.13.4) (2026-01-15)
+
+
+### Features
+
+* add copy all logs functionality to DevToolsPanel ([40fb7d9](https://github.com/Purukitto/apex-app/commit/40fb7d99039a5cc5189fb8df22618a066c825924))
+* enhance copy logs functionality in DevToolsPanel ([1e55112](https://github.com/Purukitto/apex-app/commit/1e55112e8e39012c4fee2337d033c0b601f44eaf))
+* improve toast message handling and error logging ([8a256a0](https://github.com/Purukitto/apex-app/commit/8a256a06ea8968e6e2be06c64f2ed50b87d68288))
+
+
+### Bug Fixes
+
+* defer setState call in DevToolsPanel to avoid render phase errors ([80601f4](https://github.com/Purukitto/apex-app/commit/80601f4eaa88c28f74d6d022d3df0efa056885cb))
+* enhance error handling and state management in ride tracking ([72f31d2](https://github.com/Purukitto/apex-app/commit/72f31d2a3c4b9b216656d55d3a493534a89c0cd1))
+* enhance error handling in ride tracking for geolocation and save operations ([19102c9](https://github.com/Purukitto/apex-app/commit/19102c99c87eed4468cafc00f24994d7ff7bfc6b))
+* ensure toasts are always visible on top of content ([6bf1820](https://github.com/Purukitto/apex-app/commit/6bf18201f612f0331b2bbda1079021aa9eaeeb1d))
+* improve error handling for RPC function issues in ride tracking ([efffc4d](https://github.com/Purukitto/apex-app/commit/efffc4d0dc42f1b71b3fd542235da2cf8647997a))
+* improve log level retrieval in ApexLogger ([ea756fc](https://github.com/Purukitto/apex-app/commit/ea756fc1a9ba828a771105555f7d64768d3f90d9))
+* increase console log retention in DevToolsPanel ([ce6138f](https://github.com/Purukitto/apex-app/commit/ce6138feb96ae6da9fb01b09cdae86cff4d4e4d6))
+* optimize log handling in DevToolsPanel and enhance error logging in ride tracking ([8ee0b6f](https://github.com/Purukitto/apex-app/commit/8ee0b6f1da8d1afb1e328ff58901a74c414cd2a1))
+* streamline error handling for RPC function in ride tracking ([5b8e195](https://github.com/Purukitto/apex-app/commit/5b8e195615c388dfe714221ece95798602924915))
+* update toast z-index and positioning for improved visibility ([6b2ab9d](https://github.com/Purukitto/apex-app/commit/6b2ab9db264a5323bd818b44356dde7754f32a96))
+
+
+### Styles
+
+* update safety warning toast appearance for better visibility ([cfde012](https://github.com/Purukitto/apex-app/commit/cfde012c13e56346057dd85f6edf27264cbf091d))
+
+### [0.13.3](https://github.com/Purukitto/apex-app/compare/v0.13.2...v0.13.3) (2026-01-15)
+
+
+### Bug Fixes
+
+* ensure all devtools are disabled in production builds ([5f20a99](https://github.com/Purukitto/apex-app/commit/5f20a99cb90faf02a6b64ae58de097ddced670e0))
+
+### [0.13.2](https://github.com/Purukitto/apex-app/compare/v0.13.1...v0.13.2) (2026-01-15)
+
+
+### Features
+
+* **dependencies:** add loglevel package for improved logging capabilities ([ebe189b](https://github.com/Purukitto/apex-app/commit/ebe189b9bcdadafd5ac2b2c62ee6e218cb52d329))
+* **logging:** implement centralized logging system with ApexLogger ([fbcb243](https://github.com/Purukitto/apex-app/commit/fbcb2439d6e079578ad887fe69c23f07ef4f095d))
+* **rules:** update core instructions to include mandatory logging standards ([828f401](https://github.com/Purukitto/apex-app/commit/828f4015ad327c532ab085bd760affb5d578878d))
+
+
+### Bug Fixes
+
+* improve log export functionality in DevTools panel ([dfafcbf](https://github.com/Purukitto/apex-app/commit/dfafcbf10d4c163c00166b9796f5820146564f44))
+
+
+### Code Refactoring
+
+* replace all console.* calls with logger ([ab5d73b](https://github.com/Purukitto/apex-app/commit/ab5d73bec9ca6f78506f7fefffafea6208b4b153))
+
+
+### Documentation
+
+* update notification rules to use logger instead of console ([20135bc](https://github.com/Purukitto/apex-app/commit/20135bcf70041c2d38f43f5b83f24b197a9fc6c3))
+
+### [0.13.1](https://github.com/Purukitto/apex-app/compare/v0.13.0...v0.13.1) (2026-01-15)
+
+
+### Features
+
+* **Dashboard:** enhance pull-to-refresh functionality and loading experience ([2a5ddcb](https://github.com/Purukitto/apex-app/commit/2a5ddcbb182bca4669abc2a12801486996661485))
+* **Dashboard:** enhance ride card interactivity and layout ([9358bce](https://github.com/Purukitto/apex-app/commit/9358bcece93332b393de58d2701016fee0016ae1))
+* **DebugPanel:** introduce DebugPanel component for development tools ([b43afa6](https://github.com/Purukitto/apex-app/commit/b43afa648bc1feba580108dec3e2052b36726703))
+* **Map:** improve z-index management and isolation for Leaflet maps ([d2be942](https://github.com/Purukitto/apex-app/commit/d2be9422a0533be488f35cb44e97524f59b36d90))
+* **Profile:** add OpenStreetMap attribution and hide Leaflet control ([6dd4720](https://github.com/Purukitto/apex-app/commit/6dd4720a52010d3ebeb72e703e097e68e9576ec7))
+* **RideMap:** enhance interactivity and scrolling behavior for maps ([1fb62d4](https://github.com/Purukitto/apex-app/commit/1fb62d42d40aaa4871abfb95f11d0046ff26ed37))
+
+
+### Code Refactoring
+
+* **MainActivity:** simplify onCreate method and remove fullscreen UI handling ([9a3789c](https://github.com/Purukitto/apex-app/commit/9a3789ce2e3d0f2d63766359b95600d6b91497c4))
+* **modals:** enhance padding and layout for better responsiveness ([e172aeb](https://github.com/Purukitto/apex-app/commit/e172aebcaa62db7071f6962155525a9e0fc1fa17))
+
+## [0.13.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.13.0) (2026-01-15)
+
+
+### Features
+
+* add themed loading components and optimize loading performance ([bbd3093](https://github.com/Purukitto/apex-app/commit/bbd3093a552fc9cc2f3cc48f1fe825d611ffe386))
+* integrate RideMap component in AllRides and fix coordinate saving ([3a77f20](https://github.com/Purukitto/apex-app/commit/3a77f207b88e68fabe7ca935a6de996b04a8e0be))
+* **RideMap:** add RideMap component for displaying routes on a map ([4b2fb6b](https://github.com/Purukitto/apex-app/commit/4b2fb6b4878a37692b634ea8f4bb4ac204aceac4))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+* **deps-dev:** bump the development-dependencies group with 3 updates ([#44](https://github.com/Purukitto/apex-app/issues/44)) ([75640f6](https://github.com/Purukitto/apex-app/commit/75640f6bb151a7d0522fcd8e1afa37cc9e474ce5))
+* **deps:** bump the production-dependencies group with 2 updates ([#43](https://github.com/Purukitto/apex-app/issues/43)) ([9f4ee8d](https://github.com/Purukitto/apex-app/commit/9f4ee8dc9773a144873681c5ffee24d4f9e9ce58))
+* update dependencies in package.json and package-lock.json ([9b8cf38](https://github.com/Purukitto/apex-app/commit/9b8cf38bce7c2c6c96a962d366cc9dd63221c30f))
+
+### [0.12.6](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.12.6) (2026-01-15)
+
+
+### Features
+
+* add themed loading components and optimize loading performance ([bbd3093](https://github.com/Purukitto/apex-app/commit/bbd3093a552fc9cc2f3cc48f1fe825d611ffe386))
+* integrate RideMap component in AllRides and fix coordinate saving ([3a77f20](https://github.com/Purukitto/apex-app/commit/3a77f207b88e68fabe7ca935a6de996b04a8e0be))
+* **RideMap:** add RideMap component for displaying routes on a map ([4b2fb6b](https://github.com/Purukitto/apex-app/commit/4b2fb6b4878a37692b634ea8f4bb4ac204aceac4))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+* **deps-dev:** bump the development-dependencies group with 3 updates ([#44](https://github.com/Purukitto/apex-app/issues/44)) ([75640f6](https://github.com/Purukitto/apex-app/commit/75640f6bb151a7d0522fcd8e1afa37cc9e474ce5))
+* **deps:** bump the production-dependencies group with 2 updates ([#43](https://github.com/Purukitto/apex-app/issues/43)) ([9f4ee8d](https://github.com/Purukitto/apex-app/commit/9f4ee8dc9773a144873681c5ffee24d4f9e9ce58))
+* update dependencies in package.json and package-lock.json ([9b8cf38](https://github.com/Purukitto/apex-app/commit/9b8cf38bce7c2c6c96a962d366cc9dd63221c30f))
+
 ### [0.12.5](https://github.com/Purukitto/apex-app/compare/v0.12.4...v0.12.5) (2026-01-15)
 
 

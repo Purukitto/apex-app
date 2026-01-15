@@ -6,6 +6,7 @@ import { useRides } from '../hooks/useRides';
 import { supabase } from '../lib/supabaseClient';
 import { shareRideImage } from '../lib/shareRide';
 import { apexToast } from '../lib/toast';
+import { logger } from '../lib/logger';
 import {
   MapPin,
   Timer,
@@ -24,6 +25,9 @@ import {
   buttonHoverProps,
 } from '../lib/animations';
 import ConfirmModal from '../components/ConfirmModal';
+import RideMap from '../components/RideMap';
+import LoadingSpinner from '../components/LoadingSpinner';
+import DebugPanel from '../components/DebugPanel';
 import { useThemeColors } from '../hooks/useThemeColors';
 import type { Ride } from '../types/database';
 
@@ -103,7 +107,7 @@ export default function AllRides() {
           .single();
 
         if (error || !ride) {
-          console.error('Error finding ride:', error);
+          logger.error('Error finding ride:', error);
           setIsFindingRide(false);
           setSearchParams({}, { replace: true });
           return;
@@ -123,7 +127,7 @@ export default function AllRides() {
           // The expansion will happen when the ride loads on the new page
         }
       } catch (error) {
-        console.error('Error finding ride page:', error);
+        logger.error('Error finding ride page:', error);
         setIsFindingRide(false);
         setSearchParams({}, { replace: true });
       } finally {
@@ -230,7 +234,7 @@ export default function AllRides() {
       setEditRideName('');
       setEditRideNotes('');
     } catch (error) {
-      console.error('Error updating ride:', error);
+      logger.error('Error updating ride:', error);
     }
   };
 
@@ -248,7 +252,7 @@ export default function AllRides() {
         setExpandedRideId(null);
       }
     } catch (error) {
-      console.error('Error deleting ride:', error);
+      logger.error('Error deleting ride:', error);
     }
   };
 
@@ -292,17 +296,13 @@ export default function AllRides() {
         );
       }
     } catch (error) {
-      console.error('Error sharing ride:', error);
+      logger.error('Error sharing ride:', error);
       apexToast.error('Failed to share ride');
     }
   };
 
   if (isLoading && rides.length === 0) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-white/60">Loading rides...</div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen text="Loading rides..." />;
   }
 
   return (
@@ -446,6 +446,32 @@ export default function AllRides() {
                             </div>
                           )}
 
+                          {/* Route Map */}
+                          {ride.route_path && (
+                            <div>
+                              <p className="text-xs text-white/60 mb-2">Route</p>
+                              <DebugPanel title="route_path" data={ride.route_path} />
+                              {ride.route_path.coordinates && 
+                               Array.isArray(ride.route_path.coordinates) && 
+                               ride.route_path.coordinates.length > 0 ? (
+                                <RideMap
+                                  coordinates={ride.route_path.coordinates.map(
+                                    ([lng, lat]: [number, number]) => [lat, lng] as [number, number]
+                                  )}
+                                  className="w-full"
+                                  interactive={false}
+                                  height="250px"
+                                />
+                              ) : (
+                                <div className="p-4 bg-apex-black/30 border border-apex-white/10 rounded-lg text-center">
+                                  <p className="text-xs text-apex-white/60 font-mono">
+                                    Route data format not recognized
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           {/* Action Buttons */}
                           <div className="flex gap-2 pt-2">
                             <motion.button
@@ -526,7 +552,7 @@ export default function AllRides() {
         {editingRide && (
           <>
             <motion.div
-              className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-[1000]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -536,9 +562,9 @@ export default function AllRides() {
                 setEditRideNotes('');
               }}
             />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4">
               <motion.div
-                className="bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md relative z-50"
+                className="bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md relative z-[1001]"
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}

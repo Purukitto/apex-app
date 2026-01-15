@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
 import { apexToast } from '../lib/toast';
 import type { Ride } from '../types/database';
+import { logger } from '../lib/logger';
 
 // React Query configuration for rides
 const RIDES_STALE_TIME = Infinity; // Never consider stale - only refetch manually
@@ -36,11 +37,58 @@ export async function fetchRides(options: {
     const from = page * pageSize;
     const to = from + pageSize - 1;
 
+    // Get count first
     let countQuery = supabase
       .from('rides')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id);
 
+    if (bikeId) {
+      countQuery = countQuery.eq('bike_id', bikeId);
+    }
+
+    // Try to use RPC function first (if it exists) with timeout
+    // Skip RPC if it doesn't exist to avoid slow loading
+    try {
+      const rpcResult = await Promise.race([
+        supabase.rpc('get_rides_with_geojson', {
+          p_user_id: user.id,
+          p_bike_id: bikeId || null,
+          p_limit: pageSize,
+          p_offset: from,
+        }),
+        new Promise<{ error: { message: string } }>((resolve) => {
+          setTimeout(() => resolve({ error: { message: 'RPC timeout' } }), 2000);
+        }),
+      ]) as Awaited<ReturnType<typeof supabase.rpc<'get_rides_with_geojson'>>> | { error: { message: string } };
+      
+      if ('data' in rpcResult && rpcResult.data && !rpcResult.error) {
+        const [{ count }] = await Promise.all([countQuery]);
+        
+        // Process route_path from JSONB to GeoJSONLineString format
+        const processedRides = (rpcResult.data || []).map((ride: Ride & { route_path?: unknown }) => {
+          if (ride.route_path) {
+            try {
+              // route_path comes as JSONB, parse it if it's a string
+              const routePath = typeof ride.route_path === 'string' 
+                ? JSON.parse(ride.route_path) 
+                : ride.route_path;
+              return { ...ride, route_path: routePath as Ride['route_path'] };
+            } catch {
+              return { ...ride, route_path: undefined };
+            }
+          }
+          return { ...ride, route_path: undefined };
+        });
+        
+        return { rides: processedRides as Ride[], total: count || 0 };
+      }
+    } catch {
+      // RPC function doesn't exist or timed out, fall back to regular query
+      logger.warn('RPC function get_rides_with_geojson not available, using fallback query');
+    }
+
+    // Fallback: regular query (route_path won't be available as GeoJSON)
     let dataQuery = supabase
       .from('rides')
       .select('*')
@@ -48,9 +96,7 @@ export async function fetchRides(options: {
       .order('start_time', { ascending: false })
       .range(from, to);
 
-    // Filter by bike if specified
     if (bikeId) {
-      countQuery = countQuery.eq('bike_id', bikeId);
       dataQuery = dataQuery.eq('bike_id', bikeId);
     }
 
@@ -60,10 +106,53 @@ export async function fetchRides(options: {
     ]);
 
     if (queryError) throw queryError;
-    return { rides: (data as Ride[]) || [], total: count || 0 };
+    
+    // Without RPC function, route_path won't be available
+    const processedRides = (data || []).map((ride: Ride) => ({
+      ...ride,
+      route_path: undefined, // Can't convert PostGIS geography without RPC function
+    }));
+    
+    return { rides: processedRides as Ride[], total: count || 0 };
   }
 
   // Legacy limit-based query
+  // Try RPC function first with timeout
+  try {
+    const rpcResult = await Promise.race([
+      supabase.rpc('get_rides_with_geojson', {
+        p_user_id: user.id,
+        p_bike_id: bikeId || null,
+        p_limit: limit || 10,
+        p_offset: 0,
+      }),
+      new Promise<{ error: { message: string } }>((resolve) => {
+        setTimeout(() => resolve({ error: { message: 'RPC timeout' } }), 2000);
+      }),
+    ]) as Awaited<ReturnType<typeof supabase.rpc<'get_rides_with_geojson'>>> | { error: { message: string } };
+    
+    if ('data' in rpcResult && rpcResult.data && !rpcResult.error) {
+      const processedRides = (rpcResult.data || []).map((ride: Ride & { route_path?: unknown }) => {
+        if (ride.route_path) {
+          try {
+            const routePath = typeof ride.route_path === 'string' 
+              ? JSON.parse(ride.route_path) 
+              : ride.route_path;
+            return { ...ride, route_path: routePath as Ride['route_path'] };
+          } catch {
+            return { ...ride, route_path: undefined };
+          }
+        }
+        return { ...ride, route_path: undefined };
+      });
+      
+      return { rides: processedRides as Ride[] };
+    }
+  } catch {
+    logger.warn('RPC function get_rides_with_geojson not available, using fallback query');
+  }
+
+  // Fallback: regular query
   let query = supabase
     .from('rides')
     .select('*')
@@ -71,7 +160,6 @@ export async function fetchRides(options: {
     .order('start_time', { ascending: false })
     .limit(limit || 10);
 
-  // Filter by bike if specified
   if (bikeId) {
     query = query.eq('bike_id', bikeId);
   }
@@ -79,7 +167,13 @@ export async function fetchRides(options: {
   const { data, error: queryError } = await query;
 
   if (queryError) throw queryError;
-  return { rides: (data as Ride[]) || [] };
+  
+  const processedRides = (data || []).map((ride: Ride) => ({
+    ...ride,
+    route_path: undefined,
+  }));
+  
+  return { rides: processedRides as Ride[] };
 }
 
 /**

@@ -4,6 +4,7 @@ import { useNotificationStore } from '../stores/useNotificationStore';
 import { supabase } from '../lib/supabaseClient';
 import { apexToast } from '../lib/toast';
 import type { MaintenanceLog } from '../types/database';
+import { logger } from '../lib/logger';
 
 const SERVICE_INTERVAL_KM = 5000;
 
@@ -35,7 +36,7 @@ export function useMaintenanceChecker() {
 
       if (error) {
         // Log for debugging - this is a background check, don't spam user with toasts
-        console.error('Error fetching maintenance logs:', error);
+        logger.error('Error fetching maintenance logs:', error);
         // Only show toast for critical failures that prevent the feature from working
         if (error.code === 'PGRST301' || error.message?.includes('permission')) {
           apexToast.error('Unable to check maintenance status. Please refresh the page.');

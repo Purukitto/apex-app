@@ -54,7 +54,7 @@ export default function ConfirmModal({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-[1000]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -62,9 +62,18 @@ export default function ConfirmModal({
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="fixed inset-0 z-[1001] flex items-center justify-center"
+            style={{
+              padding: '1rem',
+              paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
+              paddingBottom: `calc(1rem + env(safe-area-inset-bottom, 0px))`,
+              paddingLeft: `calc(1rem + env(safe-area-inset-left, 0px))`,
+              paddingRight: `calc(1rem + env(safe-area-inset-right, 0px))`,
+            }}
+          >
             <motion.div
-              className="bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md relative z-50"
+              className="bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md relative z-[1001]"
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}

@@ -48,6 +48,10 @@ body {
   --toast-gap: 8px;
   /* Respect safe area insets for top-center positioning */
   top: calc(1rem + env(safe-area-inset-top, 0px)) !important;
+  /* Ensure toasts are always on top of all content - higher than any fixed containers */
+  z-index: 99999 !important;
+  /* Ensure toaster portal is rendered at root level */
+  position: fixed !important;
 }
 
 /* Stacking behavior - ensure each toast is visible and properly spaced */
@@ -99,10 +103,28 @@ body {
   opacity: 1 !important;
 }
 
+/* Prevent toast text overflow - wrap long messages */
+[data-sonner-toast] [data-title],
+[data-sonner-toast] [data-content],
+[data-sonner-toast] p,
+[data-sonner-toast] span {
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  line-height: 1.4 !important;
+}
+
 /* Ensure toasts maintain their individual styling when stacked */
 [data-sonner-toast] {
   position: relative !important;
   isolation: isolate !important;
+  /* Ensure individual toasts also have high z-index - higher than any fixed containers */
+  z-index: 99999 !important;
 }
 
 /* Prevent toasts from merging visually when stacked */
@@ -127,6 +149,15 @@ body {
 
 .animate-shimmer {
   animation: shimmer 2s infinite;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
 }
 
 /* Theme-aware hover border using highlight color */
@@ -136,4 +167,35 @@ body {
 
 .hover-border-theme:hover {
   border-color: var(--color-apex-green-highlight, rgba(114, 145, 60, 0.4)) !important;
+}
+
+/* Apex Dark Map Style - Inverts OSM tiles to dark theme */
+.dark-map-tiles {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+/* Leaflet Map Z-Index Isolation - Prevent map from appearing over modals */
+/* Create a stacking context for map containers to isolate Leaflet's z-index */
+.leaflet-container {
+  isolation: isolate;
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure Leaflet controls stay within the map's stacking context */
+.leaflet-control-container {
+  position: relative;
+  z-index: 2;
+}
+
+/* Hide Leaflet attribution control - attribution moved to Profile page */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+/* Allow page scrolling through non-interactive maps */
+.map-non-interactive,
+.map-non-interactive * {
+  pointer-events: none !important;
+  touch-action: pan-y !important;
 }

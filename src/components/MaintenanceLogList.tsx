@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { listContainerVariants, fastItemVariants, buttonHoverProps, getCardHoverProps } from '../lib/animations';
 import { useThemeColors } from '../hooks/useThemeColors';
 import ConfirmModal from './ConfirmModal';
+import { LoadingSkeleton } from './LoadingSpinner';
 
 interface MaintenanceLogListProps {
   logs: MaintenanceLog[];
@@ -27,7 +28,9 @@ export default function MaintenanceLogList({
   const [logToDelete, setLogToDelete] = useState<MaintenanceLog | null>(null);
   if (isLoading) {
     return (
-      <div className="text-apex-white/60 text-sm">Loading maintenance logs...</div>
+      <div className="space-y-3">
+        <LoadingSkeleton count={3} />
+      </div>
     );
   }
 

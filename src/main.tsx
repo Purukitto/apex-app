@@ -9,18 +9,26 @@ import { ErrorBoundary } from './components/ErrorBoundary.tsx'
 import { isSupabaseConfigured } from './lib/supabaseClient.ts'
 import { initializeTheme } from './lib/theme.ts'
 import { initializeVersion } from './lib/version.ts'
+// Initialize logger early to ensure all logs are captured
+import { logger } from './lib/logger.ts'
 
-// Configure StatusBar for fullscreen on native platforms
+// Configure StatusBar for native platforms (visible with dark style)
 if (Capacitor.isNativePlatform()) {
   StatusBar.setOverlaysWebView({ overlay: true })
   StatusBar.setStyle({ style: Style.Dark })
-  StatusBar.hide()
 }
 
 // Check Supabase configuration and log warning if missing
 if (!isSupabaseConfigured()) {
-  console.error('⚠️ Supabase environment variables are missing! The app may not work correctly.');
+  logger.error('⚠️ Supabase environment variables are missing! The app may not work correctly.');
 }
+
+// Initialize logger session
+logger.info('Apex app initializing', {
+  platform: Capacitor.getPlatform(),
+  isNative: Capacitor.isNativePlatform(),
+  sessionId: logger.getSessionId(),
+});
 
 // Initialize version system (caches version in localStorage)
 initializeVersion();

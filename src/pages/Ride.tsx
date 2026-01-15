@@ -5,6 +5,7 @@ import { useRideTracking } from '../hooks/useRideTracking';
 import { useBikes } from '../hooks/useBikes';
 import { useRideStore } from '../stores/useRideStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 import { Motorbike, Gauge, Copy, Check } from 'lucide-react';
 import { apexToast } from '../lib/toast';
@@ -13,6 +14,8 @@ import QRCode from 'react-qr-code';
 import { PocketCurtain } from '../components/PocketCurtain';
 import { usePocketModeDetection } from '../hooks/usePocketModeDetection';
 import { RideStartupAnimation } from '../components/RideStartupAnimation';
+import DebugPanel from '../components/DebugPanel';
+import { logger } from '../lib/logger';
 
 /**
  * Web Fallback Component
@@ -61,7 +64,7 @@ const WebFallback = () => {
       apexToast.success('Link copied to clipboard');
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Failed to copy:', error);
+      logger.error('Failed to copy:', error);
       apexToast.error('Failed to copy link');
     }
   };
@@ -368,7 +371,7 @@ export default function Ride() {
     
     // Restore selected bike if it exists in store
     if (store.selectedBike && !selectedBike) {
-      console.log('Restoring selected bike from store');
+      logger.debug('Restoring selected bike from store');
       setSelectedBike(store.selectedBike);
     }
     
@@ -399,7 +402,7 @@ export default function Ride() {
     
     // Debug log state changes
     if (isRecording) {
-      console.log('Ride state sync:', {
+      logger.debug('Ride state sync:', {
         isRecording,
         isPaused,
         coords: coords.length,
@@ -471,14 +474,14 @@ export default function Ride() {
 
     // Bike is selected, start the ride
     try {
-      console.log('Starting ride with bike:', selectedBike.id);
+      logger.debug('Starting ride with bike:', selectedBike.id);
       // Show startup animation first
       setShowStartupAnimation(true);
       // Start ride will be triggered after animation completes
     } catch (error) {
       // Log technical details for debugging
-      console.error('Error starting ride:', error);
-      console.error('Start ride error details:', JSON.stringify(error, null, 2));
+      logger.error('Error starting ride:', error);
+      logger.error('Start ride error details:', JSON.stringify(error, null, 2));
       
       // Show user-friendly error (permission errors are already handled by checkPermissions)
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -502,41 +505,45 @@ export default function Ride() {
     }
 
     try {
-      console.log('Stopping ride...');
+      logger.debug('Stopping ride...');
       await stopRide(selectedBike.id, true);
       // Don't show toast here - saveRide mutation handles it via onSuccess/onError
       
-      // Reset UI state
+      // Reset UI state only if save succeeded (stopRide will throw if save fails)
       setSelectedBike(null);
       resetRide();
       setShowSafetyWarning(true);
       setPreviousSpeed(0);
       setShowStartupAnimation(false);
-      } catch (error) {
-        // Log technical details for debugging
-        console.error('Error stopping ride:', error);
-        console.error('Stop ride error details:', JSON.stringify(error, null, 2));
-        
-        // Extract user-friendly error message
+    } catch (error) {
+      // Log technical details for debugging
+      logger.error('Error stopping ride:', error);
+      logger.error('Stop ride error details:', JSON.stringify(error, null, 2));
+      
+      // Check if this is a save error - if so, the mutation's onError already showed a toast
+      const isSaveError = error instanceof Error && 
+        (error.message.toLowerCase().includes('save') ||
+         error.message.toLowerCase().includes('failed to save') ||
+         error.message.toLowerCase().includes('permission') ||
+         error.message.toLowerCase().includes('network') ||
+         error.message.toLowerCase().includes('authenticated'));
+      
+      // Only show toast for non-save errors (save errors are handled by mutation's onError)
+      if (!isSaveError) {
         let errorMessage = 'Failed to stop ride. Please try again.';
         if (error instanceof Error) {
           const msg = error.message.toLowerCase();
           // Map technical errors to user-friendly messages
           if (msg.includes('watchid') || msg.includes('not found')) {
             errorMessage = 'Ride tracking was already stopped.';
-          } else if (!msg.includes('ride saved')) {
-            // Use the error message if it's already user-friendly
-            errorMessage = error.message;
           } else {
-            // Don't show error if ride was saved successfully
-            return;
+            errorMessage = error.message;
           }
         }
-        
-        // Only show error if saveRide mutation didn't already show one
-        // The mutation's onError will handle the toast
         apexToast.error(errorMessage);
       }
+      // Don't reset UI state if save failed - keep ride data visible so user can retry
+    }
   };
 
   const handleCalibrate = async () => {
@@ -549,7 +556,7 @@ export default function Ride() {
       try {
         await Haptics.impact({ style: ImpactStyle.Light });
       } catch (error) {
-        console.warn('Haptic feedback not available:', error);
+        logger.warn('Haptic feedback not available:', error);
       }
     }
     
@@ -572,11 +579,7 @@ export default function Ride() {
 
   // Loading state
   if (bikesLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-apex-black">
-        <p className="text-apex-white/60">Loading...</p>
-      </div>
-    );
+    return <LoadingSpinner fullScreen text="Loading ride recorder..." />;
   }
 
   // No bikes state
@@ -616,8 +619,8 @@ export default function Ride() {
               await startRide();
             } catch (error) {
               // Log technical details for debugging
-              console.error('Error starting ride:', error);
-              console.error('Start ride error details:', JSON.stringify(error, null, 2));
+              logger.error('Error starting ride:', error);
+              logger.error('Start ride error details:', JSON.stringify(error, null, 2));
               
               // Show user-friendly error (permission errors are already handled by checkPermissions)
               const errorMessage = error instanceof Error ? error.message : String(error);
@@ -636,7 +639,7 @@ export default function Ride() {
       />
 
       <motion.div
-        className={`bg-apex-black ${isRecording ? 'fixed inset-0 p-0 overflow-hidden' : 'h-full p-4 md:p-6 overflow-y-auto'}`}
+        className={`bg-apex-black ${isRecording ? 'fixed inset-0 p-0 overflow-hidden z-0' : 'h-full p-4 md:p-6 overflow-y-auto'}`}
         style={isRecording ? {
           paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -652,7 +655,7 @@ export default function Ride() {
         <AnimatePresence>
           {showSafetyWarning && isRecording && (
             <motion.div
-              className="fixed left-1/2 -translate-x-1/2 z-50 bg-apex-green/10 border border-apex-green/40 rounded-lg px-6 py-3 max-w-md"
+              className="fixed left-1/2 -translate-x-1/2 z-[100] bg-apex-black/95 backdrop-blur-sm border border-apex-green/40 rounded-lg px-6 py-3 max-w-md"
               style={{ top: 'calc(3.5rem + max(env(safe-area-inset-top), 24px))' }}
               initial={{ opacity: 1, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -884,6 +887,27 @@ export default function Ride() {
               </motion.div>
             </motion.div>
 
+            {/* Debug Panels */}
+            <div className="w-full max-w-md space-y-2">
+              <DebugPanel 
+                title="coordinates" 
+                data={{ count: coords.length, lastCoord: coords[coords.length - 1] || null }}
+                maxHeight="max-h-24"
+              />
+              <DebugPanel 
+                title="telemetry" 
+                data={{ 
+                  currentLean, 
+                  maxLeanLeft, 
+                  maxLeanRight, 
+                  currentSpeed, 
+                  distanceKm,
+                  duration: currentDuration 
+                }}
+                maxHeight="max-h-24"
+              />
+            </div>
+
             {/* Calibrate Button */}
             <motion.div
               className="mt-4"
@@ -978,7 +1002,7 @@ export default function Ride() {
                     setShowStartupAnimation(false);
                     apexToast.success('Ride discarded');
                   } catch (error) {
-                    console.error('Error discarding ride:', error);
+                    logger.error('Error discarding ride:', error);
                     apexToast.error('Failed to discard ride');
                   }
                 }}

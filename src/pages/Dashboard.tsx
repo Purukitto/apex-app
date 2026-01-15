@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useBikes } from '../hooks/useBikes';
 import { useMaintenanceChecker } from '../hooks/useMaintenanceChecker';
 import { useUserProfile } from '../hooks/useUserProfile';
@@ -9,6 +9,10 @@ import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps } from '../lib/animations';
 import { useNotificationHandler } from '../components/layout/NotificationContext';
 import { useThemeColors } from '../hooks/useThemeColors';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { useQueryClient } from '@tanstack/react-query';
+import { Capacitor } from '@capacitor/core';
+import { logger } from '../lib/logger';
 
 export default function Dashboard() {
   const { bikes, isLoading } = useBikes();
@@ -17,56 +21,95 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { openNotifications, unreadCount } = useNotificationHandler();
   const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { primary, highlight } = useThemeColors();
+  const queryClient = useQueryClient();
+  const touchStartY = useRef(0);
+  const isPullingRef = useRef(false);
+  const currentPullDistanceRef = useRef(0);
   
   // Run maintenance checker on Dashboard load
   useMaintenanceChecker();
 
-  // Pull-to-refresh handler - refreshes all data including rides
-  const handleRefresh = async () => {
+  // Pull-to-refresh handler - refreshes all data
+  const handleRefresh = useCallback(async () => {
+    if (isRefreshing) return;
+    
+    setIsRefreshing(true);
     try {
-      await refetchRides();
-      // Note: No toast here - pull-to-refresh is a standard gesture, no need to notify
+      // Refresh all dashboard data
+      await Promise.all([
+        refetchRides(),
+        queryClient.invalidateQueries({ queryKey: ['bikes'] }),
+        queryClient.invalidateQueries({ queryKey: ['userProfile'] }),
+      ]);
     } catch (error) {
-      console.error('Error refreshing rides:', error);
+      logger.error('Error refreshing dashboard:', error);
       // Silent failure for pull-to-refresh
+    } finally {
+      // Small delay to show the refresh animation
+      setTimeout(() => {
+        setIsRefreshing(false);
+        setPullDistance(0);
+        currentPullDistanceRef.current = 0;
+      }, 300);
     }
-  };
+  }, [refetchRides, queryClient, isRefreshing]);
 
-  // Pull-to-refresh touch handlers
+  // Pull-to-refresh touch handlers - app-only (native platforms)
   useEffect(() => {
+    // Only enable pull-to-refresh on native platforms
+    if (!Capacitor.isNativePlatform()) {
+      return;
+    }
+
     // Find the main scroll container (from MainLayout)
     const mainContainer = document.querySelector('main');
     if (!mainContainer) return;
 
-    let startY = 0;
-    let currentY = 0;
-    let isPulling = false;
-
     const handleTouchStart = (e: TouchEvent) => {
-      if (mainContainer.scrollTop === 0) {
-        startY = e.touches[0].clientY;
-        isPulling = true;
+      // Only allow pull-to-refresh when at the top of the scroll container
+      if (mainContainer.scrollTop === 0 && !isRefreshing) {
+        touchStartY.current = e.touches[0].clientY;
+        isPullingRef.current = true;
+        currentPullDistanceRef.current = 0;
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isPulling) return;
-      currentY = e.touches[0].clientY;
-      const distance = Math.max(0, currentY - startY);
-      setPullDistance(distance);
+      if (!isPullingRef.current || isRefreshing) return;
+      
+      const currentY = e.touches[0].clientY;
+      const distance = Math.max(0, currentY - touchStartY.current);
+      currentPullDistanceRef.current = distance;
+      
+      // Only allow pull if we're still at the top
+      if (mainContainer.scrollTop === 0 && distance > 0) {
+        // Prevent default scrolling while pulling
+        if (distance > 10) {
+          e.preventDefault();
+        }
+        setPullDistance(Math.min(distance, 120)); // Cap at 120px
+      } else {
+        // Reset if user scrolled down
+        isPullingRef.current = false;
+        setPullDistance(0);
+        currentPullDistanceRef.current = 0;
+      }
     };
 
     const handleTouchEnd = () => {
-      if (isPulling && pullDistance > 80) {
+      const finalDistance = currentPullDistanceRef.current;
+      if (isPullingRef.current && finalDistance >= 80 && !isRefreshing) {
         handleRefresh();
       }
-      isPulling = false;
+      isPullingRef.current = false;
       setPullDistance(0);
+      currentPullDistanceRef.current = 0;
     };
 
-    mainContainer.addEventListener('touchstart', handleTouchStart);
-    mainContainer.addEventListener('touchmove', handleTouchMove);
+    mainContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+    mainContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
     mainContainer.addEventListener('touchend', handleTouchEnd);
 
     return () => {
@@ -74,15 +117,10 @@ export default function Dashboard() {
       mainContainer.removeEventListener('touchmove', handleTouchMove);
       mainContainer.removeEventListener('touchend', handleTouchEnd);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pullDistance]);
+  }, [isRefreshing, handleRefresh]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-white/60">Loading...</div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen text="Loading dashboard..." />;
   }
 
   // Calculate total distance across all bikes
@@ -128,31 +166,39 @@ export default function Dashboard() {
   const riderName = profile?.riderName || 'Rider';
 
   return (
-    <div className="h-full bg-zinc-950 flex flex-col">
+    <div className="h-full bg-apex-black flex flex-col">
       {/* Pull-to-refresh indicator */}
-      {pullDistance > 0 && (
-        <div
-          className="fixed top-0 left-0 right-0 z-50 bg-zinc-950 flex items-center justify-center pt-4 pb-2"
+      {(pullDistance > 0 || isRefreshing) && (
+        <motion.div
+          className="fixed top-0 left-0 right-0 z-50 bg-apex-black flex items-center justify-center pb-2"
           style={{
-            transform: `translateY(${Math.min(pullDistance, 80)}px)`,
-            opacity: Math.min(pullDistance / 80, 1),
-            minHeight: `${Math.min(pullDistance, 80) + 60}px`,
+            paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
           }}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{
+            opacity: isRefreshing ? 1 : Math.min(pullDistance / 80, 1),
+            y: isRefreshing ? 0 : Math.min(pullDistance * 0.5, 60),
+          }}
+          transition={{ duration: 0.2 }}
         >
-          <div className="bg-zinc-900 border border-white/5 rounded-full px-4 py-2 flex items-center gap-2">
+          <div className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-full px-4 py-2 flex items-center gap-2">
             <RefreshCw
               size={16}
-              className="text-white"
+              className={`transition-colors ${isRefreshing ? 'animate-spin' : ''}`}
               style={{
-                transform: `rotate(${pullDistance * 4}deg)`,
-                color: pullDistance > 80 ? primary : 'white',
+                transform: isRefreshing ? 'none' : `rotate(${pullDistance * 4}deg)`,
+                color: pullDistance >= 80 || isRefreshing ? primary : 'currentColor',
               }}
             />
-            <span className="text-xs text-white">
-              {pullDistance > 80 ? 'Release to refresh' : 'Pull to refresh'}
+            <span className="text-xs text-apex-white">
+              {isRefreshing 
+                ? 'Refreshing...' 
+                : pullDistance >= 80 
+                  ? 'Release to refresh' 
+                  : 'Pull to refresh'}
             </span>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Dashboard-specific Greeting Section */}
@@ -283,7 +329,7 @@ export default function Dashboard() {
               <div className="animate-spin mx-auto mb-3">
                 <RefreshCw size={32} className="text-white/20" />
               </div>
-              <p className="text-sm text-white/40">Loading rides...</p>
+              <LoadingSpinner size="sm" text="Loading rides..." />
             </div>
           ) : rides && rides.length > 0 ? (
             <motion.div
@@ -298,40 +344,55 @@ export default function Dashboard() {
                 return (
                   <motion.div
                     key={ride.id}
-                    className="bg-zinc-900 border border-white/5 rounded-apex p-5 cursor-pointer transition-all"
+                    className="bg-zinc-900 border border-white/5 rounded-apex overflow-hidden"
                     variants={fastItemVariants}
-                    onClick={() => navigate(`/rides?rideId=${ride.id}`)}
-                    whileHover={{ borderColor: highlight, scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
+                    layout
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-lg font-semibold text-white">{bikeName}</h3>
-                      <span className="text-xs text-white/40 font-mono">
-                        {formatDate(ride.start_time)}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <MapPin size={16} style={{ color: primary }} />
-                        <span className="text-sm text-white/80 font-mono">
-                          {ride.distance_km.toFixed(1)} km
-                        </span>
+                    {/* Card Header - Same as AllRides but navigates on click */}
+                    <motion.div
+                      className="p-5 cursor-pointer"
+                      onClick={() => navigate(`/rides?rideId=${ride.id}`)}
+                      whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}
+                      whileTap={{ backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-semibold text-white truncate">
+                            {ride.ride_name || bikeName}
+                          </h3>
+                          {ride.ride_name && (
+                            <p className="text-sm text-white/40 truncate mt-1">
+                              {bikeName}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Timer size={16} style={{ color: primary }} />
-                        <span className="text-sm text-white/80">
-                          {formatDuration(ride.start_time, ride.end_time)}
-                        </span>
-                      </div>
-                      {maxLean > 0 && (
+                      <div className="flex flex-wrap items-center gap-4">
                         <div className="flex items-center gap-2">
-                          <TrendingUp size={16} style={{ color: primary }} />
+                          <MapPin size={16} style={{ color: primary }} />
                           <span className="text-sm text-white/80 font-mono">
-                            {maxLean.toFixed(1)}°
+                            {ride.distance_km.toFixed(1)} km
                           </span>
                         </div>
-                      )}
-                    </div>
+                        <div className="flex items-center gap-2">
+                          <Timer size={16} style={{ color: primary }} />
+                          <span className="text-sm text-white/80">
+                            {formatDuration(ride.start_time, ride.end_time)}
+                          </span>
+                        </div>
+                        {maxLean > 0 && (
+                          <div className="flex items-center gap-2">
+                            <TrendingUp size={16} style={{ color: primary }} />
+                            <span className="text-sm text-white/80 font-mono">
+                              {maxLean.toFixed(1)}°
+                            </span>
+                          </div>
+                        )}
+                        <span className="text-xs text-white/40 font-mono">
+                          {formatDate(ride.start_time)}
+                        </span>
+                      </div>
+                    </motion.div>
                   </motion.div>
                 );
               })}

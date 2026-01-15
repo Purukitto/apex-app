@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useDiscord } from '../hooks/useDiscord';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { useAppUpdate } from '../hooks/useAppUpdate';
 import { useAppUpdateStore } from '../stores/useAppUpdateStore';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +13,7 @@ import DonationCard from '../components/profile/DonationCard';
 import { useThemeStore, PRIMARY_COLORS, BACKGROUND_COLORS, type BackgroundTheme, type PrimaryTheme } from '../stores/useThemeStore';
 import { applyTheme } from '../lib/theme';
 import { getAppVersion } from '../lib/version';
+import { logger } from '../lib/logger';
 
 const DISCORD_BLURPLE = '#5865F2';
 
@@ -69,7 +71,7 @@ export default function Profile() {
       await linkDiscord.mutateAsync();
     } catch (err) {
       // Error is handled by the hook's onError
-      console.error('Failed to link Discord:', err);
+      logger.error('Failed to link Discord:', err);
     }
   };
 
@@ -78,7 +80,7 @@ export default function Profile() {
       await unlinkDiscord.mutateAsync();
     } catch (err) {
       // Error is handled by the hook's onError
-      console.error('Failed to unlink Discord:', err);
+      logger.error('Failed to unlink Discord:', err);
     }
   };
 
@@ -101,11 +103,7 @@ export default function Profile() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-apex-black flex items-center justify-center">
-        <div className="text-apex-white/60">Loading...</div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen text="Loading profile..." />;
   }
 
   return (
@@ -298,7 +296,7 @@ export default function Profile() {
 
             {isDiscordLoading ? (
               <div className="flex items-center justify-center py-4">
-                <div className="text-apex-white/60">Loading...</div>
+                <LoadingSpinner size="sm" />
               </div>
             ) : !isConnected ? (
               <div className="space-y-4">
@@ -416,6 +414,18 @@ export default function Profile() {
             </p>
             <p className="text-sm text-apex-white/40 font-mono">
               v{getAppVersion()}
+            </p>
+            <p className="text-xs text-apex-white/30 font-mono mt-2">
+              Maps ©{' '}
+              <a
+                href="https://www.openstreetmap.org/copyright"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline transition-colors"
+              >
+                OpenStreetMap
+              </a>{' '}
+              contributors
             </p>
           </motion.div>
         </motion.div>

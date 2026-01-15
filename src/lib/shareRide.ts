@@ -3,6 +3,7 @@ import { Share } from '@capacitor/share';
 import { Capacitor } from '@capacitor/core';
 import type { Ride } from '../types/database';
 import type { Bike } from '../types/database';
+import { logger } from './logger';
 
 /**
  * Generate a shareable image for a ride (Strava-style)
@@ -317,14 +318,14 @@ export async function shareRideImage(ride: Ride, bike: Bike | undefined): Promis
         return 'clipboard';
       } catch (clipboardError) {
         // Clipboard failed or not supported, fall back to download
-        console.log('Clipboard copy not available, downloading image:', clipboardError);
+        logger.debug('Clipboard copy not available, downloading image:', clipboardError);
         downloadImage(blob, filename);
         // Return download method
         return 'download';
       }
     }
   } catch (error) {
-    console.error('Error sharing ride:', error);
+    logger.error('Error sharing ride:', error);
     throw error;
   }
 }

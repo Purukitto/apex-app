@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
 import { apexToast } from '../lib/toast';
 import type { Bike } from '../types/database';
+import { logger } from '../lib/logger';
 
 export function useBikes() {
   const queryClient = useQueryClient();
@@ -108,7 +109,7 @@ export function useBikes() {
       if (checkError || !bikeCheck) {
         // Log for debugging, but show user-friendly message
         if (checkError) {
-          console.error('Bike check error:', checkError);
+          logger.error('Bike check error:', checkError);
         }
         throw new Error(
           'Bike not found or you do not have permission to access it.'
@@ -148,7 +149,7 @@ export function useBikes() {
 
       if (error) {
         // Log technical details for debugging
-        console.error('Supabase delete error:', error);
+        logger.error('Supabase delete error:', error);
         // Provide user-friendly error messages
         if (error.code === '23503') {
           throw new Error(
@@ -166,7 +167,7 @@ export function useBikes() {
       // Check if any rows were actually deleted
       if (!data || data.length === 0) {
         // Log technical details for debugging
-        console.error('Delete returned no rows. Bike ID:', id, 'User ID:', user.id);
+        logger.error('Delete returned no rows. Bike ID:', id, 'User ID:', user.id);
         throw new Error(
           'Failed to delete bike. Please try again or contact support.'
         );
@@ -181,7 +182,7 @@ export function useBikes() {
     onError: (error) => {
       // Error toast is handled in Garage.tsx
       // Only log for debugging
-      console.error('Error deleting bike:', error);
+      logger.error('Error deleting bike:', error);
     },
   });
 

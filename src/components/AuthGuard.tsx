@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
+import LoadingSpinner from './LoadingSpinner';
 import type { User } from '@supabase/supabase-js';
 
 interface AuthGuardProps {
@@ -36,11 +37,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   }, [navigate]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-apex-black flex items-center justify-center">
-        <div className="text-apex-white">Loading...</div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen text="Authenticating..." />;
   }
 
   if (!user) {

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.13.3](https://github.com/Purukitto/apex-app/compare/v0.13.2...v0.13.3) (2026-01-15)
+
+
+### Bug Fixes
+
+* ensure all devtools are disabled in production builds ([5f20a99](https://github.com/Purukitto/apex-app/commit/5f20a99cb90faf02a6b64ae58de097ddced670e0))
+
 ### [0.13.2](https://github.com/Purukitto/apex-app/compare/v0.13.1...v0.13.2) (2026-01-15)
 
 

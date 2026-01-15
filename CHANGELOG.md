@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.13.4](https://github.com/Purukitto/apex-app/compare/v0.13.3...v0.13.4) (2026-01-15)
+
+
+### Features
+
+* add copy all logs functionality to DevToolsPanel ([40fb7d9](https://github.com/Purukitto/apex-app/commit/40fb7d99039a5cc5189fb8df22618a066c825924))
+* enhance copy logs functionality in DevToolsPanel ([1e55112](https://github.com/Purukitto/apex-app/commit/1e55112e8e39012c4fee2337d033c0b601f44eaf))
+* improve toast message handling and error logging ([8a256a0](https://github.com/Purukitto/apex-app/commit/8a256a06ea8968e6e2be06c64f2ed50b87d68288))
+
+
+### Bug Fixes
+
+* defer setState call in DevToolsPanel to avoid render phase errors ([80601f4](https://github.com/Purukitto/apex-app/commit/80601f4eaa88c28f74d6d022d3df0efa056885cb))
+* enhance error handling and state management in ride tracking ([72f31d2](https://github.com/Purukitto/apex-app/commit/72f31d2a3c4b9b216656d55d3a493534a89c0cd1))
+* enhance error handling in ride tracking for geolocation and save operations ([19102c9](https://github.com/Purukitto/apex-app/commit/19102c99c87eed4468cafc00f24994d7ff7bfc6b))
+* ensure toasts are always visible on top of content ([6bf1820](https://github.com/Purukitto/apex-app/commit/6bf18201f612f0331b2bbda1079021aa9eaeeb1d))
+* improve error handling for RPC function issues in ride tracking ([efffc4d](https://github.com/Purukitto/apex-app/commit/efffc4d0dc42f1b71b3fd542235da2cf8647997a))
+* improve log level retrieval in ApexLogger ([ea756fc](https://github.com/Purukitto/apex-app/commit/ea756fc1a9ba828a771105555f7d64768d3f90d9))
+* increase console log retention in DevToolsPanel ([ce6138f](https://github.com/Purukitto/apex-app/commit/ce6138feb96ae6da9fb01b09cdae86cff4d4e4d6))
+* optimize log handling in DevToolsPanel and enhance error logging in ride tracking ([8ee0b6f](https://github.com/Purukitto/apex-app/commit/8ee0b6f1da8d1afb1e328ff58901a74c414cd2a1))
+* streamline error handling for RPC function in ride tracking ([5b8e195](https://github.com/Purukitto/apex-app/commit/5b8e195615c388dfe714221ece95798602924915))
+* update toast z-index and positioning for improved visibility ([6b2ab9d](https://github.com/Purukitto/apex-app/commit/6b2ab9db264a5323bd818b44356dde7754f32a96))
+
+
+### Styles
+
+* update safety warning toast appearance for better visibility ([cfde012](https://github.com/Purukitto/apex-app/commit/cfde012c13e56346057dd85f6edf27264cbf091d))
+
 ### [0.13.3](https://github.com/Purukitto/apex-app/compare/v0.13.2...v0.13.3) (2026-01-15)
 
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Terminal, Database, RefreshCw, Copy, Check, Download, Search, Filter } from 'lucide-react';
 import { useRideStore } from '../stores/useRideStore';
@@ -36,12 +36,44 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
   const [logLevel, setLogLevel] = useState<LogLevel>(() => logger.getLevel() as LogLevel);
   const [searchFilter, setSearchFilter] = useState('');
   const consoleEndRef = useRef<HTMLDivElement>(null);
+  
+  // Use refs to queue logs and flush them outside render
+  const logQueueRef = useRef<ConsoleLog[]>([]);
+  const flushScheduledRef = useRef(false);
 
   // Get all store states
   const rideStore = useRideStore();
   const themeStore = useThemeStore();
   const notificationStore = useNotificationStore();
   const appUpdateStore = useAppUpdateStore();
+
+  // Flush queued logs to state
+  const flushLogs = useCallback(() => {
+    if (logQueueRef.current.length === 0) {
+      flushScheduledRef.current = false;
+      return;
+    }
+
+    const logsToAdd = [...logQueueRef.current];
+    logQueueRef.current = [];
+    flushScheduledRef.current = false;
+
+    setConsoleLogs(prev => [
+      ...prev.slice(-9999), // Keep last 10000 logs
+      ...logsToAdd,
+    ]);
+  }, []);
+
+  // Schedule log flush outside render phase
+  const scheduleFlush = useCallback(() => {
+    if (flushScheduledRef.current) return;
+    flushScheduledRef.current = true;
+    
+    // Use queueMicrotask to defer until after current render phase
+    queueMicrotask(() => {
+      flushLogs();
+    });
+  }, [flushLogs]);
 
   // Intercept console methods - always active in dev mode, not just when panel is open
   // NOTE: These console.* assignments are intentional - they intercept console calls
@@ -69,20 +101,17 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
         return String(arg);
       }).join(' ');
 
-      // Use setTimeout to defer setState call and avoid "setState during render" error
-      // This ensures setState is called outside of the render phase
-      setTimeout(() => {
-        setConsoleLogs(prev => [
-          ...prev.slice(-9999), // Keep last 10000 logs
-          {
-            id: `${Date.now()}-${Math.random()}`,
-            type,
-            message,
-            timestamp: new Date(),
-            args,
-          },
-        ]);
-      }, 0);
+      // Queue the log instead of calling setState directly
+      logQueueRef.current.push({
+        id: `${Date.now()}-${Math.random()}`,
+        type,
+        message,
+        timestamp: new Date(),
+        args,
+      });
+
+      // Schedule a flush if not already scheduled
+      scheduleFlush();
     };
 
     console.log = (...args: unknown[]) => {
@@ -123,7 +152,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
       console.debug = originalDebug;
       console.trace = originalTrace;
     };
-  }, []); // Run once on mount, not dependent on isOpen
+  }, [scheduleFlush]); // Include scheduleFlush in dependencies
 
   // Clear console logs
   const clearConsole = () => {

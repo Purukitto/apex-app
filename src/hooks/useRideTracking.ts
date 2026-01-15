@@ -621,10 +621,14 @@ export const useRideTracking = () => {
             const errorMessage = error && typeof error === 'object' && 'message' in error
               ? String((error as { message?: string }).message || '')
               : '';
+            const errorCode = error && typeof error === 'object' && 'code' in error
+              ? String((error as { code?: string }).code || '')
+              : '';
             
-            if (errorMessage.includes('WatchId not found') || errorMessage.includes('OS-PLUG-GLOC-0012')) {
+            if (errorMessage.includes('WatchId not found') || errorCode === 'OS-PLUG-GLOC-0012') {
               // This is expected - watch was already cleared or never started
-              logger.debug('GPS watch already cleared or not found (expected)');
+              // Use debug level to avoid cluttering error logs
+              logger.debug('GPS watch already cleared or not found (expected)', { code: errorCode });
             } else {
               logger.warn('Error clearing GPS watch:', error);
             }

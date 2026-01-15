@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useBikes } from '../hooks/useBikes';
-import { useMaintenanceChecker } from '../hooks/useMaintenanceChecker';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useRides } from '../hooks/useRides';
 import { useNavigate } from 'react-router-dom';
@@ -27,9 +26,7 @@ export default function Dashboard() {
   const touchStartY = useRef(0);
   const isPullingRef = useRef(false);
   const currentPullDistanceRef = useRef(0);
-  
-  // Run maintenance checker on Dashboard load
-  useMaintenanceChecker();
+  const scrollTopAtStartRef = useRef(0);
 
   // Pull-to-refresh handler - refreshes all data
   const handleRefresh = useCallback(async () => {
@@ -68,30 +65,55 @@ export default function Dashboard() {
     if (!mainContainer) return;
 
     const handleTouchStart = (e: TouchEvent) => {
-      // Only allow pull-to-refresh when at the top of the scroll container
-      if (mainContainer.scrollTop === 0 && !isRefreshing) {
+      const scrollTop = mainContainer.scrollTop;
+      // Only allow pull-to-refresh when exactly at the top (with small tolerance for sub-pixel)
+      // Use <= 2 to account for sub-pixel scrolling and rounding
+      if (scrollTop <= 2 && !isRefreshing) {
         touchStartY.current = e.touches[0].clientY;
+        scrollTopAtStartRef.current = scrollTop;
         isPullingRef.current = true;
         currentPullDistanceRef.current = 0;
+      } else {
+        // Explicitly disable if not at top
+        isPullingRef.current = false;
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!isPullingRef.current || isRefreshing) return;
       
+      const scrollTop = mainContainer.scrollTop;
       const currentY = e.touches[0].clientY;
-      const distance = Math.max(0, currentY - touchStartY.current);
-      currentPullDistanceRef.current = distance;
+      const deltaY = currentY - touchStartY.current;
       
-      // Only allow pull if we're still at the top
-      if (mainContainer.scrollTop === 0 && distance > 0) {
-        // Prevent default scrolling while pulling
+      // Strict check: must still be at top AND pulling down (positive deltaY)
+      // If scrollTop increased, user is scrolling down - cancel immediately
+      if (scrollTop > scrollTopAtStartRef.current || scrollTop > 2) {
+        // User scrolled down, cancel pull-to-refresh
+        isPullingRef.current = false;
+        setPullDistance(0);
+        currentPullDistanceRef.current = 0;
+        return;
+      }
+      
+      // Only allow pull if we're still at the top AND pulling down
+      if (scrollTop <= 2 && deltaY > 0) {
+        const distance = deltaY;
+        currentPullDistanceRef.current = distance;
+        
+        // Prevent default scrolling while pulling down (only after threshold)
+        // This prevents the browser's native pull-to-refresh
         if (distance > 10) {
           e.preventDefault();
         }
         setPullDistance(Math.min(distance, 120)); // Cap at 120px
+      } else if (deltaY <= 0) {
+        // User is scrolling up (negative deltaY), cancel pull-to-refresh
+        isPullingRef.current = false;
+        setPullDistance(0);
+        currentPullDistanceRef.current = 0;
       } else {
-        // Reset if user scrolled down
+        // Not at top anymore, cancel
         isPullingRef.current = false;
         setPullDistance(0);
         currentPullDistanceRef.current = 0;
@@ -100,12 +122,17 @@ export default function Dashboard() {
 
     const handleTouchEnd = () => {
       const finalDistance = currentPullDistanceRef.current;
-      if (isPullingRef.current && finalDistance >= 80 && !isRefreshing) {
+      const scrollTop = mainContainer.scrollTop;
+      
+      // Only trigger refresh if still at top and pulled enough
+      if (isPullingRef.current && scrollTop <= 2 && finalDistance >= 80 && !isRefreshing) {
         handleRefresh();
       }
+      
       isPullingRef.current = false;
       setPullDistance(0);
       currentPullDistanceRef.current = 0;
+      scrollTopAtStartRef.current = 0;
     };
 
     mainContainer.addEventListener('touchstart', handleTouchStart, { passive: false });

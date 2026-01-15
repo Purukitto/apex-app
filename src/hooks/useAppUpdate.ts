@@ -156,10 +156,12 @@ export function useAppUpdate() {
     updateInfo,
     isChecking,
     error,
+    hasCheckedNoUpdate,
     setUpdateInfo,
     setIsChecking,
     setError,
     setShowModal,
+    setHasCheckedNoUpdate,
   } = useAppUpdateStore();
 
   const checkForUpdate = useCallback(async (force = false, showModalOnUpdate = false): Promise<UpdateInfo | null> => {
@@ -170,6 +172,7 @@ export function useAppUpdate() {
 
     setIsChecking(true);
     setError(null);
+    setHasCheckedNoUpdate(false);
 
     try {
       // For auto-checks (showModalOnUpdate=true), always check for new versions
@@ -249,6 +252,7 @@ export function useAppUpdate() {
 
         setUpdateInfo(info);
         setIsChecking(false);
+        setHasCheckedNoUpdate(false);
         
         // Show modal if requested (for auto-checks)
         if (showModalOnUpdate) {
@@ -261,6 +265,7 @@ export function useAppUpdate() {
         const currentVersion = getAppVersion();
         logger.debug(`No update available. Current version (${currentVersion}) is up to date with latest (${latestVersion})`);
         setIsChecking(false);
+        setHasCheckedNoUpdate(true);
         return null;
       }
     } catch (err) {
@@ -270,7 +275,7 @@ export function useAppUpdate() {
       setIsChecking(false);
       return null;
     }
-  }, [setError, setIsChecking, setShowModal, setUpdateInfo]);
+  }, [setError, setIsChecking, setShowModal, setUpdateInfo, setHasCheckedNoUpdate]);
 
   const openReleasePage = useCallback(async () => {
     const currentUpdateInfo = useAppUpdateStore.getState().updateInfo;
@@ -299,6 +304,7 @@ export function useAppUpdate() {
     updateInfo,
     isChecking,
     error,
+    hasCheckedNoUpdate,
     checkForUpdate,
     openReleasePage,
     dismissUpdate,

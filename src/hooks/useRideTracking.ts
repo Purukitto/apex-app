@@ -8,6 +8,8 @@ import { supabase } from '../lib/supabaseClient';
 import { apexToast } from '../lib/toast';
 import { useRideStore } from '../stores/useRideStore';
 import { logger } from '../lib/logger';
+import { triggerDistanceBasedNotification } from '../lib/notifications';
+import type { MaintenanceSchedule } from '../types/database';
 
 interface Coordinate {
   longitude: number;
@@ -439,6 +441,114 @@ export const useRideTracking = () => {
         
         throw detailedError;
       }
+
+      // Update bike current_odo (odometer) after successfully saving the ride
+      // Calculate tripDist (totalDistance in km)
+      const tripDist = Math.round(totalDistance * 100) / 100;
+      
+      if (tripDist > 0) {
+        try {
+          logger.debug('Updating bike current_odo:', {
+            bikeId,
+            tripDist,
+            currentOdometer: 'will be fetched and incremented',
+          });
+
+          // Fetch current odometer value
+          const { data: bikeData, error: fetchError } = await supabase
+            .from('bikes')
+            .select('current_odo')
+            .eq('id', bikeId)
+            .eq('user_id', user.id)
+            .single();
+
+          if (fetchError) {
+            logger.error('Error fetching bike for odometer update:', fetchError);
+            // Don't throw - ride is already saved, just log the error
+          } else {
+            // Calculate new odometer value (round to integer to match current_odo type)
+            const currentOdometer = bikeData.current_odo ?? 0;
+            const newOdometer = Math.round(currentOdometer + tripDist);
+
+            // Update current_odo
+            const { error: updateError } = await supabase
+              .from('bikes')
+              .update({ current_odo: newOdometer })
+              .eq('id', bikeId)
+              .eq('user_id', user.id);
+
+            if (updateError) {
+              logger.error('Error updating bike current_odo:', updateError);
+              // Don't throw - ride is already saved, just log the error
+            } else {
+              logger.debug('Bike current_odo updated successfully:', {
+                bikeId,
+                oldOdometer: currentOdometer,
+                tripDist,
+                newOdometer,
+              });
+              // Invalidate bikes query to refresh odometer in UI
+              await queryClient.invalidateQueries({ queryKey: ['bikes'] });
+
+              // Check for distance-based maintenance notifications
+              try {
+                const { data: schedules, error: schedulesError } = await supabase
+                  .from('maintenance_schedules')
+                  .select('*')
+                  .eq('bike_id', bikeId)
+                  .eq('is_active', true)
+                  .gt('interval_km', 0); // Only check schedules with km intervals
+
+                if (!schedulesError && schedules) {
+                  // Get bike name for notifications
+                  const { data: bikeInfo } = await supabase
+                    .from('bikes')
+                    .select('nick_name, make, model')
+                    .eq('id', bikeId)
+                    .single();
+
+                  const bikeName = bikeInfo
+                    ? bikeInfo.nick_name || `${bikeInfo.make} ${bikeInfo.model}`
+                    : 'Your bike';
+
+                  // Check each schedule
+                  for (const schedule of schedules as MaintenanceSchedule[]) {
+                    const lastServiceOdo = schedule.last_service_odo || 0;
+                    const kmSinceService = newOdometer - lastServiceOdo;
+
+                    // If current_odo > (last_service_odo + interval_km), trigger notification
+                    if (kmSinceService >= schedule.interval_km) {
+                      logger.debug('Distance-based maintenance due:', {
+                        partName: schedule.part_name,
+                        kmSinceService,
+                        intervalKm: schedule.interval_km,
+                      });
+
+                      try {
+                        await triggerDistanceBasedNotification(
+                          schedule.part_name,
+                          bikeName
+                        );
+                      } catch (notifError) {
+                        // Log but don't fail ride save
+                        logger.warn('Failed to trigger distance notification:', notifError);
+                      }
+                    }
+                  }
+                }
+              } catch (maintenanceError) {
+                // Log but don't fail ride save
+                logger.warn('Error checking maintenance schedules:', maintenanceError);
+              }
+            }
+          }
+        } catch (odometerError) {
+          // Log error but don't fail the ride save
+          logger.error('Unexpected error updating current_odo:', odometerError);
+          // Ride is already saved, so we don't throw
+        }
+      }
+
       return data;
     },
     onSuccess: async () => {

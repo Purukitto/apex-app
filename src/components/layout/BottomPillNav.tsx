@@ -1,13 +1,15 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Activity, Motorbike, Radio, List } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { buttonHoverProps } from '../../lib/animations';
 import { useThemeColors } from '../../hooks/useThemeColors';
+import { useKeyboard } from '../../hooks/useKeyboard';
 
 export default function BottomPillNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const { primary } = useThemeColors();
+  const { isKeyboardVisible } = useKeyboard();
 
   const navItems = [
     { path: '/dashboard', icon: Activity, label: 'Dashboard' },
@@ -19,15 +21,18 @@ export default function BottomPillNav() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <motion.div
-      className="fixed left-1/2 -translate-x-1/2 z-50 bg-zinc-500/20 backdrop-blur-md rounded-full px-8 py-3 flex items-center gap-8"
-      style={{
-        bottom: 'calc(2.5rem + env(safe-area-inset-bottom, 0px))',
-      }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
-    >
+    <AnimatePresence>
+      {!isKeyboardVisible && (
+        <motion.div
+          className="fixed left-1/2 -translate-x-1/2 z-50 bg-zinc-500/20 backdrop-blur-md rounded-full px-8 py-3 flex items-center gap-8"
+          style={{
+            bottom: 'calc(2.5rem + env(safe-area-inset-bottom, 0px))',
+          }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.2 }}
+        >
       {navItems.map((item) => {
         const Icon = item.icon;
         const active = isActive(item.path);
@@ -63,6 +68,8 @@ export default function BottomPillNav() {
           </motion.button>
         );
       })}
-    </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

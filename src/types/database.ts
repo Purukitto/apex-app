@@ -4,9 +4,13 @@ export type Bike = {
   make: string;
   model: string;
   year?: number;
-  current_odo: number;
+  current_odo: number; // Odometer reading in kilometers (integer)
   nick_name?: string;
   image_url?: string;
+  specs_engine?: string;
+  specs_power?: string;
+  avg_mileage?: number; // Average mileage in km per litre (calculated from full tank logs)
+  last_fuel_price?: number; // Most recent price per litre from fuel logs
   created_at: string;
 };
 
@@ -39,4 +43,57 @@ export type MaintenanceLog = {
   notes?: string;
   receipt_url?: string;
   created_at: string;
+};
+
+export type FuelLog = {
+  id: string;
+  bike_id: string;
+  odometer: number;
+  litres: number;
+  price_per_litre: number;
+  total_cost: number;
+  is_full_tank: boolean;
+  date: string; // date format
+  created_at: string;
+};
+
+export type MaintenanceSchedule = {
+  id: string;
+  bike_id: string;
+  part_name: string;
+  interval_km: number;
+  interval_months: number;
+  last_service_date?: string; // date format, nullable
+  last_service_odo?: number; // nullable
+  is_active: boolean;
+  created_at: string;
+};
+
+export type ServiceHistory = {
+  id: string;
+  bike_id: string;
+  schedule_id: string;
+  service_date: string; // date format
+  service_odo: number;
+  cost?: number; // nullable
+  notes?: string; // nullable
+  created_at: string;
+};
+
+export type GlobalBikeSpec = {
+  id: string;
+  make: string;
+  model: string;
+  year: number | null;
+  category: string | null;
+  displacement: string | null;
+  power: string | null;
+  torque: string | null;
+  image_url: string | null;
+  is_verified: boolean;
+  report_count: number;
+  created_by: string | null;
+  search_text: string | null; // Computed search field: "make model year"
+  created_at: string;
+  updated_at: string;
 };

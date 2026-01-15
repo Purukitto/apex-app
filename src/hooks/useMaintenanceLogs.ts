@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
-import type { MaintenanceLog } from '../types/database';
+import type { MaintenanceLog, Bike } from '../types/database';
 
 export function useMaintenanceLogs(bikeId?: string) {
   const queryClient = useQueryClient();
@@ -47,6 +47,26 @@ export function useMaintenanceLogs(bikeId?: string) {
 
   // Create a new maintenance log
   const createMaintenanceLog = useMutation({
+    onMutate: async (logData) => {
+      await queryClient.cancelQueries({ queryKey: ['maintenanceLogs', bikeId] });
+      await queryClient.cancelQueries({ queryKey: ['bikes'] });
+      
+      const previousLogs = queryClient.getQueryData<MaintenanceLog[]>(['maintenanceLogs', bikeId]);
+      const previousBikes = queryClient.getQueryData<Bike[]>(['bikes']);
+      
+      // Optimistically add log
+      const optimisticLog: MaintenanceLog = {
+        ...logData,
+        id: `temp-${Date.now()}`,
+        created_at: new Date().toISOString(),
+      };
+      
+      queryClient.setQueryData<MaintenanceLog[]>(['maintenanceLogs', bikeId], (old = []) => 
+        [optimisticLog, ...old]
+      );
+      
+      return { previousLogs, previousBikes };
+    },
     mutationFn: async (
       logData: Omit<MaintenanceLog, 'id' | 'created_at'>
     ) => {
@@ -67,20 +87,50 @@ export function useMaintenanceLogs(bikeId?: string) {
         throw new Error('Bike not found or you do not have permission');
       }
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('maintenance_logs')
-        .insert(logData);
+        .insert(logData)
+        .select()
+        .single();
 
       if (error) throw error;
+      return data as MaintenanceLog;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['maintenanceLogs'] });
+    onSuccess: (newLog) => {
+      // Update with actual data from server
+      queryClient.setQueryData<MaintenanceLog[]>(['maintenanceLogs', bikeId], (old = []) => {
+        const withoutTemp = old.filter(log => !log.id.startsWith('temp-'));
+        return [newLog, ...withoutTemp];
+      });
       queryClient.invalidateQueries({ queryKey: ['bikes'] }); // In case we update bike odo
+    },
+    onError: (_error, _logData, context) => {
+      // Rollback on error
+      if (context?.previousLogs) {
+        queryClient.setQueryData(['maintenanceLogs', bikeId], context.previousLogs);
+      }
+      if (context?.previousBikes) {
+        queryClient.setQueryData(['bikes'], context.previousBikes);
+      }
     },
   });
 
   // Update a maintenance log
   const updateMaintenanceLog = useMutation({
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: ['maintenanceLogs', bikeId] });
+      await queryClient.cancelQueries({ queryKey: ['bikes'] });
+      
+      const previousLogs = queryClient.getQueryData<MaintenanceLog[]>(['maintenanceLogs', bikeId]);
+      const previousBikes = queryClient.getQueryData<Bike[]>(['bikes']);
+      
+      // Optimistically update
+      queryClient.setQueryData<MaintenanceLog[]>(['maintenanceLogs', bikeId], (old = []) =>
+        old.map(log => log.id === id ? { ...log, ...updates } : log)
+      );
+      
+      return { previousLogs, previousBikes };
+    },
     mutationFn: async ({
       id,
       updates,
@@ -113,21 +163,48 @@ export function useMaintenanceLogs(bikeId?: string) {
         throw new Error('You do not have permission to update this log');
       }
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('maintenance_logs')
         .update(updates)
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) throw error;
+      return data as MaintenanceLog;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['maintenanceLogs'] });
+    onSuccess: (updatedLog) => {
+      // Update with actual data from server
+      queryClient.setQueryData<MaintenanceLog[]>(['maintenanceLogs', bikeId], (old = []) =>
+        old.map(log => log.id === updatedLog.id ? updatedLog : log)
+      );
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
+    },
+    onError: (_error, _variables, context) => {
+      // Rollback on error
+      if (context?.previousLogs) {
+        queryClient.setQueryData(['maintenanceLogs', bikeId], context.previousLogs);
+      }
+      if (context?.previousBikes) {
+        queryClient.setQueryData(['bikes'], context.previousBikes);
+      }
     },
   });
 
   // Delete a maintenance log
   const deleteMaintenanceLog = useMutation({
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['maintenanceLogs', bikeId] });
+      
+      const previousLogs = queryClient.getQueryData<MaintenanceLog[]>(['maintenanceLogs', bikeId]);
+      
+      // Optimistically remove
+      queryClient.setQueryData<MaintenanceLog[]>(['maintenanceLogs', bikeId], (old = []) =>
+        old.filter(log => log.id !== id)
+      );
+      
+      return { previousLogs };
+    },
     mutationFn: async (id: string) => {
       const {
         data: { user },
@@ -162,7 +239,13 @@ export function useMaintenanceLogs(bikeId?: string) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['maintenanceLogs'] });
+      // Data already optimistically removed
+    },
+    onError: (_error, _id, context) => {
+      // Rollback on error
+      if (context?.previousLogs) {
+        queryClient.setQueryData(['maintenanceLogs', bikeId], context.previousLogs);
+      }
     },
   });
 

@@ -1,17 +1,19 @@
 import { X, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { buttonHoverProps } from '../lib/animations';
+import type { ReactNode } from 'react';
 
 interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  message: string;
+  message: string | ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: 'danger' | 'warning' | 'default';
   isLoading?: boolean;
+  disabled?: boolean;
 }
 
 export default function ConfirmModal({
@@ -24,6 +26,7 @@ export default function ConfirmModal({
   cancelLabel = 'Cancel',
   variant = 'danger',
   isLoading = false,
+  disabled = false,
 }: ConfirmModalProps) {
   if (!isOpen) return null;
 
@@ -97,9 +100,15 @@ export default function ConfirmModal({
                   <h3 className="text-xl font-bold text-apex-white mb-2">
                     {title}
                   </h3>
-                  <p className="text-apex-white/60 text-sm">
-                    {message}
-                  </p>
+                  {typeof message === 'string' ? (
+                    <p className="text-apex-white/60 text-sm">
+                      {message}
+                    </p>
+                  ) : (
+                    <div className="text-apex-white/60 text-sm">
+                      {message}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -115,9 +124,9 @@ export default function ConfirmModal({
                 </motion.button>
                 <motion.button
                   onClick={handleConfirm}
-                  disabled={isLoading}
+                  disabled={isLoading || disabled}
                   className={`px-4 py-2 font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${styles.button}`}
-                  {...(isLoading ? {} : buttonHoverProps)}
+                  {...(isLoading || disabled ? {} : buttonHoverProps)}
                 >
                   {isLoading ? 'Processing...' : confirmLabel}
                 </motion.button>

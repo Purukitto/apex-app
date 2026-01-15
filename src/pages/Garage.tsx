@@ -1,33 +1,44 @@
 import { useState } from 'react';
 import { Plus, Motorbike, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useBikes } from '../hooks/useBikes';
-import { useMaintenanceLogs } from '../hooks/useMaintenanceLogs';
+import { useFuelLogs } from '../hooks/useFuelLogs';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AddBikeModal from '../components/AddBikeModal';
-import MaintenanceLogModal from '../components/MaintenanceLogModal';
-import MaintenanceLogList from '../components/MaintenanceLogList';
+import AddRefuelModal from '../components/AddRefuelModal';
+import FuelLogList from '../components/FuelLogList';
 import ConfirmModal from '../components/ConfirmModal';
 import ApexTelemetryIcon from '../components/ui/ApexTelemetryIcon';
-import type { Bike as BikeType, MaintenanceLog } from '../types/database';
+import type { Bike as BikeType, FuelLog } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
 import { useThemeColors } from '../hooks/useThemeColors';
+import { logger } from '../lib/logger';
 
 export default function Garage() {
+  const navigate = useNavigate();
   const { primary } = useThemeColors();
-  const { bikes, isLoading, createBike, updateBike, deleteBike } = useBikes();
+  const { bikes, isLoading, createBike, updateBike, deleteBike, getBikeRelatedDataCounts } = useBikes();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBike, setEditingBike] = useState<BikeType | null>(null);
-  const [selectedBikeForMaintenance, setSelectedBikeForMaintenance] =
+  
+  const [selectedBikeForFuel, setSelectedBikeForFuel] =
     useState<BikeType | null>(null);
-  const [isMaintenanceViewOpen, setIsMaintenanceViewOpen] = useState(false);
-  const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
-  const [editingLog, setEditingLog] = useState<MaintenanceLog | null>(null);
+  const [isFuelViewOpen, setIsFuelViewOpen] = useState(false);
+  const [isFuelModalOpen, setIsFuelModalOpen] = useState(false);
+  const [editingFuelLog, setEditingFuelLog] = useState<FuelLog | null>(null);
+  
   const [bikeToDelete, setBikeToDelete] = useState<BikeType | null>(null);
+  const [relatedDataCounts, setRelatedDataCounts] = useState<{
+    rides: number;
+    maintenanceLogs: number;
+    fuelLogs: number;
+  } | null>(null);
+  const [isLoadingRelatedData, setIsLoadingRelatedData] = useState(false);
 
-  const { maintenanceLogs, isLoading: logsLoading, createMaintenanceLog, updateMaintenanceLog, deleteMaintenanceLog } =
-    useMaintenanceLogs(selectedBikeForMaintenance?.id);
+  const { fuelLogs, isLoading: fuelLogsLoading, createFuelLog, updateFuelLog, deleteFuelLog } =
+    useFuelLogs(selectedBikeForFuel?.id);
 
   const handleAddBike = async (bikeData: Omit<BikeType, 'id' | 'user_id' | 'created_at'>) => {
     await createBike.mutateAsync(bikeData);
@@ -63,8 +74,21 @@ export default function Garage() {
     }
   };
 
-  const handleDeleteClick = (bike: BikeType) => {
+  const handleDeleteClick = async (bike: BikeType) => {
     setBikeToDelete(bike);
+    setIsLoadingRelatedData(true);
+    setRelatedDataCounts(null);
+    
+    try {
+      const counts = await getBikeRelatedDataCounts(bike.id);
+      setRelatedDataCounts(counts);
+    } catch (error) {
+      logger.error('Error fetching related data counts:', error);
+      // Set empty counts on error so modal can still show
+      setRelatedDataCounts({ rides: 0, maintenanceLogs: 0, fuelLogs: 0 });
+    } finally {
+      setIsLoadingRelatedData(false);
+    }
   };
 
   const handleCloseModal = () => {
@@ -73,49 +97,53 @@ export default function Garage() {
   };
 
   const handleViewMaintenance = (bike: BikeType) => {
-    setSelectedBikeForMaintenance(bike);
-    setIsMaintenanceViewOpen(true);
+    navigate(`/service/${bike.id}`);
   };
 
-  const handleCloseMaintenanceView = () => {
-    setIsMaintenanceViewOpen(false);
-    setSelectedBikeForMaintenance(null);
-    setEditingLog(null);
+  const handleViewFuel = (bike: BikeType) => {
+    setSelectedBikeForFuel(bike);
+    setIsFuelViewOpen(true);
   };
 
-  const handleAddMaintenanceLog = async (
-    logData: Omit<MaintenanceLog, 'id' | 'created_at'>
+  const handleCloseFuelView = () => {
+    setIsFuelViewOpen(false);
+    setSelectedBikeForFuel(null);
+    setEditingFuelLog(null);
+  };
+
+  const handleAddFuelLog = async (
+    logData: Omit<FuelLog, 'id' | 'created_at'>
   ) => {
-    await createMaintenanceLog.mutateAsync(logData);
+    await createFuelLog.mutateAsync(logData);
   };
 
-  const handleUpdateMaintenanceLog = async (
-    logData: Omit<MaintenanceLog, 'id' | 'created_at'>
+  const handleUpdateFuelLog = async (
+    logData: Omit<FuelLog, 'id' | 'created_at'>
   ) => {
-    if (editingLog) {
-      await updateMaintenanceLog.mutateAsync({
-        id: editingLog.id,
+    if (editingFuelLog) {
+      await updateFuelLog.mutateAsync({
+        id: editingFuelLog.id,
         updates: logData,
       });
-      setEditingLog(null);
+      setEditingFuelLog(null);
     }
   };
 
-  const handleEditMaintenanceLog = (log: MaintenanceLog) => {
-    setEditingLog(log);
-    setIsMaintenanceViewOpen(false);
-    setIsMaintenanceModalOpen(true);
+  const handleEditFuelLog = (log: FuelLog) => {
+    setEditingFuelLog(log);
+    setIsFuelViewOpen(false);
+    setIsFuelModalOpen(true);
   };
 
-  const handleDeleteMaintenanceLog = async (id: string) => {
+  const handleDeleteFuelLog = async (id: string) => {
     try {
-      await deleteMaintenanceLog.mutateAsync(id);
-      apexToast.success('Maintenance log deleted');
+      await deleteFuelLog.mutateAsync(id);
+      apexToast.success('Fuel log deleted');
     } catch (error) {
       apexToast.error(
         error instanceof Error
           ? error.message
-          : 'Failed to delete maintenance log'
+          : 'Failed to delete fuel log'
       );
     }
   };
@@ -211,6 +239,13 @@ export default function Garage() {
                     Maintenance
                   </motion.button>
                   <motion.button
+                    onClick={() => handleViewFuel(currentBike)}
+                    className="flex-1 px-4 py-2 bg-zinc-800 border border-white/5 rounded-lg text-white text-sm hover:bg-zinc-700 transition-colors"
+                    {...buttonHoverProps}
+                  >
+                    Fuel
+                  </motion.button>
+                  <motion.button
                     onClick={() => handleEditBike(currentBike)}
                     className="flex-1 px-4 py-2 bg-zinc-800 border border-white/5 rounded-lg text-white text-sm hover:bg-zinc-700 transition-colors"
                     {...buttonHoverProps}
@@ -273,7 +308,14 @@ export default function Garage() {
                         className="flex-1 px-3 py-1.5 bg-zinc-800 border border-white/5 rounded-lg text-white text-xs hover:bg-zinc-700 transition-colors"
                         {...buttonHoverProps}
                       >
-                        View
+                        Maint
+                      </motion.button>
+                      <motion.button
+                        onClick={() => handleViewFuel(bike)}
+                        className="flex-1 px-3 py-1.5 bg-zinc-800 border border-white/5 rounded-lg text-white text-xs hover:bg-zinc-700 transition-colors"
+                        {...buttonHoverProps}
+                      >
+                        Fuel
                       </motion.button>
                       <motion.button
                         onClick={() => handleEditBike(bike)}
@@ -324,50 +366,116 @@ export default function Garage() {
         {bikeToDelete && (
           <ConfirmModal
             isOpen={!!bikeToDelete}
-            onClose={() => setBikeToDelete(null)}
+            onClose={() => {
+              setBikeToDelete(null);
+              setRelatedDataCounts(null);
+            }}
             onConfirm={() => bikeToDelete && handleDeleteBike(bikeToDelete.id)}
             title="Delete Bike"
-            message={`Are you sure you want to delete ${bikeToDelete.nick_name || `${bikeToDelete.make} ${bikeToDelete.model}`}? This action cannot be undone.`}
+            message={
+              <div className="space-y-3">
+                <p>
+                  Are you sure you want to delete{' '}
+                  <strong>{bikeToDelete.nick_name || `${bikeToDelete.make} ${bikeToDelete.model}`}</strong>?
+                </p>
+                
+                {isLoadingRelatedData ? (
+                  <div className="flex items-center gap-2 text-apex-white/60">
+                    <LoadingSpinner size="sm" />
+                    <span>Checking related data...</span>
+                  </div>
+                ) : relatedDataCounts ? (
+                  <>
+                    {(relatedDataCounts.rides > 0 || 
+                      relatedDataCounts.maintenanceLogs > 0 || 
+                      relatedDataCounts.fuelLogs > 0) && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold text-apex-white/80">
+                          This will permanently delete:
+                        </p>
+                        <ul className="list-disc list-inside space-y-1 text-sm text-apex-white/70 ml-2">
+                          {relatedDataCounts.rides > 0 && (
+                            <li className="text-apex-red">
+                              {relatedDataCounts.rides} ride(s) with GPS data
+                            </li>
+                          )}
+                          {relatedDataCounts.maintenanceLogs > 0 && (
+                            <li>{relatedDataCounts.maintenanceLogs} maintenance log(s)</li>
+                          )}
+                          {relatedDataCounts.fuelLogs > 0 && (
+                            <li>{relatedDataCounts.fuelLogs} fuel log(s)</li>
+                          )}
+                        </ul>
+                        {relatedDataCounts.rides > 0 && (
+                          <div className="mt-3 p-3 bg-apex-red/10 border border-apex-red/20 rounded-lg">
+                            <p className="text-apex-red text-sm font-semibold">
+                              ⚠️ Cannot delete: This bike has rides with GPS data. Please delete rides first.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {relatedDataCounts.rides === 0 && 
+                     relatedDataCounts.maintenanceLogs === 0 && 
+                     relatedDataCounts.fuelLogs === 0 && (
+                      <p className="text-sm text-apex-white/60">
+                        No related data found. Safe to delete.
+                      </p>
+                    )}
+                  </>
+                ) : null}
+                
+                <p className="text-sm text-apex-white/80 mt-4">
+                  This action cannot be undone.
+                </p>
+              </div>
+            }
             confirmLabel="Delete"
             cancelLabel="Cancel"
             variant="danger"
-            isLoading={deleteBike.isPending}
+            isLoading={deleteBike.isPending || isLoadingRelatedData}
+            disabled={relatedDataCounts ? relatedDataCounts.rides > 0 : false}
           />
         )}
 
-        {/* Maintenance Logs View Modal */}
-        {selectedBikeForMaintenance && isMaintenanceViewOpen && (
+        {/* Fuel Logs View Modal */}
+        {selectedBikeForFuel && isFuelViewOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
               className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm"
-              onClick={handleCloseMaintenanceView}
+              onClick={handleCloseFuelView}
             />
             <div className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto z-10">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-xl font-bold text-apex-white">
-                    Maintenance Logs
+                    Fuel Logs
                   </h2>
                   <p className="text-sm text-apex-white/60 mt-1">
-                    {selectedBikeForMaintenance.nick_name ||
-                      `${selectedBikeForMaintenance.make} ${selectedBikeForMaintenance.model}`}
+                    {selectedBikeForFuel.nick_name ||
+                      `${selectedBikeForFuel.make} ${selectedBikeForFuel.model}`}
                   </p>
+                  {selectedBikeForFuel.avg_mileage && (
+                    <p className="text-xs text-apex-green mt-2 font-mono">
+                      Avg. Mileage: {selectedBikeForFuel.avg_mileage.toFixed(2)} km/L
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <motion.button
                     onClick={() => {
-                      setEditingLog(null);
-                      setIsMaintenanceViewOpen(false);
-                      setIsMaintenanceModalOpen(true);
+                      setEditingFuelLog(null);
+                      setIsFuelViewOpen(false);
+                      setIsFuelModalOpen(true);
                     }}
                     className="flex items-center gap-2 px-4 py-2 rounded-full font-semibold bg-apex-green text-apex-black hover:bg-apex-green/90 transition-colors"
                     {...buttonHoverProps}
                   >
                     <Plus size={18} />
-                    Add Log
+                    Add Refuel
                   </motion.button>
                   <motion.button
-                    onClick={handleCloseMaintenanceView}
+                    onClick={handleCloseFuelView}
                     className="p-2 text-apex-white/60 hover:text-apex-white transition-colors"
                     aria-label="Close"
                     {...buttonHoverProps}
@@ -377,31 +485,31 @@ export default function Garage() {
                 </div>
               </div>
 
-              <MaintenanceLogList
-                logs={maintenanceLogs}
-                bike={selectedBikeForMaintenance}
-                onEdit={handleEditMaintenanceLog}
-                onDelete={handleDeleteMaintenanceLog}
-                isLoading={logsLoading}
+              <FuelLogList
+                logs={fuelLogs}
+                bike={selectedBikeForFuel}
+                onEdit={handleEditFuelLog}
+                onDelete={handleDeleteFuelLog}
+                isLoading={fuelLogsLoading}
               />
             </div>
           </div>
         )}
 
-        {/* Add/Edit Maintenance Log Modal */}
-        {selectedBikeForMaintenance && (
-          <MaintenanceLogModal
-            isOpen={isMaintenanceModalOpen}
+        {/* Add/Edit Fuel Log Modal */}
+        {selectedBikeForFuel && (
+          <AddRefuelModal
+            isOpen={isFuelModalOpen}
             onClose={() => {
-              setIsMaintenanceModalOpen(false);
-              setEditingLog(null);
-              setIsMaintenanceViewOpen(true);
+              setIsFuelModalOpen(false);
+              setEditingFuelLog(null);
+              setIsFuelViewOpen(true);
             }}
             onSubmit={
-              editingLog ? handleUpdateMaintenanceLog : handleAddMaintenanceLog
+              editingFuelLog ? handleUpdateFuelLog : handleAddFuelLog
             }
-            editingLog={editingLog}
-            bike={selectedBikeForMaintenance}
+            editingLog={editingFuelLog}
+            bike={selectedBikeForFuel}
           />
         )}
       </motion.div>

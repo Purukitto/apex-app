@@ -174,6 +174,121 @@ try {
 - **Location**: `src/components/ConfirmModal.tsx`
 - **Variants**: `danger` (red), `warning` (green), `default` (green)
 
+## Local Notifications (@capacitor/local-notifications)
+
+### Implementation
+- **MANDATORY**: Always use utility functions from `src/lib/notifications.ts` for local notifications.
+- **NEVER** import `LocalNotifications` directly from `@capacitor/local-notifications` - use the wrapper for consistency.
+- **Native Platforms Only**: Local notifications only work on iOS/Android. Functions automatically check `Capacitor.isNativePlatform()` and return early on web.
+
+### Permission Handling
+- **MANDATORY**: Always request permissions before scheduling notifications.
+- The `requestNotificationPermissions()` function handles permission checks automatically.
+- If permissions are denied, log a warning but don't fail the operation (graceful degradation).
+
+### Use Cases
+
+#### Time-Based Notifications
+- **When**: Scheduled when a service is completed (if `interval_months > 0`).
+- **Function**: `scheduleMaintenanceNotification(scheduleId, partName, bikeName, notificationDate)`
+- **Behavior**: 
+  - Automatically cancels any existing notification for the same schedule
+  - Schedules notification for `last_service_date + interval_months`
+  - Notification ID is derived from schedule UUID (deterministic)
+- **Example**: When user completes "Engine Oil" service, schedules notification 6 months later.
+
+#### Distance-Based Notifications
+- **When**: Triggered immediately when odometer exceeds service interval threshold.
+- **Function**: `triggerDistanceBasedNotification(partName, bikeName)`
+- **Behavior**:
+  - Triggered in `useRideTracking.saveRide()` after odometer update
+  - Checks if `current_odo >= (last_service_odo + interval_km)`
+  - Uses random notification ID (immediate, not scheduled)
+- **Example**: When ride is saved and odometer shows 5,500 km (500 km past 5,000 km interval), triggers "Chain Lube Due!" notification.
+
+### Notification Structure
+```typescript
+{
+  id: number, // Derived from schedule UUID or random for immediate
+  title: `⚠️ ${partName} Due`,
+  body: `${bikeName} - ${partName} service is due`,
+  schedule?: { at: Date }, // Only for time-based
+  sound: 'default',
+  actionTypeId: 'MAINTENANCE_DUE',
+  extra: {
+    scheduleId: string,
+    partName: string,
+    bikeName: string,
+    type: 'maintenance',
+    immediate?: boolean, // Only for distance-based
+  },
+}
+```
+
+### Notification Lifecycle
+
+#### Scheduling
+- **Time-based**: Automatically scheduled when service is completed via `useMaintenanceSchedules.completeService()`
+- **Distance-based**: Automatically triggered in `useRideTracking.saveRide()` after odometer update
+- **Cancellation**: Old notifications are automatically cancelled when new service is completed
+
+#### Cleanup
+- Use `cancelMaintenanceNotification(scheduleId)` to cancel a specific schedule's notification
+- Use `cancelAllMaintenanceNotifications()` to cancel all maintenance notifications (e.g., on logout)
+
+### Error Handling
+- **MANDATORY**: Always wrap notification calls in try-catch blocks
+- **MANDATORY**: Log errors using `logger.error()` for debugging
+- **MANDATORY**: Never throw errors - notifications are non-critical (graceful degradation)
+- **Pattern**: If notification fails, log error but continue with the operation (service completion, ride save, etc.)
+
+### Platform Detection
+- **MANDATORY**: All notification functions check `Capacitor.isNativePlatform()` first
+- **Web Platform**: Functions return early with debug log (no error thrown)
+- **Native Platform**: Functions proceed with permission check and scheduling
+
+### Examples
+
+#### Time-Based (Service Completion)
+```typescript
+// In useMaintenanceSchedules.ts completeService mutation
+await scheduleMaintenanceNotification(
+  scheduleId,
+  schedule.part_name,
+  bikeName,
+  notificationDate // last_service_date + interval_months
+);
+```
+
+#### Distance-Based (Ride Save)
+```typescript
+// In useRideTracking.ts saveRide mutation
+if (kmSinceService >= schedule.interval_km) {
+  await triggerDistanceBasedNotification(
+    schedule.part_name,
+    bikeName
+  );
+}
+```
+
+### Best Practices
+
+#### Do's ✅
+- **DO**: Use utility functions from `src/lib/notifications.ts`
+- **DO**: Handle permission denials gracefully (log warning, continue operation)
+- **DO**: Cancel old notifications before scheduling new ones
+- **DO**: Log all notification operations for debugging
+- **DO**: Check platform before attempting notification operations
+- **DO**: Use deterministic notification IDs for scheduled notifications (derived from schedule UUID)
+
+#### Don'ts ❌
+- **DON'T**: Import `LocalNotifications` directly - use utility functions
+- **DON'T**: Throw errors if notification fails - use graceful degradation
+- **DON'T**: Schedule notifications on web platform (check platform first)
+- **DON'T**: Skip permission checks before scheduling
+- **DON'T**: Use random IDs for scheduled notifications (use deterministic IDs from schedule UUID)
+- **DON'T**: Block user operations if notifications fail
+
 ## Anti-Patterns
 
 - ❌ **DON'T**: Use `toast` directly from `sonner`
@@ -186,3 +301,6 @@ try {
 - ❌ **DON'T**: Show toasts for background/automated processes (unless critical failure)
 - ❌ **DON'T**: Skip logger.error for debugging - always log technical details using logger
 - ❌ **DON'T**: Use console.* directly - always use logger from src/lib/logger
+- ❌ **DON'T**: Import `LocalNotifications` directly - use utility functions from `src/lib/notifications.ts`
+- ❌ **DON'T**: Throw errors if local notifications fail - use graceful degradation
+- ❌ **DON'T**: Schedule notifications without checking platform or permissions

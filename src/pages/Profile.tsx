@@ -21,7 +21,7 @@ export default function Profile() {
   const isNative = Capacitor.isNativePlatform();
   const { profile, isLoading, updateRiderName, signOut } = useUserProfile();
   const { isConnected, isLoading: isDiscordLoading, linkDiscord, unlinkDiscord } = useDiscord();
-  const { isChecking, checkForUpdate } = useAppUpdate();
+  const { isChecking, checkForUpdate, hasCheckedNoUpdate } = useAppUpdate();
   const { updateInfo, setShowModal } = useAppUpdateStore();
   const navigate = useNavigate();
   const [riderName, setRiderName] = useState(profile?.riderName || '');
@@ -357,12 +357,20 @@ export default function Profile() {
                 </p>
                 <motion.button
                   onClick={handleCheckForUpdate}
-                  disabled={isChecking}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-apex-black bg-apex-green transition-colors w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                  {...(isChecking ? {} : buttonHoverProps)}
+                  disabled={isChecking || hasCheckedNoUpdate}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
+                    hasCheckedNoUpdate && !isChecking
+                      ? 'text-apex-white/60 bg-apex-white/10'
+                      : 'text-apex-black bg-apex-green'
+                  }`}
+                  {...(isChecking || hasCheckedNoUpdate ? {} : buttonHoverProps)}
                 >
                   <RefreshCw size={18} className={isChecking ? 'animate-spin' : ''} />
-                  {isChecking ? 'Checking...' : 'Check for Updates'}
+                  {isChecking
+                    ? 'Checking...'
+                    : hasCheckedNoUpdate
+                    ? 'No updates available'
+                    : 'Check for Updates'}
                 </motion.button>
                 {updateInfo?.isAvailable && (
                   <div className="p-3 bg-apex-green/10 border border-apex-green/20 rounded-lg">
@@ -374,6 +382,9 @@ export default function Profile() {
               </div>
             </motion.div>
           )}
+
+          {/* Support Development Section */}
+          <DonationCard />
 
           {/* Sign Out Section */}
           <motion.div
@@ -391,9 +402,6 @@ export default function Profile() {
               {signOut.isPending ? 'Signing out...' : 'Sign Out'}
             </motion.button>
           </motion.div>
-
-          {/* Support Development Section */}
-          <DonationCard />
 
           {/* Made with Love Footer */}
           <motion.div

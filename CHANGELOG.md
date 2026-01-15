@@ -2,6 +2,105 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.14.5](https://github.com/Purukitto/apex-app/compare/v0.14.4...v0.14.5) (2026-01-15)
+
+
+### Features
+
+* **Dashboard:** improve pull-to-refresh functionality ([1eb6566](https://github.com/Purukitto/apex-app/commit/1eb6566031efb0a7aa05ad077dd761069878d3a4))
+
+### [0.14.4](https://github.com/Purukitto/apex-app/compare/v0.14.3...v0.14.4) (2026-01-15)
+
+
+### Features
+
+* **appUpdate:** enhance update checking logic and UI feedback ([e33073b](https://github.com/Purukitto/apex-app/commit/e33073b35b8de73667767a2a73859651fcc2d17c))
+
+
+### Bug Fixes
+
+* **hooks:** update error handling in various hooks to use underscore for unused parameters ([233ba8a](https://github.com/Purukitto/apex-app/commit/233ba8a9e7ed53cceda6d8de8f5ad5c22e313559))
+
+### [0.14.3](https://github.com/Purukitto/apex-app/compare/v0.14.2...v0.14.3) (2026-01-15)
+
+
+### Features
+
+* **AddBikeModal, bikeLibrary:** implement global bike search functionality ([9093770](https://github.com/Purukitto/apex-app/commit/90937701cce8f3dcc7b2313a0a11e8439683e6bc))
+* **AddBikeModal, bikeLibrary:** implement multi-bike search and reporting functionality ([d818c86](https://github.com/Purukitto/apex-app/commit/d818c86632ebf03eacfe500cec8f930c7b6743ce))
+* **AddBikeModal:** add selected bike state management and reporting enhancements ([a1bb38d](https://github.com/Purukitto/apex-app/commit/a1bb38d17143ba64805463ee76c0a0a18dc4db8c))
+* **AddBikeModal:** capitalize bike make, model, and category in display ([5460ae1](https://github.com/Purukitto/apex-app/commit/5460ae12038cd3629bbdfe2f8bddbf4913623327))
+* **bikeLibrary:** add bike search, report, and addition functionalities ([dd7c198](https://github.com/Purukitto/apex-app/commit/dd7c1988217a8e680187791e0e6bd5cca7676bdd))
+* **bikeLibrary:** enhance global bike search functionality ([a9b54ce](https://github.com/Purukitto/apex-app/commit/a9b54ce6120d04fc5b9704a353cc682af5dfa425))
+* **bikeLibrary:** improve bike search logic and prioritization ([b2d8c4b](https://github.com/Purukitto/apex-app/commit/b2d8c4bc32188dbe2dfd1ae8b879e7de8a9f8724))
+
+
+### Code Refactoring
+
+* **AddBikeModal:** streamline bike information display and remove unused icons ([b7e0bbd](https://github.com/Purukitto/apex-app/commit/b7e0bbd996f6788fd9f4de28a4b61c03ad1ccbae))
+
+### [0.14.2](https://github.com/Purukitto/apex-app/compare/v0.14.1...v0.14.2) (2026-01-15)
+
+
+### Features
+
+* implement optimistic updates for state mutations ([68f8313](https://github.com/Purukitto/apex-app/commit/68f831386f4f8052964887e9496a6f3c820fc6ff))
+
+
+### Bug Fixes
+
+* **CompleteServiceModal:** clarify odometer reading labels and pre-fill information ([2297ef2](https://github.com/Purukitto/apex-app/commit/2297ef2bc4f152848d3bb39cc374b4b8ed32215c))
+
+### [0.14.1](https://github.com/Purukitto/apex-app/compare/v0.14.0...v0.14.1) (2026-01-15)
+
+
+### Features
+
+* **AddBikeModal:** enhance keyboard handling and modal layout adjustments ([8a1a142](https://github.com/Purukitto/apex-app/commit/8a1a1425d8bf8bdf4e98c8922d02103b09f09013))
+* **AddBikeModal:** improve user experience with keyboard handling and form validation ([a94f36f](https://github.com/Purukitto/apex-app/commit/a94f36f46f3b8c1c8fe10d4f330fe3a43e8458dd))
+
+
+### Bug Fixes
+
+* improve Add Bike modal keyboard handling and UX ([c1f9d13](https://github.com/Purukitto/apex-app/commit/c1f9d13ac013debbd1f328feba05493c3b7d0d68))
+
+
+### Code Refactoring
+
+* **AddBikeModal:** enhance keyboard handling and scrolling behavior ([6c1f8b6](https://github.com/Purukitto/apex-app/commit/6c1f8b61e0ea089c247d29209412ee8ba2ab4697))
+
+## [0.14.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.14.0) (2026-01-15)
+
+
+### Features
+
+* **AddBikeModal:** enhance bike addition with Wikipedia search and additional specs fields ([dd201b7](https://github.com/Purukitto/apex-app/commit/dd201b7774203f44528b9776a90eb422b12d7252))
+* **AllRides:** add GPX export functionality for rides ([2085416](https://github.com/Purukitto/apex-app/commit/2085416687b91fa0427e8e8437efa70d75efec16))
+* enhance changelog extraction and release notes formatting ([c932f02](https://github.com/Purukitto/apex-app/commit/c932f02acda12b911f47d3e54d2ebd83dfb4a2a6))
+* **FuelLogs:** implement fuel log management with add, edit, and delete functionality ([27a1eca](https://github.com/Purukitto/apex-app/commit/27a1eca072870d279eb1bae6277f8dc9a2edc7f4))
+* implement comprehensive data deletion strategy ([1e9f464](https://github.com/Purukitto/apex-app/commit/1e9f464c3a30c811fa5317ff34c502a7674442e7))
+* **shareRide:** enhance ride sharing functionality with map integration ([05a6ba5](https://github.com/Purukitto/apex-app/commit/05a6ba5c1eebf8209aa78c286bd5021555cf2f2c))
+* upgrade to maintenance health monitor with local notifications ([412209f](https://github.com/Purukitto/apex-app/commit/412209f2d6a606795e4be68f60ce15d504aef716))
+
+
+### Bug Fixes
+
+* hide navigation pill when keyboard is visible ([8ea989b](https://github.com/Purukitto/apex-app/commit/8ea989bd3d9e47b1c8b42fdda3dc44b49ca02462))
+* resolve TypeScript build errors ([fedea3a](https://github.com/Purukitto/apex-app/commit/fedea3ad47b44fc669586360ef4a2a52832b670e))
+
+
+### Code Refactoring
+
+* **useRideTracking:** streamline odometer update logic ([e2be76e](https://github.com/Purukitto/apex-app/commit/e2be76e54c5eeddbcaf9e93f100267ac7a802a91))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+* **deps-dev:** bump the development-dependencies group with 3 updates ([#44](https://github.com/Purukitto/apex-app/issues/44)) ([75640f6](https://github.com/Purukitto/apex-app/commit/75640f6bb151a7d0522fcd8e1afa37cc9e474ce5))
+* **deps:** bump the production-dependencies group with 2 updates ([#43](https://github.com/Purukitto/apex-app/issues/43)) ([9f4ee8d](https://github.com/Purukitto/apex-app/commit/9f4ee8dc9773a144873681c5ffee24d4f9e9ce58))
+* rename start:android script to dev:android in package.json for consistency ([3dd77be](https://github.com/Purukitto/apex-app/commit/3dd77bee06e753d283d692920280c7111e6c344d))
+
 ### [0.13.4](https://github.com/Purukitto/apex-app/compare/v0.13.3...v0.13.4) (2026-01-15)
 
 

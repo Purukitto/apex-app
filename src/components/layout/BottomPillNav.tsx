@@ -20,7 +20,10 @@ export default function BottomPillNav() {
 
   return (
     <motion.div
-      className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-zinc-500/20 backdrop-blur-md rounded-full px-8 py-3 flex items-center gap-8"
+      className="fixed left-1/2 -translate-x-1/2 z-50 bg-zinc-500/20 backdrop-blur-md rounded-full px-8 py-3 flex items-center gap-8"
+      style={{
+        bottom: 'calc(2.5rem + env(safe-area-inset-bottom, 0px))',
+      }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}

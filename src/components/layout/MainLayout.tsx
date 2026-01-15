@@ -71,7 +71,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
       <div className={`min-h-screen bg-zinc-950 flex flex-col ${isRideMode ? 'fixed inset-0 overflow-hidden' : ''}`}>
         {/* Sticky Page Header - Hidden in ride mode */}
         {!isRideMode && (
-          <div className="sticky top-0 z-40 bg-zinc-950 border-b border-white/5">
+          <div 
+            className="sticky top-0 z-40 bg-zinc-950 border-b border-white/5"
+            style={{
+              paddingTop: 'env(safe-area-inset-top, 0px)',
+            }}
+          >
             <motion.div
               className="p-6"
               variants={containerVariants}

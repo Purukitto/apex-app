@@ -115,6 +115,7 @@ export default function NotificationPane({
             className="fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-apex-black border-t border-apex-white/20 rounded-t-2xl shadow-2xl"
             style={{
               maxHeight: SHEET_MAX_HEIGHT,
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
               ...(shouldUseMotionValue || isDragging ? { y, opacity: isDragging ? opacity : 1 } : {}),
             }}
             drag="y"

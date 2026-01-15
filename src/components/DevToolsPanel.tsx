@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Terminal, Database, RefreshCw, Copy, Check } from 'lucide-react';
+import { X, Terminal, Database, RefreshCw, Copy, Check, Download } from 'lucide-react';
 import { useRideStore } from '../stores/useRideStore';
 import { useThemeStore } from '../stores/useThemeStore';
 import { useNotificationStore } from '../stores/useNotificationStore';
 import { useAppUpdateStore } from '../stores/useAppUpdateStore';
 import { isDev } from '../lib/devtools';
 import { buttonHoverProps } from '../lib/animations';
+import { logger } from '../lib/logger';
+import { Capacitor } from '@capacitor/core';
 
 interface DevToolsPanelProps {
   isOpen: boolean;
@@ -17,7 +19,7 @@ type Tab = 'stores' | 'console';
 
 interface ConsoleLog {
   id: string;
-  type: 'log' | 'error' | 'warn' | 'info';
+  type: 'log' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
   message: string;
   timestamp: Date;
   args?: unknown[];
@@ -43,6 +45,8 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
     const originalError = console.error;
     const originalWarn = console.warn;
     const originalInfo = console.info;
+    const originalDebug = console.debug;
+    const originalTrace = console.trace;
 
     const addLog = (type: ConsoleLog['type'], ...args: unknown[]) => {
       const message = args.map(arg => {
@@ -88,11 +92,23 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
       addLog('info', ...args);
     };
 
+    console.debug = (...args: unknown[]) => {
+      originalDebug(...args);
+      addLog('debug', ...args);
+    };
+
+    console.trace = (...args: unknown[]) => {
+      originalTrace(...args);
+      addLog('trace', ...args);
+    };
+
     return () => {
       console.log = originalLog;
       console.error = originalError;
       console.warn = originalWarn;
       console.info = originalInfo;
+      console.debug = originalDebug;
+      console.trace = originalTrace;
     };
   }, []); // Run once on mount, not dependent on isOpen
 
@@ -240,6 +256,41 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
 
               {activeTab === 'console' && (
                 <div className="p-4">
+                  {/* Logger Session Info */}
+                  <div className="mb-4 p-3 rounded-lg bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-apex-green font-mono">Logger Session</p>
+                      {Capacitor.isNativePlatform() && (
+                        <motion.button
+                          onClick={async () => {
+                            try {
+                              const logPath = await logger.getLogFilePath();
+                              if (logPath) {
+                                logger.info('Log file path:', logPath);
+                                await navigator.clipboard.writeText(logPath);
+                                logger.info('Log file path copied to clipboard');
+                              }
+                            } catch (error) {
+                              logger.error('Failed to get log file path:', error);
+                            }
+                          }}
+                          className="p-1.5 rounded hover:bg-apex-white/10 text-apex-white/60 hover:text-apex-white"
+                          {...buttonHoverProps}
+                          title="Copy log file path"
+                        >
+                          <Download size={14} />
+                        </motion.button>
+                      )}
+                    </div>
+                    <div className="space-y-1 text-xs font-mono text-apex-white/60">
+                      <p>Session ID: <span className="text-apex-white/80">{logger.getSessionId()}</span></p>
+                      <p>Level: <span className="text-apex-green">{logger.getLevel()}</span></p>
+                      {Capacitor.isNativePlatform() && (
+                        <p className="text-apex-green">File logging: Enabled</p>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-sm text-apex-white/60">
                       {consoleLogs.length} log entries
@@ -266,6 +317,8 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                           error: 'text-apex-red',
                           warn: 'text-amber-400',
                           info: 'text-apex-green',
+                          debug: 'text-apex-white/60',
+                          trace: 'text-apex-white/40',
                         }[log.type];
 
                         return (

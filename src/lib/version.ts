@@ -1,4 +1,5 @@
 import packageJson from '../../package.json';
+import { logger } from './logger';
 
 const VERSION_STORAGE_KEY = 'apex-app-version';
 const VERSION_BUILD_KEY = 'apex-app-version-build';
@@ -22,10 +23,10 @@ export function initializeVersion(): void {
     if (storedVersion !== currentVersion) {
       localStorage.setItem(VERSION_STORAGE_KEY, currentVersion);
       localStorage.setItem(VERSION_BUILD_KEY, buildTimestamp);
-      console.log(`[Version] Initialized: ${currentVersion}`);
+      logger.info(`[Version] Initialized: ${currentVersion}`);
     }
   } catch (error) {
-    console.error('[Version] Failed to initialize version:', error);
+    logger.error('[Version] Failed to initialize version:', error);
   }
 }
 
@@ -52,7 +53,7 @@ export function getAppVersion(): string {
     localStorage.setItem(VERSION_STORAGE_KEY, version);
     return version;
   } catch (error) {
-    console.error('[Version] Failed to get version, using package.json:', error);
+    logger.error('[Version] Failed to get version, using package.json:', error);
     // Fallback to package.json on error
     return packageJson.version;
   }
@@ -71,7 +72,7 @@ export function getBuildTimestamp(): number | null {
     const timestamp = localStorage.getItem(VERSION_BUILD_KEY);
     return timestamp ? parseInt(timestamp, 10) : null;
   } catch (error) {
-    console.error('[Version] Failed to get build timestamp:', error);
+    logger.error('[Version] Failed to get build timestamp:', error);
     return null;
   }
 }

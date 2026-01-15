@@ -53,3 +53,26 @@ alwaysApply: false
 - `created_at` (timestamptz)
 
 **Note**: `maintenance_logs` does NOT have a `user_id` column. Access control must be enforced via RLS policies that join through the `bikes` table.
+
+### `fuel_logs` table
+- `id` (uuid, PK)
+- `bike_id` (uuid, FK to bikes.id)
+- `odometer` (int4)
+- `litres` (numeric)
+- `price_per_litre` (numeric)
+- `total_cost` (numeric)
+- `is_full_tank` (boolean)
+- `date` (date)
+- `created_at` (timestamptz)
+
+**Note**: `fuel_logs` does NOT have a `user_id` column. Access control must be enforced via RLS policies that join through the `bikes` table.
+
+## Data Deletion
+
+**MANDATORY**: See `600-deletion-strategy.mdc` for comprehensive deletion rules and patterns.
+
+**Key Points:**
+- Always check for related data before deleting bikes
+- Block bike deletion if rides exist (critical GPS data)
+- Recalculate bike stats after fuel log deletions
+- Verify ownership through parent entities for child deletions

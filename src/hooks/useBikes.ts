@@ -90,6 +90,40 @@ export function useBikes() {
     },
   });
 
+  /**
+   * Get counts of related data for a bike
+   * Used to show warnings before deletion
+   */
+  const getBikeRelatedDataCounts = async (bikeId: string) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Get counts for all related data in parallel
+    const [ridesResult, maintenanceResult, fuelResult] = await Promise.all([
+      supabase
+        .from('rides')
+        .select('id', { count: 'exact', head: true })
+        .eq('bike_id', bikeId)
+        .eq('user_id', user.id),
+      supabase
+        .from('maintenance_logs')
+        .select('id', { count: 'exact', head: true })
+        .eq('bike_id', bikeId),
+      supabase
+        .from('fuel_logs')
+        .select('id', { count: 'exact', head: true })
+        .eq('bike_id', bikeId),
+    ]);
+
+    return {
+      rides: ridesResult.count || 0,
+      maintenanceLogs: maintenanceResult.count || 0,
+      fuelLogs: fuelResult.count || 0,
+    };
+  };
+
   // Delete a bike
   const deleteBike = useMutation({
     mutationFn: async (id: string) => {
@@ -116,30 +150,28 @@ export function useBikes() {
         );
       }
 
-      // Check for related records that might prevent deletion
-      const { data: rides } = await supabase
-        .from('rides')
-        .select('id')
-        .eq('bike_id', id)
-        .limit(1);
+      // Check for all related records with counts
+      const relatedCounts = await getBikeRelatedDataCounts(id);
 
-      // Check maintenance logs (no user_id filter needed - RLS handles it)
-      // Note: Maintenance logs don't block deletion, but we check for reference
-      await supabase
-        .from('maintenance_logs')
-        .select('id')
-        .eq('bike_id', id)
-        .limit(1);
-
-      if (rides && rides.length > 0) {
+      // Block deletion if rides exist (critical data with GPS paths)
+      if (relatedCounts.rides > 0) {
         throw new Error(
-          'Cannot delete bike: It has associated rides. Please delete rides first or contact support.'
+          `Cannot delete bike: It has ${relatedCounts.rides} ride(s) with GPS data. ` +
+          `Please delete rides first or contact support if you need to delete everything.`
         );
       }
 
-      // Maintenance logs don't block deletion - silently proceed
+      // Warn about maintenance/fuel logs but allow deletion
+      // (These are less critical and can be recreated)
+      if (relatedCounts.maintenanceLogs > 0 || relatedCounts.fuelLogs > 0) {
+        logger.info(
+          `Deleting bike with related data: ${relatedCounts.maintenanceLogs} maintenance log(s), ${relatedCounts.fuelLogs} fuel log(s)`
+        );
+      }
 
       // Attempt deletion
+      // Note: If database has CASCADE constraints, related data will be deleted automatically
+      // Otherwise, we rely on application-level checks above
       const { data, error } = await supabase
         .from('bikes')
         .delete()
@@ -152,8 +184,11 @@ export function useBikes() {
         logger.error('Supabase delete error:', error);
         // Provide user-friendly error messages
         if (error.code === '23503') {
+          // Foreign key constraint violation
           throw new Error(
-            'Cannot delete bike: It has associated rides or maintenance logs.'
+            'Cannot delete bike: It has associated data. ' +
+            `Rides: ${relatedCounts.rides}, Maintenance: ${relatedCounts.maintenanceLogs}, Fuel: ${relatedCounts.fuelLogs}. ` +
+            'Please delete related data first or contact support.'
           );
         }
         if (error.code === 'PGRST301' || error.message?.includes('permission')) {
@@ -173,10 +208,18 @@ export function useBikes() {
         );
       }
 
+      logger.info(
+        `Bike deleted successfully. ID: ${id}, Related data deleted: ` +
+        `${relatedCounts.maintenanceLogs} maintenance log(s), ${relatedCounts.fuelLogs} fuel log(s)`
+      );
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
+      queryClient.invalidateQueries({ queryKey: ['rides'] });
+      queryClient.invalidateQueries({ queryKey: ['maintenanceLogs'] });
+      queryClient.invalidateQueries({ queryKey: ['fuelLogs'] });
       // Success toast is handled in Garage.tsx after mutation completes
     },
     onError: (error) => {
@@ -193,6 +236,7 @@ export function useBikes() {
     createBike,
     updateBike,
     deleteBike,
+    getBikeRelatedDataCounts,
   };
 }
 

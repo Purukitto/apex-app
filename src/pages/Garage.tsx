@@ -16,10 +16,11 @@ import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
 import { useThemeColors } from '../hooks/useThemeColors';
+import { logger } from '../lib/logger';
 
 export default function Garage() {
   const { primary } = useThemeColors();
-  const { bikes, isLoading, createBike, updateBike, deleteBike } = useBikes();
+  const { bikes, isLoading, createBike, updateBike, deleteBike, getBikeRelatedDataCounts } = useBikes();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBike, setEditingBike] = useState<BikeType | null>(null);
   const [selectedBikeForMaintenance, setSelectedBikeForMaintenance] =
@@ -35,6 +36,12 @@ export default function Garage() {
   const [editingFuelLog, setEditingFuelLog] = useState<FuelLog | null>(null);
   
   const [bikeToDelete, setBikeToDelete] = useState<BikeType | null>(null);
+  const [relatedDataCounts, setRelatedDataCounts] = useState<{
+    rides: number;
+    maintenanceLogs: number;
+    fuelLogs: number;
+  } | null>(null);
+  const [isLoadingRelatedData, setIsLoadingRelatedData] = useState(false);
 
   const { maintenanceLogs, isLoading: logsLoading, createMaintenanceLog, updateMaintenanceLog, deleteMaintenanceLog } =
     useMaintenanceLogs(selectedBikeForMaintenance?.id);
@@ -76,8 +83,21 @@ export default function Garage() {
     }
   };
 
-  const handleDeleteClick = (bike: BikeType) => {
+  const handleDeleteClick = async (bike: BikeType) => {
     setBikeToDelete(bike);
+    setIsLoadingRelatedData(true);
+    setRelatedDataCounts(null);
+    
+    try {
+      const counts = await getBikeRelatedDataCounts(bike.id);
+      setRelatedDataCounts(counts);
+    } catch (error) {
+      logger.error('Error fetching related data counts:', error);
+      // Set empty counts on error so modal can still show
+      setRelatedDataCounts({ rides: 0, maintenanceLogs: 0, fuelLogs: 0 });
+    } finally {
+      setIsLoadingRelatedData(false);
+    }
   };
 
   const handleCloseModal = () => {
@@ -399,14 +419,75 @@ export default function Garage() {
         {bikeToDelete && (
           <ConfirmModal
             isOpen={!!bikeToDelete}
-            onClose={() => setBikeToDelete(null)}
+            onClose={() => {
+              setBikeToDelete(null);
+              setRelatedDataCounts(null);
+            }}
             onConfirm={() => bikeToDelete && handleDeleteBike(bikeToDelete.id)}
             title="Delete Bike"
-            message={`Are you sure you want to delete ${bikeToDelete.nick_name || `${bikeToDelete.make} ${bikeToDelete.model}`}? This action cannot be undone.`}
+            message={
+              <div className="space-y-3">
+                <p>
+                  Are you sure you want to delete{' '}
+                  <strong>{bikeToDelete.nick_name || `${bikeToDelete.make} ${bikeToDelete.model}`}</strong>?
+                </p>
+                
+                {isLoadingRelatedData ? (
+                  <div className="flex items-center gap-2 text-apex-white/60">
+                    <LoadingSpinner size="sm" />
+                    <span>Checking related data...</span>
+                  </div>
+                ) : relatedDataCounts ? (
+                  <>
+                    {(relatedDataCounts.rides > 0 || 
+                      relatedDataCounts.maintenanceLogs > 0 || 
+                      relatedDataCounts.fuelLogs > 0) && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold text-apex-white/80">
+                          This will permanently delete:
+                        </p>
+                        <ul className="list-disc list-inside space-y-1 text-sm text-apex-white/70 ml-2">
+                          {relatedDataCounts.rides > 0 && (
+                            <li className="text-apex-red">
+                              {relatedDataCounts.rides} ride(s) with GPS data
+                            </li>
+                          )}
+                          {relatedDataCounts.maintenanceLogs > 0 && (
+                            <li>{relatedDataCounts.maintenanceLogs} maintenance log(s)</li>
+                          )}
+                          {relatedDataCounts.fuelLogs > 0 && (
+                            <li>{relatedDataCounts.fuelLogs} fuel log(s)</li>
+                          )}
+                        </ul>
+                        {relatedDataCounts.rides > 0 && (
+                          <div className="mt-3 p-3 bg-apex-red/10 border border-apex-red/20 rounded-lg">
+                            <p className="text-apex-red text-sm font-semibold">
+                              ⚠️ Cannot delete: This bike has rides with GPS data. Please delete rides first.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {relatedDataCounts.rides === 0 && 
+                     relatedDataCounts.maintenanceLogs === 0 && 
+                     relatedDataCounts.fuelLogs === 0 && (
+                      <p className="text-sm text-apex-white/60">
+                        No related data found. Safe to delete.
+                      </p>
+                    )}
+                  </>
+                ) : null}
+                
+                <p className="text-sm text-apex-white/80 mt-4">
+                  This action cannot be undone.
+                </p>
+              </div>
+            }
             confirmLabel="Delete"
             cancelLabel="Cancel"
             variant="danger"
-            isLoading={deleteBike.isPending}
+            isLoading={deleteBike.isPending || isLoadingRelatedData}
+            disabled={relatedDataCounts ? relatedDataCounts.rides > 0 : false}
           />
         )}
 

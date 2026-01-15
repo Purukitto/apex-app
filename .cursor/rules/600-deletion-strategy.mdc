@@ -1,0 +1,365 @@
+---
+description: Data deletion strategy and cascading deletion rules
+globs: ["src/hooks/use*.ts", "src/pages/**/*.tsx", "src/components/**/*.tsx"]
+alwaysApply: false
+---
+
+# Data Deletion Strategy
+
+## Overview
+
+This document defines the strategy for handling data deletions across the Apex application, ensuring data integrity, user experience, and graceful handling of cascading relationships.
+
+## Entity Relationships
+
+### Hierarchy
+
+```
+auth.users (Supabase Auth)
+  └── bikes (user_id FK)
+       ├── rides (bike_id FK, user_id FK)
+       ├── maintenance_logs (bike_id FK)
+       └── fuel_logs (bike_id FK)
+```
+
+### Entity Details
+
+| Entity | Parent | Children | user_id Column | Critical Data |
+|--------|--------|----------|----------------|---------------|
+| `bikes` | `auth.users` | `rides`, `maintenance_logs`, `fuel_logs` | ✅ Yes | Odometer, specs, image |
+| `rides` | `bikes` | None | ✅ Yes | GPS paths, telemetry, distance |
+| `maintenance_logs` | `bikes` | None | ❌ No (RLS via bikes) | Service history, receipts |
+| `fuel_logs` | `bikes` | None | ❌ No (RLS via bikes) | Fuel economy data |
+
+## Deletion Rules
+
+### 1. Bikes (Parent Entity)
+
+**Strategy: RESTRICT with User Warning**
+
+**MANDATORY Requirements:**
+- **Always check for related data** before allowing deletion:
+  - Count of rides (CRITICAL - blocks deletion)
+  - Count of maintenance logs (WARNING - allows deletion)
+  - Count of fuel logs (WARNING - allows deletion)
+- **Block deletion** if any rides exist (critical GPS data)
+- **Allow deletion** if only maintenance_logs or fuel_logs exist (warn user)
+- **Show detailed warning modal** with counts of all related data
+- **Log all deletion operations** for audit trail
+
+**Implementation Pattern:**
+```typescript
+// Get all related data counts
+const relatedCounts = await getBikeRelatedDataCounts(bikeId);
+
+// Block if rides exist
+if (relatedCounts.rides > 0) {
+  throw new Error(
+    `Cannot delete bike: It has ${relatedCounts.rides} ride(s) with GPS data. ` +
+    `Please delete rides first or contact support if you need to delete everything.`
+  );
+}
+
+// Warn but allow if only maintenance/fuel logs exist
+if (relatedCounts.maintenanceLogs > 0 || relatedCounts.fuelLogs > 0) {
+  logger.info(`Deleting bike with related data: ${relatedCounts.maintenanceLogs} maintenance, ${relatedCounts.fuelLogs} fuel logs`);
+}
+```
+
+**User Experience:**
+- Show loading state while checking related data
+- Display counts in confirmation modal
+- Disable delete button if rides exist
+- Show clear warning about data loss
+
+### 2. Rides (Child Entity)
+
+**Strategy: SIMPLE DELETE (standalone) / CASCADE (when bike deleted)**
+
+**MANDATORY Requirements:**
+- Standalone deletion: Simple delete (no children to check)
+- Verify ride belongs to user before deletion
+- Invalidate queries after deletion
+
+**Implementation Pattern:**
+```typescript
+// Verify ownership
+const { data: existingRide } = await supabase
+  .from('rides')
+  .select('id')
+  .eq('id', id)
+  .eq('user_id', user.id)
+  .single();
+
+if (!existingRide) {
+  throw new Error('Ride not found or you do not have permission');
+}
+
+// Delete
+await supabase.from('rides').delete().eq('id', id);
+```
+
+### 3. Maintenance Logs (Child Entity)
+
+**Strategy: SIMPLE DELETE (standalone) / CASCADE (when bike deleted)**
+
+**MANDATORY Requirements:**
+- Standalone deletion: Simple delete (no children to check)
+- Verify log's bike belongs to user (via bike_id check)
+- Invalidate queries after deletion
+
+**Implementation Pattern:**
+```typescript
+// Verify ownership through bike
+const { data: log } = await supabase
+  .from('maintenance_logs')
+  .select('bike_id')
+  .eq('id', id)
+  .single();
+
+const { data: bike } = await supabase
+  .from('bikes')
+  .select('id')
+  .eq('id', log.bike_id)
+  .eq('user_id', user.id)
+  .single();
+
+if (!bike) {
+  throw new Error('You do not have permission to delete this log');
+}
+
+// Delete
+await supabase.from('maintenance_logs').delete().eq('id', id);
+```
+
+### 4. Fuel Logs (Child Entity)
+
+**Strategy: SIMPLE DELETE (standalone) / CASCADE (when bike deleted)**
+
+**MANDATORY Requirements:**
+- Standalone deletion: Simple delete + recalculate bike stats
+- Verify log's bike belongs to user (via bike_id check)
+- **MANDATORY**: Recalculate `avg_mileage` and `last_fuel_price` after deletion
+- Invalidate queries after deletion
+
+**Implementation Pattern:**
+```typescript
+// Verify ownership through bike
+const { data: log } = await supabase
+  .from('fuel_logs')
+  .select('bike_id')
+  .eq('id', id)
+  .single();
+
+const { data: bike } = await supabase
+  .from('bikes')
+  .select('id')
+  .eq('id', log.bike_id)
+  .eq('user_id', user.id)
+  .single();
+
+if (!bike) {
+  throw new Error('You do not have permission to delete this log');
+}
+
+// Delete
+await supabase.from('fuel_logs').delete().eq('id', id);
+
+// MANDATORY: Recalculate bike stats
+await updateBikeFuelStats(log.bike_id);
+```
+
+## Helper Functions
+
+### getBikeRelatedDataCounts
+
+**MANDATORY**: Use this helper to check all related data before bike deletion.
+
+**Location**: `src/hooks/useBikes.ts`
+
+**Usage:**
+```typescript
+const { getBikeRelatedDataCounts } = useBikes();
+const counts = await getBikeRelatedDataCounts(bikeId);
+// Returns: { rides: number, maintenanceLogs: number, fuelLogs: number }
+```
+
+## Error Handling
+
+### Error Scenarios
+
+1. **Foreign Key Constraint Violation (23503)**
+   - **Cause**: Attempting to delete parent with children (if CASCADE not set)
+   - **Handling**: Show user-friendly message with counts of related data
+   - **Message**: "Cannot delete bike: It has X ride(s). Please delete rides first."
+
+2. **Permission Denied (PGRST301)**
+   - **Cause**: RLS policy blocking deletion
+   - **Handling**: Log error, show generic permission message
+   - **Message**: "Permission denied. Please try again or contact support."
+
+3. **Network/Timeout Errors**
+   - **Cause**: Connection issues during deletion
+   - **Handling**: Retry mechanism with exponential backoff
+   - **Message**: "Connection error. Please check your internet and try again."
+
+### Error Message Standards
+
+- **MANDATORY**: Always log technical details using `logger.error()`
+- **MANDATORY**: Show user-friendly, actionable error messages
+- **NEVER**: Expose technical error codes or stack traces to users
+- **ALWAYS**: Include counts of related data in error messages when applicable
+
+## User Experience Requirements
+
+### Confirmation Modals
+
+**MANDATORY**: All deletion operations must use `ConfirmModal` component.
+
+**Bike Deletion Modal Requirements:**
+- Show bike name/nickname
+- Display counts of all related data (rides, maintenance logs, fuel logs)
+- Show warning if rides exist (blocks deletion)
+- Show info if only maintenance/fuel logs exist (warns but allows)
+- Disable delete button if rides exist
+- Show loading state while checking related data
+
+**Example:**
+```typescript
+<ConfirmModal
+  variant="danger"
+  title="Delete Bike"
+  message={
+    <div>
+      <p>Are you sure you want to delete <strong>{bikeName}</strong>?</p>
+      {relatedCounts.rides > 0 && (
+        <div className="warning">
+          ⚠️ Cannot delete: {relatedCounts.rides} ride(s) with GPS data
+        </div>
+      )}
+      {(relatedCounts.maintenanceLogs > 0 || relatedCounts.fuelLogs > 0) && (
+        <div>
+          Also includes {relatedCounts.maintenanceLogs} maintenance log(s) 
+          and {relatedCounts.fuelLogs} fuel log(s).
+        </div>
+      )}
+    </div>
+  }
+  disabled={relatedCounts?.rides > 0}
+/>
+```
+
+## Query Invalidation
+
+**MANDATORY**: After any deletion, invalidate all related queries.
+
+**Pattern:**
+```typescript
+onSuccess: () => {
+  queryClient.invalidateQueries({ queryKey: ['bikes'] });
+  queryClient.invalidateQueries({ queryKey: ['rides'] });
+  queryClient.invalidateQueries({ queryKey: ['maintenanceLogs'] });
+  queryClient.invalidateQueries({ queryKey: ['fuelLogs'] });
+}
+```
+
+## Logging Requirements
+
+**MANDATORY**: Log all deletion operations for audit trail.
+
+**Pattern:**
+```typescript
+// Before deletion
+logger.info(`Attempting to delete bike: ${bikeId}`);
+
+// After successful deletion
+logger.info(
+  `Bike deleted successfully. ID: ${bikeId}, Related data deleted: ` +
+  `${maintenanceCount} maintenance log(s), ${fuelCount} fuel log(s)`
+);
+
+// On error
+logger.error('Error deleting bike:', error);
+```
+
+## Best Practices
+
+### Do's ✅
+
+- **Always check for related data** before deletion
+- **Show clear warnings** about data loss
+- **Use database constraints** for data integrity (when available)
+- **Log all deletion operations** for audit trail
+- **Handle errors gracefully** with user-friendly messages
+- **Verify ownership** before allowing deletion
+- **Invalidate all related queries** after deletion
+- **Use transactions** for multi-step deletions (when applicable)
+
+### Don'ts ❌
+
+- **Don't silently delete** related data without warning
+- **Don't bypass RLS** policies
+- **Don't delete without confirmation** for critical entities
+- **Don't expose technical errors** to users
+- **Don't allow orphaned records** (use CASCADE or RESTRICT)
+- **Don't skip permission checks** before deletion
+- **Don't delete without logging** the operation
+- **Don't forget to recalculate** derived data (e.g., bike fuel stats)
+
+## Database Constraints (Future)
+
+**Recommended**: Add CASCADE constraints to foreign keys for automatic cleanup.
+
+**SQL Pattern:**
+```sql
+ALTER TABLE rides
+ADD CONSTRAINT rides_bike_id_fkey
+  FOREIGN KEY (bike_id)
+  REFERENCES bikes(id)
+  ON DELETE CASCADE;
+
+ALTER TABLE maintenance_logs
+ADD CONSTRAINT maintenance_logs_bike_id_fkey
+  FOREIGN KEY (bike_id)
+  REFERENCES bikes(id)
+  ON DELETE CASCADE;
+
+ALTER TABLE fuel_logs
+ADD CONSTRAINT fuel_logs_bike_id_fkey
+  FOREIGN KEY (bike_id)
+  REFERENCES bikes(id)
+  ON DELETE CASCADE;
+```
+
+**Note**: When CASCADE constraints are added, application-level cascade logic can be simplified, but user warnings should still be shown.
+
+## Testing Requirements
+
+**MANDATORY**: Test all deletion scenarios:
+
+1. **Bike Deletion:**
+   - ✅ Delete bike with no related data
+   - ✅ Delete bike with only maintenance logs
+   - ✅ Delete bike with only fuel logs
+   - ✅ Delete bike with only rides (should block)
+   - ✅ Delete bike with all related data (should cascade)
+   - ✅ Delete bike with permission error (should handle gracefully)
+
+2. **Ride Deletion:**
+   - ✅ Delete ride standalone
+   - ✅ Verify bike still exists after ride deletion
+
+3. **Maintenance Log Deletion:**
+   - ✅ Delete maintenance log standalone
+   - ✅ Verify bike still exists after deletion
+
+4. **Fuel Log Deletion:**
+   - ✅ Delete fuel log standalone
+   - ✅ Verify bike stats recalculated correctly
+   - ✅ Verify bike still exists after deletion
+
+## Related Documentation
+
+- See `DELETION_STRATEGY.md` for comprehensive strategy document
+- See `100-supabase-rules.mdc` for database schema reference
+- See `200-notifications.mdc` for toast notification patterns

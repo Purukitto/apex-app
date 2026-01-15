@@ -2,13 +2,16 @@ import { useState } from 'react';
 import { Plus, Motorbike, X } from 'lucide-react';
 import { useBikes } from '../hooks/useBikes';
 import { useMaintenanceLogs } from '../hooks/useMaintenanceLogs';
+import { useFuelLogs } from '../hooks/useFuelLogs';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AddBikeModal from '../components/AddBikeModal';
 import MaintenanceLogModal from '../components/MaintenanceLogModal';
 import MaintenanceLogList from '../components/MaintenanceLogList';
+import AddRefuelModal from '../components/AddRefuelModal';
+import FuelLogList from '../components/FuelLogList';
 import ConfirmModal from '../components/ConfirmModal';
 import ApexTelemetryIcon from '../components/ui/ApexTelemetryIcon';
-import type { Bike as BikeType, MaintenanceLog } from '../types/database';
+import type { Bike as BikeType, MaintenanceLog, FuelLog } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
@@ -24,10 +27,20 @@ export default function Garage() {
   const [isMaintenanceViewOpen, setIsMaintenanceViewOpen] = useState(false);
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<MaintenanceLog | null>(null);
+  
+  const [selectedBikeForFuel, setSelectedBikeForFuel] =
+    useState<BikeType | null>(null);
+  const [isFuelViewOpen, setIsFuelViewOpen] = useState(false);
+  const [isFuelModalOpen, setIsFuelModalOpen] = useState(false);
+  const [editingFuelLog, setEditingFuelLog] = useState<FuelLog | null>(null);
+  
   const [bikeToDelete, setBikeToDelete] = useState<BikeType | null>(null);
 
   const { maintenanceLogs, isLoading: logsLoading, createMaintenanceLog, updateMaintenanceLog, deleteMaintenanceLog } =
     useMaintenanceLogs(selectedBikeForMaintenance?.id);
+  
+  const { fuelLogs, isLoading: fuelLogsLoading, createFuelLog, updateFuelLog, deleteFuelLog } =
+    useFuelLogs(selectedBikeForFuel?.id);
 
   const handleAddBike = async (bikeData: Omit<BikeType, 'id' | 'user_id' | 'created_at'>) => {
     await createBike.mutateAsync(bikeData);
@@ -116,6 +129,54 @@ export default function Garage() {
         error instanceof Error
           ? error.message
           : 'Failed to delete maintenance log'
+      );
+    }
+  };
+
+  const handleViewFuel = (bike: BikeType) => {
+    setSelectedBikeForFuel(bike);
+    setIsFuelViewOpen(true);
+  };
+
+  const handleCloseFuelView = () => {
+    setIsFuelViewOpen(false);
+    setSelectedBikeForFuel(null);
+    setEditingFuelLog(null);
+  };
+
+  const handleAddFuelLog = async (
+    logData: Omit<FuelLog, 'id' | 'created_at'>
+  ) => {
+    await createFuelLog.mutateAsync(logData);
+  };
+
+  const handleUpdateFuelLog = async (
+    logData: Omit<FuelLog, 'id' | 'created_at'>
+  ) => {
+    if (editingFuelLog) {
+      await updateFuelLog.mutateAsync({
+        id: editingFuelLog.id,
+        updates: logData,
+      });
+      setEditingFuelLog(null);
+    }
+  };
+
+  const handleEditFuelLog = (log: FuelLog) => {
+    setEditingFuelLog(log);
+    setIsFuelViewOpen(false);
+    setIsFuelModalOpen(true);
+  };
+
+  const handleDeleteFuelLog = async (id: string) => {
+    try {
+      await deleteFuelLog.mutateAsync(id);
+      apexToast.success('Fuel log deleted');
+    } catch (error) {
+      apexToast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to delete fuel log'
       );
     }
   };
@@ -211,6 +272,13 @@ export default function Garage() {
                     Maintenance
                   </motion.button>
                   <motion.button
+                    onClick={() => handleViewFuel(currentBike)}
+                    className="flex-1 px-4 py-2 bg-zinc-800 border border-white/5 rounded-lg text-white text-sm hover:bg-zinc-700 transition-colors"
+                    {...buttonHoverProps}
+                  >
+                    Fuel
+                  </motion.button>
+                  <motion.button
                     onClick={() => handleEditBike(currentBike)}
                     className="flex-1 px-4 py-2 bg-zinc-800 border border-white/5 rounded-lg text-white text-sm hover:bg-zinc-700 transition-colors"
                     {...buttonHoverProps}
@@ -273,7 +341,14 @@ export default function Garage() {
                         className="flex-1 px-3 py-1.5 bg-zinc-800 border border-white/5 rounded-lg text-white text-xs hover:bg-zinc-700 transition-colors"
                         {...buttonHoverProps}
                       >
-                        View
+                        Maint
+                      </motion.button>
+                      <motion.button
+                        onClick={() => handleViewFuel(bike)}
+                        className="flex-1 px-3 py-1.5 bg-zinc-800 border border-white/5 rounded-lg text-white text-xs hover:bg-zinc-700 transition-colors"
+                        {...buttonHoverProps}
+                      >
+                        Fuel
                       </motion.button>
                       <motion.button
                         onClick={() => handleEditBike(bike)}
@@ -402,6 +477,81 @@ export default function Garage() {
             }
             editingLog={editingLog}
             bike={selectedBikeForMaintenance}
+          />
+        )}
+
+        {/* Fuel Logs View Modal */}
+        {selectedBikeForFuel && isFuelViewOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm"
+              onClick={handleCloseFuelView}
+            />
+            <div className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto z-10">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-apex-white">
+                    Fuel Logs
+                  </h2>
+                  <p className="text-sm text-apex-white/60 mt-1">
+                    {selectedBikeForFuel.nick_name ||
+                      `${selectedBikeForFuel.make} ${selectedBikeForFuel.model}`}
+                  </p>
+                  {selectedBikeForFuel.avg_mileage && (
+                    <p className="text-xs text-apex-green mt-2 font-mono">
+                      Avg. Mileage: {selectedBikeForFuel.avg_mileage.toFixed(2)} km/L
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <motion.button
+                    onClick={() => {
+                      setEditingFuelLog(null);
+                      setIsFuelViewOpen(false);
+                      setIsFuelModalOpen(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full font-semibold bg-apex-green text-apex-black hover:bg-apex-green/90 transition-colors"
+                    {...buttonHoverProps}
+                  >
+                    <Plus size={18} />
+                    Add Refuel
+                  </motion.button>
+                  <motion.button
+                    onClick={handleCloseFuelView}
+                    className="p-2 text-apex-white/60 hover:text-apex-white transition-colors"
+                    aria-label="Close"
+                    {...buttonHoverProps}
+                  >
+                    <X size={24} />
+                  </motion.button>
+                </div>
+              </div>
+
+              <FuelLogList
+                logs={fuelLogs}
+                bike={selectedBikeForFuel}
+                onEdit={handleEditFuelLog}
+                onDelete={handleDeleteFuelLog}
+                isLoading={fuelLogsLoading}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Add/Edit Fuel Log Modal */}
+        {selectedBikeForFuel && (
+          <AddRefuelModal
+            isOpen={isFuelModalOpen}
+            onClose={() => {
+              setIsFuelModalOpen(false);
+              setEditingFuelLog(null);
+              setIsFuelViewOpen(true);
+            }}
+            onSubmit={
+              editingFuelLog ? handleUpdateFuelLog : handleAddFuelLog
+            }
+            editingLog={editingFuelLog}
+            bike={selectedBikeForFuel}
           />
         )}
       </motion.div>

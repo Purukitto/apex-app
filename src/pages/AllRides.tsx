@@ -464,6 +464,26 @@ export default function AllRides() {
                             )}
                           </div>
 
+                          {/* Fuel Cost Estimate */}
+                          {(() => {
+                            const bike = bikeMap.get(ride.bike_id);
+                            if (bike && bike.avg_mileage && bike.last_fuel_price) {
+                              const fuelCost = (ride.distance_km / bike.avg_mileage) * bike.last_fuel_price;
+                              return (
+                                <div className="p-3 bg-apex-green/10 border border-apex-green/20 rounded-lg">
+                                  <p className="text-xs text-apex-white/60 mb-1">Est. Fuel Cost</p>
+                                  <p className="text-sm font-mono text-apex-green">
+                                    ₹{fuelCost.toFixed(2)}
+                                  </p>
+                                  <p className="text-xs text-apex-white/40 mt-1">
+                                    Based on {bike.avg_mileage.toFixed(2)} km/L @ ₹{bike.last_fuel_price.toFixed(2)}/L
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
+
                           {ride.notes && (
                             <div>
                               <p className="text-xs text-white/60 mb-1">Notes</p>

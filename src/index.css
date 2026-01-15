@@ -151,3 +151,17 @@ body {
 .dark-map-tiles {
   filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }
+
+/* Leaflet Map Z-Index Isolation - Prevent map from appearing over modals */
+/* Create a stacking context for map containers to isolate Leaflet's z-index */
+.leaflet-container {
+  isolation: isolate;
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure Leaflet controls stay within the map's stacking context */
+.leaflet-control-container {
+  position: relative;
+  z-index: 2;
+}

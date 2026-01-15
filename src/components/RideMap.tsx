@@ -101,7 +101,7 @@ export default function RideMap({ coordinates, className = '' }: RideMapProps) {
   }
 
   return (
-    <div className={`rounded-lg overflow-hidden border border-apex-white/20 ${className}`}>
+    <div className={`rounded-lg overflow-hidden border border-apex-white/20 ${className}`} style={{ isolation: 'isolate', position: 'relative', zIndex: 1 }}>
       <MapContainer
         center={defaultCenter}
         zoom={13}
@@ -110,7 +110,9 @@ export default function RideMap({ coordinates, className = '' }: RideMapProps) {
         style={{ 
           height: '400px', 
           width: '100%', 
-          backgroundColor: 'var(--color-apex-black, #0A0A0A)' 
+          backgroundColor: 'var(--color-apex-black, #0A0A0A)',
+          position: 'relative',
+          zIndex: 1
         }}
       >
         <TileLayer

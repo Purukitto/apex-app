@@ -104,7 +104,7 @@ export function useMaintenanceLogs(bikeId?: string) {
       });
       queryClient.invalidateQueries({ queryKey: ['bikes'] }); // In case we update bike odo
     },
-    onError: (error, logData, context) => {
+    onError: (_error, _logData, context) => {
       // Rollback on error
       if (context?.previousLogs) {
         queryClient.setQueryData(['maintenanceLogs', bikeId], context.previousLogs);
@@ -180,7 +180,7 @@ export function useMaintenanceLogs(bikeId?: string) {
       );
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
     },
-    onError: (error, variables, context) => {
+    onError: (_error, _variables, context) => {
       // Rollback on error
       if (context?.previousLogs) {
         queryClient.setQueryData(['maintenanceLogs', bikeId], context.previousLogs);
@@ -241,7 +241,7 @@ export function useMaintenanceLogs(bikeId?: string) {
     onSuccess: () => {
       // Data already optimistically removed
     },
-    onError: (error, id, context) => {
+    onError: (_error, _id, context) => {
       // Rollback on error
       if (context?.previousLogs) {
         queryClient.setQueryData(['maintenanceLogs', bikeId], context.previousLogs);

@@ -275,7 +275,7 @@ export function useAppUpdate() {
       setIsChecking(false);
       return null;
     }
-  }, [setError, setIsChecking, setShowModal, setUpdateInfo]);
+  }, [setError, setIsChecking, setShowModal, setUpdateInfo, setHasCheckedNoUpdate]);
 
   const openReleasePage = useCallback(async () => {
     const currentUpdateInfo = useAppUpdateStore.getState().updateInfo;

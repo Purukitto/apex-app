@@ -106,7 +106,7 @@ export function useMaintenanceSchedules(bikeId?: string) {
       });
       apexToast.success('Maintenance schedule added');
     },
-    onError: (error, scheduleData, context) => {
+    onError: (error, _scheduleData, context) => {
       // Rollback on error
       if (context?.previousSchedules) {
         queryClient.setQueryData(['maintenanceSchedules', bikeId], context.previousSchedules);
@@ -179,7 +179,7 @@ export function useMaintenanceSchedules(bikeId?: string) {
       );
       apexToast.success('Schedule updated');
     },
-    onError: (error, variables, context) => {
+    onError: (error, _variables, context) => {
       // Rollback on error
       if (context?.previousSchedules) {
         queryClient.setQueryData(['maintenanceSchedules', bikeId], context.previousSchedules);
@@ -325,7 +325,7 @@ export function useMaintenanceSchedules(bikeId?: string) {
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
       apexToast.success('Service completed');
     },
-    onError: (error, variables, context) => {
+    onError: (error, _variables, context) => {
       // Rollback on error
       if (context?.previousSchedules) {
         queryClient.setQueryData(['maintenanceSchedules', bikeId], context.previousSchedules);

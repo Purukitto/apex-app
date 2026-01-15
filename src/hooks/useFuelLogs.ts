@@ -112,7 +112,7 @@ export function useFuelLogs(bikeId?: string) {
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
       apexToast.success('Fuel log added');
     },
-    onError: (error, logData, context) => {
+    onError: (error, _logData, context) => {
       // Rollback on error
       if (context?.previousFuelLogs) {
         queryClient.setQueryData(['fuelLogs', bikeId], context.previousFuelLogs);
@@ -203,7 +203,7 @@ export function useFuelLogs(bikeId?: string) {
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
       apexToast.success('Fuel log updated');
     },
-    onError: (error, variables, context) => {
+    onError: (error, _variables, context) => {
       // Rollback on error
       if (context?.previousFuelLogs) {
         queryClient.setQueryData(['fuelLogs', bikeId], context.previousFuelLogs);
@@ -272,7 +272,7 @@ export function useFuelLogs(bikeId?: string) {
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
       apexToast.success('Fuel log deleted');
     },
-    onError: (error, id, context) => {
+    onError: (error, _id, context) => {
       // Rollback on error
       if (context?.previousFuelLogs) {
         queryClient.setQueryData(['fuelLogs', bikeId], context.previousFuelLogs);

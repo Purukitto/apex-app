@@ -88,7 +88,7 @@ export function useBikes() {
       queryClient.invalidateQueries({ queryKey: ['maintenanceSchedules'] });
       apexToast.success('Bike Added');
     },
-    onError: (error, bikeData, context) => {
+    onError: (error, _bikeData, context) => {
       // Rollback on error
       if (context?.previousBikes) {
         queryClient.setQueryData(['bikes'], context.previousBikes);
@@ -141,7 +141,7 @@ export function useBikes() {
       );
       apexToast.success('Bike Updated');
     },
-    onError: (error, variables, context) => {
+    onError: (error, _variables, context) => {
       // Rollback on error
       if (context?.previousBikes) {
         queryClient.setQueryData(['bikes'], context.previousBikes);
@@ -294,7 +294,7 @@ export function useBikes() {
       queryClient.invalidateQueries({ queryKey: ['fuelLogs'] });
       // Success toast is handled in Garage.tsx after mutation completes
     },
-    onError: (error, id, context) => {
+    onError: (error, _id, context) => {
       // Rollback on error
       if (context?.previousBikes) {
         queryClient.setQueryData(['bikes'], context.previousBikes);

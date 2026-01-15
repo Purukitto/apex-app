@@ -285,7 +285,7 @@ export function useRides(options: UseRidesOptions = {}) {
       );
       apexToast.success('Ride updated');
     },
-    onError: (error, variables, context) => {
+    onError: (error, _variables, context) => {
       // Rollback on error
       if (context?.previousRides) {
         context.previousRides.forEach(([queryKey, data]) => {
@@ -338,7 +338,7 @@ export function useRides(options: UseRidesOptions = {}) {
       // Data already optimistically removed
       apexToast.success('Ride deleted');
     },
-    onError: (error, id, context) => {
+    onError: (error, _id, context) => {
       // Rollback on error
       if (context?.previousRides) {
         context.previousRides.forEach(([queryKey, data]) => {

@@ -483,7 +483,14 @@ export const useRideTracking = () => {
             errorMessage = 'Invalid data. Please check your ride information.';
           } else {
             // Show the actual error message if it's user-friendly
-            errorMessage = errorObj.message as string;
+            // But truncate if it's too long (might contain JSON or technical details)
+            const rawMessage = errorObj.message as string;
+            if (rawMessage.length > 100) {
+              // If message is too long, it's likely technical - use generic message
+              errorMessage = 'Failed to save ride. Please try again.';
+            } else {
+              errorMessage = rawMessage;
+            }
           }
         }
         

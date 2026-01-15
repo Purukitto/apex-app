@@ -5,6 +5,22 @@ import { toast } from 'sonner';
  * Ensures all toasts follow the high-contrast apex-green or red-500 color scheme
  */
 
+/**
+ * Truncate error message to prevent toast overflow
+ */
+const truncateMessage = (message: string, maxLength: number = 100): string => {
+  if (message.length <= maxLength) {
+    return message;
+  }
+  // Try to truncate at a word boundary
+  const truncated = message.substring(0, maxLength - 3);
+  const lastSpace = truncated.lastIndexOf(' ');
+  if (lastSpace > maxLength * 0.7) {
+    return truncated.substring(0, lastSpace) + '...';
+  }
+  return truncated + '...';
+};
+
 export const apexToast = {
   success: (message: string) => {
     return toast.success(message, {
@@ -18,7 +34,9 @@ export const apexToast = {
     });
   },
   error: (message: string) => {
-    return toast.error(message, {
+    // Truncate long error messages to prevent UI overflow
+    const truncatedMessage = truncateMessage(message, 120);
+    return toast.error(truncatedMessage, {
       className: 'apex-toast-error',
       style: {
         background: '#0A0A0A',

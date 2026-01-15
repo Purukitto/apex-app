@@ -103,6 +103,22 @@ body {
   opacity: 1 !important;
 }
 
+/* Prevent toast text overflow - wrap long messages */
+[data-sonner-toast] [data-title],
+[data-sonner-toast] [data-content],
+[data-sonner-toast] p,
+[data-sonner-toast] span {
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  line-height: 1.4 !important;
+}
+
 /* Ensure toasts maintain their individual styling when stacked */
 [data-sonner-toast] {
   position: relative !important;

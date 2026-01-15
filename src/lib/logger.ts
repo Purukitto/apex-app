@@ -75,9 +75,12 @@ class ApexLogger {
       
       // Verify we can write to the cache directory
       const testPath = `apex-logs/${this.sessionId}.log`;
+      const testData = `# Apex Log Session: ${this.sessionId}\n# Started: ${new Date().toISOString()}\n\n`;
+      // Capacitor Filesystem requires base64-encoded data
+      const base64TestData = btoa(unescape(encodeURIComponent(testData)));
       await Filesystem.writeFile({
         path: testPath,
-        data: `# Apex Log Session: ${this.sessionId}\n# Started: ${new Date().toISOString()}\n\n`,
+        data: base64TestData,
         directory: Directory.Cache,
         recursive: true,
       });
@@ -108,14 +111,27 @@ class ApexLogger {
         entry.data ? ` ${JSON.stringify(entry.data)}` : ''
       }\n`;
 
+      // Capacitor Filesystem requires base64-encoded data
+      // Convert string to base64
+      const base64Data = btoa(unescape(encodeURIComponent(logLine)));
+
       // Append to file
       await Filesystem.appendFile({
         path: logPath,
-        data: logLine,
+        data: base64Data,
         directory: Directory.Cache,
       });
     } catch (error) {
       // Silently fail - don't break app if file logging fails
+      // Disable file logging if it keeps failing
+      if (error && typeof error === 'object' && 'code' in error) {
+        const errorCode = (error as { code?: string }).code;
+        // If it's a base64 error, disable file logging to prevent spam
+        if (errorCode === 'OS-PLUG-FILE-0013') {
+          this.fileLoggingEnabled = false;
+          console.warn('File logging disabled due to encoding errors');
+        }
+      }
       console.error('Failed to write log to file:', error);
     }
   }
@@ -142,14 +158,27 @@ class ApexLogger {
           }\n`
       ).join('');
 
+      // Capacitor Filesystem requires base64-encoded data
+      // Convert string to base64
+      const base64Data = btoa(unescape(encodeURIComponent(logLines)));
+
       await Filesystem.appendFile({
         path: logPath,
-        data: logLines,
+        data: base64Data,
         directory: Directory.Cache,
       });
     } catch (error) {
       // Re-add entries to buffer if flush failed
       this.logBuffer.unshift(...entries);
+      // Disable file logging if it keeps failing
+      if (error && typeof error === 'object' && 'code' in error) {
+        const errorCode = (error as { code?: string }).code;
+        // If it's a base64 error, disable file logging to prevent spam
+        if (errorCode === 'OS-PLUG-FILE-0013') {
+          this.fileLoggingEnabled = false;
+          console.warn('File logging disabled due to encoding errors');
+        }
+      }
       console.error('Failed to flush logs:', error);
     }
   }

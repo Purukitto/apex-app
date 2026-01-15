@@ -5,6 +5,7 @@ import { useBikes } from '../hooks/useBikes';
 import { useRides } from '../hooks/useRides';
 import { supabase } from '../lib/supabaseClient';
 import { shareRideImage } from '../lib/shareRide';
+import { exportToGPX } from '../utils/gpx';
 import { apexToast } from '../lib/toast';
 import { logger } from '../lib/logger';
 import {
@@ -16,6 +17,7 @@ import {
   Trash2,
   X,
   Share2,
+  Download,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -301,6 +303,31 @@ export default function AllRides() {
     }
   };
 
+  const handleExportGPX = async (ride: Ride) => {
+    try {
+      apexToast.promise(
+        exportToGPX(ride.id),
+        {
+          loading: 'Exporting GPX...',
+          success: 'GPX file ready to share',
+          error: (error) => {
+            if (error instanceof Error) {
+              return error.message;
+            }
+            return 'Failed to export GPX file';
+          },
+        }
+      );
+    } catch (error) {
+      logger.error('Error exporting GPX:', error);
+      apexToast.error(
+        error instanceof Error 
+          ? error.message 
+          : 'Failed to export GPX file'
+      );
+    }
+  };
+
   if (isLoading && rides.length === 0) {
     return <LoadingSpinner fullScreen text="Loading rides..." />;
   }
@@ -473,24 +500,37 @@ export default function AllRides() {
                           )}
 
                           {/* Action Buttons */}
-                          <div className="flex gap-2 pt-2">
+                          <div className="flex gap-2 pt-2 flex-wrap">
                             <motion.button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleShareClick(ride);
                               }}
-                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-apex-green text-sm hover:bg-apex-green/20 transition-colors"
+                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-apex-green text-sm hover:bg-apex-green/20 transition-colors min-w-[100px]"
                               {...buttonHoverProps}
                             >
                               <Share2 size={16} />
                               Share
                             </motion.button>
+                            {Capacitor.isNativePlatform() && ride.route_path && ride.route_path.coordinates && ride.route_path.coordinates.length > 0 && (
+                              <motion.button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleExportGPX(ride);
+                                }}
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-apex-green text-sm hover:bg-apex-green/20 transition-colors min-w-[100px]"
+                                {...buttonHoverProps}
+                              >
+                                <Download size={16} />
+                                GPX
+                              </motion.button>
+                            )}
                             <motion.button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleEditClick(ride);
                               }}
-                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-zinc-800 border border-white/5 rounded-lg text-white text-sm hover:bg-zinc-700 transition-colors"
+                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-zinc-800 border border-white/5 rounded-lg text-white text-sm hover:bg-zinc-700 transition-colors min-w-[100px]"
                               {...buttonHoverProps}
                             >
                               <Edit2 size={16} />
@@ -501,7 +541,7 @@ export default function AllRides() {
                                 e.stopPropagation();
                                 handleDeleteClick(ride);
                               }}
-                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-sm hover:bg-red-500/30 transition-colors"
+                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-sm hover:bg-red-500/30 transition-colors min-w-[100px]"
                               {...buttonHoverProps}
                             >
                               <Trash2 size={16} />

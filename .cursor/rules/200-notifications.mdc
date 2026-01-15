@@ -137,25 +137,27 @@ if (kmUntilService <= 500) {
 - **Critical system errors** that affect user workflow - Show toast
 - **Network/API errors** that the user can retry - Show toast
 
-#### Keep as Console Error Only (Internal/Debugging)
-- **Background checks** (e.g., maintenance checker) - Log only, toast only for critical failures
-- **Geolocation errors** during ride recording - Log only, component can handle user feedback
-- **Non-critical validation errors** - Log only
-- **Development/debugging information** - Always console only
+#### Keep as Logger Only (Internal/Debugging)
+- **Background checks** (e.g., maintenance checker) - Log only using `logger`, toast only for critical failures
+- **Geolocation errors** during ride recording - Log only using `logger`, component can handle user feedback
+- **Non-critical validation errors** - Log only using `logger`
+- **Development/debugging information** - Always use `logger.debug()` or `logger.trace()`
 
 ### Error Message Transformation
 
 When catching errors from APIs or libraries:
-1. **Log the full error** to console for debugging: `console.error('Technical error:', error)`
+1. **Log the full error** using logger for debugging: `logger.error('Technical error:', error)`
 2. **Transform to user-friendly message** for toast: `apexToast.error('User-friendly message')`
 
 Example:
 ```typescript
+import { logger } from '../lib/logger';
+
 try {
   await deleteBike.mutateAsync(id);
 } catch (error) {
   // Log technical details for debugging
-  console.error('Delete error:', error);
+  logger.error('Delete error:', error);
   // Show user-friendly message
   apexToast.error(
     error instanceof Error 
@@ -182,4 +184,5 @@ try {
 - ❌ **DON'T**: Use `window.confirm()` - use `ConfirmModal` instead
 - ❌ **DON'T**: Show technical error details to users (error codes, stack traces)
 - ❌ **DON'T**: Show toasts for background/automated processes (unless critical failure)
-- ❌ **DON'T**: Skip console.error for debugging - always log technical details
+- ❌ **DON'T**: Skip logger.error for debugging - always log technical details using logger
+- ❌ **DON'T**: Use console.* directly - always use logger from src/lib/logger

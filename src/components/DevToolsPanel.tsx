@@ -38,6 +38,9 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
   const appUpdateStore = useAppUpdateStore();
 
   // Intercept console methods - always active in dev mode, not just when panel is open
+  // NOTE: These console.* assignments are intentional - they intercept console calls
+  // to capture logs for display in the DevTools panel. This is necessary for the
+  // panel to work and is the only place where console.* should be used directly.
   useEffect(() => {
     if (!isDev()) return;
 

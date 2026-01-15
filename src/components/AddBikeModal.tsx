@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Search, Loader2, Database, CheckCircle2, AlertTriangle, Flag } from 'lucide-react';
+import { X, Search, Loader2, CheckCircle2, AlertTriangle, Flag } from 'lucide-react';
 import type { Bike } from '../types/database';
 import type { GlobalBikeSpec } from '../types/database';
 import { apexToast } from '../lib/toast';
@@ -339,10 +339,8 @@ export default function AddBikeModal({
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <Database className="text-apex-green shrink-0" size={14} />
                             <p className="text-apex-white font-semibold text-sm truncate">
                               {bike.make} {bike.model}
-                              {bike.year && ` (${bike.year})`}
                             </p>
                             {bike.is_verified && (
                               <div title="Verified">
@@ -354,16 +352,12 @@ export default function AddBikeModal({
                             {bike.category && (
                               <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded">
                                 {bike.category}
+                                {bike.year && ` • ${bike.year}`}
                               </span>
                             )}
-                            {bike.displacement && (
+                            {!bike.category && bike.year && (
                               <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded font-mono">
-                                {bike.displacement}
-                              </span>
-                            )}
-                            {bike.power && (
-                              <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded font-mono">
-                                {bike.power}
+                                {bike.year}
                               </span>
                             )}
                             {bike.report_count > 0 && (

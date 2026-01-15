@@ -655,7 +655,7 @@ export default function Ride() {
         <AnimatePresence>
           {showSafetyWarning && isRecording && (
             <motion.div
-              className="fixed left-1/2 -translate-x-1/2 z-50 bg-apex-green/10 border border-apex-green/40 rounded-lg px-6 py-3 max-w-md"
+              className="fixed left-1/2 -translate-x-1/2 z-[100] bg-apex-black/95 backdrop-blur-sm border border-apex-green/40 rounded-lg px-6 py-3 max-w-md"
               style={{ top: 'calc(3.5rem + max(env(safe-area-inset-top), 24px))' }}
               initial={{ opacity: 1, y: -20 }}
               animate={{ opacity: 1, y: 0 }}

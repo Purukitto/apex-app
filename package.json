@@ -19,7 +19,7 @@
     "dev": "vite --host",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "start:android": "npx cap run android --live-reload --host=192.168.1.9 --port=5173",
+    "dev:android": "npx cap run android --live-reload --host=192.168.1.9 --port=5173",
     "assets:android": "npx capacitor-assets generate --android --iconBackgroundColor '#0A0A0A' --splashBackgroundColor '#0A0A0A'",
     "log:android": "adb logcat -c; adb logcat | Select-String -Pattern \"Motion|lean|accel|Capacitor|Console\" -CaseSensitive:$false",
     "log:android:motion": "adb logcat -c; adb logcat chromium:V Capacitor:V Console:V *:E | Select-String -Pattern \"Motion|lean|accel|DeviceMotion|sensor\" -CaseSensitive:$false",

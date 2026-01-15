@@ -310,6 +310,9 @@ export const useRideTracking = () => {
         coordsCount: coords.length,
         hasRoutePath: !!geoJSON,
         routePathPreview: geoJSON ? `${geoJSON.coordinates.length} points` : 'none',
+        firstCoord: coords.length > 0 ? { lat: coords[0].latitude, lng: coords[0].longitude } : null,
+        lastCoord: coords.length > 0 ? { lat: coords[coords.length - 1].latitude, lng: coords[coords.length - 1].longitude } : null,
+        geoJSONStringLength: geoJSON ? JSON.stringify(geoJSON).length : 0,
       });
 
       // Use RPC function to insert with PostGIS geometry conversion
@@ -317,6 +320,16 @@ export const useRideTracking = () => {
       let data, error;
       
       if (geoJSON && coords.length >= 2) {
+        // Log the full GeoJSON being sent
+        const geoJSONString = JSON.stringify(geoJSON);
+        console.log('Sending GeoJSON to RPC:', {
+          coordinatesCount: geoJSON.coordinates.length,
+          geoJSONLength: geoJSONString.length,
+          firstPoint: geoJSON.coordinates[0],
+          lastPoint: geoJSON.coordinates[geoJSON.coordinates.length - 1],
+          geoJSONPreview: geoJSONString.substring(0, 200),
+        });
+        
         // Try using RPC function first (requires SQL function in Supabase)
         const rpcResult = await supabase.rpc('insert_ride_with_geometry', {
           p_bike_id: bikeId,
@@ -326,7 +339,7 @@ export const useRideTracking = () => {
           p_distance_km: Math.round(totalDistance * 100) / 100,
           p_max_lean_left: Math.round(maxLeanLeft * 10) / 10, // Round to 1 decimal place
           p_max_lean_right: Math.round(maxLeanRight * 10) / 10, // Round to 1 decimal place
-          p_route_path_geojson: JSON.stringify(geoJSON),
+          p_route_path_geojson: geoJSON, // Send as object, not stringified
         });
         
         data = rpcResult.data;
@@ -464,13 +477,15 @@ export const useRideTracking = () => {
         distanceKm: 0,
       }));
 
-      // Sync to Zustand store immediately
+      // Sync to Zustand store immediately - reset coords array
       useRideStore.getState().setRecording(true);
       useRideStore.getState().setPaused(false);
       useRideStore.getState().setStartTime(startTimeNow);
       useRideStore.getState().setDistanceKm(0);
       useRideStore.getState().setCurrentLean(0);
       useRideStore.getState().updateMaxLean(0, 0);
+      // Clear coords array in store
+      useRideStore.setState({ coords: [] });
 
       lastNonZeroSpeedTimeRef.current = Date.now();
       console.log('Ride tracking started successfully');
@@ -488,16 +503,20 @@ export const useRideTracking = () => {
       try {
         // Get data from both hook state and store (store is source of truth if component remounted)
         const storeData = useRideStore.getState();
-        const coordsToSave = state.coords.length > 0 ? state.coords : storeData.coords;
-        const startTimeToUse = state.startTime || storeData.startTime;
-        const maxLeanLeftToUse = state.maxLeanLeft > 0 ? state.maxLeanLeft : storeData.maxLeanLeft;
-        const maxLeanRightToUse = state.maxLeanRight > 0 ? state.maxLeanRight : storeData.maxLeanRight;
+        // Always prefer store data as it's the source of truth and persists across remounts
+        const coordsToSave = storeData.coords.length > 0 ? storeData.coords : state.coords;
+        const startTimeToUse = storeData.startTime || state.startTime;
+        const maxLeanLeftToUse = storeData.maxLeanLeft > 0 ? storeData.maxLeanLeft : state.maxLeanLeft;
+        const maxLeanRightToUse = storeData.maxLeanRight > 0 ? storeData.maxLeanRight : state.maxLeanRight;
 
         console.log('Stopping ride:', {
           bikeId,
           shouldSave,
-          coordsCount: coordsToSave.length,
+          stateCoordsCount: state.coords.length,
+          storeCoordsCount: storeData.coords.length,
+          coordsToSaveCount: coordsToSave.length,
           hasStartTime: !!startTimeToUse,
+          coordsPreview: coordsToSave.slice(0, 3).map(c => ({ lat: c.latitude, lng: c.longitude })),
         });
 
         setState((prev) => ({

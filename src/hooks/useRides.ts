@@ -36,11 +36,52 @@ export async function fetchRides(options: {
     const from = page * pageSize;
     const to = from + pageSize - 1;
 
+    // Get count first
     let countQuery = supabase
       .from('rides')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id);
 
+    if (bikeId) {
+      countQuery = countQuery.eq('bike_id', bikeId);
+    }
+
+    // Try to use RPC function first (if it exists)
+    try {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_rides_with_geojson', {
+        p_user_id: user.id,
+        p_bike_id: bikeId || null,
+        p_limit: pageSize,
+        p_offset: from,
+      });
+
+      if (!rpcError && rpcData) {
+        const [{ count }] = await Promise.all([countQuery]);
+        
+        // Process route_path from JSONB to GeoJSONLineString format
+        const processedRides = (rpcData || []).map((ride: Ride & { route_path?: unknown }) => {
+          if (ride.route_path) {
+            try {
+              // route_path comes as JSONB, parse it if it's a string
+              const routePath = typeof ride.route_path === 'string' 
+                ? JSON.parse(ride.route_path) 
+                : ride.route_path;
+              return { ...ride, route_path: routePath as Ride['route_path'] };
+            } catch {
+              return { ...ride, route_path: undefined };
+            }
+          }
+          return { ...ride, route_path: undefined };
+        });
+        
+        return { rides: processedRides as Ride[], total: count || 0 };
+      }
+    } catch {
+      // RPC function doesn't exist, fall back to regular query
+      console.warn('RPC function get_rides_with_geojson not found, using fallback query. Please run supabase_rpc_get_rides_geojson.sql');
+    }
+
+    // Fallback: regular query (route_path won't be available as GeoJSON)
     let dataQuery = supabase
       .from('rides')
       .select('*')
@@ -48,9 +89,7 @@ export async function fetchRides(options: {
       .order('start_time', { ascending: false })
       .range(from, to);
 
-    // Filter by bike if specified
     if (bikeId) {
-      countQuery = countQuery.eq('bike_id', bikeId);
       dataQuery = dataQuery.eq('bike_id', bikeId);
     }
 
@@ -60,10 +99,48 @@ export async function fetchRides(options: {
     ]);
 
     if (queryError) throw queryError;
-    return { rides: (data as Ride[]) || [], total: count || 0 };
+    
+    // Without RPC function, route_path won't be available
+    const processedRides = (data || []).map((ride: Ride) => ({
+      ...ride,
+      route_path: undefined, // Can't convert PostGIS geography without RPC function
+    }));
+    
+    return { rides: processedRides as Ride[], total: count || 0 };
   }
 
   // Legacy limit-based query
+  // Try RPC function first
+  try {
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_rides_with_geojson', {
+      p_user_id: user.id,
+      p_bike_id: bikeId || null,
+      p_limit: limit || 10,
+      p_offset: 0,
+    });
+
+    if (!rpcError && rpcData) {
+      const processedRides = (rpcData || []).map((ride: Ride & { route_path?: unknown }) => {
+        if (ride.route_path) {
+          try {
+            const routePath = typeof ride.route_path === 'string' 
+              ? JSON.parse(ride.route_path) 
+              : ride.route_path;
+            return { ...ride, route_path: routePath as Ride['route_path'] };
+          } catch {
+            return { ...ride, route_path: undefined };
+          }
+        }
+        return { ...ride, route_path: undefined };
+      });
+      
+      return { rides: processedRides as Ride[] };
+    }
+  } catch {
+    console.warn('RPC function get_rides_with_geojson not found, using fallback query');
+  }
+
+  // Fallback: regular query
   let query = supabase
     .from('rides')
     .select('*')
@@ -71,7 +148,6 @@ export async function fetchRides(options: {
     .order('start_time', { ascending: false })
     .limit(limit || 10);
 
-  // Filter by bike if specified
   if (bikeId) {
     query = query.eq('bike_id', bikeId);
   }
@@ -79,7 +155,13 @@ export async function fetchRides(options: {
   const { data, error: queryError } = await query;
 
   if (queryError) throw queryError;
-  return { rides: (data as Ride[]) || [] };
+  
+  const processedRides = (data || []).map((ride: Ride) => ({
+    ...ride,
+    route_path: undefined,
+  }));
+  
+  return { rides: processedRides as Ride[] };
 }
 
 /**

@@ -93,6 +93,7 @@ export type GlobalBikeSpec = {
   is_verified: boolean;
   report_count: number;
   created_by: string | null;
+  search_text: string | null; // Computed search field: "make model year"
   created_at: string;
   updated_at: string;
 };

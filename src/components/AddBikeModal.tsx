@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Search, Loader2 } from 'lucide-react';
+import { X, Search, Loader2, Database } from 'lucide-react';
 import type { Bike } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
 import { buttonHoverProps } from '../lib/animations';
-import { searchBike, extractEngineSpecs, extractPowerSpecs } from '../services/bikeData';
+import { searchGlobalBikes } from '../services/bikeLibrary';
 import { logger } from '../lib/logger';
 import { useKeyboard } from '../hooks/useKeyboard';
 
@@ -33,8 +33,8 @@ export default function AddBikeModal({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [wikiSearchQuery, setWikiSearchQuery] = useState('');
-  const [wikiSearchResult, setWikiSearchResult] = useState<Awaited<ReturnType<typeof searchBike>> | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [globalBikeResult, setGlobalBikeResult] = useState<Awaited<ReturnType<typeof searchGlobalBikes>> | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showManualEntry, setShowManualEntry] = useState(false);
   const { isKeyboardVisible, keyboardHeight } = useKeyboard();
@@ -69,56 +69,48 @@ export default function AddBikeModal({
       setShowManualEntry(false);
     }
     setError(null);
-    setWikiSearchQuery('');
-    setWikiSearchResult(null);
+    setSearchQuery('');
+    setGlobalBikeResult(null);
   }, [editingBike, isOpen]);
 
-  // Debounced Wikipedia search
+  // Debounced search: Search global bike database
   useEffect(() => {
-    if (editingBike || !wikiSearchQuery.trim() || wikiSearchQuery.length < 3) {
-      setWikiSearchResult(null);
+    if (editingBike || !searchQuery.trim() || searchQuery.length < 3) {
+      setGlobalBikeResult(null);
       return;
     }
 
     const timeoutId = setTimeout(async () => {
       setIsSearching(true);
+      setGlobalBikeResult(null);
+
       try {
-        const result = await searchBike(wikiSearchQuery);
-        setWikiSearchResult(result);
-        if (result) {
-          // Auto-fill form data from Wikipedia result
-          // Parse title to extract make and model (e.g., "Bajaj Dominar 400" -> make: "Bajaj", model: "Dominar 400")
-          const titleParts = result.title.split(' ');
-          if (titleParts.length >= 2) {
-            setFormData((prev) => ({
-              ...prev,
-              make: titleParts[0],
-              model: titleParts.slice(1).join(' '),
-              image_url: result.imageUrl || prev.image_url,
-              specs_engine: extractEngineSpecs(result.extract) || prev.specs_engine,
-              specs_power: extractPowerSpecs(result.extract) || prev.specs_power,
-            }));
-          } else {
-            // If title is single word, use it as model
-            setFormData((prev) => ({
-              ...prev,
-              model: result.title,
-              image_url: result.imageUrl || prev.image_url,
-              specs_engine: extractEngineSpecs(result.extract) || prev.specs_engine,
-              specs_power: extractPowerSpecs(result.extract) || prev.specs_power,
-            }));
-          }
+        // Search global database with the full query string
+        // The search function will handle parsing and fuzzy matching
+        const globalResult = await searchGlobalBikes({ query: searchQuery });
+        if (globalResult) {
+          setGlobalBikeResult(globalResult);
+          // Auto-fill form data from global database
+          setFormData((prev) => ({
+            ...prev,
+            make: globalResult.make,
+            model: globalResult.model,
+            year: globalResult.year?.toString() || prev.year,
+            image_url: globalResult.image_url || prev.image_url,
+            specs_engine: globalResult.displacement || prev.specs_engine,
+            specs_power: globalResult.power || prev.specs_power,
+          }));
         }
       } catch (error) {
-        logger.error('Wikipedia search error:', error);
-        setWikiSearchResult(null);
+        logger.error('Search error:', error);
+        setGlobalBikeResult(null);
       } finally {
         setIsSearching(false);
       }
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [wikiSearchQuery, editingBike]);
+  }, [searchQuery, editingBike]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -278,52 +270,73 @@ export default function AddBikeModal({
           onSubmit={handleSubmit} 
           className="space-y-4 flex-1 min-h-0"
         >
-          {/* Wikipedia Search - Only show when adding (not editing) */}
+          {/* Bike Search - Only show when adding (not editing) */}
           {!editingBike && (
             <div>
               <label className="block text-sm text-apex-white/60 mb-2">
-                Search Wikipedia (optional)
+                Search Bike Database (optional)
               </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-apex-white/40" size={18} />
                 <input
                   type="text"
-                  value={wikiSearchQuery}
-                  onChange={(e) => setWikiSearchQuery(e.target.value)}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-apex-black border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
-                  placeholder="e.g., Dominar 400, Yamaha MT-07"
+                  placeholder="e.g., Royal Enfield Classic 350, Yamaha MT-07"
                 />
                 {isSearching && (
                   <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-apex-green animate-spin" size={18} />
                 )}
               </div>
-              {wikiSearchResult && (
+              
+              {/* Global Database Result */}
+              {globalBikeResult && (
                 <div className="mt-2 p-3 bg-gradient-to-br from-white/5 to-transparent border border-apex-green/40 rounded-lg">
                   <div className="flex items-start gap-3">
-                    {wikiSearchResult.imageUrl && (
+                    {globalBikeResult.image_url && (
                       <img
-                        src={wikiSearchResult.imageUrl}
-                        alt={wikiSearchResult.title}
+                        src={globalBikeResult.image_url}
+                        alt={`${globalBikeResult.make} ${globalBikeResult.model}`}
                         className="w-16 h-16 object-cover rounded border border-apex-white/20"
                       />
                     )}
                     <div className="flex-1">
-                      <p className="text-apex-white font-semibold text-sm">{wikiSearchResult.title}</p>
-                      {wikiSearchResult.extract && (
-                        <p className="text-apex-white/60 text-xs mt-1 line-clamp-2">
-                          {wikiSearchResult.extract.substring(0, 100)}...
+                      <div className="flex items-center gap-2 mb-1">
+                        <Database className="text-apex-green" size={14} />
+                        <p className="text-apex-white font-semibold text-sm">
+                          {globalBikeResult.make} {globalBikeResult.model}
+                          {globalBikeResult.year && ` (${globalBikeResult.year})`}
                         </p>
-                      )}
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {globalBikeResult.category && (
+                          <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded">
+                            {globalBikeResult.category}
+                          </span>
+                        )}
+                        {globalBikeResult.displacement && (
+                          <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded font-mono">
+                            {globalBikeResult.displacement}
+                          </span>
+                        )}
+                        {globalBikeResult.power && (
+                          <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded font-mono">
+                            {globalBikeResult.power}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
-              {wikiSearchQuery.length >= 3 && !isSearching && !wikiSearchResult && (
+
+              {searchQuery.length >= 3 && !isSearching && !globalBikeResult && (
                 <p className="mt-2 text-apex-white/40 text-xs">
                   No results found. You can still enter bike details manually.
                 </p>
               )}
-              {wikiSearchQuery && !showManualEntry && (
+              {searchQuery && !showManualEntry && (
                 <motion.button
                   type="button"
                   onClick={() => {
@@ -334,12 +347,12 @@ export default function AddBikeModal({
                   className="mt-3 w-full px-4 py-2 border border-apex-green/40 text-apex-green rounded-lg hover:bg-apex-green/10 transition-colors text-sm font-medium"
                   {...buttonHoverProps}
                 >
-                  {wikiSearchResult 
+                  {globalBikeResult
                     ? 'Edit details manually' 
                     : 'Enter details manually instead'}
                 </motion.button>
               )}
-              {wikiSearchQuery && showManualEntry && (
+              {searchQuery && showManualEntry && (
                 <motion.button
                   type="button"
                   onClick={() => {
@@ -356,7 +369,7 @@ export default function AddBikeModal({
 
           {/* Manual entry fields - always show when editing, or when no search query, or when search result found (so user can edit), or when user wants manual entry */}
           {/* Only show Add Bike button when required fields are visible and filled */}
-          {(editingBike || !wikiSearchQuery || wikiSearchResult || showManualEntry) && (
+          {(editingBike || !searchQuery || globalBikeResult || showManualEntry) && (
             <>
               <div>
                 <label className="block text-sm text-apex-white/60 mb-2">
@@ -482,7 +495,7 @@ export default function AddBikeModal({
 
         {/* Action buttons - sticky at bottom of modal */}
         {/* Only show buttons when manual entry is visible or editing */}
-        {(editingBike || !wikiSearchQuery || wikiSearchResult || showManualEntry) && (
+        {(editingBike || !searchQuery || globalBikeResult || showManualEntry) && (
           <div className="flex gap-3 pt-4 mt-4 border-t border-apex-white/10 shrink-0">
             <motion.button
               type="button"

@@ -359,22 +359,15 @@ export const useRideTracking = () => {
           logger.debug('RPC function succeeded:', { data });
         }
         
-        // If RPC function doesn't exist or fails, fall back to direct insert without geometry
+        // If RPC function doesn't exist, fall back to direct insert without geometry
+        // This provides resilience for new deployments or if the function is accidentally dropped
         if (error) {
           const isFunctionNotFound = 
             error.message?.includes('function') && 
             (error.message?.includes('does not exist') || error.message?.includes('not found'));
           
-          const isFunctionOverloadError = 
-            error.code === 'PGRST203' || 
-            (error.message?.includes('best candidate') || error.message?.includes('function overloading'));
-          
-          if (isFunctionNotFound || isFunctionOverloadError) {
-            if (isFunctionOverloadError) {
-              logger.warn('RPC function has ambiguous overloads. Inserting ride without route path. Please fix function overloading in Supabase.');
-            } else {
-              logger.warn('RPC function not found. Inserting ride without route path. Please create the RPC function in Supabase (see supabase_rpc_insert_ride_with_geometry.sql).');
-            }
+          if (isFunctionNotFound) {
+            logger.warn('RPC function not found. Inserting ride without route path. Please create the RPC function in Supabase.');
             
             // Fallback: insert without route_path
             const directResult = await supabase
@@ -387,7 +380,7 @@ export const useRideTracking = () => {
                 distance_km: Math.round(totalDistance * 100) / 100,
                 max_lean_left: Math.round(maxLeanLeft * 10) / 10,
                 max_lean_right: Math.round(maxLeanRight * 10) / 10,
-                route_path: null, // Can't insert geometry without working RPC function
+                route_path: null, // Can't insert geometry without RPC function
               })
               .select()
               .single();
@@ -395,8 +388,8 @@ export const useRideTracking = () => {
             data = directResult.data;
             error = directResult.error;
           } else {
+            // For other errors (permissions, network, etc.), don't fall back - let error propagate
             logger.error('RPC function failed with error:', error);
-            // Don't fall back on other errors - let the error propagate
             throw error;
           }
         }

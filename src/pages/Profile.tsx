@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useDiscord } from '../hooks/useDiscord';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { useAppUpdate } from '../hooks/useAppUpdate';
 import { useAppUpdateStore } from '../stores/useAppUpdateStore';
 import { useNavigate } from 'react-router-dom';
@@ -101,11 +102,7 @@ export default function Profile() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-apex-black flex items-center justify-center">
-        <div className="text-apex-white/60">Loading...</div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen text="Loading profile..." />;
   }
 
   return (
@@ -298,7 +295,7 @@ export default function Profile() {
 
             {isDiscordLoading ? (
               <div className="flex items-center justify-center py-4">
-                <div className="text-apex-white/60">Loading...</div>
+                <LoadingSpinner size="sm" />
               </div>
             ) : !isConnected ? (
               <div className="space-y-4">

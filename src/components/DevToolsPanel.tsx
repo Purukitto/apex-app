@@ -35,9 +35,9 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
   const notificationStore = useNotificationStore();
   const appUpdateStore = useAppUpdateStore();
 
-  // Intercept console methods
+  // Intercept console methods - always active in dev mode, not just when panel is open
   useEffect(() => {
-    if (!isOpen || !isDev()) return;
+    if (!isDev()) return;
 
     const originalLog = console.log;
     const originalError = console.error;
@@ -94,7 +94,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
       console.warn = originalWarn;
       console.info = originalInfo;
     };
-  }, [isOpen]);
+  }, []); // Run once on mount, not dependent on isOpen
 
   // Auto-scroll console to bottom
   useEffect(() => {

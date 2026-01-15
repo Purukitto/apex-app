@@ -345,26 +345,51 @@ export const useRideTracking = () => {
         data = rpcResult.data;
         error = rpcResult.error;
         
-        // If RPC function doesn't exist, fall back to direct insert without geometry
-        if (error && error.message?.includes('function') && error.message?.includes('does not exist')) {
-          console.warn('RPC function not found. Inserting ride without route path. Please create the RPC function in Supabase (see supabase_rpc_function.sql).');
-          const directResult = await supabase
-            .from('rides')
-            .insert({
-              bike_id: bikeId,
-              user_id: user.id,
-              start_time: startTime.toISOString(),
-              end_time: endTime.toISOString(),
-              distance_km: Math.round(totalDistance * 100) / 100,
-              max_lean_left: Math.round(maxLeanLeft), // Database expects int4, round to integer
-              max_lean_right: Math.round(maxLeanRight), // Database expects int4, round to integer
-              route_path: null, // Can't insert geometry without RPC function
-            })
-            .select()
-            .single();
+        // Log RPC result for debugging
+        if (error) {
+          console.error('RPC function error:', {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            fullError: error,
+          });
+        } else {
+          console.log('RPC function succeeded:', { data });
+        }
+        
+        // If RPC function doesn't exist or fails, fall back to direct insert without geometry
+        if (error) {
+          const isFunctionNotFound = 
+            error.message?.includes('function') && 
+            (error.message?.includes('does not exist') || error.message?.includes('not found'));
           
-          data = directResult.data;
-          error = directResult.error;
+          if (isFunctionNotFound) {
+            console.warn('RPC function not found. Inserting ride without route path. Please create the RPC function in Supabase (see supabase_rpc_insert_ride_with_geometry.sql).');
+            
+            // Fallback: insert without route_path
+            const directResult = await supabase
+              .from('rides')
+              .insert({
+                bike_id: bikeId,
+                user_id: user.id,
+                start_time: startTime.toISOString(),
+                end_time: endTime.toISOString(),
+                distance_km: Math.round(totalDistance * 100) / 100,
+                max_lean_left: Math.round(maxLeanLeft * 10) / 10,
+                max_lean_right: Math.round(maxLeanRight * 10) / 10,
+                route_path: null, // Can't insert geometry without RPC function
+              })
+              .select()
+              .single();
+            
+            data = directResult.data;
+            error = directResult.error;
+          } else {
+            console.error('RPC function failed with error:', error);
+            // Don't fall back on other errors - let the error propagate
+            throw error;
+          }
         }
       } else {
         // No route path, insert without geometry
@@ -393,8 +418,24 @@ export const useRideTracking = () => {
           message: error.message,
           details: error.details,
           hint: error.hint,
+          fullError: error,
         });
-        throw error;
+        
+        // Create a more detailed error message
+        let errorMessage = error.message || 'Failed to save ride';
+        if (error.details) {
+          errorMessage += `: ${error.details}`;
+        }
+        if (error.hint) {
+          errorMessage += ` (${error.hint})`;
+        }
+        
+        const detailedError = new Error(errorMessage);
+        (detailedError as unknown as { code?: string; details?: string; hint?: string }).code = error.code;
+        (detailedError as unknown as { code?: string; details?: string; hint?: string }).details = error.details;
+        (detailedError as unknown as { code?: string; details?: string; hint?: string }).hint = error.hint;
+        
+        throw detailedError;
       }
       return data;
     },
@@ -416,15 +457,16 @@ export const useRideTracking = () => {
       console.error('Save ride error:', error);
       console.error('Save ride error details:', JSON.stringify(error, null, 2));
       
-      // Show user-friendly error message
-      // Don't expose technical error details to users
+      // Show user-friendly error message with more context
       let errorMessage = 'Failed to save ride. Please try again.';
       
       if (error && typeof error === 'object') {
         const errorObj = error as Record<string, unknown>;
+        
         // Check for common user-friendly error patterns
         if ('message' in errorObj && typeof errorObj.message === 'string') {
           const msg = errorObj.message.toLowerCase();
+          
           // Map technical errors to user-friendly messages
           if (msg.includes('permission') || msg.includes('denied')) {
             errorMessage = 'Permission denied. Please check your account settings.';
@@ -434,7 +476,22 @@ export const useRideTracking = () => {
             errorMessage = 'Request timed out. Please try again.';
           } else if (msg.includes('authenticated') || msg.includes('auth')) {
             errorMessage = 'Session expired. Please sign in again.';
+          } else if (msg.includes('function') && msg.includes('does not exist')) {
+            errorMessage = 'Database function missing. Please contact support.';
+          } else if (msg.includes('violates') || msg.includes('constraint')) {
+            errorMessage = 'Invalid data. Please check your ride information.';
+          } else {
+            // Show the actual error message if it's user-friendly
+            errorMessage = errorObj.message as string;
           }
+        }
+        
+        // Include details/hint if available for debugging
+        if ('details' in errorObj && errorObj.details) {
+          console.error('Error details:', errorObj.details);
+        }
+        if ('hint' in errorObj && errorObj.hint) {
+          console.error('Error hint:', errorObj.hint);
         }
       }
       

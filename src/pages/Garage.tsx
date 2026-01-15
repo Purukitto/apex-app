@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Motorbike, X } from 'lucide-react';
 import { useBikes } from '../hooks/useBikes';
 import { useMaintenanceLogs } from '../hooks/useMaintenanceLogs';
+import LoadingSpinner from '../components/LoadingSpinner';
 import AddBikeModal from '../components/AddBikeModal';
 import MaintenanceLogModal from '../components/MaintenanceLogModal';
 import MaintenanceLogList from '../components/MaintenanceLogList';
@@ -120,11 +121,7 @@ export default function Garage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-white/60">Loading...</div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen text="Loading garage..." />;
   }
 
   const currentBike = bikes.length > 0 ? bikes[0] : null;

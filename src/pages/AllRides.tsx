@@ -25,6 +25,7 @@ import {
 } from '../lib/animations';
 import ConfirmModal from '../components/ConfirmModal';
 import RideMap from '../components/RideMap';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { useThemeColors } from '../hooks/useThemeColors';
 import type { Ride } from '../types/database';
 
@@ -299,11 +300,7 @@ export default function AllRides() {
   };
 
   if (isLoading && rides.length === 0) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-white/60">Loading rides...</div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen text="Loading rides..." />;
   }
 
   return (

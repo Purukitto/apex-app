@@ -46,20 +46,26 @@ export async function fetchRides(options: {
       countQuery = countQuery.eq('bike_id', bikeId);
     }
 
-    // Try to use RPC function first (if it exists)
+    // Try to use RPC function first (if it exists) with timeout
+    // Skip RPC if it doesn't exist to avoid slow loading
     try {
-      const { data: rpcData, error: rpcError } = await supabase.rpc('get_rides_with_geojson', {
-        p_user_id: user.id,
-        p_bike_id: bikeId || null,
-        p_limit: pageSize,
-        p_offset: from,
-      });
-
-      if (!rpcError && rpcData) {
+      const rpcResult = await Promise.race([
+        supabase.rpc('get_rides_with_geojson', {
+          p_user_id: user.id,
+          p_bike_id: bikeId || null,
+          p_limit: pageSize,
+          p_offset: from,
+        }),
+        new Promise<{ error: { message: string } }>((resolve) => {
+          setTimeout(() => resolve({ error: { message: 'RPC timeout' } }), 2000);
+        }),
+      ]) as Awaited<ReturnType<typeof supabase.rpc<'get_rides_with_geojson'>>> | { error: { message: string } };
+      
+      if ('data' in rpcResult && rpcResult.data && !rpcResult.error) {
         const [{ count }] = await Promise.all([countQuery]);
         
         // Process route_path from JSONB to GeoJSONLineString format
-        const processedRides = (rpcData || []).map((ride: Ride & { route_path?: unknown }) => {
+        const processedRides = (rpcResult.data || []).map((ride: Ride & { route_path?: unknown }) => {
           if (ride.route_path) {
             try {
               // route_path comes as JSONB, parse it if it's a string
@@ -77,8 +83,8 @@ export async function fetchRides(options: {
         return { rides: processedRides as Ride[], total: count || 0 };
       }
     } catch {
-      // RPC function doesn't exist, fall back to regular query
-      console.warn('RPC function get_rides_with_geojson not found, using fallback query. Please run supabase_rpc_get_rides_geojson.sql');
+      // RPC function doesn't exist or timed out, fall back to regular query
+      console.warn('RPC function get_rides_with_geojson not available, using fallback query');
     }
 
     // Fallback: regular query (route_path won't be available as GeoJSON)
@@ -110,17 +116,22 @@ export async function fetchRides(options: {
   }
 
   // Legacy limit-based query
-  // Try RPC function first
+  // Try RPC function first with timeout
   try {
-    const { data: rpcData, error: rpcError } = await supabase.rpc('get_rides_with_geojson', {
-      p_user_id: user.id,
-      p_bike_id: bikeId || null,
-      p_limit: limit || 10,
-      p_offset: 0,
-    });
-
-    if (!rpcError && rpcData) {
-      const processedRides = (rpcData || []).map((ride: Ride & { route_path?: unknown }) => {
+    const rpcResult = await Promise.race([
+      supabase.rpc('get_rides_with_geojson', {
+        p_user_id: user.id,
+        p_bike_id: bikeId || null,
+        p_limit: limit || 10,
+        p_offset: 0,
+      }),
+      new Promise<{ error: { message: string } }>((resolve) => {
+        setTimeout(() => resolve({ error: { message: 'RPC timeout' } }), 2000);
+      }),
+    ]) as Awaited<ReturnType<typeof supabase.rpc<'get_rides_with_geojson'>>> | { error: { message: string } };
+    
+    if ('data' in rpcResult && rpcResult.data && !rpcResult.error) {
+      const processedRides = (rpcResult.data || []).map((ride: Ride & { route_path?: unknown }) => {
         if (ride.route_path) {
           try {
             const routePath = typeof ride.route_path === 'string' 
@@ -137,7 +148,7 @@ export async function fetchRides(options: {
       return { rides: processedRides as Ride[] };
     }
   } catch {
-    console.warn('RPC function get_rides_with_geojson not found, using fallback query');
+    console.warn('RPC function get_rides_with_geojson not available, using fallback query');
   }
 
   // Fallback: regular query

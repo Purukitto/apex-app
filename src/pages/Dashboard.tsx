@@ -78,11 +78,7 @@ export default function Dashboard() {
   }, [pullDistance]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-white/60">Loading...</div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen text="Loading dashboard..." />;
   }
 
   // Calculate total distance across all bikes
@@ -283,7 +279,7 @@ export default function Dashboard() {
               <div className="animate-spin mx-auto mb-3">
                 <RefreshCw size={32} className="text-white/20" />
               </div>
-              <p className="text-sm text-white/40">Loading rides...</p>
+              <LoadingSpinner size="sm" text="Loading rides..." />
             </div>
           ) : rides && rides.length > 0 ? (
             <motion.div

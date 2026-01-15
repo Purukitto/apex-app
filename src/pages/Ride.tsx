@@ -5,6 +5,7 @@ import { useRideTracking } from '../hooks/useRideTracking';
 import { useBikes } from '../hooks/useBikes';
 import { useRideStore } from '../stores/useRideStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 import { Motorbike, Gauge, Copy, Check } from 'lucide-react';
 import { apexToast } from '../lib/toast';
@@ -572,11 +573,7 @@ export default function Ride() {
 
   // Loading state
   if (bikesLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-apex-black">
-        <p className="text-apex-white/60">Loading...</p>
-      </div>
-    );
+    return <LoadingSpinner fullScreen text="Loading ride recorder..." />;
   }
 
   // No bikes state

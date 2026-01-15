@@ -17,6 +17,118 @@ export interface SearchBikeParams {
  * @returns Bike specification with image URL, or null if not found
  */
 /**
+ * Search for multiple bikes in the global_bike_specs database
+ * Returns array of matching bikes sorted by relevance
+ * @param params - Search parameters
+ * @param limit - Maximum number of results (default: 5)
+ * @returns Array of bike specifications, or empty array if none found
+ */
+export async function searchGlobalBikesMultiple(
+  params: SearchBikeParams,
+  limit: number = 5
+): Promise<GlobalBikeSpec[]> {
+  const results = await searchGlobalBikesInternal(params, limit);
+  return results || [];
+}
+
+/**
+ * Internal search function that returns array of scored results
+ */
+async function searchGlobalBikesInternal(
+  params: SearchBikeParams,
+  limit: number = 5
+): Promise<GlobalBikeSpec[] | null> {
+  const { make, model, query, year } = params;
+
+  let searchQueryString = '';
+
+  if (query && !make && !model) {
+    searchQueryString = query.trim().toLowerCase();
+  } else {
+    if (make) {
+      searchQueryString += make.trim().toLowerCase();
+    }
+    if (model) {
+      if (searchQueryString) searchQueryString += ' ';
+      searchQueryString += model.trim().toLowerCase();
+    }
+    if (year) {
+      if (searchQueryString) searchQueryString += ' ';
+      searchQueryString += year.toString();
+    }
+  }
+
+  if (!searchQueryString.trim()) {
+    logger.warn('searchGlobalBikesInternal: make, model, query, or year is required');
+    return null;
+  }
+
+  try {
+    let dbQuery = supabase
+      .from('global_bike_specs')
+      .select('*')
+      .lt('report_count', 3);
+
+    dbQuery = dbQuery.ilike('search_text', `%${searchQueryString.trim()}%`);
+
+    const { data, error } = await dbQuery
+      .order('make', { ascending: true })
+      .order('model', { ascending: true })
+      .limit(limit);
+
+    if (error) {
+      logger.error('searchGlobalBikesInternal: Query error', error);
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      return null;
+    }
+
+    // Score and rank results
+    const searchQueryLower = searchQueryString.trim().toLowerCase();
+    const searchWords = searchQueryLower.split(/\s+/).filter(w => w.length > 0);
+    
+    const scoredResults = data.map((bike) => {
+      let score = 0;
+      const bikeSearchText = bike.search_text?.toLowerCase() || '';
+
+      if (bikeSearchText.includes(searchQueryLower)) {
+        if (bikeSearchText.startsWith(searchQueryLower)) {
+          score += 200;
+        } else {
+          score += 150;
+        }
+      }
+
+      let wordsMatched = 0;
+      for (const word of searchWords) {
+        if (bikeSearchText.includes(word)) {
+          wordsMatched++;
+        }
+      }
+      score += wordsMatched * 20;
+
+      if (bike.is_verified) {
+        score += 10;
+      }
+
+      if (bike.year) {
+        score += 5;
+      }
+
+      return { bike: bike as GlobalBikeSpec, score };
+    });
+
+    scoredResults.sort((a, b) => b.score - a.score);
+    return scoredResults.map(r => r.bike);
+  } catch (error) {
+    logger.error('searchGlobalBikesInternal: Error searching for bikes', error);
+    return null;
+  }
+}
+
+/**
  * Search for a single bike in the global_bike_specs database
  * Returns the best matching bike
  */
@@ -52,88 +164,14 @@ export async function searchGlobalBikes(
   }
 
   try {
-    // Build search query using the combined search_text field
-    // Simple approach: search search_text directly with user's query
-    // No parsing, no year extraction - just direct text matching
-    // This works for any order: "dominar 2022" or "2022 dominar" both work
-    let dbQuery = supabase
-      .from('global_bike_specs')
-      .select('*')
-      .lt('report_count', 3); // Only get bikes that haven't been reported too many times
-
-    // Use search_text field for efficient full-text search
-    // ILIKE with % on both sides allows non-ordered matching
-    // "dominar 2022" will match "bajaj dominar 250 2022" because search_text contains both words
-    dbQuery = dbQuery.ilike('search_text', `%${searchQueryString.trim()}%`);
-
-    // Order by relevance: exact matches first, then partial matches
-    // Get multiple results and pick the best match
-    const { data, error } = await dbQuery
-      .order('make', { ascending: true })
-      .order('model', { ascending: true })
-      .limit(params.limit || 20); // Get top matches
-
-    if (error) {
-      logger.error('searchGlobalBikes: Query error', error);
-      throw error;
-    }
-
-    if (!data || data.length === 0) {
+    // Use internal function to get scored results, then take the best one
+    const results = await searchGlobalBikesInternal(params, 1);
+    if (!results || results.length === 0) {
       logger.debug('searchGlobalBikes: No bike found', { query: searchQueryString });
       return null;
     }
 
-    // Score and rank results for best match
-    // Simple scoring: prioritize exact phrase matches, then word matches
-    const searchQueryLower = searchQueryString.trim().toLowerCase();
-    const searchWords = searchQueryLower.split(/\s+/).filter(w => w.length > 0);
-    
-    const scoredResults = data.map((bike) => {
-      let score = 0;
-      const bikeSearchText = bike.search_text?.toLowerCase() || '';
-
-      // Exact phrase match gets highest score
-      if (bikeSearchText.includes(searchQueryLower)) {
-        if (bikeSearchText.startsWith(searchQueryLower)) {
-          score += 200; // Starts with entire query
-        } else {
-          score += 150; // Contains entire query
-        }
-      }
-
-      // Count how many search words are found in search_text
-      let wordsMatched = 0;
-      for (const word of searchWords) {
-        if (bikeSearchText.includes(word)) {
-          wordsMatched++;
-        }
-      }
-      // More words matched = higher score
-      score += wordsMatched * 20;
-
-      // Prefer verified bikes
-      if (bike.is_verified) {
-        score += 10;
-      }
-
-      // Prefer more recent years (if year is in search)
-      if (bike.year) {
-        score += 5; // Small bonus for having a year
-      }
-
-      return { bike: bike as GlobalBikeSpec, score };
-    });
-
-    // Sort by score descending and get the best match
-    scoredResults.sort((a, b) => b.score - a.score);
-    const bestMatch = scoredResults[0]?.bike;
-
-    if (!bestMatch) {
-      logger.debug('searchGlobalBikes: No valid match found');
-      return null;
-    }
-
-    const bike = bestMatch;
+    const bike = results[0];
 
     // Self-healing: If bike found but image_url is NULL, fetch and update
     if (!bike.image_url) {

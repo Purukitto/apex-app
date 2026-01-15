@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Search, Loader2, Database } from 'lucide-react';
+import { X, Search, Loader2, Database, CheckCircle2, AlertTriangle, Flag } from 'lucide-react';
 import type { Bike } from '../types/database';
+import type { GlobalBikeSpec } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
-import { buttonHoverProps } from '../lib/animations';
-import { searchGlobalBikes } from '../services/bikeLibrary';
+import { buttonHoverProps, cardHoverProps } from '../lib/animations';
+import { searchGlobalBikesMultiple, reportBikeSpec } from '../services/bikeLibrary';
 import { logger } from '../lib/logger';
 import { useKeyboard } from '../hooks/useKeyboard';
 
@@ -34,9 +35,10 @@ export default function AddBikeModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [globalBikeResult, setGlobalBikeResult] = useState<Awaited<ReturnType<typeof searchGlobalBikes>> | null>(null);
+  const [globalBikeResults, setGlobalBikeResults] = useState<GlobalBikeSpec[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showManualEntry, setShowManualEntry] = useState(false);
+  const [reportingBikeId, setReportingBikeId] = useState<string | null>(null);
   const { isKeyboardVisible, keyboardHeight } = useKeyboard();
   const formRef = useRef<HTMLFormElement>(null);
   const modalContentRef = useRef<HTMLDivElement>(null);
@@ -70,40 +72,29 @@ export default function AddBikeModal({
     }
     setError(null);
     setSearchQuery('');
-    setGlobalBikeResult(null);
+    setGlobalBikeResults([]);
   }, [editingBike, isOpen]);
 
   // Debounced search: Search global bike database
   useEffect(() => {
     if (editingBike || !searchQuery.trim() || searchQuery.length < 3) {
-      setGlobalBikeResult(null);
+      setGlobalBikeResults([]);
       return;
     }
 
     const timeoutId = setTimeout(async () => {
       setIsSearching(true);
-      setGlobalBikeResult(null);
+      setGlobalBikeResults([]);
 
       try {
-        // Search global database with the full query string
-        // The search function will handle parsing and fuzzy matching
-        const globalResult = await searchGlobalBikes({ query: searchQuery });
-        if (globalResult) {
-          setGlobalBikeResult(globalResult);
-          // Auto-fill form data from global database
-          setFormData((prev) => ({
-            ...prev,
-            make: globalResult.make,
-            model: globalResult.model,
-            year: globalResult.year?.toString() || prev.year,
-            image_url: globalResult.image_url || prev.image_url,
-            specs_engine: globalResult.displacement || prev.specs_engine,
-            specs_power: globalResult.power || prev.specs_power,
-          }));
+        // Search global database and get multiple results (limit 5)
+        const results = await searchGlobalBikesMultiple({ query: searchQuery }, 5);
+        if (results && results.length > 0) {
+          setGlobalBikeResults(results);
         }
       } catch (error) {
         logger.error('Search error:', error);
-        setGlobalBikeResult(null);
+        setGlobalBikeResults([]);
       } finally {
         setIsSearching(false);
       }
@@ -111,6 +102,44 @@ export default function AddBikeModal({
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery, editingBike]);
+
+  // Handle selecting a bike from the results list
+  const handleSelectBike = (bike: GlobalBikeSpec) => {
+    setFormData((prev) => ({
+      ...prev,
+      make: bike.make,
+      model: bike.model,
+      year: bike.year?.toString() || prev.year,
+      image_url: bike.image_url || prev.image_url,
+      specs_engine: bike.displacement || prev.specs_engine,
+      specs_power: bike.power || prev.specs_power,
+    }));
+    setShowManualEntry(true);
+  };
+
+  // Handle reporting bad data
+  const handleReportBike = async (bikeId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent selecting the bike when clicking report
+    setReportingBikeId(bikeId);
+    try {
+      const success = await reportBikeSpec(bikeId);
+      if (success) {
+        apexToast.success('Bike reported');
+        // Refresh results to show updated report_count
+        const results = await searchGlobalBikesMultiple({ query: searchQuery }, 5);
+        if (results) {
+          setGlobalBikeResults(results);
+        }
+      } else {
+        apexToast.error('Failed to report bike');
+      }
+    } catch (error) {
+      logger.error('Error reporting bike:', error);
+      apexToast.error('Failed to report bike');
+    } finally {
+      setReportingBikeId(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -290,69 +319,105 @@ export default function AddBikeModal({
                 )}
               </div>
               
-              {/* Global Database Result */}
-              {globalBikeResult && (
-                <div className="mt-2 p-3 bg-gradient-to-br from-white/5 to-transparent border border-apex-green/40 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    {globalBikeResult.image_url && (
-                      <img
-                        src={globalBikeResult.image_url}
-                        alt={`${globalBikeResult.make} ${globalBikeResult.model}`}
-                        className="w-16 h-16 object-cover rounded border border-apex-white/20"
-                      />
-                    )}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Database className="text-apex-green" size={14} />
-                        <p className="text-apex-white font-semibold text-sm">
-                          {globalBikeResult.make} {globalBikeResult.model}
-                          {globalBikeResult.year && ` (${globalBikeResult.year})`}
-                        </p>
+              {/* Global Database Results List */}
+              {globalBikeResults.length > 0 && (
+                <div className="mt-2 space-y-2 max-h-64 overflow-y-auto">
+                  {globalBikeResults.map((bike) => (
+                    <motion.div
+                      key={bike.id}
+                      className="p-3 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg cursor-pointer hover:border-apex-green/40 transition-colors group"
+                      onClick={() => handleSelectBike(bike)}
+                      {...cardHoverProps}
+                    >
+                      <div className="flex items-start gap-3">
+                        {bike.image_url && (
+                          <img
+                            src={bike.image_url}
+                            alt={`${bike.make} ${bike.model}`}
+                            className="w-12 h-12 object-cover rounded border border-apex-white/20 shrink-0"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Database className="text-apex-green shrink-0" size={14} />
+                            <p className="text-apex-white font-semibold text-sm truncate">
+                              {bike.make} {bike.model}
+                              {bike.year && ` (${bike.year})`}
+                            </p>
+                            {bike.is_verified && (
+                              <div title="Verified">
+                                <CheckCircle2 className="text-apex-green shrink-0" size={14} />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
+                            {bike.category && (
+                              <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded">
+                                {bike.category}
+                              </span>
+                            )}
+                            {bike.displacement && (
+                              <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded font-mono">
+                                {bike.displacement}
+                              </span>
+                            )}
+                            {bike.power && (
+                              <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded font-mono">
+                                {bike.power}
+                              </span>
+                            )}
+                            {bike.report_count > 0 && (
+                              <span className="text-apex-white/40 text-xs flex items-center gap-1">
+                                <AlertTriangle size={12} />
+                                {bike.report_count} report{bike.report_count !== 1 ? 's' : ''}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <motion.button
+                          type="button"
+                          onClick={(e) => handleReportBike(bike.id, e)}
+                          disabled={reportingBikeId === bike.id}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-apex-white/60 hover:text-apex-red rounded hover:bg-apex-red/10 shrink-0"
+                          title="Report incorrect data"
+                          {...buttonHoverProps}
+                        >
+                          {reportingBikeId === bike.id ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Flag size={14} />
+                          )}
+                        </motion.button>
                       </div>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {globalBikeResult.category && (
-                          <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded">
-                            {globalBikeResult.category}
-                          </span>
-                        )}
-                        {globalBikeResult.displacement && (
-                          <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded font-mono">
-                            {globalBikeResult.displacement}
-                          </span>
-                        )}
-                        {globalBikeResult.power && (
-                          <span className="text-apex-white/60 text-xs px-2 py-0.5 bg-apex-white/5 rounded font-mono">
-                            {globalBikeResult.power}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                    </motion.div>
+                  ))}
                 </div>
               )}
 
-              {searchQuery.length >= 3 && !isSearching && !globalBikeResult && (
+              {searchQuery.length >= 3 && !isSearching && globalBikeResults.length === 0 && (
                 <p className="mt-2 text-apex-white/40 text-xs">
                   No results found. You can still enter bike details manually.
                 </p>
               )}
+              
+              {/* Manual entry button - show when there are results OR no results */}
               {searchQuery && !showManualEntry && (
                 <motion.button
                   type="button"
                   onClick={() => {
                     setShowManualEntry(true);
-                    // Don't clear search query - let user see what they searched for
-                    // They can still edit the auto-filled fields
                   }}
                   className="mt-3 w-full px-4 py-2 border border-apex-green/40 text-apex-green rounded-lg hover:bg-apex-green/10 transition-colors text-sm font-medium"
                   {...buttonHoverProps}
                 >
-                  {globalBikeResult
-                    ? 'Edit details manually' 
-                    : 'Enter details manually instead'}
+                  {globalBikeResults.length > 0 
+                    ? 'Enter details manually instead' 
+                    : 'Enter details manually'}
                 </motion.button>
               )}
-              {searchQuery && showManualEntry && (
+              
+              {/* Back to search results button - only show when manual entry is active AND there are results */}
+              {searchQuery && showManualEntry && globalBikeResults.length > 0 && (
                 <motion.button
                   type="button"
                   onClick={() => {
@@ -367,9 +432,13 @@ export default function AddBikeModal({
             </div>
           )}
 
-          {/* Manual entry fields - always show when editing, or when no search query, or when search result found (so user can edit), or when user wants manual entry */}
-          {/* Only show Add Bike button when required fields are visible and filled */}
-          {(editingBike || !searchQuery || globalBikeResult || showManualEntry) && (
+          {/* Manual entry fields - only show when:
+              1. Editing a bike
+              2. No search query (user can type directly)
+              3. User selected a bike from results (showManualEntry = true)
+              4. User clicked manual entry button
+          */}
+          {(editingBike || !searchQuery || showManualEntry) && (
             <>
               <div>
                 <label className="block text-sm text-apex-white/60 mb-2">
@@ -495,7 +564,7 @@ export default function AddBikeModal({
 
         {/* Action buttons - sticky at bottom of modal */}
         {/* Only show buttons when manual entry is visible or editing */}
-        {(editingBike || !searchQuery || globalBikeResult || showManualEntry) && (
+        {(editingBike || !searchQuery || showManualEntry) && (
           <div className="flex gap-3 pt-4 mt-4 border-t border-apex-white/10 shrink-0">
             <motion.button
               type="button"

@@ -180,7 +180,16 @@ export default function MaintenanceLogModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{
+        padding: '1rem',
+        paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
+        paddingBottom: `calc(1rem + env(safe-area-inset-bottom, 0px))`,
+        paddingLeft: `calc(1rem + env(safe-area-inset-left, 0px))`,
+        paddingRight: `calc(1rem + env(safe-area-inset-right, 0px))`,
+      }}
+    >
       <div
         className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm"
         onClick={onClose}

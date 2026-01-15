@@ -62,7 +62,16 @@ export default function ConfirmModal({
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{
+              padding: '1rem',
+              paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
+              paddingBottom: `calc(1rem + env(safe-area-inset-bottom, 0px))`,
+              paddingLeft: `calc(1rem + env(safe-area-inset-left, 0px))`,
+              paddingRight: `calc(1rem + env(safe-area-inset-right, 0px))`,
+            }}
+          >
             <motion.div
               className="bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md relative z-50"
               initial={{ opacity: 0, scale: 0.95, y: 20 }}

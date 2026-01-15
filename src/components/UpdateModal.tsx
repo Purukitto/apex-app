@@ -106,7 +106,16 @@ export default function UpdateModal({
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pb-24">
+          <div 
+            className="fixed inset-0 z-[100] flex items-center justify-center"
+            style={{
+              padding: '1rem',
+              paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
+              paddingBottom: `calc(6rem + env(safe-area-inset-bottom, 0px))`,
+              paddingLeft: `calc(1rem + env(safe-area-inset-left, 0px))`,
+              paddingRight: `calc(1rem + env(safe-area-inset-right, 0px))`,
+            }}
+          >
             <motion.div
               className="bg-apex-black border border-apex-green/40 rounded-lg p-6 w-full max-w-lg relative z-[100] max-h-[85vh] flex flex-col"
               initial={{ opacity: 0, scale: 0.95, y: 20 }}

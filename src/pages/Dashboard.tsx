@@ -11,6 +11,7 @@ import { useNotificationHandler } from '../components/layout/NotificationContext
 import { useThemeColors } from '../hooks/useThemeColors';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useQueryClient } from '@tanstack/react-query';
+import { Capacitor } from '@capacitor/core';
 
 export default function Dashboard() {
   const { bikes, isLoading } = useBikes();
@@ -54,8 +55,13 @@ export default function Dashboard() {
     }
   }, [refetchRides, queryClient, isRefreshing]);
 
-  // Pull-to-refresh touch handlers
+  // Pull-to-refresh touch handlers - app-only (native platforms)
   useEffect(() => {
+    // Only enable pull-to-refresh on native platforms
+    if (!Capacitor.isNativePlatform()) {
+      return;
+    }
+
     // Find the main scroll container (from MainLayout)
     const mainContainer = document.querySelector('main');
     if (!mainContainer) return;
@@ -163,7 +169,10 @@ export default function Dashboard() {
       {/* Pull-to-refresh indicator */}
       {(pullDistance > 0 || isRefreshing) && (
         <motion.div
-          className="fixed top-0 left-0 right-0 z-50 bg-apex-black flex items-center justify-center pt-4 pb-2"
+          className="fixed top-0 left-0 right-0 z-50 bg-apex-black flex items-center justify-center pb-2"
+          style={{
+            paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
+          }}
           initial={{ opacity: 0, y: -20 }}
           animate={{
             opacity: isRefreshing ? 1 : Math.min(pullDistance / 80, 1),

@@ -73,7 +73,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
       // This ensures setState is called outside of the render phase
       setTimeout(() => {
         setConsoleLogs(prev => [
-          ...prev.slice(-99), // Keep last 100 logs
+          ...prev.slice(-9999), // Keep last 10000 logs
           {
             id: `${Date.now()}-${Math.random()}`,
             type,

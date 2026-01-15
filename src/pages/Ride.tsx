@@ -639,7 +639,7 @@ export default function Ride() {
       />
 
       <motion.div
-        className={`bg-apex-black ${isRecording ? 'fixed inset-0 p-0 overflow-hidden' : 'h-full p-4 md:p-6 overflow-y-auto'}`}
+        className={`bg-apex-black ${isRecording ? 'fixed inset-0 p-0 overflow-hidden z-0' : 'h-full p-4 md:p-6 overflow-y-auto'}`}
         style={isRecording ? {
           paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',

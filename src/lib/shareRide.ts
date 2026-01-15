@@ -4,10 +4,55 @@ import { Capacitor } from '@capacitor/core';
 import type { Ride } from '../types/database';
 import type { Bike } from '../types/database';
 import { logger } from './logger';
+import { createRoot, Root } from 'react-dom/client';
+import React from 'react';
+import RideMap from '../components/RideMap';
+
+/**
+ * Wait for map tiles to load
+ */
+function waitForMapTiles(mapContainer: HTMLElement, timeout = 5000): Promise<void> {
+  return new Promise((resolve) => {
+    const startTime = Date.now();
+    
+    const checkTiles = () => {
+      // Check if Leaflet map container exists
+      const leafletContainer = mapContainer.querySelector('.leaflet-container');
+      if (!leafletContainer) {
+        if (Date.now() - startTime > timeout) {
+          // Resolve anyway - component might still render
+          resolve();
+          return;
+        }
+        setTimeout(checkTiles, 100);
+        return;
+      }
+
+      // Check for any tile images (loaded or loading)
+      const allTiles = leafletContainer.querySelectorAll('img.leaflet-tile');
+      const loadedTiles = leafletContainer.querySelectorAll('img.leaflet-tile-loaded');
+      
+      // If we have tiles and at least some are loaded, or if we've waited long enough
+      if (allTiles.length > 0 && (loadedTiles.length > 0 || Date.now() - startTime > 2000)) {
+        // Give a bit more time for all tiles to fully render
+        setTimeout(() => resolve(), 500);
+      } else {
+        if (Date.now() - startTime > timeout) {
+          // Resolve anyway if timeout - map might still render
+          resolve();
+          return;
+        }
+        setTimeout(checkTiles, 100);
+      }
+    };
+
+    checkTiles();
+  });
+}
 
 /**
  * Generate a shareable image for a ride (Strava-style)
- * Creates an image with ride stats and styling
+ * Creates an image with ride stats and styling, including map if route data is available
  */
 export async function generateRideShareImage(
   ride: Ride,
@@ -52,6 +97,17 @@ export async function generateRideShareImage(
   const apexWhite = getComputedStyle(root).getPropertyValue('--color-apex-white').trim() || '#E2E2E2';
   const apexGreen = getComputedStyle(root).getPropertyValue('--color-apex-green').trim() || '#00FF41';
 
+  // Check if route data is available
+  const hasRoute = ride.route_path && 
+                   ride.route_path.coordinates && 
+                   Array.isArray(ride.route_path.coordinates) && 
+                   ride.route_path.coordinates.length > 0;
+
+  // Convert route coordinates from [lng, lat] to [lat, lng] for RideMap
+  const routeCoordinates: [number, number][] = hasRoute
+    ? ride.route_path.coordinates.map(([lng, lat]: [number, number]) => [lat, lng] as [number, number])
+    : [];
+
   // Create a temporary container for the image
   const container = document.createElement('div');
   container.style.position = 'fixed';
@@ -93,12 +149,69 @@ export async function generateRideShareImage(
   header.appendChild(subtitle);
   container.appendChild(header);
 
+  // Map section (if route available) - Strava-style: map at top
+  let mapContainer: HTMLElement | null = null;
+  let mapRoot: Root | null = null;
+  
+  if (hasRoute && routeCoordinates.length > 0) {
+    try {
+      const mapWrapper = document.createElement('div');
+      mapWrapper.style.width = '100%';
+      mapWrapper.style.height = '400px';
+      mapWrapper.style.marginTop = '40px';
+      mapWrapper.style.marginBottom = '40px';
+      mapWrapper.style.borderRadius = '12px';
+      mapWrapper.style.overflow = 'hidden';
+      // Border with 20% opacity using CSS color-mix or fallback
+      if (apexWhite.startsWith('#')) {
+        const borderColor = apexWhite.replace('#', '');
+        const r = parseInt(borderColor.substring(0, 2), 16);
+        const g = parseInt(borderColor.substring(2, 4), 16);
+        const b = parseInt(borderColor.substring(4, 6), 16);
+        mapWrapper.style.border = `1px solid rgba(${r}, ${g}, ${b}, 0.2)`;
+      } else {
+        // Fallback for non-hex colors
+        mapWrapper.style.border = '1px solid rgba(226, 226, 226, 0.2)';
+      }
+      mapWrapper.style.position = 'relative';
+      mapWrapper.style.zIndex = '1';
+      mapWrapper.id = 'share-map-container';
+      
+      container.appendChild(mapWrapper);
+      mapContainer = mapWrapper;
+
+      // Render RideMap component
+      mapRoot = createRoot(mapWrapper);
+      mapRoot.render(
+        React.createElement(RideMap, {
+          coordinates: routeCoordinates,
+          interactive: false,
+          height: '400px',
+          className: 'w-full',
+        })
+      );
+
+      // Wait for map tiles to load
+      await waitForMapTiles(mapWrapper, 5000).catch((error) => {
+        logger.debug('Map tiles loading timeout or error:', error);
+        // Continue anyway - map might still render
+      });
+    } catch (error) {
+      logger.debug('Error rendering map for share image:', error);
+      // Remove map container if there was an error
+      if (mapContainer && mapContainer.parentNode) {
+        mapContainer.parentNode.removeChild(mapContainer);
+      }
+      mapContainer = null;
+    }
+  }
+
   // Stats section
   const statsContainer = document.createElement('div');
   statsContainer.style.display = 'grid';
   statsContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
   statsContainer.style.gap = '40px';
-  statsContainer.style.marginTop = '60px';
+  statsContainer.style.marginTop = hasRoute ? '0' : '60px';
   statsContainer.style.marginBottom = '60px';
 
   // Distance stat
@@ -153,18 +266,28 @@ export async function generateRideShareImage(
       useCORS: true,
       width: 1080,
       height: 1080,
+      allowTaint: false,
+      foreignObjectRendering: true,
     });
 
     // Convert to data URL
     const dataUrl = canvas.toDataURL('image/png', 1.0);
     
     // Clean up
+    if (mapRoot) {
+      mapRoot.unmount();
+    }
     document.body.removeChild(container);
     
     return dataUrl;
   } catch (error) {
     // Clean up on error
-    document.body.removeChild(container);
+    if (mapRoot) {
+      mapRoot.unmount();
+    }
+    if (container.parentNode) {
+      document.body.removeChild(container);
+    }
     throw error;
   }
 }

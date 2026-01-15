@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.14.1](https://github.com/Purukitto/apex-app/compare/v0.14.0...v0.14.1) (2026-01-15)
+
+
+### Features
+
+* **AddBikeModal:** enhance keyboard handling and modal layout adjustments ([8a1a142](https://github.com/Purukitto/apex-app/commit/8a1a1425d8bf8bdf4e98c8922d02103b09f09013))
+* **AddBikeModal:** improve user experience with keyboard handling and form validation ([a94f36f](https://github.com/Purukitto/apex-app/commit/a94f36f46f3b8c1c8fe10d4f330fe3a43e8458dd))
+
+
+### Bug Fixes
+
+* improve Add Bike modal keyboard handling and UX ([c1f9d13](https://github.com/Purukitto/apex-app/commit/c1f9d13ac013debbd1f328feba05493c3b7d0d68))
+
+
+### Code Refactoring
+
+* **AddBikeModal:** enhance keyboard handling and scrolling behavior ([6c1f8b6](https://github.com/Purukitto/apex-app/commit/6c1f8b61e0ea089c247d29209412ee8ba2ab4697))
+
 ## [0.14.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.14.0) (2026-01-15)
 
 

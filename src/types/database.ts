@@ -79,3 +79,20 @@ export type ServiceHistory = {
   notes?: string; // nullable
   created_at: string;
 };
+
+export type GlobalBikeSpec = {
+  id: string;
+  make: string;
+  model: string;
+  year: number | null;
+  category: string | null;
+  displacement: string | null;
+  power: string | null;
+  torque: string | null;
+  image_url: string | null;
+  is_verified: boolean;
+  report_count: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};

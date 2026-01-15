@@ -137,3 +137,8 @@ body {
 .hover-border-theme:hover {
   border-color: var(--color-apex-green-highlight, rgba(114, 145, 60, 0.4)) !important;
 }
+
+/* Apex Dark Map Style - Inverts OSM tiles to dark theme */
+.dark-map-tiles {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}

@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.13.2](https://github.com/Purukitto/apex-app/compare/v0.13.1...v0.13.2) (2026-01-15)
+
+
+### Features
+
+* **dependencies:** add loglevel package for improved logging capabilities ([ebe189b](https://github.com/Purukitto/apex-app/commit/ebe189b9bcdadafd5ac2b2c62ee6e218cb52d329))
+* **logging:** implement centralized logging system with ApexLogger ([fbcb243](https://github.com/Purukitto/apex-app/commit/fbcb2439d6e079578ad887fe69c23f07ef4f095d))
+* **rules:** update core instructions to include mandatory logging standards ([828f401](https://github.com/Purukitto/apex-app/commit/828f4015ad327c532ab085bd760affb5d578878d))
+
+
+### Bug Fixes
+
+* improve log export functionality in DevTools panel ([dfafcbf](https://github.com/Purukitto/apex-app/commit/dfafcbf10d4c163c00166b9796f5820146564f44))
+
+
+### Code Refactoring
+
+* replace all console.* calls with logger ([ab5d73b](https://github.com/Purukitto/apex-app/commit/ab5d73bec9ca6f78506f7fefffafea6208b4b153))
+
+
+### Documentation
+
+* update notification rules to use logger instead of console ([20135bc](https://github.com/Purukitto/apex-app/commit/20135bcf70041c2d38f43f5b83f24b197a9fc6c3))
+
 ### [0.13.1](https://github.com/Purukitto/apex-app/compare/v0.13.0...v0.13.1) (2026-01-15)
 
 

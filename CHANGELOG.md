@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.13.1](https://github.com/Purukitto/apex-app/compare/v0.13.0...v0.13.1) (2026-01-15)
+
+
+### Features
+
+* **Dashboard:** enhance pull-to-refresh functionality and loading experience ([2a5ddcb](https://github.com/Purukitto/apex-app/commit/2a5ddcbb182bca4669abc2a12801486996661485))
+* **Dashboard:** enhance ride card interactivity and layout ([9358bce](https://github.com/Purukitto/apex-app/commit/9358bcece93332b393de58d2701016fee0016ae1))
+* **DebugPanel:** introduce DebugPanel component for development tools ([b43afa6](https://github.com/Purukitto/apex-app/commit/b43afa648bc1feba580108dec3e2052b36726703))
+* **Map:** improve z-index management and isolation for Leaflet maps ([d2be942](https://github.com/Purukitto/apex-app/commit/d2be9422a0533be488f35cb44e97524f59b36d90))
+* **Profile:** add OpenStreetMap attribution and hide Leaflet control ([6dd4720](https://github.com/Purukitto/apex-app/commit/6dd4720a52010d3ebeb72e703e097e68e9576ec7))
+* **RideMap:** enhance interactivity and scrolling behavior for maps ([1fb62d4](https://github.com/Purukitto/apex-app/commit/1fb62d42d40aaa4871abfb95f11d0046ff26ed37))
+
+
+### Code Refactoring
+
+* **MainActivity:** simplify onCreate method and remove fullscreen UI handling ([9a3789c](https://github.com/Purukitto/apex-app/commit/9a3789ce2e3d0f2d63766359b95600d6b91497c4))
+* **modals:** enhance padding and layout for better responsiveness ([e172aeb](https://github.com/Purukitto/apex-app/commit/e172aebcaa62db7071f6962155525a9e0fc1fa17))
+
 ## [0.13.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.13.0) (2026-01-15)
 
 

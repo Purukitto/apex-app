@@ -165,3 +165,8 @@ body {
   position: relative;
   z-index: 2;
 }
+
+/* Hide Leaflet attribution control - attribution moved to Profile page */
+.leaflet-control-attribution {
+  display: none !important;
+}

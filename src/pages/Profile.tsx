@@ -414,6 +414,18 @@ export default function Profile() {
             <p className="text-sm text-apex-white/40 font-mono">
               v{getAppVersion()}
             </p>
+            <p className="text-xs text-apex-white/30 font-mono mt-2">
+              Maps ©{' '}
+              <a
+                href="https://www.openstreetmap.org/copyright"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline transition-colors"
+              >
+                OpenStreetMap
+              </a>{' '}
+              contributors
+            </p>
           </motion.div>
         </motion.div>
       </motion.div>

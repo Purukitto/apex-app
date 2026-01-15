@@ -58,7 +58,7 @@ function calculateHealth(
       health = Math.min(health, timeHealth);
     } else {
       // No service date means service has never been done - health should be 0%
-      // This applies to items like Insurance that require an initial setup
+      // This applies to time-based maintenance items that require an initial setup
       health = 0;
     }
   }

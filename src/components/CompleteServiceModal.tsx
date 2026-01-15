@@ -122,7 +122,7 @@ export default function CompleteServiceModal({
               htmlFor="serviceOdo"
               className="block text-sm font-semibold text-apex-white mb-2"
             >
-              Odometer Reading (km)
+              Odometer Reading at Time of Service (km)
             </label>
             <input
               id="serviceOdo"
@@ -137,7 +137,7 @@ export default function CompleteServiceModal({
               disabled={isSubmitting}
             />
             <p className="text-xs text-apex-white/40 mt-1">
-              Current odometer: {bike.current_odo.toLocaleString()} km
+              Current odometer: {bike.current_odo.toLocaleString()} km (pre-filled, adjust if different)
             </p>
           </div>
 

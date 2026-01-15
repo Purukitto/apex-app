@@ -287,6 +287,7 @@ export async function initializeDefaultSchedules(bikeId: string): Promise<void> 
   }
 
   // Default schedules
+  // Note: Insurance removed - it requires date-based tracking which doesn't fit the odometer-based maintenance model
   const defaultSchedules: Omit<MaintenanceSchedule, 'id' | 'created_at'>[] = [
     {
       bike_id: bikeId,
@@ -307,13 +308,6 @@ export async function initializeDefaultSchedules(bikeId: string): Promise<void> 
       part_name: 'Chain Slack',
       interval_km: 1000,
       interval_months: 0,
-      is_active: true,
-    },
-    {
-      bike_id: bikeId,
-      part_name: 'Insurance',
-      interval_km: 0,
-      interval_months: 12,
       is_active: true,
     },
   ];

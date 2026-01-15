@@ -10,6 +10,7 @@ import { buttonHoverProps } from '../lib/animations';
 import { logger } from '../lib/logger';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
+import { apexToast } from '../lib/toast';
 
 interface DevToolsPanelProps {
   isOpen: boolean;
@@ -458,22 +459,95 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                       <motion.button
                         onClick={async () => {
                           try {
+                            // Check if there are logs to copy
+                            if (filteredLogs.length === 0) {
+                              apexToast.error('No logs to copy');
+                              return;
+                            }
+
                             const allLogsText = filteredLogs.map((log) => {
                               const timestamp = log.timestamp.toLocaleString();
                               const level = log.type.toUpperCase().padEnd(5);
                               return `[${timestamp}] ${level} ${log.message}`;
                             }).join('\n');
                             
-                            await navigator.clipboard.writeText(allLogsText);
-                            setCopiedId('all-logs');
-                            setTimeout(() => setCopiedId(null), 2000);
+                            // Try modern Clipboard API first
+                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                              try {
+                                await navigator.clipboard.writeText(allLogsText);
+                                setCopiedId('all-logs');
+                                apexToast.success(`Copied ${filteredLogs.length} log${filteredLogs.length === 1 ? '' : 's'} to clipboard`);
+                                setTimeout(() => setCopiedId(null), 2000);
+                                return;
+                              } catch (clipboardError) {
+                                // Clipboard API might fail due to permissions or security context
+                                // Fall through to fallback method
+                                logger.debug('Clipboard API failed, trying fallback:', clipboardError);
+                              }
+                            }
+                            
+                            // Fallback: Use execCommand for older browsers, webviews, or when clipboard API fails
+                            const textArea = document.createElement('textarea');
+                            textArea.value = allLogsText;
+                            // Position off-screen but visible to the browser
+                            textArea.style.position = 'fixed';
+                            textArea.style.left = '0';
+                            textArea.style.top = '0';
+                            textArea.style.width = '2em';
+                            textArea.style.height = '2em';
+                            textArea.style.padding = '0';
+                            textArea.style.border = 'none';
+                            textArea.style.outline = 'none';
+                            textArea.style.boxShadow = 'none';
+                            textArea.style.background = 'transparent';
+                            textArea.style.opacity = '0';
+                            textArea.setAttribute('readonly', '');
+                            textArea.setAttribute('aria-hidden', 'true');
+                            
+                            document.body.appendChild(textArea);
+                            
+                            // For mobile webviews, we need to ensure the element is selectable
+                            if (Capacitor.isNativePlatform()) {
+                              textArea.contentEditable = 'true';
+                              textArea.readOnly = false;
+                            }
+                            
+                            // Select the text
+                            const range = document.createRange();
+                            range.selectNodeContents(textArea);
+                            const selection = window.getSelection();
+                            if (selection) {
+                              selection.removeAllRanges();
+                              selection.addRange(range);
+                            }
+                            textArea.setSelectionRange(0, 99999); // For mobile devices
+                            textArea.focus();
+                            
+                            // Execute copy command
+                            const successful = document.execCommand('copy');
+                            
+                            // Clean up
+                            document.body.removeChild(textArea);
+                            if (selection) {
+                              selection.removeAllRanges();
+                            }
+                            
+                            if (successful) {
+                              setCopiedId('all-logs');
+                              apexToast.success(`Copied ${filteredLogs.length} log${filteredLogs.length === 1 ? '' : 's'} to clipboard`);
+                              setTimeout(() => setCopiedId(null), 2000);
+                            } else {
+                              throw new Error('execCommand copy failed');
+                            }
                           } catch (error) {
                             logger.error('Failed to copy logs:', error);
+                            apexToast.error('Failed to copy logs to clipboard');
                           }
                         }}
-                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-apex-white/60 hover:text-apex-white bg-apex-white/5 hover:bg-apex-white/10 rounded-lg border border-apex-white/10"
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-apex-white/60 hover:text-apex-white bg-apex-white/5 hover:bg-apex-white/10 rounded-lg border border-apex-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
                         {...buttonHoverProps}
                         title="Copy all filtered logs to clipboard"
+                        disabled={filteredLogs.length === 0}
                       >
                         {copiedId === 'all-logs' ? (
                           <>

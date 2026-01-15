@@ -15,6 +15,7 @@ import { PocketCurtain } from '../components/PocketCurtain';
 import { usePocketModeDetection } from '../hooks/usePocketModeDetection';
 import { RideStartupAnimation } from '../components/RideStartupAnimation';
 import DebugPanel from '../components/DebugPanel';
+import { logger } from '../lib/logger';
 
 /**
  * Web Fallback Component
@@ -63,7 +64,7 @@ const WebFallback = () => {
       apexToast.success('Link copied to clipboard');
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Failed to copy:', error);
+      logger.error('Failed to copy:', error);
       apexToast.error('Failed to copy link');
     }
   };
@@ -370,7 +371,7 @@ export default function Ride() {
     
     // Restore selected bike if it exists in store
     if (store.selectedBike && !selectedBike) {
-      console.log('Restoring selected bike from store');
+      logger.debug('Restoring selected bike from store');
       setSelectedBike(store.selectedBike);
     }
     
@@ -401,7 +402,7 @@ export default function Ride() {
     
     // Debug log state changes
     if (isRecording) {
-      console.log('Ride state sync:', {
+      logger.debug('Ride state sync:', {
         isRecording,
         isPaused,
         coords: coords.length,
@@ -473,14 +474,14 @@ export default function Ride() {
 
     // Bike is selected, start the ride
     try {
-      console.log('Starting ride with bike:', selectedBike.id);
+      logger.debug('Starting ride with bike:', selectedBike.id);
       // Show startup animation first
       setShowStartupAnimation(true);
       // Start ride will be triggered after animation completes
     } catch (error) {
       // Log technical details for debugging
-      console.error('Error starting ride:', error);
-      console.error('Start ride error details:', JSON.stringify(error, null, 2));
+      logger.error('Error starting ride:', error);
+      logger.error('Start ride error details:', JSON.stringify(error, null, 2));
       
       // Show user-friendly error (permission errors are already handled by checkPermissions)
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -504,7 +505,7 @@ export default function Ride() {
     }
 
     try {
-      console.log('Stopping ride...');
+      logger.debug('Stopping ride...');
       await stopRide(selectedBike.id, true);
       // Don't show toast here - saveRide mutation handles it via onSuccess/onError
       
@@ -516,8 +517,8 @@ export default function Ride() {
       setShowStartupAnimation(false);
       } catch (error) {
         // Log technical details for debugging
-        console.error('Error stopping ride:', error);
-        console.error('Stop ride error details:', JSON.stringify(error, null, 2));
+        logger.error('Error stopping ride:', error);
+        logger.error('Stop ride error details:', JSON.stringify(error, null, 2));
         
         // Extract user-friendly error message
         let errorMessage = 'Failed to stop ride. Please try again.';
@@ -551,7 +552,7 @@ export default function Ride() {
       try {
         await Haptics.impact({ style: ImpactStyle.Light });
       } catch (error) {
-        console.warn('Haptic feedback not available:', error);
+        logger.warn('Haptic feedback not available:', error);
       }
     }
     
@@ -614,8 +615,8 @@ export default function Ride() {
               await startRide();
             } catch (error) {
               // Log technical details for debugging
-              console.error('Error starting ride:', error);
-              console.error('Start ride error details:', JSON.stringify(error, null, 2));
+              logger.error('Error starting ride:', error);
+              logger.error('Start ride error details:', JSON.stringify(error, null, 2));
               
               // Show user-friendly error (permission errors are already handled by checkPermissions)
               const errorMessage = error instanceof Error ? error.message : String(error);
@@ -997,7 +998,7 @@ export default function Ride() {
                     setShowStartupAnimation(false);
                     apexToast.success('Ride discarded');
                   } catch (error) {
-                    console.error('Error discarding ride:', error);
+                    logger.error('Error discarding ride:', error);
                     apexToast.error('Failed to discard ride');
                   }
                 }}

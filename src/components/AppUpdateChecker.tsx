@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useAppUpdate } from '../hooks/useAppUpdate';
+import { logger } from '../lib/logger';
 
 /**
  * Component that silently checks for app updates on app start
@@ -28,7 +29,7 @@ export default function AppUpdateChecker() {
       // Pass true for showModalOnUpdate to automatically show modal when update is found
       checkForUpdate(false, true).catch((error) => {
         // Silently fail - don't show errors for background checks
-        console.log('Background update check failed:', error);
+        logger.debug('Background update check failed:', error);
       });
     }, 500); // Small delay to ensure app is ready
 

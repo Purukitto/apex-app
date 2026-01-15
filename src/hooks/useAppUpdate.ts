@@ -4,6 +4,7 @@ import { Preferences } from '@capacitor/preferences';
 import { Browser } from '@capacitor/browser';
 import { getAppVersion } from '../lib/version';
 import { useAppUpdateStore } from '../stores/useAppUpdateStore';
+import { logger } from '../lib/logger';
 
 const GITHUB_REPO = 'Purukitto/apex-app';
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
@@ -67,14 +68,14 @@ async function fetchLatestRelease(): Promise<GitHubRelease | null> {
     });
 
     if (!response.ok) {
-      console.error('Failed to fetch GitHub release:', response.statusText);
+      logger.error('Failed to fetch GitHub release:', response.statusText);
       return null;
     }
 
     const data = await response.json();
     return data as GitHubRelease;
   } catch (error) {
-    console.error('Error fetching GitHub release:', error);
+    logger.error('Error fetching GitHub release:', error);
     return null;
   }
 }
@@ -92,7 +93,7 @@ async function getLastCheckTime(): Promise<number | null> {
     const { value } = await Preferences.get({ key: LAST_CHECK_KEY });
     return value ? parseInt(value, 10) : null;
   } catch (error) {
-    console.error('Error reading last check time:', error);
+    logger.error('Error reading last check time:', error);
     return null;
   }
 }
@@ -109,7 +110,7 @@ async function setLastCheckTime(timestamp: number): Promise<void> {
   try {
     await Preferences.set({ key: LAST_CHECK_KEY, value: timestamp.toString() });
   } catch (error) {
-    console.error('Error storing last check time:', error);
+    logger.error('Error storing last check time:', error);
   }
 }
 
@@ -125,7 +126,7 @@ async function getLastShownVersion(): Promise<string | null> {
     const { value } = await Preferences.get({ key: LAST_VERSION_KEY });
     return value || null;
   } catch (error) {
-    console.error('Error reading last shown version:', error);
+    logger.error('Error reading last shown version:', error);
     return null;
   }
 }
@@ -142,7 +143,7 @@ export async function setLastShownVersion(version: string): Promise<void> {
   try {
     await Preferences.set({ key: LAST_VERSION_KEY, value: version });
   } catch (error) {
-    console.error('Error storing last shown version:', error);
+    logger.error('Error storing last shown version:', error);
   }
 }
 
@@ -182,7 +183,7 @@ export function useAppUpdate() {
         const now = Date.now();
         
         if (lastCheck && (now - lastCheck) < CHECK_INTERVAL_MS) {
-          console.log('Update check skipped - checked recently');
+          logger.debug('Update check skipped - checked recently');
           setIsChecking(false);
           return null;
         }
@@ -203,12 +204,12 @@ export function useAppUpdate() {
       const versionComparison = compareVersions(latestVersion, currentVersion);
       const hasUpdate = versionComparison > 0;
 
-      console.log(`Update check: Current=${currentVersion}, Latest=${latestVersion}, Comparison=${versionComparison}, HasUpdate=${hasUpdate}`);
+      logger.debug(`Update check: Current=${currentVersion}, Latest=${latestVersion}, Comparison=${versionComparison}, HasUpdate=${hasUpdate}`);
 
       // Check if we've already shown this version (only skip if not forced and already shown)
       const lastShown = await getLastShownVersion();
       if (lastShown === latestVersion && !force) {
-        console.log('Update already shown for this version');
+        logger.debug('Update already shown for this version');
         setIsChecking(false);
         return null;
       }
@@ -258,14 +259,14 @@ export function useAppUpdate() {
       } else {
         // No update available
         const currentVersion = getAppVersion();
-        console.log(`No update available. Current version (${currentVersion}) is up to date with latest (${latestVersion})`);
+        logger.debug(`No update available. Current version (${currentVersion}) is up to date with latest (${latestVersion})`);
         setIsChecking(false);
         return null;
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
-      console.error('Error checking for updates:', err);
+      logger.error('Error checking for updates:', err);
       setIsChecking(false);
       return null;
     }
@@ -278,7 +279,7 @@ export function useAppUpdate() {
     try {
       await Browser.open({ url: currentUpdateInfo.releaseUrl });
     } catch (error) {
-      console.error('Error opening browser:', error);
+      logger.error('Error opening browser:', error);
     }
   }, []);
 

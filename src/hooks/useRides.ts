@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
 import { apexToast } from '../lib/toast';
 import type { Ride } from '../types/database';
+import { logger } from '../lib/logger';
 
 // React Query configuration for rides
 const RIDES_STALE_TIME = Infinity; // Never consider stale - only refetch manually
@@ -84,7 +85,7 @@ export async function fetchRides(options: {
       }
     } catch {
       // RPC function doesn't exist or timed out, fall back to regular query
-      console.warn('RPC function get_rides_with_geojson not available, using fallback query');
+      logger.warn('RPC function get_rides_with_geojson not available, using fallback query');
     }
 
     // Fallback: regular query (route_path won't be available as GeoJSON)
@@ -148,7 +149,7 @@ export async function fetchRides(options: {
       return { rides: processedRides as Ride[] };
     }
   } catch {
-    console.warn('RPC function get_rides_with_geojson not available, using fallback query');
+    logger.warn('RPC function get_rides_with_geojson not available, using fallback query');
   }
 
   // Fallback: regular query

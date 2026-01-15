@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { apexToast } from '../lib/toast';
+import { logger } from '../lib/logger';
 
 interface DiscordConnection {
   id: string;
@@ -53,7 +54,7 @@ export function useDiscord() {
           return { connected: false };
         }
         // Other errors should be logged but still return not connected
-        console.error('Error checking Discord connection:', error);
+        logger.error('Error checking Discord connection:', error);
         return { connected: false };
       }
 
@@ -267,7 +268,7 @@ export function useDiscord() {
     },
     onError: (error: Error) => {
       // Don't show toast for presence updates - they're background operations
-      console.error('Failed to update Discord presence:', error);
+      logger.error('Failed to update Discord presence:', error);
     },
   });
 

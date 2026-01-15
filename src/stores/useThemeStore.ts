@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { logger } from '../lib/logger';
 
 export type BackgroundTheme = 'apex-black' | 'pure-black';
 export type PrimaryTheme = 'apex-green' | 'cyan' | 'orange' | 'amber';
@@ -45,7 +46,7 @@ const loadTheme = (): Partial<ThemeStore> => {
       return theme;
     }
   } catch (error) {
-    console.error('Failed to load theme from localStorage:', error);
+    logger.error('Failed to load theme from localStorage:', error);
   }
   return {};
 };
@@ -58,7 +59,7 @@ const saveTheme = (state: Partial<ThemeStore>) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (error) {
-    console.error('Failed to save theme to localStorage:', error);
+    logger.error('Failed to save theme to localStorage:', error);
   }
 };
 

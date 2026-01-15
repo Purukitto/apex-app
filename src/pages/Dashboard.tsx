@@ -12,6 +12,7 @@ import { useThemeColors } from '../hooks/useThemeColors';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useQueryClient } from '@tanstack/react-query';
 import { Capacitor } from '@capacitor/core';
+import { logger } from '../lib/logger';
 
 export default function Dashboard() {
   const { bikes, isLoading } = useBikes();
@@ -43,7 +44,7 @@ export default function Dashboard() {
         queryClient.invalidateQueries({ queryKey: ['userProfile'] }),
       ]);
     } catch (error) {
-      console.error('Error refreshing dashboard:', error);
+      logger.error('Error refreshing dashboard:', error);
       // Silent failure for pull-to-refresh
     } finally {
       // Small delay to show the refresh animation

@@ -132,7 +132,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
       setCopiedId(storeName);
       setTimeout(() => setCopiedId(null), 2000);
     } catch (error) {
-      console.error('Failed to copy:', error);
+      logger.error('Failed to copy:', error);
     }
   };
 

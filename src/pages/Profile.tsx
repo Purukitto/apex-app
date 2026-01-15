@@ -13,6 +13,7 @@ import DonationCard from '../components/profile/DonationCard';
 import { useThemeStore, PRIMARY_COLORS, BACKGROUND_COLORS, type BackgroundTheme, type PrimaryTheme } from '../stores/useThemeStore';
 import { applyTheme } from '../lib/theme';
 import { getAppVersion } from '../lib/version';
+import { logger } from '../lib/logger';
 
 const DISCORD_BLURPLE = '#5865F2';
 
@@ -70,7 +71,7 @@ export default function Profile() {
       await linkDiscord.mutateAsync();
     } catch (err) {
       // Error is handled by the hook's onError
-      console.error('Failed to link Discord:', err);
+      logger.error('Failed to link Discord:', err);
     }
   };
 
@@ -79,7 +80,7 @@ export default function Profile() {
       await unlinkDiscord.mutateAsync();
     } catch (err) {
       // Error is handled by the hook's onError
-      console.error('Failed to unlink Discord:', err);
+      logger.error('Failed to unlink Discord:', err);
     }
   };
 

@@ -7,6 +7,7 @@ import { itemVariants, buttonHoverProps, cardHoverProps } from '../../lib/animat
 import { DONATION_CONFIG } from '../../config/donation';
 import QRCode from 'react-qr-code';
 import { apexToast } from '../../lib/toast';
+import { logger } from '../../lib/logger';
 
 export default function DonationCard() {
   const [showUPIModal, setShowUPIModal] = useState(false);
@@ -39,7 +40,7 @@ export default function DonationCard() {
       // Don't show modal - let the user choose or cancel naturally
     } catch (error) {
       // Only show QR modal if there's an explicit error
-      console.error('Failed to open UPI app:', error);
+      logger.error('Failed to open UPI app:', error);
       setShowUPIModal(true);
     }
   };
@@ -59,7 +60,7 @@ export default function DonationCard() {
         } catch (clipboardError) {
           // Clipboard API might fail due to permissions or security context
           // Fall through to fallback method
-          console.log('Clipboard API failed, trying fallback:', clipboardError);
+          logger.debug('Clipboard API failed, trying fallback:', clipboardError);
         }
       }
       
@@ -118,7 +119,7 @@ export default function DonationCard() {
         throw new Error('execCommand copy failed');
       }
     } catch (error) {
-      console.error('Failed to copy UPI ID:', error);
+      logger.error('Failed to copy UPI ID:', error);
       apexToast.error('Failed to copy UPI ID');
     }
   };
@@ -130,7 +131,7 @@ export default function DonationCard() {
         windowName: '_blank',
       });
     } catch (error) {
-      console.error('Failed to open Buy Me a Coffee:', error);
+      logger.error('Failed to open Buy Me a Coffee:', error);
     }
   };
 

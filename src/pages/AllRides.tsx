@@ -6,6 +6,7 @@ import { useRides } from '../hooks/useRides';
 import { supabase } from '../lib/supabaseClient';
 import { shareRideImage } from '../lib/shareRide';
 import { apexToast } from '../lib/toast';
+import { logger } from '../lib/logger';
 import {
   MapPin,
   Timer,
@@ -106,7 +107,7 @@ export default function AllRides() {
           .single();
 
         if (error || !ride) {
-          console.error('Error finding ride:', error);
+          logger.error('Error finding ride:', error);
           setIsFindingRide(false);
           setSearchParams({}, { replace: true });
           return;
@@ -126,7 +127,7 @@ export default function AllRides() {
           // The expansion will happen when the ride loads on the new page
         }
       } catch (error) {
-        console.error('Error finding ride page:', error);
+        logger.error('Error finding ride page:', error);
         setIsFindingRide(false);
         setSearchParams({}, { replace: true });
       } finally {
@@ -233,7 +234,7 @@ export default function AllRides() {
       setEditRideName('');
       setEditRideNotes('');
     } catch (error) {
-      console.error('Error updating ride:', error);
+      logger.error('Error updating ride:', error);
     }
   };
 
@@ -251,7 +252,7 @@ export default function AllRides() {
         setExpandedRideId(null);
       }
     } catch (error) {
-      console.error('Error deleting ride:', error);
+      logger.error('Error deleting ride:', error);
     }
   };
 
@@ -295,7 +296,7 @@ export default function AllRides() {
         );
       }
     } catch (error) {
-      console.error('Error sharing ride:', error);
+      logger.error('Error sharing ride:', error);
       apexToast.error('Failed to share ride');
     }
   };

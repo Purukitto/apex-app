@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
 import { apexToast } from '../lib/toast';
 import { useRideStore } from '../stores/useRideStore';
+import { logger } from '../lib/logger';
 
 interface Coordinate {
   longitude: number;
@@ -149,7 +150,7 @@ export const useRideTracking = () => {
     try {
       // Check if Geolocation API is available
       if (!Geolocation || typeof Geolocation.checkPermissions !== 'function') {
-        console.warn('Geolocation API not available');
+        logger.warn('Geolocation API not available');
         setState((prev) => ({
           ...prev,
           permissionsGranted: { location: false, motion: true },
@@ -162,14 +163,14 @@ export const useRideTracking = () => {
       let locationGranted = false;
       try {
         const locationStatus = await Geolocation.checkPermissions();
-        console.log('Location permission status:', locationStatus);
+        logger.debug('Location permission status:', locationStatus);
         locationGranted = locationStatus.location === 'granted';
 
         if (!locationGranted) {
-          console.log('Requesting location permissions...');
+          logger.debug('Requesting location permissions...');
           // This will show the native Android permission dialog
           const locationRequest = await Geolocation.requestPermissions();
-          console.log('Location permission request result:', locationRequest);
+          logger.debug('Location permission request result:', locationRequest);
           locationGranted = locationRequest.location === 'granted';
           
           if (!locationGranted) {
@@ -181,13 +182,13 @@ export const useRideTracking = () => {
           }
         }
       } catch (locationError) {
-        console.error('Location permission error:', locationError);
+        logger.error('Location permission error:', locationError);
         const errorMessage = locationError instanceof Error ? locationError.message : String(locationError);
         
         // Check if it's a manifest permission error (shouldn't happen after fix, but handle gracefully)
         if (errorMessage.includes('AndroidManifest.xml') || errorMessage.includes('ACCESS_FINE_LOCATION')) {
           // This is a development issue - log it but show user-friendly message
-          console.error('Manifest permission error detected - app needs to be rebuilt');
+          logger.error('Manifest permission error detected - app needs to be rebuilt');
           apexToast.error(
             'Location permissions not available. Please contact support.'
           );
@@ -223,7 +224,7 @@ export const useRideTracking = () => {
 
       return true;
     } catch (error) {
-      console.error('Permission check error:', error);
+      logger.error('Permission check error:', error);
       // In live reload mode, allow proceeding - errors will be handled by the actual API calls
       // Only show error if it's a real permission denial, not an API availability issue
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -289,7 +290,7 @@ export const useRideTracking = () => {
       // Convert to PostGIS WKT format for geography column
       const routePathWKT = coordsToPostGISWKT(coords);
 
-      console.log('Saving ride with route path:', {
+      logger.debug('Saving ride with route path:', {
         coordsCount: coords.length,
         wktLength: routePathWKT?.length,
         wktPreview: routePathWKT?.substring(0, 100),
@@ -305,7 +306,7 @@ export const useRideTracking = () => {
           }
         : null;
 
-      console.log('Inserting ride:', {
+      logger.debug('Inserting ride:', {
         bikeId,
         coordsCount: coords.length,
         hasRoutePath: !!geoJSON,
@@ -322,7 +323,7 @@ export const useRideTracking = () => {
       if (geoJSON && coords.length >= 2) {
         // Log the full GeoJSON being sent
         const geoJSONString = JSON.stringify(geoJSON);
-        console.log('Sending GeoJSON to RPC:', {
+        logger.debug('Sending GeoJSON to RPC:', {
           coordinatesCount: geoJSON.coordinates.length,
           geoJSONLength: geoJSONString.length,
           firstPoint: geoJSON.coordinates[0],
@@ -347,7 +348,7 @@ export const useRideTracking = () => {
         
         // Log RPC result for debugging
         if (error) {
-          console.error('RPC function error:', {
+          logger.error('RPC function error:', {
             code: error.code,
             message: error.message,
             details: error.details,
@@ -355,7 +356,7 @@ export const useRideTracking = () => {
             fullError: error,
           });
         } else {
-          console.log('RPC function succeeded:', { data });
+          logger.debug('RPC function succeeded:', { data });
         }
         
         // If RPC function doesn't exist or fails, fall back to direct insert without geometry
@@ -365,7 +366,7 @@ export const useRideTracking = () => {
             (error.message?.includes('does not exist') || error.message?.includes('not found'));
           
           if (isFunctionNotFound) {
-            console.warn('RPC function not found. Inserting ride without route path. Please create the RPC function in Supabase (see supabase_rpc_insert_ride_with_geometry.sql).');
+            logger.warn('RPC function not found. Inserting ride without route path. Please create the RPC function in Supabase (see supabase_rpc_insert_ride_with_geometry.sql).');
             
             // Fallback: insert without route_path
             const directResult = await supabase
@@ -386,7 +387,7 @@ export const useRideTracking = () => {
             data = directResult.data;
             error = directResult.error;
           } else {
-            console.error('RPC function failed with error:', error);
+            logger.error('RPC function failed with error:', error);
             // Don't fall back on other errors - let the error propagate
             throw error;
           }
@@ -413,7 +414,7 @@ export const useRideTracking = () => {
       }
 
       if (error) {
-        console.error('Supabase insert error:', {
+        logger.error('Supabase insert error:', {
           code: error.code,
           message: error.message,
           details: error.details,
@@ -454,8 +455,8 @@ export const useRideTracking = () => {
     },
     onError: (error: unknown) => {
       // Log technical details for debugging
-      console.error('Save ride error:', error);
-      console.error('Save ride error details:', JSON.stringify(error, null, 2));
+      logger.error('Save ride error:', error);
+      logger.error('Save ride error details:', JSON.stringify(error, null, 2));
       
       // Show user-friendly error message with more context
       let errorMessage = 'Failed to save ride. Please try again.';
@@ -488,10 +489,10 @@ export const useRideTracking = () => {
         
         // Include details/hint if available for debugging
         if ('details' in errorObj && errorObj.details) {
-          console.error('Error details:', errorObj.details);
+          logger.error('Error details:', errorObj.details);
         }
         if ('hint' in errorObj && errorObj.hint) {
-          console.error('Error hint:', errorObj.hint);
+          logger.error('Error hint:', errorObj.hint);
         }
       }
       
@@ -511,11 +512,11 @@ export const useRideTracking = () => {
     try {
       const hasPermissions = await checkPermissions();
       if (!hasPermissions) {
-        console.log('Permissions not granted, cannot start ride');
+        logger.debug('Permissions not granted, cannot start ride');
         return;
       }
 
-      console.log('Starting ride tracking...');
+      logger.debug('Starting ride tracking...');
       const startTimeNow = new Date();
       
       // Reset signal processing state
@@ -545,9 +546,9 @@ export const useRideTracking = () => {
       useRideStore.setState({ coords: [] });
 
       lastNonZeroSpeedTimeRef.current = Date.now();
-      console.log('Ride tracking started successfully');
+      logger.debug('Ride tracking started successfully');
     } catch (error) {
-      console.error('Error starting ride:', error);
+      logger.error('Error starting ride:', error);
       apexToast.error('Failed to start ride. Please try again.');
     }
   }, [isMobile, checkPermissions]);
@@ -566,7 +567,7 @@ export const useRideTracking = () => {
         const maxLeanLeftToUse = storeData.maxLeanLeft > 0 ? storeData.maxLeanLeft : state.maxLeanLeft;
         const maxLeanRightToUse = storeData.maxLeanRight > 0 ? storeData.maxLeanRight : state.maxLeanRight;
 
-        console.log('Stopping ride:', {
+        logger.debug('Stopping ride:', {
           bikeId,
           shouldSave,
           stateCoordsCount: state.coords.length,
@@ -592,7 +593,7 @@ export const useRideTracking = () => {
             await Geolocation.clearWatch({ id: watchIdRef.current });
             watchIdRef.current = undefined;
           } catch (error) {
-            console.warn('Error clearing GPS watch (may already be cleared):', error);
+            logger.warn('Error clearing GPS watch (may already be cleared):', error);
             // Watch might already be cleared, continue anyway
             watchIdRef.current = undefined;
           }
@@ -610,7 +611,7 @@ export const useRideTracking = () => {
 
         // Save ride if requested
         if (shouldSave && bikeId && coordsToSave.length > 0 && startTimeToUse) {
-          console.log('Saving ride with data:', {
+          logger.debug('Saving ride with data:', {
             bikeId,
             coordsCount: coordsToSave.length,
             distance: storeData.distanceKm,
@@ -640,7 +641,7 @@ export const useRideTracking = () => {
           // Reset store
           useRideStore.getState().resetRide();
         } else {
-          console.log('Not saving ride:', {
+          logger.debug('Not saving ride:', {
             shouldSave,
             hasBikeId: !!bikeId,
             hasCoords: coordsToSave.length > 0,
@@ -649,8 +650,8 @@ export const useRideTracking = () => {
         }
       } catch (error: unknown) {
         // Log technical details for debugging
-        console.error('Error in stopRide:', error);
-        console.error('Stop ride error details:', JSON.stringify(error, null, 2));
+        logger.error('Error in stopRide:', error);
+        logger.error('Stop ride error details:', JSON.stringify(error, null, 2));
         
         // Show user-friendly error message
         let errorMessage = 'Failed to stop ride. Please try again.';
@@ -696,12 +697,12 @@ export const useRideTracking = () => {
   // Restore permissions and restart tracking if recording was active on mount
   useEffect(() => {
     if (state.isRecording && !state.permissionsGranted.location) {
-      console.log('Recording active but no permissions - requesting...');
+      logger.debug('Recording active but no permissions - requesting...');
       // If we're recording but don't have permissions, check them
       checkPermissions().then((granted) => {
         if (!granted) {
           // If permissions denied, stop recording
-          console.log('Permissions denied, stopping recording');
+          logger.debug('Permissions denied, stopping recording');
           setState((prev) => ({
             ...prev,
             isRecording: false,
@@ -722,7 +723,7 @@ export const useRideTracking = () => {
 
     // If recording but no permission, try to get it
     if (!state.permissionsGranted.location) {
-      console.log('Recording active, requesting location permission...');
+      logger.debug('Recording active, requesting location permission...');
       checkPermissions();
       return;
     }
@@ -736,7 +737,7 @@ export const useRideTracking = () => {
       },
       (position: Position | null, err?: Error) => {
         if (err) {
-          console.error('Geolocation error:', err);
+          logger.error('Geolocation error:', err);
           return;
         }
 
@@ -766,7 +767,7 @@ export const useRideTracking = () => {
             useRideStore.getState().addCoord(newCoord);
             useRideStore.getState().setDistanceKm(newDistance);
 
-            console.log('GPS update:', {
+            logger.debug('GPS update:', {
               speed: speed ? Math.round(speed * 3.6) : 0,
               coords: prev.coords.length + 1,
               distance: newDistance.toFixed(2),
@@ -813,20 +814,20 @@ export const useRideTracking = () => {
       }
     ).then((id: string) => {
       watchIdRef.current = id;
-      console.log('GPS watch started, id:', id);
+      logger.debug('GPS watch started, id:', id);
     }).catch((error) => {
-      console.error('Failed to start GPS watch:', error);
+      logger.error('Failed to start GPS watch:', error);
     });
 
     return () => {
       if (watchIdRef.current) {
         try {
           Geolocation.clearWatch({ id: watchIdRef.current }).catch((err) => {
-            console.warn('Error clearing GPS watch on cleanup:', err);
+            logger.warn('Error clearing GPS watch on cleanup:', err);
           });
           watchIdRef.current = undefined;
         } catch (error) {
-          console.warn('Error clearing GPS watch on cleanup:', error);
+          logger.warn('Error clearing GPS watch on cleanup:', error);
           watchIdRef.current = undefined;
         }
       }
@@ -851,9 +852,9 @@ export const useRideTracking = () => {
         try {
           motionListenerRef.current.remove();
           motionListenerRef.current = undefined;
-          console.log('Motion listener removed (recording stopped or pocket mode active)');
+          logger.debug('Motion listener removed (recording stopped or pocket mode active)');
         } catch (error) {
-          console.warn('Error removing motion listener:', error);
+          logger.warn('Error removing motion listener:', error);
           motionListenerRef.current = undefined;
         }
       }
@@ -862,13 +863,13 @@ export const useRideTracking = () => {
 
     // Check if Motion API is available
     if (!Motion || typeof Motion.addListener !== 'function') {
-      console.error('Motion API not available');
+      logger.error('Motion API not available');
       apexToast.error('Motion sensor API not available. Lean angle tracking disabled.');
       return;
     }
 
-    console.log('Setting up motion listener for lean angle tracking...');
-    console.log('Motion API check:', {
+    logger.debug('Setting up motion listener for lean angle tracking...');
+    logger.debug('Motion API check:', {
       Motion: !!Motion,
       addListener: typeof Motion?.addListener,
       isNative: isMobile,
@@ -882,35 +883,35 @@ export const useRideTracking = () => {
         // - iOS: DeviceMotionEvent via @capacitor/motion (Safari/WebView API)
         // - Web: DeviceMotionEvent via @capacitor/motion (browser API, requires HTTPS)
         const platform = Capacitor.getPlatform();
-        console.log('Setting up motion listener for platform:', platform);
+        logger.debug('Setting up motion listener for platform:', platform);
         
         if (platform === 'android') {
           // Use native Android accelerometer via @danyalwe/capacitor-sensors
-          console.log('Using native Android accelerometer sensor...');
+          logger.debug('Using native Android accelerometer sensor...');
           
           // Check if accelerometer is available
           const availableSensors = await Sensors.getAvailableSensors();
-          console.log('Available sensors:', availableSensors);
+          logger.debug('Available sensors:', availableSensors);
           
           if (!availableSensors.sensors.includes('ACCELEROMETER')) {
-            console.error('Accelerometer not available on this device');
+            logger.error('Accelerometer not available on this device');
             apexToast.error('Accelerometer not available on this device.');
             return;
           }
           
           // Initialize the accelerometer
           const sensorData = await Sensors.init({ type: 'ACCELEROMETER', delay: 'UI' });
-          console.log('Accelerometer initialized:', sensorData);
+          logger.debug('Accelerometer initialized:', sensorData);
           
           if (!sensorData) {
-            console.error('Failed to initialize accelerometer');
+            logger.error('Failed to initialize accelerometer');
             apexToast.error('Failed to initialize accelerometer.');
             return;
           }
           
           // Start the accelerometer
           await Sensors.start({ type: 'ACCELEROMETER' });
-          console.log('✅ Started accelerometer');
+          logger.debug('✅ Started accelerometer');
           
           let callbackCallCount = 0;
           const startTime = Date.now();
@@ -927,14 +928,14 @@ export const useRideTracking = () => {
             // Validate sensor data
             if (x === undefined || y === undefined || z === undefined || 
                 isNaN(x) || isNaN(y) || isNaN(z)) {
-              console.warn('[Accel] Invalid sensor data:', result);
+              logger.warn('[Accel] Invalid sensor data:', result);
               return;
             }
             
             // Log every callback for first 10, then every 10th
             const shouldLog = callbackCallCount <= 10 || callbackCallCount % 10 === 0;
             if (shouldLog) {
-              console.log(`[Accel #${callbackCallCount}] Data received after ${timeSinceStart}ms:`, {
+              logger.debug(`[Accel #${callbackCallCount}] Data received after ${timeSinceStart}ms:`, {
                 x: x.toFixed(3),
                 y: y.toFixed(3),
                 z: z.toFixed(3),
@@ -967,7 +968,7 @@ export const useRideTracking = () => {
             const processedLeanAngle = processLeanAngle(rawRollWithCalibration);
             
             if (shouldLog) {
-              console.log(`[Accel ${callbackCallCount}] Calculated:`, {
+              logger.debug(`[Accel ${callbackCallCount}] Calculated:`, {
                 rollDeg: rollDeg.toFixed(2),
                 rawRollWithCalibration: rawRollWithCalibration.toFixed(2),
                 processedLeanAngle: processedLeanAngle.toFixed(2),
@@ -987,7 +988,7 @@ export const useRideTracking = () => {
                   if (processedLeanAngle > prev.maxLeanLeft) {
                     newMaxLeanLeft = newCurrentLean;
                     if (shouldLog) {
-                      console.log(`[Accel ${callbackCallCount}] New max lean left: ${newMaxLeanLeft.toFixed(1)}°`);
+                      logger.debug(`[Accel ${callbackCallCount}] New max lean left: ${newMaxLeanLeft.toFixed(1)}°`);
                     }
                   }
                 } else {
@@ -995,7 +996,7 @@ export const useRideTracking = () => {
                   if (processedLeanAngle > prev.maxLeanRight) {
                     newMaxLeanRight = newCurrentLean;
                     if (shouldLog) {
-                      console.log(`[Accel ${callbackCallCount}] New max lean right: ${newMaxLeanRight.toFixed(1)}°`);
+                      logger.debug(`[Accel ${callbackCallCount}] New max lean right: ${newMaxLeanRight.toFixed(1)}°`);
                     }
                   }
                 }
@@ -1014,7 +1015,7 @@ export const useRideTracking = () => {
           });
           
           motionListenerRef.current = listener as unknown as Awaited<ReturnType<typeof Motion.addListener>>;
-          console.log('✅ Native accelerometer listener added successfully');
+          logger.debug('✅ Native accelerometer listener added successfully');
           return;
         }
         
@@ -1022,10 +1023,10 @@ export const useRideTracking = () => {
         // Note: @capacitor/motion is web-only and uses DeviceMotionEvent
         // On iOS, this works through Safari/WebView's DeviceMotionEvent support
         // iOS requires explicit permission request (iOS 13+)
-        console.log('Using DeviceMotionEvent API for iOS/Web platform');
+        logger.debug('Using DeviceMotionEvent API for iOS/Web platform');
         
         if (typeof window === 'undefined' || !('DeviceMotionEvent' in window)) {
-          console.error('DeviceMotionEvent not available in this environment');
+          logger.error('DeviceMotionEvent not available in this environment');
           apexToast.error('Motion sensors not available on this device.');
           return;
         }
@@ -1033,27 +1034,27 @@ export const useRideTracking = () => {
         // iOS requires explicit permission request (iOS 13+)
         // This will show a native permission dialog on iOS
         if (typeof (window as unknown as { DeviceMotionEvent?: { requestPermission?: () => Promise<string> } }).DeviceMotionEvent?.requestPermission === 'function') {
-          console.log('Requesting DeviceMotionEvent permission for iOS...');
+          logger.debug('Requesting DeviceMotionEvent permission for iOS...');
           const permission = await (window as unknown as { DeviceMotionEvent: { requestPermission: () => Promise<string> } }).DeviceMotionEvent.requestPermission();
           if (permission !== 'granted') {
-            console.error('DeviceMotionEvent permission denied');
+            logger.error('DeviceMotionEvent permission denied');
             apexToast.error('Motion sensor permission denied. Lean angle tracking disabled.');
             return;
           }
-          console.log('✅ DeviceMotionEvent permission granted');
+          logger.debug('✅ DeviceMotionEvent permission granted');
         } else {
-          console.log('DeviceMotionEvent available (no permission required for this iOS version)');
+          logger.debug('DeviceMotionEvent available (no permission required for this iOS version)');
         }
         
         let callbackCallCount = 0;
         const startTime = Date.now();
         
-        console.log('Calling Motion.addListener (web/iOS)...');
+        logger.debug('Calling Motion.addListener (web/iOS)...');
         const listener = await Motion.addListener('accel', (event: AccelListenerEvent) => {
           const timeSinceStart = Date.now() - startTime;
           callbackCallCount++;
           
-          console.log(`[Motion #${callbackCallCount}] Callback fired after ${timeSinceStart}ms`);
+          logger.debug(`[Motion #${callbackCallCount}] Callback fired after ${timeSinceStart}ms`);
       
           // Calculate roll angle from accelerometer
           // For a phone mounted on a motorcycle (portrait mode):
@@ -1075,7 +1076,7 @@ export const useRideTracking = () => {
           // Validate that we have valid sensor data
           if (x === undefined || y === undefined || z === undefined || 
               isNaN(x) || isNaN(y) || isNaN(z)) {
-            console.warn('[Motion] Invalid sensor data:', { x, y, z });
+            logger.warn('[Motion] Invalid sensor data:', { x, y, z });
             return;
           }
           
@@ -1106,7 +1107,7 @@ export const useRideTracking = () => {
           // Log every callback for first 10, then every 10th
           const shouldLog = callbackCallCount <= 10 || callbackCallCount % 10 === 0;
           if (shouldLog) {
-            console.log(`[Motion ${callbackCallCount}] Sensor data:`, {
+            logger.debug(`[Motion ${callbackCallCount}] Sensor data:`, {
               x: x.toFixed(3),
               y: y.toFixed(3),
               z: z.toFixed(3),
@@ -1132,7 +1133,7 @@ export const useRideTracking = () => {
                 if (processedLeanAngle > prev.maxLeanLeft) {
                   newMaxLeanLeft = newCurrentLean;
                   if (shouldLog) {
-                    console.log(`[Motion ${callbackCallCount}] New max lean left: ${newMaxLeanLeft.toFixed(1)}°`);
+                    logger.debug(`[Motion ${callbackCallCount}] New max lean left: ${newMaxLeanLeft.toFixed(1)}°`);
                   }
                 }
               } else {
@@ -1140,7 +1141,7 @@ export const useRideTracking = () => {
                 if (processedLeanAngle > prev.maxLeanRight) {
                   newMaxLeanRight = newCurrentLean;
                   if (shouldLog) {
-                    console.log(`[Motion ${callbackCallCount}] New max lean right: ${newMaxLeanRight.toFixed(1)}°`);
+                    logger.debug(`[Motion ${callbackCallCount}] New max lean right: ${newMaxLeanRight.toFixed(1)}°`);
                   }
                 }
               }
@@ -1160,10 +1161,10 @@ export const useRideTracking = () => {
         });
         
         motionListenerRef.current = listener;
-        console.log('✅ Motion listener added successfully, waiting for sensor data...');
+        logger.debug('✅ Motion listener added successfully, waiting for sensor data...');
       } catch (error: unknown) {
-        console.error('❌ Failed to add motion listener:', error);
-        console.error('Motion listener error details:', JSON.stringify(error, null, 2));
+        logger.error('❌ Failed to add motion listener:', error);
+        logger.error('Motion listener error details:', JSON.stringify(error, null, 2));
         // Don't block recording if motion fails
         apexToast.error('Motion sensor unavailable. Lean angle tracking disabled.');
       }
@@ -1179,7 +1180,7 @@ export const useRideTracking = () => {
           if (platform === 'android') {
             // Stop native accelerometer
             Sensors.stop({ type: 'ACCELEROMETER' }).catch((err: unknown) => {
-              console.warn('Error stopping accelerometer:', err);
+              logger.warn('Error stopping accelerometer:', err);
             });
             // Remove listener
             if (motionListenerRef.current && typeof motionListenerRef.current.remove === 'function') {
@@ -1190,9 +1191,9 @@ export const useRideTracking = () => {
             motionListenerRef.current.remove();
           }
           motionListenerRef.current = undefined;
-          console.log('Motion listener removed');
+          logger.debug('Motion listener removed');
         } catch (error) {
-          console.warn('Error removing motion listener:', error);
+          logger.warn('Error removing motion listener:', error);
           motionListenerRef.current = undefined;
         }
       }
@@ -1208,7 +1209,7 @@ export const useRideTracking = () => {
     try {
       localStorage.setItem(CALIBRATION_STORAGE_KEY, currentRawRotation.toString());
     } catch (error) {
-      console.warn('Failed to save calibration offset to localStorage:', error);
+      logger.warn('Failed to save calibration offset to localStorage:', error);
     }
   }, []);
 

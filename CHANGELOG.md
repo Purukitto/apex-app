@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.14.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.14.0) (2026-01-15)
+
+
+### Features
+
+* **AddBikeModal:** enhance bike addition with Wikipedia search and additional specs fields ([dd201b7](https://github.com/Purukitto/apex-app/commit/dd201b7774203f44528b9776a90eb422b12d7252))
+* **AllRides:** add GPX export functionality for rides ([2085416](https://github.com/Purukitto/apex-app/commit/2085416687b91fa0427e8e8437efa70d75efec16))
+* enhance changelog extraction and release notes formatting ([c932f02](https://github.com/Purukitto/apex-app/commit/c932f02acda12b911f47d3e54d2ebd83dfb4a2a6))
+* **FuelLogs:** implement fuel log management with add, edit, and delete functionality ([27a1eca](https://github.com/Purukitto/apex-app/commit/27a1eca072870d279eb1bae6277f8dc9a2edc7f4))
+* implement comprehensive data deletion strategy ([1e9f464](https://github.com/Purukitto/apex-app/commit/1e9f464c3a30c811fa5317ff34c502a7674442e7))
+* **shareRide:** enhance ride sharing functionality with map integration ([05a6ba5](https://github.com/Purukitto/apex-app/commit/05a6ba5c1eebf8209aa78c286bd5021555cf2f2c))
+* upgrade to maintenance health monitor with local notifications ([412209f](https://github.com/Purukitto/apex-app/commit/412209f2d6a606795e4be68f60ce15d504aef716))
+
+
+### Bug Fixes
+
+* hide navigation pill when keyboard is visible ([8ea989b](https://github.com/Purukitto/apex-app/commit/8ea989bd3d9e47b1c8b42fdda3dc44b49ca02462))
+* resolve TypeScript build errors ([fedea3a](https://github.com/Purukitto/apex-app/commit/fedea3ad47b44fc669586360ef4a2a52832b670e))
+
+
+### Code Refactoring
+
+* **useRideTracking:** streamline odometer update logic ([e2be76e](https://github.com/Purukitto/apex-app/commit/e2be76e54c5eeddbcaf9e93f100267ac7a802a91))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+* **deps-dev:** bump the development-dependencies group with 3 updates ([#44](https://github.com/Purukitto/apex-app/issues/44)) ([75640f6](https://github.com/Purukitto/apex-app/commit/75640f6bb151a7d0522fcd8e1afa37cc9e474ce5))
+* **deps:** bump the production-dependencies group with 2 updates ([#43](https://github.com/Purukitto/apex-app/issues/43)) ([9f4ee8d](https://github.com/Purukitto/apex-app/commit/9f4ee8dc9773a144873681c5ffee24d4f9e9ce58))
+* rename start:android script to dev:android in package.json for consistency ([3dd77be](https://github.com/Purukitto/apex-app/commit/3dd77bee06e753d283d692920280c7111e6c344d))
+
 ### [0.13.4](https://github.com/Purukitto/apex-app/compare/v0.13.3...v0.13.4) (2026-01-15)
 
 

@@ -454,14 +454,48 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                         </span>
                       )}
                     </p>
-                    <motion.button
-                      onClick={clearConsole}
-                      className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-apex-white/60 hover:text-apex-white bg-apex-white/5 hover:bg-apex-white/10 rounded-lg border border-apex-white/10"
-                      {...buttonHoverProps}
-                    >
-                      <RefreshCw size={14} />
-                      Clear
-                    </motion.button>
+                    <div className="flex items-center gap-2">
+                      <motion.button
+                        onClick={async () => {
+                          try {
+                            const allLogsText = filteredLogs.map((log) => {
+                              const timestamp = log.timestamp.toLocaleString();
+                              const level = log.type.toUpperCase().padEnd(5);
+                              return `[${timestamp}] ${level} ${log.message}`;
+                            }).join('\n');
+                            
+                            await navigator.clipboard.writeText(allLogsText);
+                            setCopiedId('all-logs');
+                            setTimeout(() => setCopiedId(null), 2000);
+                          } catch (error) {
+                            logger.error('Failed to copy logs:', error);
+                          }
+                        }}
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-apex-white/60 hover:text-apex-white bg-apex-white/5 hover:bg-apex-white/10 rounded-lg border border-apex-white/10"
+                        {...buttonHoverProps}
+                        title="Copy all filtered logs to clipboard"
+                      >
+                        {copiedId === 'all-logs' ? (
+                          <>
+                            <Check size={14} className="text-apex-green" />
+                            Copied
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={14} />
+                            Copy All
+                          </>
+                        )}
+                      </motion.button>
+                      <motion.button
+                        onClick={clearConsole}
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-apex-white/60 hover:text-apex-white bg-apex-white/5 hover:bg-apex-white/10 rounded-lg border border-apex-white/10"
+                        {...buttonHoverProps}
+                      >
+                        <RefreshCw size={14} />
+                        Clear
+                      </motion.button>
+                    </div>
                   </div>
 
                   <div className="space-y-1 font-mono text-xs">

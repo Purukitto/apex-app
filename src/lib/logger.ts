@@ -281,7 +281,16 @@ class ApexLogger {
    * Get the current log level
    */
   getLevel(): LogLevel {
-    return log.getLevel() as LogLevel;
+    const numericLevel = log.getLevel();
+    // loglevel returns: 0=trace, 1=debug, 2=info, 3=warn, 4=error, 5=silent
+    const levelMap: Record<number, LogLevel> = {
+      0: 'trace',
+      1: 'debug',
+      2: 'info',
+      3: 'warn',
+      4: 'error',
+    };
+    return levelMap[numericLevel] ?? 'warn'; // Default to 'warn' if unknown
   }
 
   /**

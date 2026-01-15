@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.12.5](https://github.com/Purukitto/apex-app/compare/v0.12.4...v0.12.5) (2026-01-15)
+
+
+### Features
+
+* **layout:** add safe area insets for better compatibility with notches and punch-holes ([477a1e3](https://github.com/Purukitto/apex-app/commit/477a1e389d6c48019534708a186d0c99941e866c))
+* **Ride:** implement startup animation and enhance back button handling ([0b0ea7e](https://github.com/Purukitto/apex-app/commit/0b0ea7e378e29ac4eb8a8b63ce2063500f69f257))
+
+
+### Bug Fixes
+
+* **usePocketModeDetection:** correct proximity sensor logic for pocket mode detection ([3faa1e7](https://github.com/Purukitto/apex-app/commit/3faa1e7462fdc293e21f1d21b9393e073783bf45))
+
+
+### Code Refactoring
+
+* **DonationCard:** remove unused App import to clean up code ([18ec85d](https://github.com/Purukitto/apex-app/commit/18ec85db319a97d482a0c9b730a054fa179cf837))
+
 ### [0.12.4](https://github.com/Purukitto/apex-app/compare/v0.12.3...v0.12.4) (2026-01-14)
 
 

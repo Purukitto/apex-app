@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.14.4](https://github.com/Purukitto/apex-app/compare/v0.14.3...v0.14.4) (2026-01-15)
+
+
+### Features
+
+* **appUpdate:** enhance update checking logic and UI feedback ([e33073b](https://github.com/Purukitto/apex-app/commit/e33073b35b8de73667767a2a73859651fcc2d17c))
+
+
+### Bug Fixes
+
+* **hooks:** update error handling in various hooks to use underscore for unused parameters ([233ba8a](https://github.com/Purukitto/apex-app/commit/233ba8a9e7ed53cceda6d8de8f5ad5c22e313559))
+
 ### [0.14.3](https://github.com/Purukitto/apex-app/compare/v0.14.2...v0.14.3) (2026-01-15)
 
 

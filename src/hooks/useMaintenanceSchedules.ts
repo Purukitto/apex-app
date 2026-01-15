@@ -51,6 +51,24 @@ export function useMaintenanceSchedules(bikeId?: string) {
 
   // Create a new maintenance schedule
   const createSchedule = useMutation({
+    onMutate: async (scheduleData) => {
+      await queryClient.cancelQueries({ queryKey: ['maintenanceSchedules', bikeId] });
+      
+      const previousSchedules = queryClient.getQueryData<MaintenanceSchedule[]>(['maintenanceSchedules', bikeId]);
+      
+      // Optimistically add schedule
+      const optimisticSchedule: MaintenanceSchedule = {
+        ...scheduleData,
+        id: `temp-${Date.now()}`,
+        created_at: new Date().toISOString(),
+      };
+      
+      queryClient.setQueryData<MaintenanceSchedule[]>(['maintenanceSchedules', bikeId], (old = []) => 
+        [...old, optimisticSchedule]
+      );
+      
+      return { previousSchedules };
+    },
     mutationFn: async (
       scheduleData: Omit<MaintenanceSchedule, 'id' | 'created_at'>
     ) => {
@@ -71,17 +89,28 @@ export function useMaintenanceSchedules(bikeId?: string) {
         throw new Error('Bike not found or you do not have permission');
       }
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('maintenance_schedules')
-        .insert(scheduleData);
+        .insert(scheduleData)
+        .select()
+        .single();
 
       if (error) throw error;
+      return data as MaintenanceSchedule;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['maintenanceSchedules'] });
+    onSuccess: (newSchedule) => {
+      // Update with actual data from server
+      queryClient.setQueryData<MaintenanceSchedule[]>(['maintenanceSchedules', bikeId], (old = []) => {
+        const withoutTemp = old.filter(s => !s.id.startsWith('temp-'));
+        return [...withoutTemp, newSchedule];
+      });
       apexToast.success('Maintenance schedule added');
     },
-    onError: (error) => {
+    onError: (error, scheduleData, context) => {
+      // Rollback on error
+      if (context?.previousSchedules) {
+        queryClient.setQueryData(['maintenanceSchedules', bikeId], context.previousSchedules);
+      }
       logger.error('Error creating maintenance schedule:', error);
       apexToast.error('Failed to add maintenance schedule');
     },
@@ -89,6 +118,18 @@ export function useMaintenanceSchedules(bikeId?: string) {
 
   // Update a maintenance schedule
   const updateSchedule = useMutation({
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: ['maintenanceSchedules', bikeId] });
+      
+      const previousSchedules = queryClient.getQueryData<MaintenanceSchedule[]>(['maintenanceSchedules', bikeId]);
+      
+      // Optimistically update
+      queryClient.setQueryData<MaintenanceSchedule[]>(['maintenanceSchedules', bikeId], (old = []) =>
+        old.map(schedule => schedule.id === id ? { ...schedule, ...updates } : schedule)
+      );
+      
+      return { previousSchedules };
+    },
     mutationFn: async ({
       id,
       updates,
@@ -121,18 +162,28 @@ export function useMaintenanceSchedules(bikeId?: string) {
         throw new Error('You do not have permission to update this schedule');
       }
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('maintenance_schedules')
         .update(updates)
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) throw error;
+      return data as MaintenanceSchedule;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['maintenanceSchedules'] });
+    onSuccess: (updatedSchedule) => {
+      // Update with actual data from server
+      queryClient.setQueryData<MaintenanceSchedule[]>(['maintenanceSchedules', bikeId], (old = []) =>
+        old.map(schedule => schedule.id === updatedSchedule.id ? updatedSchedule : schedule)
+      );
       apexToast.success('Schedule updated');
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousSchedules) {
+        queryClient.setQueryData(['maintenanceSchedules', bikeId], context.previousSchedules);
+      }
       logger.error('Error updating maintenance schedule:', error);
       apexToast.error('Failed to update schedule');
     },
@@ -140,6 +191,30 @@ export function useMaintenanceSchedules(bikeId?: string) {
 
   // Complete a service (update schedule and create history entry)
   const completeService = useMutation({
+    onMutate: async ({ scheduleId, serviceOdo }) => {
+      await queryClient.cancelQueries({ queryKey: ['maintenanceSchedules', bikeId] });
+      await queryClient.cancelQueries({ queryKey: ['serviceHistory'] });
+      await queryClient.cancelQueries({ queryKey: ['bikes'] });
+      
+      const previousSchedules = queryClient.getQueryData<MaintenanceSchedule[]>(['maintenanceSchedules', bikeId]);
+      
+      const serviceDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      
+      // Optimistically update schedule
+      queryClient.setQueryData<MaintenanceSchedule[]>(['maintenanceSchedules', bikeId], (old = []) =>
+        old.map(schedule => 
+          schedule.id === scheduleId 
+            ? { 
+                ...schedule, 
+                last_service_date: serviceDate,
+                last_service_odo: serviceOdo 
+              } 
+            : schedule
+        )
+      );
+      
+      return { previousSchedules };
+    },
     mutationFn: async ({
       scheduleId,
       bikeId,
@@ -231,14 +306,30 @@ export function useMaintenanceSchedules(bikeId?: string) {
           logger.warn('Failed to schedule notification:', notifError);
         }
       }
+      
+      // Return updated schedule for optimistic update
+      const { data: updatedSchedule } = await supabase
+        .from('maintenance_schedules')
+        .select('*')
+        .eq('id', scheduleId)
+        .single();
+      
+      return updatedSchedule as MaintenanceSchedule;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['maintenanceSchedules'] });
+    onSuccess: (updatedSchedule) => {
+      // Update with actual data from server
+      queryClient.setQueryData<MaintenanceSchedule[]>(['maintenanceSchedules', bikeId], (old = []) =>
+        old.map(schedule => schedule.id === updatedSchedule.id ? updatedSchedule : schedule)
+      );
       queryClient.invalidateQueries({ queryKey: ['serviceHistory'] });
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
       apexToast.success('Service completed');
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousSchedules) {
+        queryClient.setQueryData(['maintenanceSchedules', bikeId], context.previousSchedules);
+      }
       logger.error('Error completing service:', error);
       apexToast.error('Failed to complete service');
     },

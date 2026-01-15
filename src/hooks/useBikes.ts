@@ -59,12 +59,40 @@ export function useBikes() {
       
       return newBike;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bikes'] });
+    onMutate: async (bikeData) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['bikes'] });
+      
+      // Snapshot previous value
+      const previousBikes = queryClient.getQueryData<Bike[]>(['bikes']);
+      
+      // Optimistically update
+      const optimisticBike: Bike = {
+        ...bikeData,
+        id: `temp-${Date.now()}`, // Temporary ID
+        user_id: '', // Will be set by server
+        created_at: new Date().toISOString(),
+      };
+      
+      queryClient.setQueryData<Bike[]>(['bikes'], (old = []) => [optimisticBike, ...old]);
+      
+      return { previousBikes };
+    },
+    onSuccess: (newBike) => {
+      // Update with actual data from server
+      queryClient.setQueryData<Bike[]>(['bikes'], (old = []) => {
+        // Remove optimistic bike and add real one
+        const withoutTemp = old.filter(b => !b.id.startsWith('temp-'));
+        return [newBike, ...withoutTemp];
+      });
       queryClient.invalidateQueries({ queryKey: ['maintenanceSchedules'] });
       apexToast.success('Bike Added');
     },
-    onError: (error) => {
+    onError: (error, bikeData, context) => {
+      // Rollback on error
+      if (context?.previousBikes) {
+        queryClient.setQueryData(['bikes'], context.previousBikes);
+      }
       apexToast.error(error instanceof Error ? error.message : 'Failed to add bike');
     },
   });
@@ -94,11 +122,30 @@ export function useBikes() {
       if (error) throw error;
       return data as Bike;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bikes'] });
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: ['bikes'] });
+      
+      const previousBikes = queryClient.getQueryData<Bike[]>(['bikes']);
+      
+      // Optimistically update
+      queryClient.setQueryData<Bike[]>(['bikes'], (old = []) =>
+        old.map(bike => bike.id === id ? { ...bike, ...updates } : bike)
+      );
+      
+      return { previousBikes };
+    },
+    onSuccess: (updatedBike) => {
+      // Update with actual data from server
+      queryClient.setQueryData<Bike[]>(['bikes'], (old = []) =>
+        old.map(bike => bike.id === updatedBike.id ? updatedBike : bike)
+      );
       apexToast.success('Bike Updated');
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousBikes) {
+        queryClient.setQueryData(['bikes'], context.previousBikes);
+      }
       apexToast.error(error instanceof Error ? error.message : 'Failed to update bike');
     },
   });
@@ -139,6 +186,18 @@ export function useBikes() {
 
   // Delete a bike
   const deleteBike = useMutation({
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['bikes'] });
+      
+      const previousBikes = queryClient.getQueryData<Bike[]>(['bikes']);
+      
+      // Optimistically remove
+      queryClient.setQueryData<Bike[]>(['bikes'], (old = []) =>
+        old.filter(bike => bike.id !== id)
+      );
+      
+      return { previousBikes };
+    },
     mutationFn: async (id: string) => {
       const {
         data: { user },
@@ -229,15 +288,18 @@ export function useBikes() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bikes'] });
+      // Data already optimistically removed, just invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['rides'] });
       queryClient.invalidateQueries({ queryKey: ['maintenanceLogs'] });
       queryClient.invalidateQueries({ queryKey: ['fuelLogs'] });
       // Success toast is handled in Garage.tsx after mutation completes
     },
-    onError: (error) => {
+    onError: (error, id, context) => {
+      // Rollback on error
+      if (context?.previousBikes) {
+        queryClient.setQueryData(['bikes'], context.previousBikes);
+      }
       // Error toast is handled in Garage.tsx
-      // Only log for debugging
       logger.error('Error deleting bike:', error);
     },
   });

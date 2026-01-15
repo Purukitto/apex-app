@@ -203,6 +203,25 @@ export function useRides(options: UseRidesOptions = {}) {
 
   // Update ride mutation
   const updateRide = useMutation({
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: ['rides'] });
+      
+      const previousRides = queryClient.getQueriesData({ queryKey: ['rides'] });
+      
+      // Optimistically update all ride queries
+      queryClient.setQueriesData<{ rides: Ride[]; total?: number }>(
+        { queryKey: ['rides'] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            rides: old.rides.map(ride => ride.id === id ? { ...ride, ...updates } : ride)
+          };
+        }
+      );
+      
+      return { previousRides };
+    },
     mutationFn: async ({
       id,
       updates,
@@ -252,11 +271,27 @@ export function useRides(options: UseRidesOptions = {}) {
 
       return data as Ride;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rides'] });
+    onSuccess: (updatedRide) => {
+      // Update with actual data from server
+      queryClient.setQueriesData<{ rides: Ride[]; total?: number }>(
+        { queryKey: ['rides'] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            rides: old.rides.map(ride => ride.id === updatedRide.id ? updatedRide : ride)
+          };
+        }
+      );
       apexToast.success('Ride updated');
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousRides) {
+        context.previousRides.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
       apexToast.error(
         error instanceof Error ? error.message : 'Failed to update ride'
       );
@@ -265,6 +300,26 @@ export function useRides(options: UseRidesOptions = {}) {
 
   // Delete ride mutation
   const deleteRide = useMutation({
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['rides'] });
+      
+      const previousRides = queryClient.getQueriesData({ queryKey: ['rides'] });
+      
+      // Optimistically remove
+      queryClient.setQueriesData<{ rides: Ride[]; total?: number }>(
+        { queryKey: ['rides'] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            rides: old.rides.filter(ride => ride.id !== id),
+            total: old.total !== undefined ? Math.max(0, (old.total || 0) - 1) : undefined
+          };
+        }
+      );
+      
+      return { previousRides };
+    },
     mutationFn: async (id: string) => {
       const {
         data: { user },
@@ -280,10 +335,16 @@ export function useRides(options: UseRidesOptions = {}) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rides'] });
+      // Data already optimistically removed
       apexToast.success('Ride deleted');
     },
-    onError: (error) => {
+    onError: (error, id, context) => {
+      // Rollback on error
+      if (context?.previousRides) {
+        context.previousRides.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
       apexToast.error(
         error instanceof Error ? error.message : 'Failed to delete ride'
       );

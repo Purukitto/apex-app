@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
 import { apexToast } from '../lib/toast';
-import type { FuelLog } from '../types/database';
+import type { FuelLog, Bike } from '../types/database';
 import { logger } from '../lib/logger';
 import { calculateMileage, getLastFuelPrice } from '../utils/fuelCalculations';
 
@@ -51,6 +51,26 @@ export function useFuelLogs(bikeId?: string) {
 
   // Create a new fuel log
   const createFuelLog = useMutation({
+    onMutate: async (logData) => {
+      await queryClient.cancelQueries({ queryKey: ['fuelLogs', bikeId] });
+      await queryClient.cancelQueries({ queryKey: ['bikes'] });
+      
+      const previousFuelLogs = queryClient.getQueryData<FuelLog[]>(['fuelLogs', bikeId]);
+      const previousBikes = queryClient.getQueryData<Bike[]>(['bikes']);
+      
+      // Optimistically add log
+      const optimisticLog: FuelLog = {
+        ...logData,
+        id: `temp-${Date.now()}`,
+        created_at: new Date().toISOString(),
+      };
+      
+      queryClient.setQueryData<FuelLog[]>(['fuelLogs', bikeId], (old = []) => 
+        [optimisticLog, ...old]
+      );
+      
+      return { previousFuelLogs, previousBikes };
+    },
     mutationFn: async (logData: Omit<FuelLog, 'id' | 'created_at'>) => {
       const {
         data: { user },
@@ -69,19 +89,37 @@ export function useFuelLogs(bikeId?: string) {
         throw new Error('Bike not found or you do not have permission');
       }
 
-      const { error } = await supabase.from('fuel_logs').insert(logData);
+      const { data, error } = await supabase
+        .from('fuel_logs')
+        .insert(logData)
+        .select()
+        .single();
 
       if (error) throw error;
 
       // Calculate and update mileage and last_fuel_price in bikes table
       await updateBikeFuelStats(logData.bike_id);
+      
+      return data as FuelLog;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['fuelLogs'] });
+    onSuccess: (newLog) => {
+      // Update with actual data from server
+      queryClient.setQueryData<FuelLog[]>(['fuelLogs', bikeId], (old = []) => {
+        const withoutTemp = old.filter(log => !log.id.startsWith('temp-'));
+        return [newLog, ...withoutTemp];
+      });
+      // Invalidate bikes to refetch updated stats
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
       apexToast.success('Fuel log added');
     },
-    onError: (error) => {
+    onError: (error, logData, context) => {
+      // Rollback on error
+      if (context?.previousFuelLogs) {
+        queryClient.setQueryData(['fuelLogs', bikeId], context.previousFuelLogs);
+      }
+      if (context?.previousBikes) {
+        queryClient.setQueryData(['bikes'], context.previousBikes);
+      }
       logger.error('Error creating fuel log:', error);
       apexToast.error(
         error instanceof Error ? error.message : 'Failed to add fuel log'
@@ -91,6 +129,20 @@ export function useFuelLogs(bikeId?: string) {
 
   // Update a fuel log
   const updateFuelLog = useMutation({
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: ['fuelLogs', bikeId] });
+      await queryClient.cancelQueries({ queryKey: ['bikes'] });
+      
+      const previousFuelLogs = queryClient.getQueryData<FuelLog[]>(['fuelLogs', bikeId]);
+      const previousBikes = queryClient.getQueryData<Bike[]>(['bikes']);
+      
+      // Optimistically update
+      queryClient.setQueryData<FuelLog[]>(['fuelLogs', bikeId], (old = []) =>
+        old.map(log => log.id === id ? { ...log, ...updates } : log)
+      );
+      
+      return { previousFuelLogs, previousBikes };
+    },
     mutationFn: async ({
       id,
       updates,
@@ -132,13 +184,33 @@ export function useFuelLogs(bikeId?: string) {
 
       // Recalculate and update mileage and last_fuel_price
       await updateBikeFuelStats(log.bike_id);
+      
+      // Return updated log
+      const { data: updatedLog } = await supabase
+        .from('fuel_logs')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      return updatedLog as FuelLog;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['fuelLogs'] });
+    onSuccess: (updatedLog) => {
+      // Update with actual data from server
+      queryClient.setQueryData<FuelLog[]>(['fuelLogs', bikeId], (old = []) =>
+        old.map(log => log.id === updatedLog.id ? updatedLog : log)
+      );
+      // Invalidate bikes to refetch updated stats
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
       apexToast.success('Fuel log updated');
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousFuelLogs) {
+        queryClient.setQueryData(['fuelLogs', bikeId], context.previousFuelLogs);
+      }
+      if (context?.previousBikes) {
+        queryClient.setQueryData(['bikes'], context.previousBikes);
+      }
       logger.error('Error updating fuel log:', error);
       apexToast.error(
         error instanceof Error ? error.message : 'Failed to update fuel log'
@@ -148,6 +220,20 @@ export function useFuelLogs(bikeId?: string) {
 
   // Delete a fuel log
   const deleteFuelLog = useMutation({
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['fuelLogs', bikeId] });
+      await queryClient.cancelQueries({ queryKey: ['bikes'] });
+      
+      const previousFuelLogs = queryClient.getQueryData<FuelLog[]>(['fuelLogs', bikeId]);
+      const previousBikes = queryClient.getQueryData<Bike[]>(['bikes']);
+      
+      // Optimistically remove
+      queryClient.setQueryData<FuelLog[]>(['fuelLogs', bikeId], (old = []) =>
+        old.filter(log => log.id !== id)
+      );
+      
+      return { previousFuelLogs, previousBikes };
+    },
     mutationFn: async (id: string) => {
       const {
         data: { user },
@@ -182,11 +268,18 @@ export function useFuelLogs(bikeId?: string) {
       await updateBikeFuelStats(log.bike_id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['fuelLogs'] });
+      // Data already optimistically removed, just invalidate bikes for stats
       queryClient.invalidateQueries({ queryKey: ['bikes'] });
       apexToast.success('Fuel log deleted');
     },
-    onError: (error) => {
+    onError: (error, id, context) => {
+      // Rollback on error
+      if (context?.previousFuelLogs) {
+        queryClient.setQueryData(['fuelLogs', bikeId], context.previousFuelLogs);
+      }
+      if (context?.previousBikes) {
+        queryClient.setQueryData(['bikes'], context.previousBikes);
+      }
       logger.error('Error deleting fuel log:', error);
       apexToast.error(
         error instanceof Error ? error.message : 'Failed to delete fuel log'

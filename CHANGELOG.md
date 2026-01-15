@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.14.3](https://github.com/Purukitto/apex-app/compare/v0.14.2...v0.14.3) (2026-01-15)
+
+
+### Features
+
+* **AddBikeModal, bikeLibrary:** implement global bike search functionality ([9093770](https://github.com/Purukitto/apex-app/commit/90937701cce8f3dcc7b2313a0a11e8439683e6bc))
+* **AddBikeModal, bikeLibrary:** implement multi-bike search and reporting functionality ([d818c86](https://github.com/Purukitto/apex-app/commit/d818c86632ebf03eacfe500cec8f930c7b6743ce))
+* **AddBikeModal:** add selected bike state management and reporting enhancements ([a1bb38d](https://github.com/Purukitto/apex-app/commit/a1bb38d17143ba64805463ee76c0a0a18dc4db8c))
+* **AddBikeModal:** capitalize bike make, model, and category in display ([5460ae1](https://github.com/Purukitto/apex-app/commit/5460ae12038cd3629bbdfe2f8bddbf4913623327))
+* **bikeLibrary:** add bike search, report, and addition functionalities ([dd7c198](https://github.com/Purukitto/apex-app/commit/dd7c1988217a8e680187791e0e6bd5cca7676bdd))
+* **bikeLibrary:** enhance global bike search functionality ([a9b54ce](https://github.com/Purukitto/apex-app/commit/a9b54ce6120d04fc5b9704a353cc682af5dfa425))
+* **bikeLibrary:** improve bike search logic and prioritization ([b2d8c4b](https://github.com/Purukitto/apex-app/commit/b2d8c4bc32188dbe2dfd1ae8b879e7de8a9f8724))
+
+
+### Code Refactoring
+
+* **AddBikeModal:** streamline bike information display and remove unused icons ([b7e0bbd](https://github.com/Purukitto/apex-app/commit/b7e0bbd996f6788fd9f4de28a4b61c03ad1ccbae))
+
 ### [0.14.2](https://github.com/Purukitto/apex-app/compare/v0.14.1...v0.14.2) (2026-01-15)
 
 

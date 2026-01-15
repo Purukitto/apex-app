@@ -13,7 +13,7 @@
   "bugs": {
     "url": "https://github.com/Purukitto/apex-app/issues"
   },
-  "version": "0.14.2",
+  "version": "0.14.3",
   "type": "module",
   "scripts": {
     "dev": "vite --host",

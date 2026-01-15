@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.14.5](https://github.com/Purukitto/apex-app/compare/v0.14.4...v0.14.5) (2026-01-15)
+
+
+### Features
+
+* **Dashboard:** improve pull-to-refresh functionality ([1eb6566](https://github.com/Purukitto/apex-app/commit/1eb6566031efb0a7aa05ad077dd761069878d3a4))
+
 ### [0.14.4](https://github.com/Purukitto/apex-app/compare/v0.14.3...v0.14.4) (2026-01-15)
 
 

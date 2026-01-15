@@ -10,11 +10,10 @@ import { isSupabaseConfigured } from './lib/supabaseClient.ts'
 import { initializeTheme } from './lib/theme.ts'
 import { initializeVersion } from './lib/version.ts'
 
-// Configure StatusBar for fullscreen on native platforms
+// Configure StatusBar for native platforms (visible with dark style)
 if (Capacitor.isNativePlatform()) {
   StatusBar.setOverlaysWebView({ overlay: true })
   StatusBar.setStyle({ style: Style.Dark })
-  StatusBar.hide()
 }
 
 // Check Supabase configuration and log warning if missing

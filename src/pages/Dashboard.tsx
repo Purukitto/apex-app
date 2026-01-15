@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps } from '../lib/animations';
 import { useNotificationHandler } from '../components/layout/NotificationContext';
 import { useThemeColors } from '../hooks/useThemeColors';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Dashboard() {
   const { bikes, isLoading } = useBikes();

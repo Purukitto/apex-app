@@ -4,12 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { buttonHoverProps } from '../../lib/animations';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { useKeyboard } from '../../hooks/useKeyboard';
+import { Capacitor } from '@capacitor/core';
 
 export default function BottomPillNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const { primary } = useThemeColors();
   const { isKeyboardVisible } = useKeyboard();
+  const isNative = Capacitor.isNativePlatform();
+  
+  // On web, always show navigation (keyboard doesn't cover it)
+  // On native, hide when keyboard is visible
+  const shouldHide = isNative && isKeyboardVisible;
 
   const navItems = [
     { path: '/dashboard', icon: Activity, label: 'Dashboard' },
@@ -22,9 +28,9 @@ export default function BottomPillNav() {
 
   return (
     <AnimatePresence>
-      {!isKeyboardVisible && (
+      {!shouldHide && (
         <motion.div
-          className="fixed left-1/2 -translate-x-1/2 z-50 bg-zinc-500/20 backdrop-blur-md rounded-full px-8 py-3 flex items-center gap-8"
+          className="fixed left-1/2 -translate-x-1/2 z-50 bg-apex-white/10 backdrop-blur-md rounded-full px-8 py-3 flex items-center gap-8 pointer-events-auto"
           style={{
             bottom: 'calc(2.5rem + env(safe-area-inset-bottom, 0px))',
           }}
@@ -42,8 +48,12 @@ export default function BottomPillNav() {
           return (
             <motion.button
               key={item.path}
-              onClick={() => navigate(item.path, { replace: true })}
-              className="px-8 py-3 rounded-full font-semibold text-zinc-950 flex items-center gap-2 shadow-lg"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                navigate(item.path, { replace: true });
+              }}
+              className="px-8 py-3 rounded-full font-semibold text-apex-black flex items-center gap-2 shadow-lg"
               style={{ backgroundColor: primary }}
               {...buttonHoverProps}
             >
@@ -56,11 +66,15 @@ export default function BottomPillNav() {
         return (
           <motion.button
             key={item.path}
-            onClick={() => navigate(item.path, { replace: true })}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              navigate(item.path, { replace: true });
+            }}
             className={`p-2 rounded-full transition-colors ${
               active
-                ? 'text-white bg-white/10'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
+                ? 'text-apex-white bg-apex-white/10'
+                : 'text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5'
             }`}
             {...buttonHoverProps}
           >

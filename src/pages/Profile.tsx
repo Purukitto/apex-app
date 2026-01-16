@@ -107,7 +107,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="h-full bg-apex-black">
+    <div className="h-full">
       <motion.div
         className="p-6 pb-32 space-y-6"
         variants={containerVariants}

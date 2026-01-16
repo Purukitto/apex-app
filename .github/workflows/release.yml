@@ -123,13 +123,15 @@ jobs:
             IS_MAJOR_RELEASE=1
           fi
           
-          awk -v target_version="$VERSION_NUM" -v minor_prefix="$MINOR_PREFIX" -v is_major="$IS_MAJOR_RELEASE" '
-            BEGIN { 
-              found_target = 0
-              collecting = 0
-            }
+          # Create awk script to extract changelog
+          cat > /tmp/extract_changelog.awk << 'AWKSCRIPT'
+          BEGIN {
+            found_target = 0
+            collecting = 0
+          }
+          {
             # Match version headers: ## [0.14.0] (major) or ### [0.14.5] (minor/patch)
-            /^##\s+\[[0-9]+\.[0-9]+\.[0-9]+\]/ || /^###\s+\[[0-9]+\.[0-9]+\.[0-9]+\]/ {
+            if ($0 ~ /^##[[:space:]]+\[[0-9]+\.[0-9]+\.[0-9]+\]/ || $0 ~ /^###[[:space:]]+\[[0-9]+\.[0-9]+\.[0-9]+\]/) {
               # Extract version from header
               if (match($0, /\[([0-9]+\.[0-9]+\.[0-9]+)\]/, version_match)) {
                 current_version = version_match[1]
@@ -140,16 +142,17 @@ jobs:
                   collecting = 1
                   print
                   next
-                } else if (found_target && collecting) {
-                  # We're already collecting, check if we should continue or stop
+                } else if (found_target == 1 && collecting == 1) {
+                  # We are already collecting, check if we should continue or stop
                   if (is_major == 1) {
-                    # For major releases, stop at next version (different major.minor or next major)
+                    # For major releases, stop at next version
                     exit
                   } else {
                     # For minor/patch releases, collect all versions in same minor release
-                    # Continue collecting patch versions (0.14.4, 0.14.3, etc.) and the major 0.14.0
-                    if (current_version ~ "^" minor_prefix "\\.") {
-                      # Same minor version, continue collecting (including major release 0.14.0)
+                    # Build regex pattern for minor prefix
+                    pattern = "^" minor_prefix "\\."
+                    if (current_version ~ pattern) {
+                      # Same minor version, continue collecting
                       print
                       next
                     } else {
@@ -161,13 +164,25 @@ jobs:
                   # Haven't found target yet, skip this version
                   next
                 }
+              } else {
+                # Not a valid version header, continue processing
+                next
+              }
+            } else {
+              # Not a version header line
+              if (collecting == 1) {
+                # Print all content lines when collecting
+                print
               }
             }
-            # Print all content lines when collecting
-            if (collecting) {
-              print
-            }
-          ' CHANGELOG.md > release_notes.md || true
+          }
+          AWKSCRIPT
+          
+          # Run awk script
+          awk -v target_version="$VERSION_NUM" -v minor_prefix="$MINOR_PREFIX" -v is_major="$IS_MAJOR_RELEASE" -f /tmp/extract_changelog.awk CHANGELOG.md > release_notes.md || true
+          
+          # Cleanup
+          rm -f /tmp/extract_changelog.awk
           
           # If extraction failed or empty, create fallback with link to full changelog
           if [ ! -s release_notes.md ]; then

@@ -64,6 +64,7 @@ export const apexToast = {
         border: '1px solid rgba(255, 255, 255, 0.2)',
         color: '#E2E2E2',
       },
+      duration: 3000,
     });
   },
 };

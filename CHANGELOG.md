@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.15.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.15.0) (2026-01-16)
+
+
+### Features
+
+* add image URL input to ride edit modal ([67cd105](https://github.com/Purukitto/apex-app/commit/67cd105f1d121f0b801ac5d663a60122df15f70a))
+* add image_url field to Ride type ([7b60876](https://github.com/Purukitto/apex-app/commit/7b608765884b5174803ae2f58052c5996f38a67f))
+* add multiple share modes to ride image generation ([82e0b39](https://github.com/Purukitto/apex-app/commit/82e0b396c0025cba5e198f1f24fd576d4a46368a))
+* create ShareModal component with swipeable options ([3739fb6](https://github.com/Purukitto/apex-app/commit/3739fb6d8750d6e42ff02dd72f25a7138307fb94))
+* **DevToolsPanel:** enhance log display and sharing functionality ([797b5c5](https://github.com/Purukitto/apex-app/commit/797b5c507bf339b1c2469229df5754063b70fe3a))
+* **gpx:** enhance GPX export functionality for native and web platforms ([fd9aa0a](https://github.com/Purukitto/apex-app/commit/fd9aa0a49af680c6e1af751e95f9ca20774f825d))
+* **logger:** enhance logging functionality with dynamic log level checks ([3d5f4b4](https://github.com/Purukitto/apex-app/commit/3d5f4b450c8dec9b6bb2fa7f8ffaaa1fd88a4949))
+* **MainLayout, toast:** update background colors and toast duration ([8ab52a3](https://github.com/Purukitto/apex-app/commit/8ab52a33cdaf63afc029fc5c7550695fdb63111f))
+* **share:** add map snapshot support and image_url handling for ride sharing ([29dfd70](https://github.com/Purukitto/apex-app/commit/29dfd703a7ab68ec2991b9efc5d9bda1d5ce1c84))
+* support image_url updates in useRides hook ([4c5bc52](https://github.com/Purukitto/apex-app/commit/4c5bc52052b69ca5ff48724775bfc6a77d4673a3))
+* **ui:** improve keyboard handling and navigation visibility ([0564d69](https://github.com/Purukitto/apex-app/commit/0564d690a89659a8993fdcb1f267a25c45d0d0c1))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+* **deps-dev:** bump the development-dependencies group with 3 updates ([#44](https://github.com/Purukitto/apex-app/issues/44)) ([75640f6](https://github.com/Purukitto/apex-app/commit/75640f6bb151a7d0522fcd8e1afa37cc9e474ce5))
+* **deps:** bump the production-dependencies group with 2 updates ([#43](https://github.com/Purukitto/apex-app/issues/43)) ([9f4ee8d](https://github.com/Purukitto/apex-app/commit/9f4ee8dc9773a144873681c5ffee24d4f9e9ce58))
+
+
+### Documentation
+
+* add rule for common utility function reuse ([fbe533d](https://github.com/Purukitto/apex-app/commit/fbe533d04cfbe1becc537f0638a018206be7dba4))
+
+
+### Code Refactoring
+
+* extract date/time formatting utilities to shared module ([11f513c](https://github.com/Purukitto/apex-app/commit/11f513c18855cb7dfd2097d2405b5e4ad3c7ab2e))
+* remove unnecessary debug logging from share image generation ([f434b31](https://github.com/Purukitto/apex-app/commit/f434b3165328a78a41e6288b72da44fdf81476f4))
+* **ShareModal:** clean up code formatting and improve readability ([011aa85](https://github.com/Purukitto/apex-app/commit/011aa856f3aa5615b1b4b2adee5ea2b9ff691a8e))
+
 ### [0.14.6](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.14.6) (2026-01-16)
 
 

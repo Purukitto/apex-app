@@ -19,6 +19,7 @@ alwaysApply: true
 - Centralize state using **Zustand**.
 - Fetch data using **TanStack Query** (React Query).
 - Logic for "Ride Recording" must check for mobile platform using Capacitor.
+- Prefer shared utilities for common logic (dates, durations, formatting). If logic is reused in 2+ places, extract it into `src/utils/` or an existing shared module.
 
 ## Logging Standards
 - **MANDATORY**: Always use `logger` from `src/lib/logger.ts` instead of `console.*` methods.

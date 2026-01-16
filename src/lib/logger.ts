@@ -198,11 +198,36 @@ class ApexLogger {
   }
 
   /**
+   * Check if a log level should be displayed based on current log level
+   */
+  private shouldLog(level: LogLevel): boolean {
+    const levelOrder: Record<LogLevel | 'silent', number> = {
+      trace: 0,
+      debug: 1,
+      info: 2,
+      warn: 3,
+      error: 4,
+      silent: 5,
+    };
+    
+    const currentLevel = this.getLevel();
+    const currentLevelOrder = levelOrder[currentLevel] ?? 3; // Default to warn
+    const logLevelOrder = levelOrder[level] ?? 3;
+    
+    return logLevelOrder >= currentLevelOrder;
+  }
+
+  /**
    * Log at trace level
    */
   trace(message: string, ...args: unknown[]): void {
     const entry = this.createEntry('trace', message, ...args);
-    log.trace(message, ...args);
+    // Call console.trace directly so DevToolsPanel intercepts can catch it
+    // This ensures logs appear in DevToolsPanel on web
+    // Only call if log level allows it
+    if (this.shouldLog('trace') && typeof console !== 'undefined' && console.trace) {
+      console.trace(message, ...args);
+    }
     
     if (this.fileLoggingEnabled) {
       this.logBuffer.push(entry);
@@ -217,7 +242,12 @@ class ApexLogger {
    */
   debug(message: string, ...args: unknown[]): void {
     const entry = this.createEntry('debug', message, ...args);
-    log.debug(message, ...args);
+    // Call console.debug directly so DevToolsPanel intercepts can catch it
+    // This ensures logs appear in DevToolsPanel on web
+    // Only call if log level allows it
+    if (this.shouldLog('debug') && typeof console !== 'undefined' && console.debug) {
+      console.debug(message, ...args);
+    }
     
     if (this.fileLoggingEnabled) {
       this.logBuffer.push(entry);
@@ -232,7 +262,12 @@ class ApexLogger {
    */
   info(message: string, ...args: unknown[]): void {
     const entry = this.createEntry('info', message, ...args);
-    log.info(message, ...args);
+    // Call console.info directly so DevToolsPanel intercepts can catch it
+    // This ensures logs appear in DevToolsPanel on web
+    // Only call if log level allows it
+    if (this.shouldLog('info') && typeof console !== 'undefined' && console.info) {
+      console.info(message, ...args);
+    }
     
     if (this.fileLoggingEnabled) {
       this.logBuffer.push(entry);
@@ -247,7 +282,12 @@ class ApexLogger {
    */
   warn(message: string, ...args: unknown[]): void {
     const entry = this.createEntry('warn', message, ...args);
-    log.warn(message, ...args);
+    // Call console.warn directly so DevToolsPanel intercepts can catch it
+    // This ensures logs appear in DevToolsPanel on web
+    // Only call if log level allows it
+    if (this.shouldLog('warn') && typeof console !== 'undefined' && console.warn) {
+      console.warn(message, ...args);
+    }
     
     if (this.fileLoggingEnabled) {
       this.logBuffer.push(entry);
@@ -262,7 +302,12 @@ class ApexLogger {
    */
   error(message: string, ...args: unknown[]): void {
     const entry = this.createEntry('error', message, ...args);
-    log.error(message, ...args);
+    // Call console.error directly so DevToolsPanel intercepts can catch it
+    // This ensures logs appear in DevToolsPanel on web
+    // Only call if log level allows it
+    if (this.shouldLog('error') && typeof console !== 'undefined' && console.error) {
+      console.error(message, ...args);
+    }
     
     // Always flush errors immediately
     if (this.fileLoggingEnabled) {

@@ -156,7 +156,7 @@ export default function Garage() {
   const otherBikes = bikes.slice(1);
 
   return (
-    <div className="h-full bg-zinc-950">
+    <div className="h-full">
       <motion.div
         className="p-6 pb-32 space-y-6"
         variants={containerVariants}
@@ -170,7 +170,7 @@ export default function Garage() {
             className="flex flex-col items-center justify-center py-16 text-center"
             variants={itemVariants}
           >
-            <div className="p-4 bg-zinc-900 rounded-apex mb-4">
+            <div className="p-4 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex mb-4">
               <Motorbike size={48} style={{ color: primary }} />
             </div>
             <h2 className="text-xl font-semibold text-white mb-2">
@@ -181,7 +181,7 @@ export default function Garage() {
             </p>
             <motion.button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-zinc-950"
+              className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-apex-black"
               style={{ backgroundColor: primary }}
               {...buttonHoverProps}
             >
@@ -194,7 +194,7 @@ export default function Garage() {
             {/* Hero Card - Current Bike */}
             {currentBike && (
               <motion.div
-                className="bg-zinc-900 rounded-apex p-6 border border-white/5"
+                className="bg-gradient-to-br from-white/5 to-transparent rounded-apex p-6 border border-apex-white/20"
                 variants={itemVariants}
                 {...cardHoverProps}
               >
@@ -233,21 +233,21 @@ export default function Garage() {
                 <div className="flex gap-2">
                   <motion.button
                     onClick={() => handleViewMaintenance(currentBike)}
-                    className="flex-1 px-4 py-2 bg-zinc-800 border border-white/5 rounded-lg text-white text-sm hover:bg-zinc-700 transition-colors"
+                    className="flex-1 px-4 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-sm hover:bg-apex-white/20 transition-colors"
                     {...buttonHoverProps}
                   >
                     Maintenance
                   </motion.button>
                   <motion.button
                     onClick={() => handleViewFuel(currentBike)}
-                    className="flex-1 px-4 py-2 bg-zinc-800 border border-white/5 rounded-lg text-white text-sm hover:bg-zinc-700 transition-colors"
+                    className="flex-1 px-4 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-sm hover:bg-apex-white/20 transition-colors"
                     {...buttonHoverProps}
                   >
                     Fuel
                   </motion.button>
                   <motion.button
                     onClick={() => handleEditBike(currentBike)}
-                    className="flex-1 px-4 py-2 bg-zinc-800 border border-white/5 rounded-lg text-white text-sm hover:bg-zinc-700 transition-colors"
+                    className="flex-1 px-4 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-sm hover:bg-apex-white/20 transition-colors"
                     {...buttonHoverProps}
                   >
                     Edit
@@ -272,7 +272,7 @@ export default function Garage() {
                 {otherBikes.map((bike) => (
                   <motion.div
                     key={bike.id}
-                    className="bg-zinc-900 rounded-apex p-5 border border-white/5"
+                    className="bg-gradient-to-br from-white/5 to-transparent rounded-apex p-5 border border-apex-white/20"
                     variants={fastItemVariants}
                     {...cardHoverProps}
                   >
@@ -305,21 +305,21 @@ export default function Garage() {
                     <div className="flex gap-2">
                       <motion.button
                         onClick={() => handleViewMaintenance(bike)}
-                        className="flex-1 px-3 py-1.5 bg-zinc-800 border border-white/5 rounded-lg text-white text-xs hover:bg-zinc-700 transition-colors"
+                        className="flex-1 px-3 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors"
                         {...buttonHoverProps}
                       >
                         Maint
                       </motion.button>
                       <motion.button
                         onClick={() => handleViewFuel(bike)}
-                        className="flex-1 px-3 py-1.5 bg-zinc-800 border border-white/5 rounded-lg text-white text-xs hover:bg-zinc-700 transition-colors"
+                        className="flex-1 px-3 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors"
                         {...buttonHoverProps}
                       >
                         Fuel
                       </motion.button>
                       <motion.button
                         onClick={() => handleEditBike(bike)}
-                        className="flex-1 px-3 py-1.5 bg-zinc-800 border border-white/5 rounded-lg text-white text-xs hover:bg-zinc-700 transition-colors"
+                        className="flex-1 px-3 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors"
                         {...buttonHoverProps}
                       >
                         Edit
@@ -344,7 +344,7 @@ export default function Garage() {
             >
               <motion.button
                 onClick={() => setIsModalOpen(true)}
-                className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-zinc-950"
+                className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-apex-black"
                 style={{ backgroundColor: primary }}
                 {...buttonHoverProps}
               >

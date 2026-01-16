@@ -29,7 +29,7 @@ export default function Service() {
 
   if (!bikeId) {
     return (
-      <div className="h-full bg-apex-black flex items-center justify-center">
+      <div className="h-full flex items-center justify-center">
         <p className="text-apex-white/60">No bike selected</p>
       </div>
     );
@@ -39,7 +39,7 @@ export default function Service() {
 
   if (!bike) {
     return (
-      <div className="h-full bg-apex-black flex items-center justify-center">
+      <div className="h-full flex items-center justify-center">
         <p className="text-apex-white/60">Bike not found</p>
       </div>
     );
@@ -70,7 +70,7 @@ export default function Service() {
     : null;
 
   return (
-    <div className="h-full bg-apex-black">
+    <div className="h-full">
       <motion.div
         className="p-6 pb-32 space-y-6"
         variants={containerVariants}

@@ -62,23 +62,33 @@ export function useKeyboard() {
     } else {
       // Web: Use focus/blur events on input elements as fallback
       // On web, keyboards don't typically cover fixed navigation, but we can still detect input focus
-      const handleInputFocus = () => {
-        setIsKeyboardVisible(true);
+      const handleInputFocus = (e: FocusEvent) => {
+        const target = e.target as HTMLElement;
+        // Only show keyboard for actual input elements, not buttons or other interactive elements
+        if (target?.tagName === 'INPUT' || 
+            target?.tagName === 'TEXTAREA' ||
+            target?.getAttribute('contenteditable') === 'true') {
+          setIsKeyboardVisible(true);
+        }
       };
 
       const handleInputBlur = () => {
-        // Small delay to handle cases where user clicks another input
+        // Small delay to handle cases where user clicks another input or button
         blurTimeout = setTimeout(() => {
           const activeElement = document.activeElement;
           const isInputFocused = activeElement?.tagName === 'INPUT' || 
                                  activeElement?.tagName === 'TEXTAREA' ||
                                  activeElement?.getAttribute('contenteditable') === 'true';
           
-          if (!isInputFocused) {
+          // Don't hide keyboard if clicking on a button or other non-input element
+          const isButton = activeElement?.tagName === 'BUTTON' || 
+                          activeElement?.closest('button') !== null;
+          
+          if (!isInputFocused && !isButton) {
             setIsKeyboardVisible(false);
             setKeyboardHeight(0);
           }
-        }, 100);
+        }, 150);
       };
 
       // Listen for focus/blur on all input elements

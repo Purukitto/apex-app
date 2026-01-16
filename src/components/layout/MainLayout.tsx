@@ -69,11 +69,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
         unreadCount,
       }}
     >
-      <div className={`min-h-screen bg-zinc-950 flex flex-col ${isRideMode ? 'fixed inset-0 overflow-hidden' : ''}`}>
+      <div className={`min-h-screen bg-apex-black flex flex-col ${isRideMode ? 'fixed inset-0 overflow-hidden' : ''}`}>
         {/* Sticky Page Header - Hidden in ride mode */}
         {!isRideMode && (
           <div 
-            className="sticky top-0 z-40 bg-zinc-950 border-b border-white/5"
+            className="sticky top-0 z-40 bg-apex-black border-b border-apex-white/5"
             style={{
               paddingTop: 'env(safe-area-inset-top, 0px)',
             }}
@@ -92,7 +92,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         {/* Main Content */}
         <main 
           ref={mainRef} 
-          className={`flex-1 min-h-0 transition-all overflow-y-auto ${isRideMode ? 'pb-0' : 'pb-32'}`}
+          className={`flex-1 min-h-0 transition-all overflow-y-auto bg-apex-black ${isRideMode ? 'pb-0' : 'pb-32'}`}
           style={{ overscrollBehaviorY: 'contain' }}
         >
           <AnimatePresence mode="wait" key={location.pathname}>
@@ -119,6 +119,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
               color: '#E2E2E2',
               fontFamily: 'inherit',
             },
+            duration: 3000,
           }}
         />
 

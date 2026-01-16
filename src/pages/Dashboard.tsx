@@ -12,6 +12,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { useQueryClient } from '@tanstack/react-query';
 import { Capacitor } from '@capacitor/core';
 import { logger } from '../lib/logger';
+import { formatDuration, formatShortDate } from '../utils/format';
 
 export default function Dashboard() {
   const { bikes, isLoading } = useBikes();
@@ -155,37 +156,8 @@ export default function Dashboard() {
   const bikeCount = bikes.length;
   const totalRides = rides?.length || 0;
 
-  // Format duration from start_time and end_time
-  const formatDuration = (startTime: string, endTime?: string): string => {
-    if (!endTime) return 'In progress';
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    const seconds = Math.floor((end.getTime() - start.getTime()) / 1000);
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Format date
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today';
-    }
-    if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    }
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
+  const formatRideDate = (dateString: string): string =>
+    formatShortDate(dateString, { includeYear: false, useRelative: true });
 
   // Create a map of bike IDs to bike objects for quick lookup
   const bikeMap = new Map(bikes.map((bike) => [bike.id, bike]));
@@ -193,7 +165,7 @@ export default function Dashboard() {
   const riderName = profile?.riderName || 'Rider';
 
   return (
-    <div className="h-full bg-apex-black flex flex-col">
+    <div className="h-full flex flex-col">
       {/* Pull-to-refresh indicator */}
       {(pullDistance > 0 || isRefreshing) && (
         <motion.div
@@ -258,9 +230,9 @@ export default function Dashboard() {
               style={{ backgroundColor: primary }}
               {...buttonHoverProps}
             >
-              <Bell size={20} className="text-zinc-950" />
+              <Bell size={20} className="text-apex-black" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-zinc-950 text-white text-[10px] font-mono font-bold rounded-full flex items-center justify-center border-2 border-white">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-apex-black text-apex-white text-[10px] font-mono font-bold rounded-full flex items-center justify-center border-2 border-apex-white">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -284,7 +256,7 @@ export default function Dashboard() {
         >
           {/* Hero Card - Distance (Non-clickable) */}
           <motion.div
-            className="col-span-2 md:col-span-2 bg-zinc-900 border border-white/5 rounded-apex p-6"
+            className="col-span-2 md:col-span-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex p-6"
             variants={itemVariants}
           >
             <div className="flex items-start justify-between">
@@ -307,7 +279,7 @@ export default function Dashboard() {
           >
             {/* Bikes in Garage Tile (Clickable) */}
             <motion.div
-              className="bg-zinc-900 border border-white/5 rounded-apex p-5 cursor-pointer transition-all"
+              className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex p-5 cursor-pointer transition-all"
               variants={itemVariants}
               onClick={() => navigate('/garage')}
               whileHover={{ borderColor: highlight, scale: 1.02 }}
@@ -326,7 +298,7 @@ export default function Dashboard() {
 
             {/* Total Rides Tile (Clickable) */}
             <motion.div
-              className="bg-zinc-900 border border-white/5 rounded-apex p-5 cursor-pointer transition-all"
+              className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex p-5 cursor-pointer transition-all"
               variants={itemVariants}
               onClick={() => navigate('/rides')}
               whileHover={{ borderColor: highlight, scale: 1.02 }}
@@ -352,7 +324,7 @@ export default function Dashboard() {
         >
           <h2 className="text-xl font-semibold text-white">Recent Rides</h2>
           {ridesLoading ? (
-            <div className="bg-zinc-900 border border-white/5 rounded-apex p-8 text-center">
+            <div className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex p-8 text-center">
               <div className="animate-spin mx-auto mb-3">
                 <RefreshCw size={32} className="text-white/20" />
               </div>
@@ -371,7 +343,7 @@ export default function Dashboard() {
                 return (
                   <motion.div
                     key={ride.id}
-                    className="bg-zinc-900 border border-white/5 rounded-apex overflow-hidden"
+                    className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex overflow-hidden"
                     variants={fastItemVariants}
                     layout
                   >
@@ -416,7 +388,7 @@ export default function Dashboard() {
                           </div>
                         )}
                         <span className="text-xs text-white/40 font-mono">
-                          {formatDate(ride.start_time)}
+                          {formatRideDate(ride.start_time)}
                         </span>
                       </div>
                     </motion.div>
@@ -425,7 +397,7 @@ export default function Dashboard() {
               })}
             </motion.div>
           ) : (
-            <div className="bg-zinc-900 border border-white/5 rounded-apex p-8 text-center">
+            <div className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex p-8 text-center">
               <Timer className="mx-auto mb-3 text-white/20" size={32} />
               <p className="text-sm text-white/40">
                 No rides recorded yet. Start tracking your rides to see them here.

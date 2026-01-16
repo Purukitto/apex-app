@@ -51,13 +51,21 @@ function waitForMapTiles(mapContainer: HTMLElement, timeout = 5000): Promise<voi
   });
 }
 
+export type ShareMode = 
+  | 'no-map-no-image'
+  | 'map-no-image'
+  | 'no-map-image-dark'
+  | 'map-image-dark'
+  | 'no-map-image-transparent';
+
 /**
  * Generate a shareable image for a ride (Strava-style)
  * Creates an image with ride stats and styling, including map if route data is available
  */
 export async function generateRideShareImage(
   ride: Ride,
-  bike: Bike | undefined
+  bike: Bike | undefined,
+  mode: ShareMode = 'no-map-no-image'
 ): Promise<string> {
   // Format bike name as "Make (Year)" to match AllRides card format
   const bikeName = bike 
@@ -109,14 +117,49 @@ export async function generateRideShareImage(
     ? ride.route_path.coordinates.map(([lng, lat]: [number, number]) => [lat, lng] as [number, number])
     : [];
 
-  // Create a temporary container for the image
+  // Determine what to show based on mode
+  const showMap = (mode === 'map-no-image' || mode === 'map-image-dark') && hasRoute && routeCoordinates.length > 0;
+  const showImage = mode === 'no-map-image-dark' || mode === 'map-image-dark' || mode === 'no-map-image-transparent';
+  const imageDarkened = mode === 'no-map-image-dark' || mode === 'map-image-dark';
+  const transparentBg = mode === 'no-map-image-transparent';
+
+  // Check if ride has image URL
+  const hasImageUrl = ride.image_url && ride.image_url.trim() !== '';
+
+  // Create a wrapper container
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '-9999px';
+  wrapper.style.top = '0';
+  wrapper.style.width = '1080px';
+  wrapper.style.height = '1080px';
+  
+  // Set background based on mode
+  if (showImage && hasImageUrl) {
+    wrapper.style.backgroundImage = `url(${ride.image_url})`;
+    wrapper.style.backgroundSize = 'cover';
+    wrapper.style.backgroundPosition = 'center';
+    if (imageDarkened) {
+      // Add dark overlay
+      const overlay = document.createElement('div');
+      overlay.style.position = 'absolute';
+      overlay.style.inset = '0';
+      overlay.style.backgroundColor = 'rgba(10, 10, 10, 0.7)';
+      overlay.style.zIndex = '1';
+      wrapper.appendChild(overlay);
+    } else if (transparentBg) {
+      // Transparent background - no overlay
+      wrapper.style.backgroundColor = 'transparent';
+    }
+  } else {
+    wrapper.style.background = transparentBg ? 'transparent' : apexBlack;
+  }
+
+  // Create content container
   const container = document.createElement('div');
-  container.style.position = 'fixed';
-  container.style.left = '-9999px';
-  container.style.top = '0';
-  container.style.width = '1080px';
-  container.style.height = '1080px';
-  container.style.background = apexBlack;
+  container.style.position = 'relative';
+  container.style.width = '100%';
+  container.style.height = '100%';
   container.style.padding = '60px';
   container.style.boxSizing = 'border-box';
   container.style.fontFamily = 'system-ui, -apple-system, sans-serif';
@@ -124,6 +167,9 @@ export async function generateRideShareImage(
   container.style.display = 'flex';
   container.style.flexDirection = 'column';
   container.style.justifyContent = 'space-between';
+  container.style.zIndex = '2';
+  
+  wrapper.appendChild(container);
 
   // Header section
   const header = document.createElement('div');
@@ -150,11 +196,11 @@ export async function generateRideShareImage(
   header.appendChild(subtitle);
   container.appendChild(header);
 
-  // Map section (if route available) - Strava-style: map at top
+  // Map section (if route available and mode requires it) - Strava-style: map at top
   let mapContainer: HTMLElement | null = null;
   let mapRoot: Root | null = null;
   
-  if (hasRoute && routeCoordinates.length > 0) {
+  if (showMap) {
     try {
       const mapWrapper = document.createElement('div');
       mapWrapper.style.width = '100%';
@@ -212,8 +258,10 @@ export async function generateRideShareImage(
   statsContainer.style.display = 'grid';
   statsContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
   statsContainer.style.gap = '40px';
-  statsContainer.style.marginTop = hasRoute ? '0' : '60px';
+  statsContainer.style.marginTop = showMap ? '0' : '60px';
   statsContainer.style.marginBottom = '60px';
+  statsContainer.style.position = 'relative';
+  statsContainer.style.zIndex = '2';
 
   // Distance stat
   const distanceStat = createStatCard('Distance', `${ride.distance_km.toFixed(1)} km`, apexWhite, apexGreen);
@@ -243,6 +291,8 @@ export async function generateRideShareImage(
   footer.style.marginTop = 'auto';
   footer.style.paddingTop = '40px';
   footer.style.borderTop = '1px solid rgba(226, 226, 226, 0.1)';
+  footer.style.position = 'relative';
+  footer.style.zIndex = '2';
   
   const logoText = document.createElement('div');
   logoText.textContent = 'APEX';
@@ -256,12 +306,12 @@ export async function generateRideShareImage(
   container.appendChild(footer);
 
   // Append to body temporarily
-  document.body.appendChild(container);
+  document.body.appendChild(wrapper);
 
   try {
     // Generate canvas
-    const canvas = await html2canvas(container, {
-      backgroundColor: apexBlack,
+    const canvas = await html2canvas(wrapper, {
+      backgroundColor: transparentBg ? null : apexBlack,
       scale: 2, // Higher quality
       logging: false,
       useCORS: true,
@@ -278,7 +328,7 @@ export async function generateRideShareImage(
     if (mapRoot) {
       mapRoot.unmount();
     }
-    document.body.removeChild(container);
+    document.body.removeChild(wrapper);
     
     return dataUrl;
   } catch (error) {
@@ -286,8 +336,8 @@ export async function generateRideShareImage(
     if (mapRoot) {
       mapRoot.unmount();
     }
-    if (container.parentNode) {
-      document.body.removeChild(container);
+    if (wrapper.parentNode) {
+      document.body.removeChild(wrapper);
     }
     throw error;
   }
@@ -363,10 +413,14 @@ function downloadImage(blob: Blob, filename: string): void {
  * - On web: Tries to copy to clipboard first, falls back to download
  * @returns Object with method used: 'clipboard' | 'download' | 'share'
  */
-export async function shareRideImage(ride: Ride, bike: Bike | undefined): Promise<'clipboard' | 'download' | 'share'> {
+export async function shareRideImage(
+  ride: Ride, 
+  bike: Bike | undefined, 
+  mode: ShareMode = 'no-map-no-image'
+): Promise<'clipboard' | 'download' | 'share'> {
   try {
     // Generate the image
-    const imageDataUrl = await generateRideShareImage(ride, bike);
+    const imageDataUrl = await generateRideShareImage(ride, bike, mode);
     
     // Convert data URL to blob
     const response = await fetch(imageDataUrl);

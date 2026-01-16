@@ -37,12 +37,13 @@ export default function UpdateModal({
     let currentSection: string | null = null;
     let currentVersion: string | null = null;
     let currentSectionItems: string[] = [];
+    let insideVersion = false;
     
     // First pass: collect all items by section type
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       
-      // Check if this is a version header (## [0.13.0] or ### [0.13.4])
+      // Check if this is a version header (## [0.14.0] for major or ### [0.14.5] for minor/patch)
       const versionMatch = line.match(/^(##|###)\s+\[([0-9]+\.[0-9]+\.[0-9]+)\]/);
       if (versionMatch) {
         // Save previous section if we were collecting
@@ -59,12 +60,14 @@ export default function UpdateModal({
         
         currentVersion = versionMatch[2];
         currentSection = null;
+        insideVersion = true;
         continue;
       }
       
       // Check if this is a section header (### Section Name)
+      // Only match if it's not a version header (which also starts with ###)
       const sectionMatch = line.match(/^###\s+(.+?)\s*$/);
-      if (sectionMatch) {
+      if (sectionMatch && insideVersion) {
         // Save previous section if we were collecting
         if (currentSection && currentSectionItems.length > 0) {
           if (!sections[currentSection]) {
@@ -92,7 +95,7 @@ export default function UpdateModal({
       }
       
       // Collect content for current section
-      if (currentSection && line.trim()) {
+      if (currentSection && line.trim() && insideVersion) {
         currentSectionItems.push(line);
       }
     }
@@ -123,13 +126,32 @@ export default function UpdateModal({
           const items = item.content
             .split('\n')
             .map(line => line.trim())
-            .filter(line => line.length > 0 && line.startsWith('*'));
+            .filter(line => {
+              // Keep list items (starting with *) and non-empty lines that look like content
+              return line.length > 0 && (line.startsWith('*') || line.startsWith('-'));
+            });
           
           allItems.push(...items);
         }
         
-        // Remove duplicates (same commit message)
-        const uniqueItems = Array.from(new Set(allItems));
+        // Remove duplicates (same commit message) while preserving order
+        const seen = new Set<string>();
+        const uniqueItems: string[] = [];
+        for (const item of allItems) {
+          // Normalize item for comparison (remove commit hashes, links, etc.)
+          const normalized = item
+            .replace(/\(\[[a-f0-9]{7,}\]\)/gi, '')
+            .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
+            .replace(/https?:\/\/github\.com\/[^\s)]+/gi, '')
+            .replace(/\s+\([a-f0-9]{7,}\)\s*$/, '')
+            .trim();
+          
+          if (normalized && !seen.has(normalized)) {
+            seen.add(normalized);
+            uniqueItems.push(item);
+          }
+        }
+        
         output.push(...uniqueItems);
         output.push('');
       }

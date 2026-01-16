@@ -4,9 +4,8 @@ import { Capacitor } from '@capacitor/core';
 import { useBikes } from '../hooks/useBikes';
 import { useRides } from '../hooks/useRides';
 import { supabase } from '../lib/supabaseClient';
-import { shareRideImage } from '../lib/shareRide';
+import ShareModal from '../components/ShareModal';
 import { exportToGPX } from '../utils/gpx';
-import { apexToast } from '../lib/toast';
 import { logger } from '../lib/logger';
 import {
   MapPin,
@@ -44,8 +43,10 @@ export default function AllRides() {
   const [expandedRideId, setExpandedRideId] = useState<string | null>(null);
   const [editingRide, setEditingRide] = useState<Ride | null>(null);
   const [rideToDelete, setRideToDelete] = useState<Ride | null>(null);
+  const [rideToShare, setRideToShare] = useState<Ride | null>(null);
   const [editRideName, setEditRideName] = useState('');
   const [editRideNotes, setEditRideNotes] = useState('');
+  const [editRideImageUrl, setEditRideImageUrl] = useState('');
   const [isFindingRide, setIsFindingRide] = useState(false);
 
   const {
@@ -219,6 +220,7 @@ export default function AllRides() {
     setEditingRide(ride);
     setEditRideName(ride.ride_name || '');
     setEditRideNotes(ride.notes || '');
+    setEditRideImageUrl(ride.image_url || '');
   };
 
   const handleSaveEdit = async () => {
@@ -230,11 +232,13 @@ export default function AllRides() {
         updates: {
           ride_name: editRideName.trim() || undefined,
           notes: editRideNotes.trim() || undefined,
+          image_url: editRideImageUrl.trim() || undefined,
         },
       });
       setEditingRide(null);
       setEditRideName('');
       setEditRideNotes('');
+      setEditRideImageUrl('');
     } catch (error) {
       logger.error('Error updating ride:', error);
     }
@@ -265,42 +269,8 @@ export default function AllRides() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleShareClick = async (ride: Ride) => {
-    const bike = bikeMap.get(ride.bike_id);
-    
-    try {
-      if (Capacitor.isNativePlatform()) {
-        // Native: Use promise toast for share
-        apexToast.promise(
-          shareRideImage(ride, bike),
-          {
-            loading: 'Generating share image...',
-            success: 'Ride shared',
-            error: 'Failed to share ride',
-          }
-        );
-      } else {
-        // Web: Show loading, then appropriate success message based on method
-        const sharePromise = shareRideImage(ride, bike).then((method) => {
-          // Return success message based on method
-          return method === 'clipboard' 
-            ? 'Image copied to clipboard' 
-            : 'Image downloaded';
-        });
-        
-        apexToast.promise(
-          sharePromise,
-          {
-            loading: 'Generating share image...',
-            success: (message) => message,
-            error: 'Failed to share ride',
-          }
-        );
-      }
-    } catch (error) {
-      logger.error('Error sharing ride:', error);
-      apexToast.error('Failed to share ride');
-    }
+  const handleShareClick = (ride: Ride) => {
+    setRideToShare(ride);
   };
 
   const handleExportGPX = async (ride: Ride) => {
@@ -620,6 +590,7 @@ export default function AllRides() {
                 setEditingRide(null);
                 setEditRideName('');
                 setEditRideNotes('');
+                setEditRideImageUrl('');
               }}
             />
             <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4">
@@ -637,6 +608,7 @@ export default function AllRides() {
                       setEditingRide(null);
                       setEditRideName('');
                       setEditRideNotes('');
+                      setEditRideImageUrl('');
                     }}
                     className="p-2 text-apex-white/60 hover:text-apex-white transition-colors"
                     {...buttonHoverProps}
@@ -671,6 +643,19 @@ export default function AllRides() {
                       className="w-full px-4 py-2 bg-zinc-900 border border-white/5 rounded-lg text-apex-white placeholder:text-white/40 focus:outline-none focus:border-apex-green/40 transition-colors resize-none"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm text-apex-white/60 mb-2">
+                      Image URL
+                    </label>
+                    <input
+                      type="url"
+                      value={editRideImageUrl}
+                      onChange={(e) => setEditRideImageUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full px-4 py-2 bg-zinc-900 border border-white/5 rounded-lg text-apex-white placeholder:text-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex gap-3 justify-end mt-6">
@@ -679,6 +664,7 @@ export default function AllRides() {
                       setEditingRide(null);
                       setEditRideName('');
                       setEditRideNotes('');
+                      setEditRideImageUrl('');
                     }}
                     className="px-4 py-2 text-apex-white/60 hover:text-apex-white transition-colors"
                     {...buttonHoverProps}
@@ -712,6 +698,16 @@ export default function AllRides() {
           cancelLabel="Cancel"
           variant="danger"
           isLoading={deleteRide.isPending}
+        />
+      )}
+
+      {/* Share Modal */}
+      {rideToShare && (
+        <ShareModal
+          isOpen={!!rideToShare}
+          onClose={() => setRideToShare(null)}
+          ride={rideToShare}
+          bike={bikeMap.get(rideToShare.bike_id)}
         />
       )}
     </div>

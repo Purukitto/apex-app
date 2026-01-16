@@ -119,7 +119,7 @@ jobs:
           
           # Determine if this is a major release (patch is 0 or empty) or minor/patch release
           IS_MAJOR_RELEASE=0
-          if [ -z "$PATCH" ] || [ "$PATCH" = "0" ]; then
+          if [ -z "${PATCH}" ] || [ "${PATCH}" = "0" ]; then
             IS_MAJOR_RELEASE=1
           fi
           
@@ -130,8 +130,7 @@ jobs:
             }
             # Match version headers: ## [0.14.0] (major) or ### [0.14.5] (minor/patch)
             /^##\s+\[[0-9]+\.[0-9]+\.[0-9]+\]/ || /^###\s+\[[0-9]+\.[0-9]+\.[0-9]+\]/ {
-              # Extract version from header and check if it's a major release (##)
-              is_major_header = /^##\s+\[/
+              # Extract version from header
               if (match($0, /\[([0-9]+\.[0-9]+\.[0-9]+)\]/, version_match)) {
                 current_version = version_match[1]
                 

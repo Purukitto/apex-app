@@ -1,13 +1,19 @@
-import { useState, useEffect } from 'react';
-import { motion, PanInfo } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { buttonHoverProps } from '../lib/animations';
-import type { Ride } from '../types/database';
-import type { Bike } from '../types/database';
-import { shareRideImage, generateRideShareImage, generateAllRideShareImages, type ShareMode } from '../lib/shareRide';
-import { Capacitor } from '@capacitor/core';
-import { apexToast } from '../lib/toast';
-import { logger } from '../lib/logger';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import type { PanInfo } from "framer-motion";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { buttonHoverProps } from "../lib/animations";
+import type { Ride } from "../types/database";
+import type { Bike } from "../types/database";
+import {
+  shareRideImage,
+  generateRideShareImage,
+  generateAllRideShareImages,
+  type ShareMode,
+} from "../lib/shareRide";
+import { Capacitor } from "@capacitor/core";
+import { apexToast } from "../lib/toast";
+import { logger } from "../lib/logger";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -18,51 +24,63 @@ interface ShareModalProps {
 
 const SHARE_MODES: { id: ShareMode; label: string }[] = [
   {
-    id: 'no-map-no-image',
-    label: 'Stats Only',
+    id: "no-map-no-image",
+    label: "Stats Only",
   },
   {
-    id: 'map-no-image',
-    label: 'With Map',
+    id: "map-no-image",
+    label: "With Map",
   },
   {
-    id: 'no-map-image-dark',
-    label: 'Image Background',
+    id: "no-map-image-dark",
+    label: "Image Background",
   },
   {
-    id: 'map-image-dark',
-    label: 'Map + Image',
+    id: "map-image-dark",
+    label: "Map + Image",
   },
   {
-    id: 'no-map-image-transparent',
-    label: 'Transparent',
+    id: "no-map-image-transparent",
+    label: "Transparent",
   },
 ];
 
-export default function ShareModal({ isOpen, onClose, ride, bike }: ShareModalProps) {
+export default function ShareModal({
+  isOpen,
+  onClose,
+  ride,
+  bike,
+}: ShareModalProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isSharing, setIsSharing] = useState(false);
   const [dragX, setDragX] = useState(0);
-  const [previewImages, setPreviewImages] = useState<Record<string, string>>({});
-  const [isGeneratingPreviews, setIsGeneratingPreviews] = useState<Record<string, boolean>>({});
+  const [previewImages, setPreviewImages] = useState<Record<string, string>>(
+    {}
+  );
+  const [isGeneratingPreviews, setIsGeneratingPreviews] = useState<
+    Record<string, boolean>
+  >({});
 
   // Generate preview for a specific mode
   const generatePreview = async (modeId: ShareMode) => {
     // Don't regenerate if we already have it
     if (previewImages[modeId]) return;
 
-    setIsGeneratingPreviews(prev => ({ ...prev, [modeId]: true }));
+    setIsGeneratingPreviews((prev) => ({ ...prev, [modeId]: true }));
     try {
       const preview = await generateRideShareImage(ride, bike, modeId);
-      if (preview && preview.startsWith('data:image')) {
-        setPreviewImages(prev => ({ ...prev, [modeId]: preview }));
+      if (preview && preview.startsWith("data:image")) {
+        setPreviewImages((prev) => ({ ...prev, [modeId]: preview }));
       } else {
-        logger.warn(`Invalid preview data for ${modeId}:`, preview?.substring(0, 50));
+        logger.warn(
+          `Invalid preview data for ${modeId}:`,
+          preview?.substring(0, 50)
+        );
       }
     } catch (error) {
       logger.error(`Failed to generate preview for ${modeId}:`, error);
     } finally {
-      setIsGeneratingPreviews(prev => ({ ...prev, [modeId]: false }));
+      setIsGeneratingPreviews((prev) => ({ ...prev, [modeId]: false }));
     }
   };
 
@@ -74,23 +92,23 @@ export default function ShareModal({ isOpen, onClose, ride, bike }: ShareModalPr
       setDragX(0);
       setPreviewImages({});
       setIsGeneratingPreviews({});
-      
+
       // Generate all previews at once using optimized batch function
       setIsGeneratingPreviews({
-        'no-map-no-image': true,
-        'map-no-image': true,
-        'no-map-image-dark': true,
-        'map-image-dark': true,
-        'no-map-image-transparent': true,
+        "no-map-no-image": true,
+        "map-no-image": true,
+        "no-map-image-dark": true,
+        "map-image-dark": true,
+        "no-map-image-transparent": true,
       });
-      
+
       generateAllRideShareImages(ride, bike)
         .then((results) => {
           setPreviewImages(results);
           setIsGeneratingPreviews({});
         })
         .catch((error) => {
-          logger.error('Batch preview generation failed:', error);
+          logger.error("Batch preview generation failed:", error);
           setIsGeneratingPreviews({});
         });
     }
@@ -105,7 +123,10 @@ export default function ShareModal({ isOpen, onClose, ride, bike }: ShareModalPr
     setCurrentIndex((prev) => (prev < SHARE_MODES.length - 1 ? prev + 1 : 0));
   };
 
-  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+  const handleDragEnd = (
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
     const threshold = 50;
     if (info.offset.x > threshold) {
       handlePrevious();
@@ -123,34 +144,30 @@ export default function ShareModal({ isOpen, onClose, ride, bike }: ShareModalPr
 
     try {
       if (Capacitor.isNativePlatform()) {
-        apexToast.promise(
-          shareRideImage(ride, bike, selectedMode),
-          {
-            loading: 'Generating share image...',
-            success: 'Ride shared',
-            error: 'Failed to share ride',
-          }
-        );
-      } else {
-        const sharePromise = shareRideImage(ride, bike, selectedMode).then((method) => {
-          return method === 'clipboard' 
-            ? 'Image copied to clipboard' 
-            : 'Image downloaded';
+        apexToast.promise(shareRideImage(ride, bike, selectedMode), {
+          loading: "Generating share image...",
+          success: "Ride shared",
+          error: "Failed to share ride",
         });
-        
-        apexToast.promise(
-          sharePromise,
-          {
-            loading: 'Generating share image...',
-            success: (message) => message,
-            error: 'Failed to share ride',
+      } else {
+        const sharePromise = shareRideImage(ride, bike, selectedMode).then(
+          (method) => {
+            return method === "clipboard"
+              ? "Image copied to clipboard"
+              : "Image downloaded";
           }
         );
+
+        apexToast.promise(sharePromise, {
+          loading: "Generating share image...",
+          success: (message) => message,
+          error: "Failed to share ride",
+        });
       }
       onClose();
     } catch (error) {
-      logger.error('Error sharing ride:', error);
-      apexToast.error('Failed to share ride');
+      logger.error("Error sharing ride:", error);
+      apexToast.error("Failed to share ride");
     } finally {
       setIsSharing(false);
     }
@@ -195,7 +212,7 @@ export default function ShareModal({ isOpen, onClose, ride, bike }: ShareModalPr
             <motion.div
               className="flex"
               style={{
-                x: dragX - currentIndex * 100 + '%',
+                x: dragX - currentIndex * 100 + "%",
               }}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
@@ -205,24 +222,25 @@ export default function ShareModal({ isOpen, onClose, ride, bike }: ShareModalPr
                 x: `-${currentIndex * 100}%`,
               }}
               transition={{
-                type: 'spring',
+                type: "spring",
                 stiffness: 300,
                 damping: 30,
               }}
             >
               {SHARE_MODES.map((mode) => (
-                <div
-                  key={mode.id}
-                  className="w-full flex-shrink-0 px-6 py-8"
-                >
+                <div key={mode.id} className="w-full flex-shrink-0 px-6 py-8">
                   <div className="text-center space-y-4">
                     <h3 className="text-2xl font-bold text-apex-white">
                       {mode.label}
                     </h3>
                     {/* Preview */}
-                    <div 
+                    <div
                       className="mt-6 aspect-square bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg overflow-hidden relative cursor-pointer"
-                      onClick={() => !previewImages[mode.id] && !isGeneratingPreviews[mode.id] && generatePreview(mode.id)}
+                      onClick={() =>
+                        !previewImages[mode.id] &&
+                        !isGeneratingPreviews[mode.id] &&
+                        generatePreview(mode.id)
+                      }
                     >
                       {isGeneratingPreviews[mode.id] ? (
                         <div className="absolute inset-0 flex items-center justify-center bg-apex-black/50">
@@ -236,8 +254,11 @@ export default function ShareModal({ isOpen, onClose, ride, bike }: ShareModalPr
                           alt={`${mode.label} preview`}
                           className="w-full h-full object-contain"
                           onError={(e) => {
-                            logger.error(`Failed to load preview image for ${mode.id}`);
-                            (e.target as HTMLImageElement).style.display = 'none';
+                            logger.error(
+                              `Failed to load preview image for ${mode.id}`
+                            );
+                            (e.target as HTMLImageElement).style.display =
+                              "none";
                           }}
                         />
                       ) : (
@@ -262,8 +283,8 @@ export default function ShareModal({ isOpen, onClose, ride, bike }: ShareModalPr
                 onClick={() => setCurrentIndex(index)}
                 className={`w-2 h-2 rounded-full transition-all ${
                   index === currentIndex
-                    ? 'bg-apex-green w-8'
-                    : 'bg-apex-white/20 hover:bg-apex-white/40'
+                    ? "bg-apex-green w-8"
+                    : "bg-apex-white/20 hover:bg-apex-white/40"
                 }`}
                 aria-label={`Go to option ${index + 1}`}
               />
@@ -287,7 +308,7 @@ export default function ShareModal({ isOpen, onClose, ride, bike }: ShareModalPr
               className="px-6 py-3 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               {...(isSharing ? {} : buttonHoverProps)}
             >
-              {isSharing ? 'Sharing...' : 'Share'}
+              {isSharing ? "Sharing..." : "Share"}
             </motion.button>
 
             <motion.button

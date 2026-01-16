@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Capacitor } from '@capacitor/core';
-import { useBikes } from '../hooks/useBikes';
-import { useRides } from '../hooks/useRides';
-import { supabase } from '../lib/supabaseClient';
-import ShareModal from '../components/ShareModal';
-import { exportToGPX } from '../utils/gpx';
-import { logger } from '../lib/logger';
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useBikes } from "../hooks/useBikes";
+import { useRides } from "../hooks/useRides";
+import { supabase } from "../lib/supabaseClient";
+import ShareModal from "../components/ShareModal";
+import { exportToGPX } from "../utils/gpx";
+import { logger } from "../lib/logger";
+import { apexToast } from "../lib/toast";
 import {
   MapPin,
   Timer,
@@ -17,20 +17,21 @@ import {
   X,
   Share2,
   Download,
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   containerVariants,
   itemVariants,
   fastItemVariants,
   buttonHoverProps,
-} from '../lib/animations';
-import ConfirmModal from '../components/ConfirmModal';
-import RideMap from '../components/RideMap';
-import LoadingSpinner from '../components/LoadingSpinner';
-import DebugPanel from '../components/DebugPanel';
-import { useThemeColors } from '../hooks/useThemeColors';
-import type { Ride } from '../types/database';
+} from "../lib/animations";
+import ConfirmModal from "../components/ConfirmModal";
+import RideMap from "../components/RideMap";
+import LoadingSpinner from "../components/LoadingSpinner";
+import DebugPanel from "../components/DebugPanel";
+import { useThemeColors } from "../hooks/useThemeColors";
+import { formatDateTime, formatDuration, formatShortDate } from "../utils/format";
+import type { Ride } from "../types/database";
 
 const PAGE_SIZE = 20;
 
@@ -38,24 +39,18 @@ export default function AllRides() {
   const { primary } = useThemeColors();
   const { bikes } = useBikes();
   const [searchParams, setSearchParams] = useSearchParams();
-  const rideIdFromUrl = searchParams.get('rideId');
+  const rideIdFromUrl = searchParams.get("rideId");
   const [page, setPage] = useState(0);
   const [expandedRideId, setExpandedRideId] = useState<string | null>(null);
   const [editingRide, setEditingRide] = useState<Ride | null>(null);
   const [rideToDelete, setRideToDelete] = useState<Ride | null>(null);
   const [rideToShare, setRideToShare] = useState<Ride | null>(null);
-  const [editRideName, setEditRideName] = useState('');
-  const [editRideNotes, setEditRideNotes] = useState('');
-  const [editRideImageUrl, setEditRideImageUrl] = useState('');
+  const [editRideName, setEditRideName] = useState("");
+  const [editRideNotes, setEditRideNotes] = useState("");
+  const [editRideImageUrl, setEditRideImageUrl] = useState("");
   const [isFindingRide, setIsFindingRide] = useState(false);
 
-  const {
-    rides,
-    total,
-    isLoading,
-    updateRide,
-    deleteRide,
-  } = useRides({
+  const { rides, total, isLoading, updateRide, deleteRide } = useRides({
     page,
     pageSize: PAGE_SIZE,
   });
@@ -68,7 +63,7 @@ export default function AllRides() {
 
     // Check if the ride is in the current page
     const rideInCurrentPage = rides.find((r) => r.id === rideIdFromUrl);
-    
+
     if (rideInCurrentPage) {
       // Ride is on current page, expand it
       if (expandedRideId !== rideIdFromUrl) {
@@ -78,9 +73,11 @@ export default function AllRides() {
       setSearchParams({}, { replace: true });
       // Scroll to the ride after a brief delay to ensure it's rendered
       setTimeout(() => {
-        const element = document.querySelector(`[data-ride-id="${rideIdFromUrl}"]`);
+        const element = document.querySelector(
+          `[data-ride-id="${rideIdFromUrl}"]`
+        );
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }, 300);
       return;
@@ -88,9 +85,9 @@ export default function AllRides() {
 
     // Ride is not on current page, need to find which page it's on
     if (isFindingRide) return; // Already searching
-    
+
     setIsFindingRide(true);
-    
+
     const findRidePage = async () => {
       try {
         const {
@@ -103,14 +100,14 @@ export default function AllRides() {
 
         // Fetch the ride to get its start_time
         const { data: ride, error } = await supabase
-          .from('rides')
-          .select('start_time')
-          .eq('id', rideIdFromUrl)
-          .eq('user_id', user.id)
+          .from("rides")
+          .select("start_time")
+          .eq("id", rideIdFromUrl)
+          .eq("user_id", user.id)
           .single();
 
         if (error || !ride) {
-          logger.error('Error finding ride:', error);
+          logger.error("Error finding ride:", error);
           setIsFindingRide(false);
           setSearchParams({}, { replace: true });
           return;
@@ -118,10 +115,10 @@ export default function AllRides() {
 
         // Count how many rides come before this one (ordered by start_time DESC)
         const { count } = await supabase
-          .from('rides')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .gt('start_time', ride.start_time);
+          .from("rides")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gt("start_time", ride.start_time);
 
         if (count !== null) {
           // Calculate which page this ride is on
@@ -130,7 +127,7 @@ export default function AllRides() {
           // The expansion will happen when the ride loads on the new page
         }
       } catch (error) {
-        logger.error('Error finding ride page:', error);
+        logger.error("Error finding ride page:", error);
         setIsFindingRide(false);
         setSearchParams({}, { replace: true });
       } finally {
@@ -140,11 +137,23 @@ export default function AllRides() {
     };
 
     findRidePage();
-  }, [rideIdFromUrl, rides, isLoading, isFindingRide, expandedRideId, setSearchParams]);
+  }, [
+    rideIdFromUrl,
+    rides,
+    isLoading,
+    isFindingRide,
+    expandedRideId,
+    setSearchParams,
+  ]);
 
   // Expand the ride once it's loaded on the correct page (after page change)
   useEffect(() => {
-    if (rideIdFromUrl && !isLoading && rides.length > 0 && expandedRideId !== rideIdFromUrl) {
+    if (
+      rideIdFromUrl &&
+      !isLoading &&
+      rides.length > 0 &&
+      expandedRideId !== rideIdFromUrl
+    ) {
       const rideInCurrentPage = rides.find((r) => r.id === rideIdFromUrl);
       if (rideInCurrentPage) {
         setExpandedRideId(rideIdFromUrl);
@@ -152,9 +161,11 @@ export default function AllRides() {
         setSearchParams({}, { replace: true });
         // Scroll to the ride
         setTimeout(() => {
-          const element = document.querySelector(`[data-ride-id="${rideIdFromUrl}"]`);
+          const element = document.querySelector(
+            `[data-ride-id="${rideIdFromUrl}"]`
+          );
           if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
           }
         }, 300);
       }
@@ -164,53 +175,8 @@ export default function AllRides() {
   // Create a map of bike IDs to bike objects for quick lookup
   const bikeMap = new Map(bikes.map((bike) => [bike.id, bike]));
 
-  // Format duration from start_time and end_time
-  const formatDuration = (startTime: string, endTime?: string): string => {
-    if (!endTime) return 'In progress';
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    const seconds = Math.floor((end.getTime() - start.getTime()) / 1000);
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Format date
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today';
-    }
-    if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    }
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  // Format full date and time
-  const formatDateTime = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  };
+  const formatRideDate = (dateString: string): string =>
+    formatShortDate(dateString, { includeYear: true, useRelative: true });
 
   const handleToggleExpand = (rideId: string) => {
     setExpandedRideId(expandedRideId === rideId ? null : rideId);
@@ -218,29 +184,48 @@ export default function AllRides() {
 
   const handleEditClick = (ride: Ride) => {
     setEditingRide(ride);
-    setEditRideName(ride.ride_name || '');
-    setEditRideNotes(ride.notes || '');
-    setEditRideImageUrl(ride.image_url || '');
+    setEditRideName(ride.ride_name || "");
+    setEditRideNotes(ride.notes || "");
+    setEditRideImageUrl(ride.image_url || "");
   };
 
   const handleSaveEdit = async () => {
     if (!editingRide) return;
 
     try {
-      await updateRide.mutateAsync({
-        id: editingRide.id,
-        updates: {
-          ride_name: editRideName.trim() || undefined,
-          notes: editRideNotes.trim() || undefined,
-          image_url: editRideImageUrl.trim() || undefined,
-        },
-      });
+      // Build updates object, only including fields that have values or need to be cleared
+      const updates: Partial<Pick<Ride, "ride_name" | "notes" | "image_url">> =
+        {};
+
+      const trimmedName = editRideName.trim();
+      const trimmedNotes = editRideNotes.trim();
+      const trimmedImageUrl = editRideImageUrl.trim();
+
+      // Only include fields that have changed or need to be set
+      if (trimmedName !== (editingRide.ride_name || "")) {
+        updates.ride_name = trimmedName || undefined;
+      }
+      if (trimmedNotes !== (editingRide.notes || "")) {
+        updates.notes = trimmedNotes || undefined;
+      }
+      if (trimmedImageUrl !== (editingRide.image_url || "")) {
+        updates.image_url = trimmedImageUrl || undefined;
+      }
+
+      // Only update if there are changes
+      if (Object.keys(updates).length > 0) {
+        await updateRide.mutateAsync({
+          id: editingRide.id,
+          updates,
+        });
+      }
+
       setEditingRide(null);
-      setEditRideName('');
-      setEditRideNotes('');
-      setEditRideImageUrl('');
+      setEditRideName("");
+      setEditRideNotes("");
+      setEditRideImageUrl("");
     } catch (error) {
-      logger.error('Error updating ride:', error);
+      logger.error("Error updating ride:", error);
     }
   };
 
@@ -258,7 +243,7 @@ export default function AllRides() {
         setExpandedRideId(null);
       }
     } catch (error) {
-      logger.error('Error deleting ride:', error);
+      logger.error("Error deleting ride:", error);
     }
   };
 
@@ -266,7 +251,7 @@ export default function AllRides() {
     setPage(newPage);
     setExpandedRideId(null);
     // Scroll to top on page change
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleShareClick = (ride: Ride) => {
@@ -275,25 +260,20 @@ export default function AllRides() {
 
   const handleExportGPX = async (ride: Ride) => {
     try {
-      apexToast.promise(
-        exportToGPX(ride.id),
-        {
-          loading: 'Exporting GPX...',
-          success: 'GPX file ready to share',
-          error: (error) => {
-            if (error instanceof Error) {
-              return error.message;
-            }
-            return 'Failed to export GPX file';
-          },
-        }
-      );
+      apexToast.promise(exportToGPX(ride.id), {
+        loading: "Exporting GPX...",
+        success: "GPX file ready to share",
+        error: (error) => {
+          if (error instanceof Error) {
+            return error.message;
+          }
+          return "Failed to export GPX file";
+        },
+      });
     } catch (error) {
-      logger.error('Error exporting GPX:', error);
+      logger.error("Error exporting GPX:", error);
       apexToast.error(
-        error instanceof Error 
-          ? error.message 
-          : 'Failed to export GPX file'
+        error instanceof Error ? error.message : "Failed to export GPX file"
       );
     }
   };
@@ -303,7 +283,7 @@ export default function AllRides() {
   }
 
   return (
-    <div className="h-full bg-zinc-950 flex flex-col">
+    <div className="h-full flex flex-col">
       <motion.div
         className="p-6 pb-32 space-y-6"
         variants={containerVariants}
@@ -314,7 +294,7 @@ export default function AllRides() {
         <motion.div variants={itemVariants}>
           {total !== undefined && (
             <p className="text-sm text-white/60">
-              {total} {total === 1 ? 'ride' : 'rides'} total
+              {total} {total === 1 ? "ride" : "rides"} total
             </p>
           )}
         </motion.div>
@@ -322,7 +302,7 @@ export default function AllRides() {
         {/* Rides List */}
         {rides.length === 0 ? (
           <motion.div
-            className="bg-zinc-900 border border-white/5 rounded-apex p-8 text-center"
+            className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex p-8 text-center"
             variants={itemVariants}
           >
             <Timer className="mx-auto mb-3 text-white/20" size={32} />
@@ -331,16 +311,13 @@ export default function AllRides() {
             </p>
           </motion.div>
         ) : (
-          <motion.div
-            className="space-y-3"
-            variants={containerVariants}
-          >
+          <motion.div className="space-y-3" variants={containerVariants}>
             {rides.map((ride) => {
               const bike = bikeMap.get(ride.bike_id);
               const bikeName =
                 bike?.nick_name || bike
                   ? `${bike.make} ${bike.model}`
-                  : 'Unknown Bike';
+                  : "Unknown Bike";
               const maxLean = Math.max(ride.max_lean_left, ride.max_lean_right);
               const isExpanded = expandedRideId === ride.id;
 
@@ -348,7 +325,7 @@ export default function AllRides() {
                 <motion.div
                   key={ride.id}
                   data-ride-id={ride.id}
-                  className="bg-zinc-900 border border-white/5 rounded-apex overflow-hidden"
+                  className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex overflow-hidden"
                   variants={fastItemVariants}
                   layout
                 >
@@ -356,8 +333,10 @@ export default function AllRides() {
                   <motion.div
                     className="p-5 cursor-pointer"
                     onClick={() => handleToggleExpand(ride.id)}
-                    whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}
-                    whileTap={{ backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
+                    whileHover={{
+                      backgroundColor: "rgba(255, 255, 255, 0.02)",
+                    }}
+                    whileTap={{ backgroundColor: "rgba(255, 255, 255, 0.04)" }}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
@@ -400,7 +379,7 @@ export default function AllRides() {
                         </div>
                       )}
                       <span className="text-xs text-white/40 font-mono">
-                        {formatDate(ride.start_time)}
+                        {formatRideDate(ride.start_time)}
                       </span>
                     </div>
                   </motion.div>
@@ -410,7 +389,7 @@ export default function AllRides() {
                     {isExpanded && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
+                        animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                         className="overflow-hidden"
@@ -419,14 +398,18 @@ export default function AllRides() {
                           {/* Additional Ride Details */}
                           <div className="grid grid-cols-2 gap-4 pt-4">
                             <div>
-                              <p className="text-xs text-white/60 mb-1">Start Time</p>
+                              <p className="text-xs text-white/60 mb-1">
+                                Start Time
+                              </p>
                               <p className="text-sm text-white/80 font-mono">
                                 {formatDateTime(ride.start_time)}
                               </p>
                             </div>
                             {ride.end_time && (
                               <div>
-                                <p className="text-xs text-white/60 mb-1">End Time</p>
+                                <p className="text-xs text-white/60 mb-1">
+                                  End Time
+                                </p>
                                 <p className="text-sm text-white/80 font-mono">
                                   {formatDateTime(ride.end_time)}
                                 </p>
@@ -437,16 +420,25 @@ export default function AllRides() {
                           {/* Fuel Cost Estimate */}
                           {(() => {
                             const bike = bikeMap.get(ride.bike_id);
-                            if (bike && bike.avg_mileage && bike.last_fuel_price) {
-                              const fuelCost = (ride.distance_km / bike.avg_mileage) * bike.last_fuel_price;
+                            if (
+                              bike &&
+                              bike.avg_mileage &&
+                              bike.last_fuel_price
+                            ) {
+                              const fuelCost =
+                                (ride.distance_km / bike.avg_mileage) *
+                                bike.last_fuel_price;
                               return (
                                 <div className="p-3 bg-apex-green/10 border border-apex-green/20 rounded-lg">
-                                  <p className="text-xs text-apex-white/60 mb-1">Est. Fuel Cost</p>
+                                  <p className="text-xs text-apex-white/60 mb-1">
+                                    Est. Fuel Cost
+                                  </p>
                                   <p className="text-sm font-mono text-apex-green">
                                     ₹{fuelCost.toFixed(2)}
                                   </p>
                                   <p className="text-xs text-apex-white/40 mt-1">
-                                    Based on {bike.avg_mileage.toFixed(2)} km/L @ ₹{bike.last_fuel_price.toFixed(2)}/L
+                                    Based on {bike.avg_mileage.toFixed(2)} km/L
+                                    @ ₹{bike.last_fuel_price.toFixed(2)}/L
                                   </p>
                                 </div>
                               );
@@ -456,24 +448,57 @@ export default function AllRides() {
 
                           {ride.notes && (
                             <div>
-                              <p className="text-xs text-white/60 mb-1">Notes</p>
+                              <p className="text-xs text-white/60 mb-1">
+                                Notes
+                              </p>
                               <p className="text-sm text-white/80 whitespace-pre-wrap">
                                 {ride.notes}
                               </p>
                             </div>
                           )}
 
+                          {/* Ride Image */}
+                          {ride.image_url && ride.image_url.trim() !== "" && (
+                            <div>
+                              <p className="text-xs text-white/60 mb-2">
+                                Image
+                              </p>
+                              <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-apex-white/20 bg-gradient-to-br from-white/5 to-transparent">
+                                <img
+                                  src={ride.image_url}
+                                  alt="Ride image"
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    logger.error('Failed to load ride image', {
+                                      rideId: ride.id,
+                                      imageUrl: ride.image_url,
+                                      imgSrc: (e.target as HTMLImageElement).src,
+                                    });
+                                    const img = e.target as HTMLImageElement;
+                                    img.style.display = "none";
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
                           {/* Route Map */}
                           {ride.route_path && (
                             <div>
-                              <p className="text-xs text-white/60 mb-2">Route</p>
-                              <DebugPanel title="route_path" data={ride.route_path} />
-                              {ride.route_path.coordinates && 
-                               Array.isArray(ride.route_path.coordinates) && 
-                               ride.route_path.coordinates.length > 0 ? (
+                              <p className="text-xs text-white/60 mb-2">
+                                Route
+                              </p>
+                              <DebugPanel
+                                title="route_path"
+                                data={ride.route_path}
+                              />
+                              {ride.route_path.coordinates &&
+                              Array.isArray(ride.route_path.coordinates) &&
+                              ride.route_path.coordinates.length > 0 ? (
                                 <RideMap
                                   coordinates={ride.route_path.coordinates.map(
-                                    ([lng, lat]: [number, number]) => [lat, lng] as [number, number]
+                                    ([lng, lat]: [number, number]) =>
+                                      [lat, lng] as [number, number]
                                   )}
                                   className="w-full"
                                   interactive={false}
@@ -502,7 +527,7 @@ export default function AllRides() {
                               <Share2 size={16} />
                               Share
                             </motion.button>
-                            {Capacitor.isNativePlatform() && ride.route_path && ride.route_path.coordinates && ride.route_path.coordinates.length > 0 && (
+                            {ride.route_path && ride.route_path.coordinates && ride.route_path.coordinates.length > 0 && (
                               <motion.button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -516,11 +541,15 @@ export default function AllRides() {
                               </motion.button>
                             )}
                             <motion.button
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                handleEditClick(ride);
+                                // Ensure we have the latest ride data before opening edit modal
+                                // Find the ride from the current rides array (which should be updated after query invalidation)
+                                const currentRide =
+                                  rides.find((r) => r.id === ride.id) || ride;
+                                handleEditClick(currentRide);
                               }}
-                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-zinc-800 border border-white/5 rounded-lg text-white text-sm hover:bg-zinc-700 transition-colors min-w-[100px]"
+                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-sm hover:bg-apex-white/20 transition-colors min-w-[100px]"
                               {...buttonHoverProps}
                             >
                               <Edit2 size={16} />
@@ -557,7 +586,7 @@ export default function AllRides() {
             <motion.button
               onClick={() => handlePageChange(page - 1)}
               disabled={page === 0}
-              className="px-4 py-2 bg-zinc-900 border border-white/5 rounded-lg text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-800 transition-colors"
+              className="px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-apex-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-white/10 transition-colors"
               {...(page === 0 ? {} : buttonHoverProps)}
             >
               Previous
@@ -568,7 +597,7 @@ export default function AllRides() {
             <motion.button
               onClick={() => handlePageChange(page + 1)}
               disabled={page >= totalPages - 1}
-              className="px-4 py-2 bg-zinc-900 border border-white/5 rounded-lg text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-zinc-800 transition-colors"
+              className="px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-apex-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-white/10 transition-colors"
               {...(page >= totalPages - 1 ? {} : buttonHoverProps)}
             >
               Next
@@ -588,9 +617,9 @@ export default function AllRides() {
               exit={{ opacity: 0 }}
               onClick={() => {
                 setEditingRide(null);
-                setEditRideName('');
-                setEditRideNotes('');
-                setEditRideImageUrl('');
+                setEditRideName("");
+                setEditRideNotes("");
+                setEditRideImageUrl("");
               }}
             />
             <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4">
@@ -602,13 +631,15 @@ export default function AllRides() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-apex-white">Edit Ride</h2>
+                  <h2 className="text-xl font-bold text-apex-white">
+                    Edit Ride
+                  </h2>
                   <motion.button
                     onClick={() => {
                       setEditingRide(null);
-                      setEditRideName('');
-                      setEditRideNotes('');
-                      setEditRideImageUrl('');
+                      setEditRideName("");
+                      setEditRideNotes("");
+                      setEditRideImageUrl("");
                     }}
                     className="p-2 text-apex-white/60 hover:text-apex-white transition-colors"
                     {...buttonHoverProps}
@@ -627,7 +658,7 @@ export default function AllRides() {
                       value={editRideName}
                       onChange={(e) => setEditRideName(e.target.value)}
                       placeholder="Enter ride name (optional)"
-                      className="w-full px-4 py-2 bg-zinc-900 border border-white/5 rounded-lg text-apex-white placeholder:text-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
+                      className="w-full px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-apex-white placeholder:text-apex-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
                     />
                   </div>
 
@@ -653,7 +684,7 @@ export default function AllRides() {
                       value={editRideImageUrl}
                       onChange={(e) => setEditRideImageUrl(e.target.value)}
                       placeholder="https://..."
-                      className="w-full px-4 py-2 bg-zinc-900 border border-white/5 rounded-lg text-apex-white placeholder:text-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
+                      className="w-full px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-apex-white placeholder:text-apex-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
                     />
                   </div>
                 </div>
@@ -662,9 +693,9 @@ export default function AllRides() {
                   <motion.button
                     onClick={() => {
                       setEditingRide(null);
-                      setEditRideName('');
-                      setEditRideNotes('');
-                      setEditRideImageUrl('');
+                      setEditRideName("");
+                      setEditRideNotes("");
+                      setEditRideImageUrl("");
                     }}
                     className="px-4 py-2 text-apex-white/60 hover:text-apex-white transition-colors"
                     {...buttonHoverProps}
@@ -677,7 +708,7 @@ export default function AllRides() {
                     className="px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     {...(updateRide.isPending ? {} : buttonHoverProps)}
                   >
-                    {updateRide.isPending ? 'Saving...' : 'Save'}
+                    {updateRide.isPending ? "Saving..." : "Save"}
                   </motion.button>
                 </div>
               </motion.div>

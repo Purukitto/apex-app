@@ -1,6 +1,7 @@
 import html2canvas from 'html2canvas';
 import { Share } from '@capacitor/share';
 import { Capacitor } from '@capacitor/core';
+import type { Map as LeafletMap } from 'leaflet';
 import type { Ride } from '../types/database';
 import type { Bike } from '../types/database';
 import { logger } from './logger';
@@ -8,47 +9,132 @@ import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import React from 'react';
 import RideMap from '../components/RideMap';
+import { formatDuration, formatShortDate } from '../utils/format';
 
-/**
- * Wait for map tiles to load
- */
-function waitForMapTiles(mapContainer: HTMLElement, timeout = 5000): Promise<void> {
-  return new Promise((resolve) => {
-    const startTime = Date.now();
-    
-    const checkTiles = () => {
-      // Check if Leaflet map container exists
-      const leafletContainer = mapContainer.querySelector('.leaflet-container');
-      if (!leafletContainer) {
-        if (Date.now() - startTime > timeout) {
-          // Resolve anyway - component might still render
-          resolve();
-          return;
-        }
-        setTimeout(checkTiles, 100);
-        return;
+// waitForMapTiles removed: snapshot rendering uses direct tile fetches
+
+const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_SUBDOMAINS = ['a', 'b', 'c'];
+
+function applyDarkMapFilter(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = 255 - data[i];
+    const g = 255 - data[i + 1];
+    const b = 255 - data[i + 2];
+
+    data[i] = Math.min(255, Math.max(0, r * 0.95 * 0.9));
+    data[i + 1] = Math.min(255, Math.max(0, g * 0.95 * 0.9));
+    data[i + 2] = Math.min(255, Math.max(0, b * 0.95 * 0.9));
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+}
+
+async function renderLeafletMapSnapshot(
+  map: LeafletMap,
+  backgroundColor: string,
+  routeCoordinates: [number, number][],
+  routeColor: string,
+  applyDarkFilter: boolean
+): Promise<string | null> {
+  const size = map.getSize();
+  if (!size || size.x === 0 || size.y === 0) {
+    logger.warn('Map snapshot skipped - map size is zero');
+    return null;
+  }
+
+  const scale = 2;
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(size.x * scale);
+  canvas.height = Math.round(size.y * scale);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    logger.warn('Map snapshot skipped - canvas context unavailable');
+    return null;
+  }
+
+  ctx.scale(scale, scale);
+  ctx.fillStyle = backgroundColor;
+  ctx.fillRect(0, 0, size.x, size.y);
+
+  const bounds = map.getPixelBounds();
+  if (!bounds || !bounds.min || !bounds.max) {
+    logger.warn('Map snapshot skipped - invalid bounds');
+    return null;
+  }
+
+  const zoom = map.getZoom();
+  const tileSize = 256;
+  const maxIndex = 1 << zoom;
+
+  const minTileX = Math.floor(bounds.min.x / tileSize);
+  const minTileY = Math.floor(bounds.min.y / tileSize);
+  const maxTileX = Math.floor(bounds.max.x / tileSize);
+  const maxTileY = Math.floor(bounds.max.y / tileSize);
+
+  const tilePromises: Promise<void>[] = [];
+
+  for (let x = minTileX; x <= maxTileX; x += 1) {
+    for (let y = minTileY; y <= maxTileY; y += 1) {
+      if (y < 0 || y >= maxIndex) {
+        continue;
       }
 
-      // Check for any tile images (loaded or loading)
-      const allTiles = leafletContainer.querySelectorAll('img.leaflet-tile');
-      const loadedTiles = leafletContainer.querySelectorAll('img.leaflet-tile-loaded');
-      
-      // If we have tiles and at least some are loaded, or if we've waited long enough
-      if (allTiles.length > 0 && (loadedTiles.length > 0 || Date.now() - startTime > 2000)) {
-        // Give a bit more time for all tiles to fully render
-        setTimeout(() => resolve(), 500);
+      const wrappedX = ((x % maxIndex) + maxIndex) % maxIndex;
+      const subdomain = TILE_SUBDOMAINS[Math.abs(x + y) % TILE_SUBDOMAINS.length];
+      const url = TILE_URL
+        .replace('{s}', subdomain)
+        .replace('{z}', String(zoom))
+        .replace('{x}', String(wrappedX))
+        .replace('{y}', String(y));
+
+      const px = x * tileSize - bounds.min.x;
+      const py = y * tileSize - bounds.min.y;
+
+      tilePromises.push(
+        new Promise((resolve) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            ctx.drawImage(img, px, py, tileSize, tileSize);
+            resolve();
+          };
+          img.onerror = () => resolve();
+          img.src = url;
+        })
+      );
+    }
+  }
+
+  await Promise.all(tilePromises);
+
+  if (applyDarkFilter) {
+    applyDarkMapFilter(ctx, canvas.width, canvas.height);
+  }
+
+  // Draw route polyline on top of tiles (after filter so it stays bright)
+  if (routeCoordinates.length > 1) {
+    ctx.strokeStyle = routeColor;
+    ctx.lineWidth = 6;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    ctx.beginPath();
+    routeCoordinates.forEach(([lat, lng], index) => {
+      const point = map.latLngToContainerPoint([lat, lng]);
+      if (index === 0) {
+        ctx.moveTo(point.x, point.y);
       } else {
-        if (Date.now() - startTime > timeout) {
-          // Resolve anyway if timeout - map might still render
-          resolve();
-          return;
-        }
-        setTimeout(checkTiles, 100);
+        ctx.lineTo(point.x, point.y);
       }
-    };
+    });
+    ctx.stroke();
+  }
 
-    checkTiles();
-  });
+  return canvas.toDataURL('image/png');
 }
 
 export type ShareMode = 
@@ -59,47 +145,26 @@ export type ShareMode =
   | 'no-map-image-transparent';
 
 /**
- * Generate a shareable image for a ride (Strava-style)
- * Creates an image with ride stats and styling, including map if route data is available
+ * Shared resources for optimized batch preview generation
  */
-export async function generateRideShareImage(
+interface SharedResources {
+  contentContainer: HTMLElement;
+  mapSnapshot: string | null;
+  routeCoordinates: [number, number][];
+  hasRoute: boolean;
+  hasImageUrl: boolean;
+  apexBlack: string;
+  apexWhite: string;
+  apexGreen: string;
+}
+
+/**
+ * Build shared resources (content container + map snapshot) for optimized batch generation
+ */
+async function buildSharedResources(
   ride: Ride,
-  bike: Bike | undefined,
-  mode: ShareMode = 'no-map-no-image'
-): Promise<string> {
-  // Format bike name as "Make (Year)" to match AllRides card format
-  const bikeName = bike 
-    ? `${bike.make}${bike.year ? ` (${bike.year})` : ''}`
-    : 'Unknown Bike';
-  const rideName = ride.ride_name || bikeName;
-  const maxLean = Math.max(ride.max_lean_left, ride.max_lean_right);
-
-  // Format duration
-  const formatDuration = (startTime: string, endTime?: string): string => {
-    if (!endTime) return 'In progress';
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    const seconds = Math.floor((end.getTime() - start.getTime()) / 1000);
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Format date
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
+  bike: Bike | undefined
+): Promise<SharedResources> {
   // Get theme colors from CSS variables
   const root = document.documentElement;
   const apexBlack = getComputedStyle(root).getPropertyValue('--color-apex-black').trim() || '#0A0A0A';
@@ -117,43 +182,700 @@ export async function generateRideShareImage(
     ? ride.route_path.coordinates.map(([lng, lat]: [number, number]) => [lat, lng] as [number, number])
     : [];
 
+  // Check if ride has image URL
+  const hasImageUrl = ride.image_url && ride.image_url.trim() !== '';
+
+  // Build shared content container (header, stats, footer)
+  const contentContainer = buildSharedContentContainer(
+    ride,
+    bike,
+    !!hasRoute, // Ensure boolean
+    apexWhite,
+    apexGreen
+  );
+
+  // Generate map snapshot once if route exists
+  let mapSnapshot: string | null = null;
+  if (hasRoute && routeCoordinates.length > 0) {
+    try {
+      // Create temporary map container to generate snapshot
+      const tempMapWrapper = document.createElement('div');
+      tempMapWrapper.style.width = '960px'; // Match map container width
+      tempMapWrapper.style.height = '400px';
+      tempMapWrapper.style.position = 'fixed';
+      tempMapWrapper.style.left = '0';
+      tempMapWrapper.style.top = '0';
+      // Keep visible but off-screen so Leaflet can render
+      tempMapWrapper.style.transform = 'translateX(-2000px)';
+      tempMapWrapper.style.opacity = '0';
+      tempMapWrapper.style.pointerEvents = 'none';
+      tempMapWrapper.style.backgroundColor = apexBlack;
+      document.body.appendChild(tempMapWrapper);
+
+      let mapRoot: Root | null = null;
+
+      const mapReadyPromise = new Promise<LeafletMap | null>((resolve) => {
+        const timeoutId = setTimeout(() => {
+          logger.warn('Map ready timeout for snapshot generation');
+          resolve(null);
+        }, 10000);
+
+        mapRoot = createRoot(tempMapWrapper);
+        mapRoot.render(
+          React.createElement(RideMap, {
+            coordinates: routeCoordinates,
+            interactive: false,
+            height: '400px',
+            className: 'w-full',
+            hideControls: true,
+            onMapReady: (map) => {
+              map.whenReady(() => {
+                clearTimeout(timeoutId);
+                map.invalidateSize();
+                // Small delay to ensure bounds/zoom are stable
+                setTimeout(() => resolve(map), 300);
+              });
+            },
+          })
+        );
+      });
+
+      const map = await mapReadyPromise;
+      if (map) {
+        mapSnapshot = await renderLeafletMapSnapshot(
+          map,
+          apexBlack,
+          routeCoordinates,
+          apexGreen,
+          true // Apply dark filter
+        );
+      }
+
+      // Cleanup
+      if (mapRoot) {
+        try {
+          (mapRoot as Root).unmount();
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
+      if (tempMapWrapper.parentNode) {
+        document.body.removeChild(tempMapWrapper);
+      }
+    } catch (error) {
+      logger.error('Error generating map snapshot:', error);
+    }
+  }
+
+  return {
+    contentContainer,
+    mapSnapshot,
+    routeCoordinates,
+    hasRoute: !!hasRoute, // Ensure boolean
+    hasImageUrl: !!hasImageUrl, // Ensure boolean
+    apexBlack,
+    apexWhite,
+    apexGreen,
+  };
+}
+
+/**
+ * Generate a shareable image for a ride (Strava-style)
+ * Creates an image with ride stats and styling, including map if route data is available
+ * @param sharedResources Optional shared resources for optimized batch generation
+ */
+export async function generateRideShareImage(
+  ride: Ride,
+  bike: Bike | undefined,
+  mode: ShareMode = 'no-map-no-image',
+  sharedResources?: SharedResources
+): Promise<string> {
+  // Use shared resources if provided, otherwise build them
+  const resources = sharedResources || await buildSharedResources(ride, bike);
+  const {
+    contentContainer: sharedContent,
+    mapSnapshot: sharedMapSnapshot,
+    routeCoordinates,
+    hasRoute,
+    hasImageUrl,
+    apexBlack,
+    apexWhite,
+    apexGreen, // Used in map border color calculation
+  } = resources;
+
   // Determine what to show based on mode
   const showMap = (mode === 'map-no-image' || mode === 'map-image-dark') && hasRoute && routeCoordinates.length > 0;
   const showImage = mode === 'no-map-image-dark' || mode === 'map-image-dark' || mode === 'no-map-image-transparent';
   const imageDarkened = mode === 'no-map-image-dark' || mode === 'map-image-dark';
   const transparentBg = mode === 'no-map-image-transparent';
 
-  // Check if ride has image URL
-  const hasImageUrl = ride.image_url && ride.image_url.trim() !== '';
-
   // Create a wrapper container
+  // html2canvas needs the element to be in the DOM and properly positioned
   const wrapper = document.createElement('div');
+  wrapper.style.width = '1080px';
+  wrapper.style.height = '1080px';
+  wrapper.style.overflow = 'hidden';
+  
+  // Set background based on mode
+  // For transparent mode, never set background image - it should be truly transparent
+  if (showImage && hasImageUrl && !transparentBg) {
+    // Validate and preload image to ensure it's accessible
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      // Preload image before setting as background
+      await new Promise<void>((resolve) => {
+        const timeout = setTimeout(() => {
+          logger.warn('Image preload timeout, proceeding anyway');
+          resolve();
+        }, 5000);
+        
+        img.onload = () => {
+          clearTimeout(timeout);
+          resolve();
+        };
+        
+        img.onerror = (error) => {
+          clearTimeout(timeout);
+          logger.error('Failed to preload background image', error);
+          // Continue anyway - might still work
+          resolve();
+        };
+        
+        img.src = ride.image_url!;
+      });
+      
+      wrapper.style.backgroundImage = `url(${ride.image_url})`;
+      wrapper.style.backgroundSize = 'cover';
+      wrapper.style.backgroundPosition = 'center';
+      
+      if (imageDarkened) {
+        // Add dark overlay
+        const overlay = document.createElement('div');
+        overlay.style.position = 'absolute';
+        overlay.style.inset = '0';
+        overlay.style.backgroundColor = 'rgba(10, 10, 10, 0.7)';
+        overlay.style.zIndex = '1';
+        wrapper.appendChild(overlay);
+      }
+    } catch (error) {
+      logger.error('Error setting background image', error);
+      // Fallback to solid color
+      wrapper.style.background = apexBlack;
+    }
+  } else {
+    // No image or transparent mode - set solid color or transparent
+    wrapper.style.background = transparentBg ? 'transparent' : apexBlack;
+    wrapper.style.backgroundColor = transparentBg ? 'transparent' : apexBlack;
+  }
+
+  // Clone shared content container (optimization: reuse instead of rebuilding)
+  const container = sharedContent.cloneNode(true) as HTMLElement;
+  // Update container background based on mode
+  if (transparentBg || (showImage && hasImageUrl)) {
+    container.style.backgroundColor = 'transparent';
+  } else {
+    container.style.backgroundColor = apexBlack;
+  }
+  
+  wrapper.appendChild(container);
+
+  // Insert map snapshot if needed (optimization: reuse pre-generated snapshot)
+  let mapContainer: HTMLElement | null = null;
+  let mapSnapshotApplied = false;
+  
+  if (showMap && sharedMapSnapshot) {
+    // Find header in cloned container to insert map after it
+    const header = container.querySelector('div:first-child') as HTMLElement | null;
+    if (header) {
+      const mapWrapper = document.createElement('div');
+      mapWrapper.style.width = '100%';
+      mapWrapper.style.height = '400px';
+      mapWrapper.style.marginTop = '40px';
+      mapWrapper.style.marginBottom = '40px';
+      mapWrapper.style.borderRadius = '12px';
+      mapWrapper.style.overflow = 'hidden';
+      // Border with 20% opacity
+      // Use apexWhite for border color (apexGreen not needed here)
+      if (apexWhite.startsWith('#')) {
+        const borderColor = apexWhite.replace('#', '');
+        const r = parseInt(borderColor.substring(0, 2), 16);
+        const g = parseInt(borderColor.substring(2, 4), 16);
+        const b = parseInt(borderColor.substring(4, 6), 16);
+        mapWrapper.style.border = `1px solid rgba(${r}, ${g}, ${b}, 0.2)`;
+      } else {
+        mapWrapper.style.border = '1px solid rgba(226, 226, 226, 0.2)';
+      }
+      // apexGreen is used in shared content container, not here
+      void apexGreen; // Suppress unused warning
+      mapWrapper.style.position = 'relative';
+      mapWrapper.style.zIndex = '1';
+      mapWrapper.id = 'share-map-container';
+      mapWrapper.style.backgroundColor = apexBlack;
+      mapWrapper.style.backgroundImage = `url("${sharedMapSnapshot}")`;
+      mapWrapper.style.backgroundSize = 'cover';
+      mapWrapper.style.backgroundPosition = 'center';
+      mapWrapper.style.backgroundRepeat = 'no-repeat';
+      mapWrapper.dataset.snapshotApplied = 'true';
+      
+      container.insertBefore(mapWrapper, header.nextSibling);
+      mapContainer = mapWrapper;
+      mapSnapshotApplied = true;
+    }
+  }
+
+  // Append wrapper to body - html2canvas needs element in DOM and in viewport
+  // Keep in viewport but position off-screen using left (html2canvas requirement)
   wrapper.style.position = 'fixed';
-  wrapper.style.left = '-9999px';
+  wrapper.style.left = '0';
   wrapper.style.top = '0';
   wrapper.style.width = '1080px';
   wrapper.style.height = '1080px';
+  wrapper.style.overflow = 'hidden';
+  wrapper.style.visibility = 'visible';
+  wrapper.style.opacity = '1';
+  wrapper.style.pointerEvents = 'none';
+  wrapper.style.zIndex = '-1';
+  // Move off-screen but keep in viewport bounds
+  wrapper.style.marginLeft = '-1080px';
   
-  // Set background based on mode
-  if (showImage && hasImageUrl) {
-    wrapper.style.backgroundImage = `url(${ride.image_url})`;
-    wrapper.style.backgroundSize = 'cover';
-    wrapper.style.backgroundPosition = 'center';
-    if (imageDarkened) {
-      // Add dark overlay
-      const overlay = document.createElement('div');
-      overlay.style.position = 'absolute';
-      overlay.style.inset = '0';
-      overlay.style.backgroundColor = 'rgba(10, 10, 10, 0.7)';
-      overlay.style.zIndex = '1';
-      wrapper.appendChild(overlay);
-    } else if (transparentBg) {
-      // Transparent background - no overlay
-      wrapper.style.backgroundColor = 'transparent';
+  document.body.appendChild(wrapper);
+
+  try {
+    // Force a reflow to ensure DOM is updated
+    void wrapper.offsetHeight;
+    
+    // Wait for content to render (no need to wait for map if using snapshot)
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Force reflow to ensure everything is painted
+    void wrapper.offsetHeight;
+    void container.offsetHeight;
+    
+    // Additional wait to ensure all content is fully rendered
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Generate canvas - target the wrapper
+    // Convert all CSS variables and computed styles to explicit RGB values
+    // This prevents html2canvas from encountering unsupported color functions like oklab
+    // CRITICAL: Must convert ALL colors before html2canvas parses the DOM
+    const convertColorsToRGB = (element: HTMLElement) => {
+      try {
+        const computed = window.getComputedStyle(element);
+        
+        // Convert background-color - ensure it's RGB, not oklab/color-mix
+        const bgColor = computed.backgroundColor;
+        if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+          // Force RGB format - if it contains oklab, getComputedStyle should have resolved it
+          // But set it explicitly to ensure html2canvas sees RGB
+          element.style.setProperty('background-color', bgColor, 'important');
+        }
+        
+        // Convert color
+        const textColor = computed.color;
+        if (textColor && textColor !== 'rgba(0, 0, 0, 0)') {
+          element.style.setProperty('color', textColor, 'important');
+        }
+        
+        // Convert border-color
+        if (computed.borderWidth !== '0px') {
+          const borderColor = computed.borderColor;
+          if (borderColor) {
+            element.style.setProperty('border-color', borderColor, 'important');
+          }
+        }
+        
+        // Also convert outline-color, box-shadow colors, etc.
+        const outlineColor = computed.outlineColor;
+        if (outlineColor && computed.outlineWidth !== '0px') {
+          element.style.setProperty('outline-color', outlineColor, 'important');
+        }
+      } catch {
+        // Ignore errors - element might not be fully rendered
+      }
+    };
+    
+    // Convert colors on wrapper and ALL children BEFORE html2canvas runs
+    // This is critical - html2canvas parses styles during initialization
+    convertColorsToRGB(wrapper);
+    const allElements = wrapper.querySelectorAll('*');
+    allElements.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      convertColorsToRGB(htmlEl);
+      
+      // Remove CSS classes that might use Tailwind/oklab colors
+      // className can be a string or DOMTokenList, so convert to string first
+      const classNameStr = String(htmlEl.className || '');
+      
+      if (classNameStr) {
+        const hasColorClasses = classNameStr.includes('bg-') || 
+                                classNameStr.includes('text-') || 
+                                classNameStr.includes('border-') ||
+                                classNameStr.includes('dark-map-tiles');
+        if (hasColorClasses) {
+          // Remove Tailwind color classes - we've already set explicit RGB
+          const classes = classNameStr.split(' ').filter((cls: string) => 
+            cls && 
+            !cls.startsWith('bg-') && 
+            !cls.startsWith('text-') && 
+            !cls.startsWith('border-') &&
+            cls !== 'dark-map-tiles' // Remove this too - we don't use filters
+          );
+          htmlEl.className = classes.join(' ');
+        }
+        
+        // Force inline styles to override any remaining CSS
+        const computed = window.getComputedStyle(htmlEl);
+        const bgColor = computed.backgroundColor;
+        if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+          htmlEl.style.setProperty('background-color', bgColor, 'important');
+        }
+        const textColor = computed.color;
+        if (textColor) {
+          htmlEl.style.setProperty('color', textColor, 'important');
+        }
+      }
+    });
+    
+    // Force a reflow to ensure all style changes are applied
+    void wrapper.offsetHeight;
+    
+    // Map snapshot is already applied as background image, no need for tile/control handling
+    
+    const canvas = await html2canvas(wrapper, {
+      backgroundColor: transparentBg ? null : apexBlack,
+      scale: 2,
+      logging: false,
+      useCORS: true,
+      width: 1080,
+      height: 1080,
+      allowTaint: false,
+      foreignObjectRendering: false, // Disable foreignObjectRendering for better map tile support
+      removeContainer: false,
+      windowWidth: 1080,
+      windowHeight: 1080,
+      imageTimeout: 15000, // Increase timeout for map tiles
+      proxy: undefined, // Don't use proxy
+      ignoreElements: (element) => {
+        // Ignore Leaflet controls
+        return element.classList.contains('leaflet-control-container') ||
+               element.classList.contains('leaflet-control-zoom') ||
+               element.classList.contains('leaflet-control-attribution');
+      },
+      onclone: (clonedDoc, element) => {
+        // CRITICAL: Remove all stylesheets from cloned document to prevent oklab parsing
+        // html2canvas reads stylesheets directly, so we need to remove them
+        const styleSheets = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]');
+        styleSheets.forEach((sheet) => sheet.remove());
+        
+        // Also remove any style elements that might contain oklab
+        const allStyleElements = clonedDoc.querySelectorAll('style');
+        allStyleElements.forEach((style) => {
+          const styleContent = style.textContent || '';
+          if (styleContent.includes('oklab') || styleContent.includes('oklch') || styleContent.includes('color-mix')) {
+            style.remove();
+          }
+        });
+        
+        // Ensure cloned element is visible and positioned at origin
+        if (element) {
+          const clonedElement = element as HTMLElement;
+          clonedElement.style.visibility = 'visible';
+          clonedElement.style.opacity = '1';
+          clonedElement.style.position = 'fixed';
+          clonedElement.style.left = '0';
+          clonedElement.style.top = '0';
+          clonedElement.style.marginLeft = '0'; // Reset margin in clone
+          
+          // For transparent mode, ensure NO background image is set
+          if (transparentBg) {
+            clonedElement.style.backgroundImage = 'none';
+            clonedElement.style.backgroundColor = 'transparent';
+          }
+          
+          // CRITICAL: Convert all colors in cloned document to explicit RGB
+          // Since we removed stylesheets, we need to set all colors explicitly
+          const convertClonedColors = (el: HTMLElement) => {
+            try {
+              // Get computed style from original element (not cloned, as stylesheets are removed)
+              // Find corresponding original element
+              const originalEl = Array.from(wrapper.querySelectorAll('*')).find(
+                (orig) => {
+                  // Try to match by position or ID
+                  if (orig.id && el.id && orig.id === el.id) return true;
+                  if (orig.getAttribute('data-share-id') && el.getAttribute('data-share-id') && 
+                      orig.getAttribute('data-share-id') === el.getAttribute('data-share-id')) return true;
+                  return false;
+                }
+              ) as HTMLElement;
+              
+              if (originalEl) {
+                const computed = window.getComputedStyle(originalEl);
+                
+                // Apply RGB colors explicitly with !important
+                const bgColor = computed.backgroundColor;
+                if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+                  el.style.setProperty('background-color', bgColor, 'important');
+                }
+                const textColor = computed.color;
+                if (textColor && textColor !== 'rgba(0, 0, 0, 0)') {
+                  el.style.setProperty('color', textColor, 'important');
+                }
+                const borderColor = computed.borderColor;
+                if (borderColor && computed.borderWidth !== '0px') {
+                  el.style.setProperty('border-color', borderColor, 'important');
+                }
+              }
+            } catch {
+              // Ignore errors
+            }
+          };
+          
+          // Convert colors on all elements in clone
+          convertClonedColors(clonedElement);
+          const allClonedElements = clonedElement.querySelectorAll('*');
+          allClonedElements.forEach((el) => convertClonedColors(el as HTMLElement));
+          
+          // Ensure all text elements have explicit colors for transparent mode
+          if (transparentBg) {
+            const allTextElements = clonedElement.querySelectorAll('h1, h2, h3, p, div, span');
+            allTextElements.forEach((el) => {
+              const htmlEl = el as HTMLElement;
+              // Only set color if not already set
+              if (!htmlEl.style.color || htmlEl.style.color === '') {
+                htmlEl.style.color = apexWhite;
+              }
+            });
+          }
+          
+          // Make sure container is transparent when we have background image
+          const clonedContainer = clonedElement.querySelector('div[style*="padding"]');
+          if (clonedContainer && (showImage && hasImageUrl)) {
+            (clonedContainer as HTMLElement).style.backgroundColor = 'transparent';
+          }
+        }
+        
+        // Hide controls in cloned document
+        const clonedControls = clonedDoc.querySelectorAll('.leaflet-control-container, .leaflet-control-zoom, .leaflet-control-attribution');
+        clonedControls.forEach((control) => {
+          (control as HTMLElement).style.display = 'none';
+        });
+        
+        // Ensure map tiles are visible in clone
+        // NOTE: Do NOT apply CSS filters - html2canvas doesn't support them!
+        // We'll apply dark filter as post-processing on the canvas
+        if (showMap) {
+          const clonedMapContainer = clonedDoc.querySelector('#share-map-container');
+          if (clonedMapContainer) {
+            const mapContainerEl = clonedMapContainer as HTMLElement;
+            mapContainerEl.style.visibility = 'visible';
+            mapContainerEl.style.opacity = '1';
+            mapContainerEl.style.position = 'relative';
+            mapContainerEl.style.width = '100%';
+            mapContainerEl.style.height = '100%';
+            // Use explicit RGB - prevent oklab parsing
+            mapContainerEl.style.setProperty('background-color', apexBlack, 'important');
+            
+            // Remove ALL CSS classes from map container and children to prevent oklab parsing
+            mapContainerEl.className = '';
+            const allMapChildren = clonedMapContainer.querySelectorAll('*');
+            allMapChildren.forEach((child) => {
+              const childEl = child as HTMLElement;
+              // Remove classes that might use oklab
+              childEl.className = '';
+              // Ensure explicit RGB colors
+              try {
+                const computed = window.getComputedStyle(childEl);
+                const bgColor = computed.backgroundColor;
+                if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+                  childEl.style.setProperty('background-color', bgColor, 'important');
+                }
+                const textColor = computed.color;
+                if (textColor) {
+                  childEl.style.setProperty('color', textColor, 'important');
+                }
+              } catch {
+                // Ignore errors
+              }
+            });
+            
+            // Find all map tile images - make visible but NO filter
+            const allImages = clonedMapContainer.querySelectorAll('img');
+            allImages.forEach((img) => {
+              const imgEl = img as HTMLImageElement;
+              imgEl.style.visibility = 'visible';
+              imgEl.style.opacity = '1';
+              imgEl.style.display = 'block';
+              // Remove any filter - html2canvas doesn't support CSS filters
+              imgEl.style.filter = 'none';
+              imgEl.className = ''; // Remove classes to prevent oklab parsing
+              // Ensure CORS is set
+              if (!imgEl.crossOrigin) {
+                imgEl.crossOrigin = 'anonymous';
+              }
+            });
+            
+            // Also handle canvas elements - no filter
+            const canvases = clonedMapContainer.querySelectorAll('canvas');
+            canvases.forEach((canvas) => {
+              const canvasEl = canvas as HTMLCanvasElement;
+              canvasEl.style.visibility = 'visible';
+              canvasEl.style.opacity = '1';
+              canvasEl.style.filter = 'none';
+              canvasEl.className = ''; // Remove classes to prevent oklab parsing
+            });
+            
+          } else {
+            logger.warn('Map container not found in cloned document');
+          }
+        }
+      },
+    });
+    
+    // Verify canvas has content by checking sample areas
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Failed to get canvas context');
     }
-  } else {
-    wrapper.style.background = transparentBg ? 'transparent' : apexBlack;
+    
+    // Check multiple areas to ensure content exists
+    // For transparent mode, check header area (where title is) and center (where stats are)
+    const sampleSize = 200;
+    const sampleAreas = transparentBg 
+      ? [
+          { x: 60, y: 60, w: 500, h: 150 }, // Header area (title)
+          { x: Math.floor(canvas.width / 2) - sampleSize / 2, y: Math.floor(canvas.height / 2) - sampleSize / 2, w: sampleSize, h: sampleSize }, // Center (stats)
+        ]
+      : [
+          { x: Math.floor(canvas.width / 2) - sampleSize / 2, y: Math.floor(canvas.height / 2) - sampleSize / 2, w: sampleSize, h: sampleSize }, // Center (stats)
+        ];
+    
+    let totalNonTransparentPixels = 0;
+    for (const area of sampleAreas) {
+      const imageData = ctx.getImageData(
+        Math.max(0, area.x),
+        Math.max(0, area.y),
+        Math.min(area.w, canvas.width - area.x),
+        Math.min(area.h, canvas.height - area.y)
+      );
+      
+      for (let i = 3; i < imageData.data.length; i += 4) {
+        if (imageData.data[i] > 0) {
+          totalNonTransparentPixels++;
+        }
+      }
+    }
+
+    // For transparent background mode, we need at least some content (text should be visible)
+    // For solid background, we should have many pixels
+    const minPixels = transparentBg ? 500 : 1000;
+    
+    if (totalNonTransparentPixels < minPixels) {
+      logger.error('Generated canvas appears to be empty or has insufficient content', {
+        canvasSize: `${canvas.width}x${canvas.height}`,
+        totalNonTransparentPixels,
+        minPixels,
+        transparentBg,
+        wrapperInDOM: document.body.contains(wrapper),
+        wrapperVisible: wrapper.style.visibility,
+        wrapperOpacity: wrapper.style.opacity,
+        hasContainer: !!container,
+        containerChildren: container?.children.length || 0,
+        sampleAreas: sampleAreas.length,
+      });
+      throw new Error('Failed to generate image: canvas is empty');
+    }
+    
+    // Apply dark filter to map area as post-processing (html2canvas doesn't support CSS filters)
+    // Skip if we already applied a snapshot (pre-filtered)
+    const hasSnapshotBg = !!mapContainer?.style.backgroundImage && mapContainer.style.backgroundImage !== 'none';
+    const snapshotApplied = mapSnapshotApplied || mapContainer?.dataset.snapshotApplied === 'true' || hasSnapshotBg;
+    if (showMap && mapContainer && !snapshotApplied) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Get the map container bounds relative to wrapper
+        const mapRect = mapContainer.getBoundingClientRect();
+        const wrapperRect = wrapper.getBoundingClientRect();
+        
+        // Calculate map area in canvas coordinates (accounting for scale: 2)
+        const scale = 2;
+        const mapX = Math.max(0, Math.floor((mapRect.left - wrapperRect.left) * scale));
+        const mapY = Math.max(0, Math.floor((mapRect.top - wrapperRect.top) * scale));
+        const mapWidth = Math.min(canvas.width - mapX, Math.floor(mapRect.width * scale));
+        const mapHeight = Math.min(canvas.height - mapY, Math.floor(mapRect.height * scale));
+        
+        if (mapWidth > 0 && mapHeight > 0) {
+          // Get image data from map area only
+          const imageData = ctx.getImageData(mapX, mapY, mapWidth, mapHeight);
+          const data = imageData.data;
+          
+          // Apply dark map filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)
+          for (let i = 0; i < data.length; i += 4) {
+            // Only process non-transparent pixels
+            if (data[i + 3] > 0) {
+              // Invert RGB (255 - value)
+              const r = 255 - data[i];
+              const g = 255 - data[i + 1];
+              const b = 255 - data[i + 2];
+              
+              // Apply brightness(95%) and contrast(90%) adjustments
+              data[i] = Math.min(255, Math.max(0, r * 0.95 * 0.9));
+              data[i + 1] = Math.min(255, Math.max(0, g * 0.95 * 0.9));
+              data[i + 2] = Math.min(255, Math.max(0, b * 0.95 * 0.9));
+            }
+          }
+          
+          // Put modified image data back
+          ctx.putImageData(imageData, mapX, mapY);
+        }
+      }
+    }
+
+    // Convert to data URL
+    const dataUrl = canvas.toDataURL('image/png', 1.0);
+    
+    // Clean up
+    if (wrapper.parentNode) {
+      document.body.removeChild(wrapper);
+    }
+    
+    return dataUrl;
+  } catch (error) {
+    // Better error logging
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error('Error generating share image:', {
+      message: errorMessage,
+      stack: errorStack,
+      mode,
+      hasMap: showMap,
+      hasImage: showImage,
+      hasRoute: hasRoute,
+    });
+    // Clean up on error
+    if (wrapper.parentNode) {
+      document.body.removeChild(wrapper);
+    }
+    throw error;
   }
+}
+
+/**
+ * Build shared content container (header, stats, footer) - reusable across all modes
+ */
+function buildSharedContentContainer(
+  ride: Ride,
+  bike: Bike | undefined,
+  hasRoute: boolean,
+  apexWhite: string,
+  apexGreen: string
+): HTMLElement {
+  const bikeName = bike 
+    ? `${bike.make}${bike.year ? ` (${bike.year})` : ''}`
+    : 'Unknown Bike';
+  const rideName = ride.ride_name || bikeName;
+  const maxLean = Math.max(ride.max_lean_left, ride.max_lean_right);
 
   // Create content container
   const container = document.createElement('div');
@@ -168,9 +890,6 @@ export async function generateRideShareImage(
   container.style.flexDirection = 'column';
   container.style.justifyContent = 'space-between';
   container.style.zIndex = '2';
-  
-  wrapper.appendChild(container);
-
   // Header section
   const header = document.createElement('div');
   header.style.display = 'flex';
@@ -196,89 +915,38 @@ export async function generateRideShareImage(
   header.appendChild(subtitle);
   container.appendChild(header);
 
-  // Map section (if route available and mode requires it) - Strava-style: map at top
-  let mapContainer: HTMLElement | null = null;
-  let mapRoot: Root | null = null;
-  
-  if (showMap) {
-    try {
-      const mapWrapper = document.createElement('div');
-      mapWrapper.style.width = '100%';
-      mapWrapper.style.height = '400px';
-      mapWrapper.style.marginTop = '40px';
-      mapWrapper.style.marginBottom = '40px';
-      mapWrapper.style.borderRadius = '12px';
-      mapWrapper.style.overflow = 'hidden';
-      // Border with 20% opacity using CSS color-mix or fallback
-      if (apexWhite.startsWith('#')) {
-        const borderColor = apexWhite.replace('#', '');
-        const r = parseInt(borderColor.substring(0, 2), 16);
-        const g = parseInt(borderColor.substring(2, 4), 16);
-        const b = parseInt(borderColor.substring(4, 6), 16);
-        mapWrapper.style.border = `1px solid rgba(${r}, ${g}, ${b}, 0.2)`;
-      } else {
-        // Fallback for non-hex colors
-        mapWrapper.style.border = '1px solid rgba(226, 226, 226, 0.2)';
-      }
-      mapWrapper.style.position = 'relative';
-      mapWrapper.style.zIndex = '1';
-      mapWrapper.id = 'share-map-container';
-      
-      container.appendChild(mapWrapper);
-      mapContainer = mapWrapper;
-
-      // Render RideMap component
-      mapRoot = createRoot(mapWrapper);
-      mapRoot.render(
-        React.createElement(RideMap, {
-          coordinates: routeCoordinates,
-          interactive: false,
-          height: '400px',
-          className: 'w-full',
-        })
-      );
-
-      // Wait for map tiles to load
-      await waitForMapTiles(mapWrapper, 5000).catch((error) => {
-        logger.debug('Map tiles loading timeout or error:', error);
-        // Continue anyway - map might still render
-      });
-    } catch (error) {
-      logger.debug('Error rendering map for share image:', error);
-      // Remove map container if there was an error
-      if (mapContainer && mapContainer.parentNode) {
-        mapContainer.parentNode.removeChild(mapContainer);
-      }
-      mapContainer = null;
-    }
-  }
-
   // Stats section
   const statsContainer = document.createElement('div');
   statsContainer.style.display = 'grid';
   statsContainer.style.gridTemplateColumns = 'repeat(2, 1fr)';
   statsContainer.style.gap = '40px';
-  statsContainer.style.marginTop = showMap ? '0' : '60px';
+  statsContainer.style.marginTop = hasRoute ? '0' : '60px';
   statsContainer.style.marginBottom = '60px';
   statsContainer.style.position = 'relative';
   statsContainer.style.zIndex = '2';
 
-  // Distance stat
   const distanceStat = createStatCard('Distance', `${ride.distance_km.toFixed(1)} km`, apexWhite, apexGreen);
   statsContainer.appendChild(distanceStat);
 
-  // Duration stat
-  const durationStat = createStatCard('Duration', formatDuration(ride.start_time, ride.end_time), apexWhite, apexGreen);
+  const durationStat = createStatCard(
+    'Duration',
+    formatDuration(ride.start_time, ride.end_time),
+    apexWhite,
+    apexGreen
+  );
   statsContainer.appendChild(durationStat);
 
-  // Max lean stat
   if (maxLean > 0) {
     const leanStat = createStatCard('Max Lean', `${maxLean.toFixed(1)}°`, apexWhite, apexGreen);
     statsContainer.appendChild(leanStat);
   }
 
-  // Date stat
-  const dateStat = createStatCard('Date', formatDate(ride.start_time), apexWhite, apexGreen);
+  const dateStat = createStatCard(
+    'Date',
+    formatShortDate(ride.start_time, { includeYear: true, useRelative: false }),
+    apexWhite,
+    apexGreen
+  );
   statsContainer.appendChild(dateStat);
 
   container.appendChild(statsContainer);
@@ -305,42 +973,7 @@ export async function generateRideShareImage(
   footer.appendChild(logoText);
   container.appendChild(footer);
 
-  // Append to body temporarily
-  document.body.appendChild(wrapper);
-
-  try {
-    // Generate canvas
-    const canvas = await html2canvas(wrapper, {
-      backgroundColor: transparentBg ? null : apexBlack,
-      scale: 2, // Higher quality
-      logging: false,
-      useCORS: true,
-      width: 1080,
-      height: 1080,
-      allowTaint: false,
-      foreignObjectRendering: true,
-    });
-
-    // Convert to data URL
-    const dataUrl = canvas.toDataURL('image/png', 1.0);
-    
-    // Clean up
-    if (mapRoot) {
-      mapRoot.unmount();
-    }
-    document.body.removeChild(wrapper);
-    
-    return dataUrl;
-  } catch (error) {
-    // Clean up on error
-    if (mapRoot) {
-      mapRoot.unmount();
-    }
-    if (wrapper.parentNode) {
-      document.body.removeChild(wrapper);
-    }
-    throw error;
-  }
+  return container;
 }
 
 /**
@@ -413,6 +1046,47 @@ function downloadImage(blob: Blob, filename: string): void {
  * - On web: Tries to copy to clipboard first, falls back to download
  * @returns Object with method used: 'clipboard' | 'download' | 'share'
  */
+/**
+ * Generate all share image previews at once (optimized batch generation)
+ * Builds shared resources once and reuses them across all modes
+ */
+export async function generateAllRideShareImages(
+  ride: Ride,
+  bike: Bike | undefined
+): Promise<Record<ShareMode, string>> {
+  // Build shared resources once
+  const sharedResources = await buildSharedResources(ride, bike);
+  
+  // Generate all modes in parallel using shared resources
+  const modes: ShareMode[] = [
+    'no-map-no-image',
+    'map-no-image',
+    'no-map-image-dark',
+    'map-image-dark',
+    'no-map-image-transparent',
+  ];
+  
+  const results = await Promise.all(
+    modes.map(async (mode) => {
+      try {
+        const image = await generateRideShareImage(ride, bike, mode, sharedResources);
+        return { mode, image };
+      } catch (error) {
+        logger.error(`Failed to generate preview for ${mode}:`, error);
+        return { mode, image: '' };
+      }
+    })
+  );
+  
+  // Convert to record
+  const record: Record<ShareMode, string> = {} as Record<ShareMode, string>;
+  results.forEach(({ mode, image }) => {
+    record[mode] = image;
+  });
+  
+  return record;
+}
+
 export async function shareRideImage(
   ride: Ride, 
   bike: Bike | undefined, 
@@ -494,9 +1168,8 @@ export async function shareRideImage(
         await copyImageToClipboard(blob);
         // Success - clipboard copy worked
         return 'clipboard';
-      } catch (clipboardError) {
+      } catch {
         // Clipboard failed or not supported, fall back to download
-        logger.debug('Clipboard copy not available, downloading image:', clipboardError);
         downloadImage(blob, filename);
         // Return download method
         return 'download';

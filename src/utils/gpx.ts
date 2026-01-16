@@ -4,6 +4,7 @@ import { Share } from '@capacitor/share';
 import { supabase } from '../lib/supabaseClient';
 import { logger } from '../lib/logger';
 import type { Ride } from '../types/database';
+import { formatDuration } from './format';
 
 /**
  * Export a ride to GPX format and share it
@@ -273,21 +274,6 @@ function escapeXml(text: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
-}
-
-/**
- * Format duration between two dates
- */
-function formatDuration(start: Date, end: Date): string {
-  const seconds = Math.floor((end.getTime() - start.getTime()) / 1000);
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
-  return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 
 /**

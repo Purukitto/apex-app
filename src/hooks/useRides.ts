@@ -227,7 +227,7 @@ export function useRides(options: UseRidesOptions = {}) {
       updates,
     }: {
       id: string;
-      updates: Partial<Pick<Ride, 'ride_name' | 'notes'>>;
+      updates: Partial<Pick<Ride, 'ride_name' | 'notes' | 'image_url'>>;
     }) => {
       const {
         data: { user },

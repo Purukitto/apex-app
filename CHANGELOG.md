@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.14.6](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.14.6) (2026-01-16)
+
+
+### Bug Fixes
+
+* **release:** improve changelog extraction for major and minor releases ([038fb43](https://github.com/Purukitto/apex-app/commit/038fb4390be075993c10bcad0de8c29adde29270))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+* **deps-dev:** bump the development-dependencies group with 3 updates ([#44](https://github.com/Purukitto/apex-app/issues/44)) ([75640f6](https://github.com/Purukitto/apex-app/commit/75640f6bb151a7d0522fcd8e1afa37cc9e474ce5))
+* **deps:** bump the production-dependencies group with 2 updates ([#43](https://github.com/Purukitto/apex-app/issues/43)) ([9f4ee8d](https://github.com/Purukitto/apex-app/commit/9f4ee8dc9773a144873681c5ffee24d4f9e9ce58))
+
 ### [0.14.5](https://github.com/Purukitto/apex-app/compare/v0.14.4...v0.14.5) (2026-01-15)
 
 

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { MapContainer, TileLayer, Polyline, useMap } from 'react-leaflet';
 import type { LatLngExpression } from 'leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 interface RideMapProps {
@@ -8,12 +9,20 @@ interface RideMapProps {
   className?: string;
   interactive?: boolean; // If false, map is static and won't capture scroll events
   height?: string; // Map height (default: '400px')
+  hideControls?: boolean; // If true, hides all UI controls (zoom, attribution) for export
+  onMapReady?: (map: L.Map) => void; // Callback when map is ready
 }
 
 /**
- * Internal component to handle map bounds fitting
+ * Internal component to handle map bounds fitting and expose map instance
  */
-function MapBoundsFitter({ coordinates }: { coordinates: [number, number][] }) {
+function MapBoundsFitter({ 
+  coordinates, 
+  onMapReady 
+}: { 
+  coordinates: [number, number][];
+  onMapReady?: (map: L.Map) => void;
+}) {
   const map = useMap();
 
   useEffect(() => {
@@ -52,7 +61,15 @@ function MapBoundsFitter({ coordinates }: { coordinates: [number, number][] }) {
         maxZoom: 18,
       }
     );
-  }, [map, coordinates]);
+    
+    // Notify when map is ready
+    if (onMapReady) {
+      map.whenReady(() => {
+        map.invalidateSize();
+        onMapReady(map);
+      });
+    }
+  }, [map, coordinates, onMapReady]);
 
   return null;
 }
@@ -69,7 +86,9 @@ export default function RideMap({
   coordinates, 
   className = '', 
   interactive = false,
-  height = '300px'
+  height = '300px',
+  hideControls = false,
+  onMapReady
 }: RideMapProps) {
   // Get theme color for polyline
   const getPolylineColor = (): string => {
@@ -109,13 +128,32 @@ export default function RideMap({
 
   return (
     <div 
-      className={`rounded-lg overflow-hidden border border-apex-white/20 ${className} ${!interactive ? 'map-non-interactive' : ''}`}
+      className={`rounded-lg overflow-hidden border border-apex-white/20 ${className} ${!interactive ? 'map-non-interactive' : ''} ${hideControls ? 'map-export-mode' : ''}`}
       style={{ 
         isolation: 'isolate', 
         position: 'relative', 
         zIndex: 1
       }}
     >
+      <style>
+        {hideControls && `
+          .map-export-mode .leaflet-control-container {
+            display: none !important;
+          }
+          .map-export-mode .leaflet-control-zoom {
+            display: none !important;
+          }
+          .map-export-mode .leaflet-control-attribution {
+            display: none !important;
+          }
+          .map-export-mode .leaflet-top,
+          .map-export-mode .leaflet-bottom,
+          .map-export-mode .leaflet-left,
+          .map-export-mode .leaflet-right {
+            display: none !important;
+          }
+        `}
+      </style>
       <MapContainer
         center={defaultCenter}
         zoom={13}
@@ -125,6 +163,7 @@ export default function RideMap({
         doubleClickZoom={interactive}
         boxZoom={interactive}
         keyboard={interactive}
+        preferCanvas={true}
         className="w-full h-full"
         style={{ 
           height, 
@@ -136,9 +175,10 @@ export default function RideMap({
         }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution={hideControls ? '' : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           className="dark-map-tiles"
+          crossOrigin="anonymous"
         />
         <Polyline
           positions={polylinePositions}
@@ -148,7 +188,7 @@ export default function RideMap({
             opacity: 0.9,
           }}
         />
-        <MapBoundsFitter coordinates={coordinates} />
+        <MapBoundsFitter coordinates={coordinates} onMapReady={onMapReady} />
       </MapContainer>
     </div>
   );

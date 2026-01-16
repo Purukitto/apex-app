@@ -260,7 +260,12 @@ export function useRides(options: UseRidesOptions = {}) {
           throw new Error('Ride not found or you do not have permission to update it');
         }
         if (error.message?.includes('column') && error.message?.includes('does not exist')) {
-          throw new Error('Database columns not found. Please run the migration to add ride_name and notes columns.');
+          const missingColumn = error.message.includes('image_url') 
+            ? 'image_url' 
+            : error.message.includes('ride_name') || error.message.includes('notes')
+            ? 'ride_name or notes'
+            : 'required columns';
+          throw new Error(`Database column not found. Please run the migration to add ${missingColumn} column(s).`);
         }
         throw error;
       }
@@ -269,10 +274,15 @@ export function useRides(options: UseRidesOptions = {}) {
         throw new Error('Update succeeded but no data was returned');
       }
 
+      // Note: route_path (PostGIS geography) is not returned in simple select
+      // It will be refetched via query invalidation in onSuccess
       return data as Ride;
     },
     onSuccess: (updatedRide) => {
-      // Update with actual data from server
+      // Invalidate and refetch to ensure all data (including route_path) is fresh
+      queryClient.invalidateQueries({ queryKey: ['rides'] });
+      
+      // Also optimistically update cache with the returned data
       queryClient.setQueriesData<{ rides: Ride[]; total?: number }>(
         { queryKey: ['rides'] },
         (old) => {

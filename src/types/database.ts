@@ -31,6 +31,7 @@ export type Ride = {
   route_path?: GeoJSONLineString;
   ride_name?: string;
   notes?: string;
+  image_url?: string;
   created_at: string;
 };
 

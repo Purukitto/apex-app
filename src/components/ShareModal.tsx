@@ -4,7 +4,7 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { buttonHoverProps } from '../lib/animations';
 import type { Ride } from '../types/database';
 import type { Bike } from '../types/database';
-import { shareRideImage, type ShareMode } from '../lib/shareRide';
+import { shareRideImage, generateRideShareImage, generateAllRideShareImages, type ShareMode } from '../lib/shareRide';
 import { Capacitor } from '@capacitor/core';
 import { apexToast } from '../lib/toast';
 import { logger } from '../lib/logger';
@@ -16,31 +16,26 @@ interface ShareModalProps {
   bike: Bike | undefined;
 }
 
-const SHARE_MODES: { id: ShareMode; label: string; description: string }[] = [
+const SHARE_MODES: { id: ShareMode; label: string }[] = [
   {
     id: 'no-map-no-image',
     label: 'Stats Only',
-    description: 'No map, no image background',
   },
   {
     id: 'map-no-image',
     label: 'With Map',
-    description: 'Map included, no image background',
   },
   {
     id: 'no-map-image-dark',
     label: 'Image Background',
-    description: 'Darkened image background, no map',
   },
   {
     id: 'map-image-dark',
     label: 'Map + Image',
-    description: 'Both map and darkened image background',
   },
   {
     id: 'no-map-image-transparent',
     label: 'Transparent',
-    description: 'Image background, transparent (no dark overlay)',
   },
 ];
 
@@ -48,14 +43,59 @@ export default function ShareModal({ isOpen, onClose, ride, bike }: ShareModalPr
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isSharing, setIsSharing] = useState(false);
   const [dragX, setDragX] = useState(0);
+  const [previewImages, setPreviewImages] = useState<Record<string, string>>({});
+  const [isGeneratingPreviews, setIsGeneratingPreviews] = useState<Record<string, boolean>>({});
 
-  // Reset to first option when modal opens
+  // Generate preview for a specific mode
+  const generatePreview = async (modeId: ShareMode) => {
+    // Don't regenerate if we already have it
+    if (previewImages[modeId]) return;
+
+    setIsGeneratingPreviews(prev => ({ ...prev, [modeId]: true }));
+    try {
+      const preview = await generateRideShareImage(ride, bike, modeId);
+      if (preview && preview.startsWith('data:image')) {
+        setPreviewImages(prev => ({ ...prev, [modeId]: preview }));
+      } else {
+        logger.warn(`Invalid preview data for ${modeId}:`, preview?.substring(0, 50));
+      }
+    } catch (error) {
+      logger.error(`Failed to generate preview for ${modeId}:`, error);
+    } finally {
+      setIsGeneratingPreviews(prev => ({ ...prev, [modeId]: false }));
+    }
+  };
+
+  // Generate all previews in background when modal opens (optimized batch generation)
   useEffect(() => {
     if (isOpen) {
+      // Reset state
       setCurrentIndex(0);
       setDragX(0);
+      setPreviewImages({});
+      setIsGeneratingPreviews({});
+      
+      // Generate all previews at once using optimized batch function
+      setIsGeneratingPreviews({
+        'no-map-no-image': true,
+        'map-no-image': true,
+        'no-map-image-dark': true,
+        'map-image-dark': true,
+        'no-map-image-transparent': true,
+      });
+      
+      generateAllRideShareImages(ride, bike)
+        .then((results) => {
+          setPreviewImages(results);
+          setIsGeneratingPreviews({});
+        })
+        .catch((error) => {
+          logger.error('Batch preview generation failed:', error);
+          setIsGeneratingPreviews({});
+        });
     }
-  }, [isOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, ride.id]);
 
   const handlePrevious = () => {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : SHARE_MODES.length - 1));
@@ -179,14 +219,34 @@ export default function ShareModal({ isOpen, onClose, ride, bike }: ShareModalPr
                     <h3 className="text-2xl font-bold text-apex-white">
                       {mode.label}
                     </h3>
-                    <p className="text-sm text-apex-white/60">
-                      {mode.description}
-                    </p>
-                    {/* Preview placeholder */}
-                    <div className="mt-6 aspect-square bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg flex items-center justify-center">
-                      <p className="text-xs text-apex-white/40 font-mono">
-                        Preview
-                      </p>
+                    {/* Preview */}
+                    <div 
+                      className="mt-6 aspect-square bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg overflow-hidden relative cursor-pointer"
+                      onClick={() => !previewImages[mode.id] && !isGeneratingPreviews[mode.id] && generatePreview(mode.id)}
+                    >
+                      {isGeneratingPreviews[mode.id] ? (
+                        <div className="absolute inset-0 flex items-center justify-center bg-apex-black/50">
+                          <p className="text-xs text-apex-white/40 font-mono">
+                            Generating...
+                          </p>
+                        </div>
+                      ) : previewImages[mode.id] ? (
+                        <img
+                          src={previewImages[mode.id]}
+                          alt={`${mode.label} preview`}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            logger.error(`Failed to load preview image for ${mode.id}`);
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <p className="text-xs text-apex-white/40 font-mono">
+                            Click to generate preview
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.15.2](https://github.com/Purukitto/apex-app/compare/v0.15.1...v0.15.2) (2026-01-17)
+
+
+### Features
+
+* **Garage:** add BikeImage component for improved bike image handling ([1ca0889](https://github.com/Purukitto/apex-app/commit/1ca088989e6704e8d1c6346962905980bb1ad19c))
+
+
+### Bug Fixes
+
+* add keyboard-safe scroll handling to data entry modals ([b7b4f3e](https://github.com/Purukitto/apex-app/commit/b7b4f3ea9daae504df29953042180c5c96e44c95))
+
+
+### Documentation
+
+* add keyboard-safe modal handling standards to UX rules ([2b50a63](https://github.com/Purukitto/apex-app/commit/2b50a6309cbff5694c604d81450dd93f68b6c303))
+
 ### [0.15.1](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.15.1) (2026-01-17)
 
 

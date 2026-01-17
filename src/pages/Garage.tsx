@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Motorbike, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBikes } from '../hooks/useBikes';
@@ -15,6 +15,48 @@ import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { logger } from '../lib/logger';
+
+// Helper component for bike image with fallback
+function BikeImage({ 
+  imageUrl, 
+  alt, 
+  size = 64, 
+  className = '' 
+}: { 
+  imageUrl?: string | null; 
+  alt: string; 
+  size?: number;
+  className?: string;
+}) {
+  const [imageError, setImageError] = useState(false);
+
+  // Reset error state when imageUrl changes
+  // This is necessary to allow retrying when the image URL is updated
+  useEffect(() => {
+    setImageError(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imageUrl]);
+
+  if (!imageUrl || imageError) {
+    return <ApexTelemetryIcon size={size} static className={className} />;
+  }
+
+  return (
+    <img
+      src={imageUrl}
+      alt={alt}
+      className={`object-cover rounded-lg border border-apex-white/20 ${className}`}
+      style={{ width: size, height: size }}
+      onError={(e) => {
+        logger.error('Failed to load bike image', {
+          imageUrl,
+          imgSrc: (e.target as HTMLImageElement).src,
+        });
+        setImageError(true);
+      }}
+    />
+  );
+}
 
 export default function Garage() {
   const navigate = useNavigate();
@@ -213,7 +255,11 @@ export default function Garage() {
                     )}
                   </div>
                   <div className="shrink-0">
-                    <ApexTelemetryIcon size={64} static />
+                    <BikeImage
+                      imageUrl={currentBike.image_url}
+                      alt={currentBike.nick_name || `${currentBike.make} ${currentBike.model}`}
+                      size={64}
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mb-4">
@@ -286,6 +332,13 @@ export default function Garage() {
                             {bike.make} {bike.model}
                           </p>
                         )}
+                      </div>
+                      <div className="shrink-0 ml-2">
+                        <BikeImage
+                          imageUrl={bike.image_url}
+                          alt={bike.nick_name || `${bike.make} ${bike.model}`}
+                          size={48}
+                        />
                       </div>
                     </div>
                     <div className="space-y-2 mb-3">

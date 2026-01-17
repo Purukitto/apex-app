@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, Motorbike, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBikes } from '../hooks/useBikes';
@@ -28,16 +28,10 @@ function BikeImage({
   size?: number;
   className?: string;
 }) {
-  const [imageError, setImageError] = useState(false);
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
+  const hasError = !!imageUrl && failedImageUrl === imageUrl;
 
-  // Reset error state when imageUrl changes
-  // This is necessary to allow retrying when the image URL is updated
-  useEffect(() => {
-    setImageError(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imageUrl]);
-
-  if (!imageUrl || imageError) {
+  if (!imageUrl || hasError) {
     return <ApexTelemetryIcon size={size} static className={className} />;
   }
 
@@ -52,7 +46,7 @@ function BikeImage({
           imageUrl,
           imgSrc: (e.target as HTMLImageElement).src,
         });
-        setImageError(true);
+        setFailedImageUrl(imageUrl ?? null);
       }}
     />
   );

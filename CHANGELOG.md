@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.16.0](https://github.com/Purukitto/apex-app/compare/v0.15.2...v0.16.0) (2026-01-17)
+
+
+### Features
+
+* add Firebase config injection for public repo safety ([d0067aa](https://github.com/Purukitto/apex-app/commit/d0067aac4f2a87571621e4cddb5e8e9e224e7be4))
+* **devtools:** add server notification sender to DevTools panel ([c98328a](https://github.com/Purukitto/apex-app/commit/c98328a5c203902e0a0aa35446874425dd3d4978))
+* enhance Firebase configuration for Android and web integration ([544fb37](https://github.com/Purukitto/apex-app/commit/544fb372661dfcb1cca1f47edb77e79279685e08))
+* **notifications:** implement server-synced notification system with FCM push ([0996336](https://github.com/Purukitto/apex-app/commit/0996336690208856132d37791df6ac18104dc4b6))
+* **toast:** add error action support to promise toasts ([37cff91](https://github.com/Purukitto/apex-app/commit/37cff9176c80c6a25f78887ba66f8f29be090efb))
+
+
+### Bug Fixes
+
+* **garage:** refactor image error handling to avoid setState in effect ([e74b17e](https://github.com/Purukitto/apex-app/commit/e74b17e247de9c5eeddb90b2fd15188ca49233b1))
+
+
+### Code Refactoring
+
+* **notifications:** disable local notifications when server notifications enabled ([37256f1](https://github.com/Purukitto/apex-app/commit/37256f1c74edc8b8fff352bf5c4c06441996181f))
+* **notifications:** migrate UI to server-synced notification system ([13fbe11](https://github.com/Purukitto/apex-app/commit/13fbe11ee72baf083f5a19113922e3b084bbbb8f))
+
+
+### Documentation
+
+* add notification system setup guide and update rules ([2dcc393](https://github.com/Purukitto/apex-app/commit/2dcc3930fdcb0b9278b6c26effe62846e589eea0))
+
+
+### Miscellaneous Chores
+
+* add .cursorignore for workspace file exclusions ([6aed4e6](https://github.com/Purukitto/apex-app/commit/6aed4e6acc08d2bfaeb29de12e9662b968e3fbd1))
+* add Firebase and Capacitor push notification packages ([bcd70a0](https://github.com/Purukitto/apex-app/commit/bcd70a072ab388088b6e55e6074b9bd83d8d7814))
+* update app identifiers and versioning for rebranding ([8cf9ecc](https://github.com/Purukitto/apex-app/commit/8cf9ecc9be9d08d30d438d5044e7590a25a9d9e1))
+
 ### [0.15.2](https://github.com/Purukitto/apex-app/compare/v0.15.1...v0.15.2) (2026-01-17)
 
 

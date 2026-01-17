@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Terminal, Database, RefreshCw, Copy, Check, Download, Search, Filter } from 'lucide-react';
+import { X, Terminal, Database, RefreshCw, Copy, Check, Download, Search, Filter, ChevronDown } from 'lucide-react';
 import { useRideStore } from '../stores/useRideStore';
 import { useThemeStore } from '../stores/useThemeStore';
 import { useNotificationStore } from '../stores/useNotificationStore';
@@ -11,6 +11,7 @@ import { logger } from '../lib/logger';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import { apexToast } from '../lib/toast';
+import { supabase } from '../lib/supabaseClient';
 
 interface DevToolsPanelProps {
   isOpen: boolean;
@@ -36,6 +37,11 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
   const [logLevel, setLogLevel] = useState<LogLevel>(() => logger.getLevel() as LogLevel);
   const [searchFilter, setSearchFilter] = useState('');
   const consoleEndRef = useRef<HTMLDivElement>(null);
+  const [notificationType, setNotificationType] = useState<'info' | 'warning' | 'error'>('info');
+  const [notificationTitle, setNotificationTitle] = useState('DevTools Test');
+  const [notificationMessage, setNotificationMessage] = useState('This is a test notification.');
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const typeDropdownRef = useRef<HTMLDivElement>(null);
   
   // Use refs to queue logs and flush them outside render
   const logQueueRef = useRef<ConsoleLog[]>([]);
@@ -225,6 +231,22 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
     }
   }, [consoleLogs.length, activeTab, filteredLogs.length]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target as Node)) {
+        setIsTypeDropdownOpen(false);
+      }
+    };
+
+    if (isTypeDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [isTypeDropdownOpen]);
+
   // Copy state to clipboard
   const copyState = async (storeName: string, state: unknown) => {
     try {
@@ -246,6 +268,64 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
     }
   };
 
+  const sendServerNotification = useCallback(async () => {
+    const trimmedMessage = notificationMessage.trim();
+    if (!trimmedMessage) {
+      apexToast.error('Message is required');
+      return;
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      apexToast.error('You must be signed in to send notifications');
+      return;
+    }
+
+    const insertPromise = supabase.from('notifications').insert({
+      user_id: user.id,
+      type: notificationType,
+      title: notificationTitle.trim() || null,
+      message: trimmedMessage,
+      source: 'devtools',
+      payload: {
+        source: 'devtools',
+        sentAt: new Date().toISOString(),
+      },
+    });
+
+    await apexToast.promise(
+      new Promise<boolean>((resolve, reject) => {
+        Promise.resolve(insertPromise)
+          .then(({ error }) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+            resolve(true);
+          })
+          .catch(reject);
+      }),
+      {
+        loading: 'Sending notification...',
+        success: 'Notification Sent',
+        error: 'Failed to send notification',
+      },
+      {
+        errorAction: {
+          label: 'Retry',
+          onClick: () => {
+            sendServerNotification().catch((error) => {
+              logger.error('Retry send notification failed:', error);
+            });
+          },
+        },
+      }
+    );
+  }, [notificationMessage, notificationTitle, notificationType]);
+
   if (!isDev()) return null;
 
   const stores = [
@@ -261,7 +341,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-[9998]"
+            className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-9998"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -270,7 +350,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
 
           {/* Panel */}
           <motion.div
-            className="fixed inset-y-0 right-0 w-full max-w-2xl bg-apex-black border-l border-apex-white/20 z-[9999] flex flex-col"
+            className="fixed inset-y-0 right-0 w-full max-w-2xl bg-apex-black border-l border-apex-white/20 z-9999 flex flex-col"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -329,7 +409,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                   {stores.map((store) => (
                     <div
                       key={store.name}
-                      className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-4"
+                      className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-4"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="text-sm font-semibold text-apex-green font-mono">
@@ -352,15 +432,111 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                       </pre>
                     </div>
                   ))}
+
+                  <div className="bg-linear-to-br from-apex-white/5 to-transparent border border-apex-white/20 rounded-lg p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-apex-green font-mono">
+                        Notification Sender
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] font-mono text-apex-white/60">
+                          Type
+                        </label>
+                        <div className="relative" ref={typeDropdownRef}>
+                          <button
+                            type="button"
+                            onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+                            className="w-full px-3 py-2 text-xs font-mono bg-apex-white/5 border border-apex-green/40 rounded-lg text-apex-white focus:outline-none focus:border-apex-green focus:bg-apex-white/10 transition-colors flex items-center justify-between"
+                            {...buttonHoverProps}
+                          >
+                            <span>{notificationType}</span>
+                            <ChevronDown 
+                              size={14} 
+                              className={`text-apex-green transition-transform ${isTypeDropdownOpen ? 'rotate-180' : ''}`}
+                            />
+                          </button>
+                          <AnimatePresence>
+                            {isTypeDropdownOpen && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.2 }}
+                                className="absolute z-50 w-full mt-1 bg-apex-black border border-apex-green/40 rounded-lg shadow-lg overflow-hidden"
+                              >
+                                {(['info', 'warning', 'error'] as const).map((type) => (
+                                  <button
+                                    key={type}
+                                    type="button"
+                                    onClick={() => {
+                                      setNotificationType(type);
+                                      setIsTypeDropdownOpen(false);
+                                    }}
+                                    className={`w-full px-3 py-2 text-xs font-mono text-left transition-colors ${
+                                      notificationType === type
+                                        ? 'bg-apex-green/20 text-apex-green'
+                                        : 'text-apex-white hover:bg-apex-white/10'
+                                    }`}
+                                    {...buttonHoverProps}
+                                  >
+                                    {type}
+                                  </button>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1 md:col-span-2">
+                        <label className="text-[10px] font-mono text-apex-white/60">
+                          Title
+                        </label>
+                        <input
+                          type="text"
+                          value={notificationTitle}
+                          onChange={(e) => setNotificationTitle(e.target.value)}
+                          placeholder="Optional title"
+                          className="w-full px-3 py-2 text-xs font-mono bg-apex-white/5 border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green/40 focus:bg-apex-white/10 transition-colors"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-mono text-apex-white/60">
+                        Message
+                      </label>
+                      <textarea
+                        value={notificationMessage}
+                        onChange={(e) => setNotificationMessage(e.target.value)}
+                        rows={3}
+                        placeholder="Notification message"
+                        className="w-full px-3 py-2 text-xs font-mono bg-apex-white/5 border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green/40 focus:bg-apex-white/10 transition-colors resize-none"
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <motion.button
+                        onClick={() => {
+                          sendServerNotification().catch((error) => {
+                            logger.error('Send notification failed:', error);
+                          });
+                        }}
+                        className="px-4 py-2 text-xs font-semibold text-apex-black bg-apex-green rounded-lg border border-apex-green/60 hover:border-apex-green transition-colors"
+                        {...buttonHoverProps}
+                      >
+                        Send Notification
+                      </motion.button>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {activeTab === 'console' && (
                 <div className="flex flex-col flex-1 min-h-0">
                   {/* Fixed Controls Section */}
-                  <div className="flex-shrink-0 p-4 space-y-4 border-b border-apex-white/10">
+                  <div className="shrink-0 p-4 space-y-4 border-b border-apex-white/10">
                     {/* Logger Session Info */}
-                    <div className="p-3 rounded-lg bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20">
+                    <div className="p-3 rounded-lg bg-linear-to-br from-white/5 to-transparent border border-apex-white/20">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-xs font-semibold text-apex-green font-mono">Logger Session</p>
                         <motion.button
@@ -435,7 +611,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                     </div>
 
                     {/* Log Level Selector */}
-                    <div className="p-3 rounded-lg bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20">
+                    <div className="p-3 rounded-lg bg-linear-to-br from-white/5 to-transparent border border-apex-white/20">
                       <div className="flex items-center gap-2 mb-2">
                         <Filter size={14} className="text-apex-green" />
                         <p className="text-xs font-semibold text-apex-green font-mono">Log Level</p>
@@ -635,13 +811,13 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                               className="p-2 rounded bg-apex-white/5 border border-apex-white/10"
                             >
                               <div className="flex items-start gap-2">
-                                <span className={`text-[10px] ${colorClass} flex-shrink-0`}>
+                                <span className={`text-[10px] ${colorClass} shrink-0`}>
                                   {log.type.toUpperCase()}
                                 </span>
-                                <span className="text-apex-white/40 flex-shrink-0">
+                                <span className="text-apex-white/40 shrink-0">
                                   {log.timestamp.toLocaleTimeString()}
                                 </span>
-                                <span className={`flex-1 ${colorClass} break-words`}>
+                                <span className={`flex-1 ${colorClass} wrap-break-word`}>
                                   {log.message}
                                 </span>
                               </div>

@@ -33,7 +33,10 @@ export const apexToast = {
       duration: 3000,
     });
   },
-  error: (message: string) => {
+  error: (
+    message: string,
+    options?: { action?: { label: string; onClick: () => void } }
+  ) => {
     // Truncate long error messages to prevent UI overflow
     const truncatedMessage = truncateMessage(message, 120);
     return toast.error(truncatedMessage, {
@@ -43,6 +46,7 @@ export const apexToast = {
         border: '1px solid #FF3B30',
         color: '#E2E2E2',
       },
+      action: options?.action,
       duration: 4000,
     });
   },
@@ -52,12 +56,12 @@ export const apexToast = {
       loading: string;
       success: string | ((data: T) => string);
       error: string | ((error: unknown) => string);
+    },
+    options?: {
+      errorAction?: { label: string; onClick: () => void };
     }
   ) => {
-    return toast.promise(promise, {
-      loading: messages.loading,
-      success: messages.success,
-      error: messages.error,
+    const toastId = toast.loading(messages.loading, {
       className: 'apex-toast-promise',
       style: {
         background: '#0A0A0A',
@@ -66,6 +70,50 @@ export const apexToast = {
       },
       duration: 3000,
     });
+
+    return promise
+      .then((data) => {
+        const successMessage =
+          typeof messages.success === 'function'
+            ? messages.success(data)
+            : messages.success;
+        toast.success(successMessage, {
+          id: toastId,
+          className: 'apex-toast-promise',
+          style: {
+            background: '#0A0A0A',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            color: '#E2E2E2',
+          },
+          duration: 3000,
+        });
+        return data;
+      })
+      .catch((error) => {
+        const errorMessage =
+          typeof messages.error === 'function'
+            ? messages.error(error)
+            : messages.error;
+
+        if (options?.errorAction) {
+          toast.dismiss(toastId);
+          apexToast.error(errorMessage, { action: options.errorAction });
+        } else {
+          const truncatedMessage = truncateMessage(errorMessage, 120);
+          toast.error(truncatedMessage, {
+            id: toastId,
+            className: 'apex-toast-promise',
+            style: {
+              background: '#0A0A0A',
+              border: '1px solid #FF3B30',
+              color: '#E2E2E2',
+            },
+            duration: 4000,
+          });
+        }
+
+        throw error;
+      });
   },
 };
 

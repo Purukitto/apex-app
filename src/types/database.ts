@@ -70,6 +70,21 @@ export type MaintenanceSchedule = {
   created_at: string;
 };
 
+export type NotificationRow = {
+  id: string;
+  user_id: string;
+  type: 'warning' | 'error' | 'info';
+  title?: string;
+  message: string;
+  read_at?: string | null;
+  dismissed_at?: string | null;
+  created_at: string;
+  bike_id?: string | null;
+  schedule_id?: string | null;
+  source?: string | null;
+  dedupe_key?: string | null;
+};
+
 export type ServiceHistory = {
   id: string;
   bike_id: string;

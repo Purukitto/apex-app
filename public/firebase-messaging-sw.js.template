@@ -1,0 +1,28 @@
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+
+// Firebase config - REPLACE WITH YOUR OWN VALUES
+// This file is injected at build time from VITE_FIREBASE_* environment variables
+// If env vars are not set, these placeholder values will be used (push notifications won't work)
+// See README.md for setup instructions
+const firebaseConfig = {
+  apiKey: 'YOUR_FIREBASE_API_KEY',
+  authDomain: 'YOUR_PROJECT.firebaseapp.com',
+  projectId: 'YOUR_PROJECT_ID',
+  storageBucket: 'YOUR_PROJECT.firebasestorage.app',
+  messagingSenderId: 'YOUR_SENDER_ID',
+  appId: 'YOUR_APP_ID',
+};
+
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+  const title = payload?.notification?.title || 'Apex';
+  const options = {
+    body: payload?.notification?.body || '',
+    data: payload?.data || {},
+  };
+
+  self.registration.showNotification(title, options);
+});

@@ -4,6 +4,7 @@ import type { MaintenanceSchedule, ServiceHistory } from '../types/database';
 import { logger } from '../lib/logger';
 import { apexToast } from '../lib/toast';
 import { scheduleMaintenanceNotification } from '../lib/notifications';
+import { serverNotificationsEnabled } from '../config/notifications';
 
 export function useMaintenanceSchedules(bikeId?: string) {
   const queryClient = useQueryClient();
@@ -288,7 +289,7 @@ export function useMaintenanceSchedules(bikeId?: string) {
         .single();
 
       // Schedule time-based notification if interval_months > 0
-      if (schedule && bikeInfo && schedule.interval_months > 0) {
+      if (!serverNotificationsEnabled && schedule && bikeInfo && schedule.interval_months > 0) {
         const notificationDate = new Date(serviceDate);
         notificationDate.setMonth(notificationDate.getMonth() + schedule.interval_months);
 

@@ -57,7 +57,7 @@ alwaysApply: true
 
 ### Card Components
 - **MANDATORY Styling:**
-  - Background: `bg-gradient-to-br from-white/5 to-transparent`
+  - Background: `bg-linear-to-br from-apex-white/5 to-transparent`
   - Border: `border border-apex-white/20`
   - Hover: `hover:border-apex-green/40` with framer-motion `whileHover`
   - Padding: `p-4` or `p-6` depending on content density
@@ -90,6 +90,12 @@ alwaysApply: true
 - **All cards must use `{...cardHoverProps}`:** No inline hover definitions.
 - **All lists must have staggered animations:** Use `listContainerVariants` and `fastItemVariants` for list items.
 - **No duplicate animation code:** Always import from `src/lib/animations.ts`.
+
+### Custom Dropdowns
+- **MANDATORY**: For non-native dropdowns, use a button + popover pattern with `AnimatePresence`.
+- **Layering**: Use `z-50` (or higher) and `bg-apex-black` with `border-apex-green/40`.
+- **Typography**: Use `font-mono` for values and options.
+- **Interaction**: Apply `{...buttonHoverProps}` on the trigger and options.
 
 ## 3. Visual Hierarchy & Polish
 - **Borders over Shadows:** Avoid heavy shadows. Use `border border-white/10` or `border-white/20` for containers.

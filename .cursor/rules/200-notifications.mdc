@@ -50,11 +50,13 @@ alwaysApply: true
 - **Text color**: `#E2E2E2` (apex-white)
 - **Font**: Inherit from theme (use `font-mono` for numbers/data in toast content)
 
-## Persistent Notifications (Zustand Store)
+## Persistent Notifications (Server-Synced)
 
 ### Notification Store
-- **MUST** use `useNotificationStore` (Zustand) for persistent alerts that need to remain visible.
-- Store location: `src/stores/useNotificationStore.ts`
+- **MUST** use `useNotifications` for server-backed notifications and sync.
+- Store location: `src/stores/useNotificationStore.ts` (client cache only).
+- Hook location: `src/hooks/useNotifications.ts`
+- Notifications are stored in `public.notifications` and synced across devices.
 - Use cases:
   - Maintenance warnings (service intervals)
   - Critical system alerts
@@ -62,21 +64,54 @@ alwaysApply: true
 
 ### Business Logic Alerts
 - **MANDATORY**: When a calculation triggers a warning (e.g., Odometer approaching service interval):
-  1. Add the alert to `useNotificationStore`
+  1. Insert into `public.notifications` (server) when possible
   2. Show a toast notification using `apexToast`
-  3. Display the alert in the UI (e.g., Dashboard maintenance section)
+  3. Display the alert in the UI via `useNotifications`
 
 ### Alert Structure
 ```typescript
-interface Notification {
+interface NotificationRow {
   id: string;
+  user_id: string;
   type: 'warning' | 'error' | 'info';
+  title?: string | null;
   message: string;
-  timestamp: Date;
-  dismissible: boolean;
-  action?: { label: string; onClick: () => void };
+  read_at?: string | null;
+  dismissed_at?: string | null;
+  created_at: string;
+  bike_id?: string | null;
+  schedule_id?: string | null;
+  source?: string | null;
+  dedupe_key?: string | null;
 }
 ```
+
+## Server-Side Notifications
+
+### Source of Truth
+- **MANDATORY**: Server is the source of truth for notifications and read/dismiss state.
+- **NEVER** keep long-lived local-only alerts unless `VITE_SERVER_NOTIFICATIONS=false`.
+- **ALWAYS** write to `public.notifications` for system alerts and maintenance due warnings.
+
+### Delivery Configuration
+- **MANDATORY**: Delivery settings live in `public.app_settings`.
+- **REQUIRED KEYS**: `edge_function_url`, `edge_function_service_key`.
+- **DO NOT** use `ALTER SYSTEM` or server GUCs for delivery configuration.
+
+### FCM (HTTP v1)
+- **MANDATORY**: Use FCM HTTP v1 with a service account JSON.
+- **Edge Function Secret**: `FCM_SERVICE_ACCOUNT_JSON` (stringified JSON).
+- **DO NOT** use legacy server keys.
+
+### Delivery
+- **Push Tokens** live in `public.push_tokens`.
+- **Edge Function** `send-notification` delivers push via FCM.
+- **Queue**: `public.notification_delivery_queue` is processed by cron job.
+
+### Safety
+- **DO NOT** include sensitive data in push payloads.
+- **DO** include identifiers (`notificationId`, `type`) only.
+- **DO** rely on RLS for all client reads/writes.
 
 ## Examples
 
@@ -108,20 +143,18 @@ const handleSubmit = async (data) => {
 };
 ```
 
-### Business Logic Alert
+### Business Logic Alert (Server-Synced)
 ```typescript
-// In Dashboard or component
-if (kmUntilService <= 500) {
-  // Add to notification store
-  useNotificationStore.getState().addNotification({
-    id: `maintenance-${bike.id}`,
+const { data: { user } } = await supabase.auth.getUser();
+if (kmUntilService <= 500 && user) {
+  await supabase.from('notifications').insert({
+    user_id: user.id,
     type: 'warning',
+    title: 'Service Due',
     message: `${bike.nick_name} service due in ${kmUntilService} km`,
-    timestamp: new Date(),
-    dismissible: true,
+    bike_id: bike.id,
+    source: 'client',
   });
-  
-  // Show toast
   apexToast.error(`Service due soon: ${bike.nick_name}`);
 }
 ```
@@ -180,6 +213,7 @@ try {
 - **MANDATORY**: Always use utility functions from `src/lib/notifications.ts` for local notifications.
 - **NEVER** import `LocalNotifications` directly from `@capacitor/local-notifications` - use the wrapper for consistency.
 - **Native Platforms Only**: Local notifications only work on iOS/Android. Functions automatically check `Capacitor.isNativePlatform()` and return early on web.
+- **NOTE**: Local notifications are a fallback when server notifications are disabled via `VITE_SERVER_NOTIFICATIONS=false`.
 
 ### Permission Handling
 - **MANDATORY**: Always request permissions before scheduling notifications.

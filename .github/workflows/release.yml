@@ -59,11 +59,32 @@ jobs:
         if: steps.check_release.outputs.exists == 'false'
         run: npm ci
 
+      - name: Setup Google Services JSON
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          # Use secret if provided, otherwise use committed file (if exists)
+          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
+            echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/google-services.json
+            echo "✓ google-services.json created from secret"
+          elif [ -f "android/app/google-services.json" ]; then
+            echo "✓ Using committed google-services.json"
+          else
+            echo "⚠️  Warning: google-services.json not found. Android push notifications may not work."
+            echo "   Add GOOGLE_SERVICES_JSON secret or commit android/app/google-services.json"
+          fi
+
       - name: Build and Sync
         if: steps.check_release.outputs.exists == 'false'
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
         run: |
           npm run build
           npx cap sync android

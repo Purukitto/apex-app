@@ -82,19 +82,30 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 **Notifications (Server + Push):**
+
+⚠️ **Important:** You must set up your own Firebase project. The placeholder values in the repo will not work.
+
+1. Create a Firebase project at https://console.firebase.google.com/
+2. Add a Web app and an Android app to your Firebase project
+3. Copy the configuration values to your `.env` file:
+
 ```env
 VITE_SERVER_NOTIFICATIONS=true
 VITE_PUSH_NOTIFICATIONS=true
 VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
-VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_firebase_sender_id
-VITE_FIREBASE_APP_ID=your_firebase_app_id
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
 VITE_FIREBASE_VAPID_KEY=your_web_vapid_key
 ```
 
-You can find these values in your Supabase project settings under API.
+4. For Android builds, download `google-services.json` from Firebase Console and place it at `android/app/google-services.json`
+   - Use `android/app/google-services.json.example` as a template
+   - **Optional:** To keep your `google-services.json` private, uncomment line 65 in `android/.gitignore`
+
+**Note:** The `firebase-messaging-sw.js` file is automatically generated from `firebase-messaging-sw.js.template` at build time using your `VITE_FIREBASE_*` environment variables. The generated file is gitignored to prevent committing your Firebase credentials.
 
 **For Discord Integration (Optional):**
 - Create a Discord application at https://discord.com/developers/applications

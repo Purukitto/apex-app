@@ -16,7 +16,9 @@
   "version": "0.15.2",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/inject-firebase-sw.js",
     "dev": "vite --host",
+    "prebuild": "node scripts/inject-firebase-sw.js",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "dev:android": "npx cap run android --live-reload --host=192.168.1.9 --port=5173",
@@ -77,6 +79,7 @@
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^4.2.2",
+    "dotenv": "^17.2.3",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

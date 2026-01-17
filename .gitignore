@@ -27,3 +27,6 @@ dist-ssr
 *.sw?
 
 dev-logs*
+
+# Firebase service worker (injected at build time from template)
+public/firebase-messaging-sw.js

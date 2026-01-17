@@ -1,14 +1,17 @@
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
-// Replace these values with your Firebase config at build/deploy time.
+// Firebase config - REPLACE WITH YOUR OWN VALUES
+// This file is injected at build time from VITE_FIREBASE_* environment variables
+// If env vars are not set, these placeholder values will be used (push notifications won't work)
+// See README.md for setup instructions
 const firebaseConfig = {
-  apiKey: 'AIzaSyDmUnuHlGm9FEsFs8AFRuJsOw8tSaBHMQ0',
-  authDomain: 'apex-app-main.firebaseapp.com',
-  projectId: 'apex-app-main',
-  storageBucket: 'apex-app-main.firebasestorage.app',
-  messagingSenderId: '898623854898',
-  appId: '1:898623854898:web:4998990b82d937977edf2b',
+  apiKey: 'YOUR_FIREBASE_API_KEY',
+  authDomain: 'YOUR_PROJECT.firebaseapp.com',
+  projectId: 'YOUR_PROJECT_ID',
+  storageBucket: 'YOUR_PROJECT.firebasestorage.app',
+  messagingSenderId: 'YOUR_SENDER_ID',
+  appId: 'YOUR_APP_ID',
 };
 
 firebase.initializeApp(firebaseConfig);

@@ -81,6 +81,19 @@ VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
+**Notifications (Server + Push):**
+```env
+VITE_SERVER_NOTIFICATIONS=true
+VITE_PUSH_NOTIFICATIONS=true
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_firebase_sender_id
+VITE_FIREBASE_APP_ID=your_firebase_app_id
+VITE_FIREBASE_VAPID_KEY=your_web_vapid_key
+```
+
 You can find these values in your Supabase project settings under API.
 
 **For Discord Integration (Optional):**
@@ -98,6 +111,11 @@ Ensure your Supabase database has the following tables with PostGIS enabled:
 - `maintenance_logs` - Service history
 - `user_discord_connections` - Discord OAuth tokens (optional, for Discord integration)
 - `discord_oauth_states` - OAuth state management (optional, for Discord integration)
+
+**Notifications Tables (Required):**
+- `notifications` - Server-synced notification feed (read/dismiss state)
+- `push_tokens` - Device tokens for FCM delivery
+- `notification_delivery_queue` - Delivery queue processed by cron
 
 **PostgreSQL Functions (RPC):**
 The app uses secure Postgres functions with `SECURITY DEFINER` for Discord OAuth:

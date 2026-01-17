@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabaseClient';
 import { apexToast } from '../lib/toast';
 import type { MaintenanceLog } from '../types/database';
 import { logger } from '../lib/logger';
+import { serverNotificationsEnabled } from '../config/notifications';
 
 const SERVICE_INTERVAL_KM = 5000;
 
@@ -14,6 +15,9 @@ export function useMaintenanceChecker() {
   const checkedBikesRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    if (serverNotificationsEnabled) {
+      return;
+    }
     if (isLoading || bikes.length === 0) return;
 
     const checkMaintenance = async () => {
@@ -78,7 +82,6 @@ export function useMaintenanceChecker() {
             addNotification({
               type: 'warning',
               message: `${bikeName} requires service (${kmSinceService.toLocaleString()} km since last service)`,
-              read_status: false,
               bike_id: bike.id,
             });
 

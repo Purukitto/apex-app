@@ -1,6 +1,7 @@
+import { type ReactElement } from 'react';
 import { X, Download, ExternalLink, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { buttonHoverProps } from '../lib/animations';
+import { buttonHoverProps, fastItemVariants, listContainerVariants } from '../lib/animations';
 import type { UpdateInfo } from '../hooks/useAppUpdate';
 
 interface UpdateModalProps {
@@ -159,42 +160,146 @@ export default function UpdateModal({
     
     const combined = output.join('\n');
     
-    // Clean up formatting - preserve section headers (### Section Name) and list markers (*)
-    return combined
-      .split('\n')
-      .map(line => {
-        // Clean up markdown formatting
-        let cleaned = line
-          // Remove bold markdown
-          .replace(/\*\*(.*?)\*\*/g, '$1')
-          // Remove italic markdown (careful not to break list markers)
-          // Match *text* but not * at start of line (list marker)
-          .replace(/([^*])\*([^*\n]+?)\*([^*])/g, '$1$2$3')
-          // Remove GitHub commit links
-          .replace(/\(\[[a-f0-9]{7,}\]\)/gi, '')
-          // Remove GitHub URLs
-          .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
-          .replace(/https?:\/\/github\.com\/[^\s)]+/gi, '')
-          // Remove commit hash references at end
-          .replace(/\s+\([a-f0-9]{7,}\)\s*$/, '')
-          // Clean up multiple spaces
-          .replace(/[ \t]{2,}/g, ' ');
-        
-        // Trim lines that aren't section headers (preserve ### headers)
-        if (!cleaned.match(/^###\s+/)) {
-          cleaned = cleaned.trim();
-        }
-        
-        return cleaned;
-      })
-      .filter(line => line.length > 0)
-      .join('\n')
-      // Clean up multiple newlines (keep max 2)
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
+        // Clean up formatting - preserve section headers (### Section Name) and list markers (*)
+        return combined
+          .split('\n')
+          .map(line => {
+            // Clean up markdown formatting
+            const cleaned = line
+              // Remove bold markdown (handles **text** and **scope:** patterns)
+              .replace(/\*\*(.*?)\*\*/g, '$1')
+              // Remove italic markdown (careful not to break list markers)
+              // Match *text* but not * at start of line (list marker)
+              .replace(/([^*])\*([^*\n]+?)\*([^*])/g, '$1$2$3')
+              // Remove GitHub commit links in format ([hash](url))
+              .replace(/\(\[[a-f0-9]{7,}\]\([^)]+\)\)/gi, '')
+              // Remove GitHub commit links in format ([hash])
+              .replace(/\(\[[a-f0-9]{7,}\]\)/gi, '')
+              // Remove GitHub URLs in markdown links [text](url)
+              .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
+              // Remove standalone GitHub URLs
+              .replace(/https?:\/\/github\.com\/[^\s)]+/gi, '')
+              // Remove commit hash references at end in format (hash)
+              .replace(/\s+\([a-f0-9]{7,}\)\s*$/, '')
+              // Clean up multiple spaces
+              .replace(/[ \t]{2,}/g, ' ')
+              // Clean up trailing whitespace
+              .trim();
+            
+            // Preserve section headers exactly as they are (### Section Name)
+            if (cleaned.match(/^###\s+/)) {
+              return cleaned;
+            }
+            
+            // For other lines, ensure they're trimmed
+            return cleaned;
+          })
+          .filter(line => line.length > 0)
+          .join('\n')
+          // Clean up multiple newlines (keep max 2)
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
   };
 
   const formattedNotes = formatReleaseNotes(updateInfo.releaseNotes);
+
+  // Parse formatted notes and render as JSX
+  const renderReleaseNotes = (notes: string) => {
+    if (!notes || notes === 'No release notes available.') {
+      return (
+        <p className="text-sm text-apex-white/60 italic">No release notes available.</p>
+      );
+    }
+
+    const lines = notes.split('\n');
+    const elements: ReactElement[] = [];
+    let currentListItems: string[] = [];
+    let listKey = 0;
+
+    const flushList = () => {
+      if (currentListItems.length > 0) {
+        elements.push(
+          <motion.ul
+            key={`list-${listKey++}`}
+            variants={fastItemVariants}
+            className="space-y-2 mb-4 last:mb-0"
+          >
+            {currentListItems.map((item, idx) => {
+              // Remove list marker (*, -, or +) and clean up the text
+              const cleanText = item.replace(/^[*\-+]\s+/, '').trim();
+              return (
+                <motion.li
+                  key={idx}
+                  variants={fastItemVariants}
+                  className="text-sm text-apex-white/80 leading-relaxed flex items-start gap-2"
+                >
+                  <span className="text-apex-green shrink-0 mt-1.5">•</span>
+                  <span className="flex-1 wrap-break-word">{cleanText}</span>
+                </motion.li>
+              );
+            })}
+          </motion.ul>
+        );
+        currentListItems = [];
+      }
+    };
+
+    lines.forEach((line, idx) => {
+      const trimmed = line.trim();
+      
+      // Section header (### Section Name) - must be exactly 3 hashes followed by space
+      if (trimmed.match(/^###\s+[^#]/)) {
+        flushList();
+        const sectionName = trimmed.replace(/^###\s+/, '').trim();
+        const isFirstSection = elements.length === 0;
+        elements.push(
+          <motion.h5
+            key={`section-${idx}`}
+            variants={fastItemVariants}
+            className={`text-base font-semibold text-apex-white mb-3 ${isFirstSection ? 'mt-0' : 'mt-5'}`}
+          >
+            {sectionName}
+          </motion.h5>
+        );
+      }
+      // List item (* or - or +) - must start with marker followed by space
+      else if (trimmed.match(/^[*\-+]\s+/)) {
+        currentListItems.push(trimmed);
+      }
+      // Empty line - flush list if we have items
+      else if (!trimmed) {
+        flushList();
+      }
+      // Regular text (shouldn't happen with current formatting, but handle it gracefully)
+      else if (trimmed) {
+        flushList();
+        elements.push(
+          <motion.p
+            key={`text-${idx}`}
+            variants={fastItemVariants}
+            className="text-sm text-apex-white/80 mb-2 wrap-break-word"
+          >
+            {trimmed}
+          </motion.p>
+        );
+      }
+    });
+
+    flushList(); // Flush any remaining list items
+
+    return (
+      <motion.div
+        variants={listContainerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-1"
+      >
+        {elements.length > 0 ? elements : (
+          <p className="text-sm text-apex-white/60 italic">No release notes available.</p>
+        )}
+      </motion.div>
+    );
+  };
 
   return (
     <AnimatePresence>
@@ -202,7 +307,7 @@ export default function UpdateModal({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-[100]"
+            className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-100"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -211,7 +316,7 @@ export default function UpdateModal({
 
           {/* Modal */}
           <div 
-            className="fixed inset-0 z-[100] flex items-center justify-center"
+            className="fixed inset-0 z-100 flex items-center justify-center"
             style={{
               padding: '1rem',
               paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
@@ -221,7 +326,7 @@ export default function UpdateModal({
             }}
           >
             <motion.div
-              className="bg-apex-black border border-apex-green/40 rounded-lg p-6 w-full max-w-lg relative z-[100] max-h-[85vh] flex flex-col"
+              className="bg-apex-black border border-apex-green/40 rounded-lg p-6 w-full max-w-lg relative z-100 max-h-[85vh] flex flex-col"
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -257,13 +362,11 @@ export default function UpdateModal({
 
               {/* Release Notes */}
               <div className="flex-1 overflow-y-auto mb-6 min-h-0">
-                <div className="bg-apex-white/5 rounded-lg p-4 border border-apex-white/10">
-                  <h4 className="text-sm font-semibold text-apex-white mb-3 uppercase tracking-wide">
+                <div className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-4 border border-apex-white/10">
+                  <h4 className="text-sm font-semibold text-apex-white mb-4 uppercase tracking-wide">
                     What's New
                   </h4>
-                  <div className="text-sm text-apex-white/80 whitespace-pre-wrap leading-relaxed break-words overflow-wrap-anywhere">
-                    {formattedNotes || 'No release notes available.'}
-                  </div>
+                  {renderReleaseNotes(formattedNotes)}
                 </div>
               </div>
 

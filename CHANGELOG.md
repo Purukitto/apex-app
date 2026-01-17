@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.15.2](https://github.com/Purukitto/apex-app/compare/v0.15.1...v0.15.2) (2026-01-17)
+
+
+### Features
+
+* **Garage:** add BikeImage component for improved bike image handling ([1ca0889](https://github.com/Purukitto/apex-app/commit/1ca088989e6704e8d1c6346962905980bb1ad19c))
+
+
+### Bug Fixes
+
+* add keyboard-safe scroll handling to data entry modals ([b7b4f3e](https://github.com/Purukitto/apex-app/commit/b7b4f3ea9daae504df29953042180c5c96e44c95))
+
+
+### Documentation
+
+* add keyboard-safe modal handling standards to UX rules ([2b50a63](https://github.com/Purukitto/apex-app/commit/2b50a6309cbff5694c604d81450dd93f68b6c303))
+
+### [0.15.1](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.15.1) (2026-01-17)
+
+
+### Features
+
+* **AddRefuelModal:** enhance fuel log entry with improved validation and auto-calculation ([2f5ed1f](https://github.com/Purukitto/apex-app/commit/2f5ed1faf0da2990b845225c1e1bb25304eb73af))
+* **Dashboard:** enhance pull-to-refresh functionality with document scroll tracking ([075b13b](https://github.com/Purukitto/apex-app/commit/075b13b60dbb92071dbfe719fe69b89fd40d8796))
+* **UpdateModal:** enhance UpdateModal functionality and formatting ([19ebca4](https://github.com/Purukitto/apex-app/commit/19ebca459820f974719eec420cceb1c7f9daa045))
+
+
+### Miscellaneous Chores
+
+* changelog ([3ddecd5](https://github.com/Purukitto/apex-app/commit/3ddecd5e4c4be9db35f2160e10a2e2ae8e77206f))
+* **deps-dev:** bump the development-dependencies group with 3 updates ([#44](https://github.com/Purukitto/apex-app/issues/44)) ([75640f6](https://github.com/Purukitto/apex-app/commit/75640f6bb151a7d0522fcd8e1afa37cc9e474ce5))
+* **deps:** bump the production-dependencies group with 2 updates ([#43](https://github.com/Purukitto/apex-app/issues/43)) ([9f4ee8d](https://github.com/Purukitto/apex-app/commit/9f4ee8dc9773a144873681c5ffee24d4f9e9ce58))
+
 ## [0.15.0](https://github.com/Purukitto/apex-app/compare/v0.6.0...v0.15.0) (2026-01-16)
 
 

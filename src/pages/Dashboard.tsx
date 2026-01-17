@@ -28,6 +28,7 @@ export default function Dashboard() {
   const isPullingRef = useRef(false);
   const currentPullDistanceRef = useRef(0);
   const scrollTopAtStartRef = useRef(0);
+  const documentScrollTopAtStartRef = useRef(0);
 
   // Pull-to-refresh handler - refreshes all data
   const handleRefresh = useCallback(async () => {
@@ -65,13 +66,25 @@ export default function Dashboard() {
     const mainContainer = document.querySelector('main');
     if (!mainContainer) return;
 
+    const getDocumentScrollTop = () =>
+      document.scrollingElement?.scrollTop ?? document.documentElement.scrollTop ?? 0;
+
+    const isAtTop = () => {
+      const scrollTop = mainContainer.scrollTop;
+      const documentScrollTop = getDocumentScrollTop();
+      // Ensure both the main container and document are at top
+      return scrollTop <= 2 && documentScrollTop <= 2;
+    };
+
     const handleTouchStart = (e: TouchEvent) => {
       const scrollTop = mainContainer.scrollTop;
+      const documentScrollTop = getDocumentScrollTop();
       // Only allow pull-to-refresh when exactly at the top (with small tolerance for sub-pixel)
       // Use <= 2 to account for sub-pixel scrolling and rounding
-      if (scrollTop <= 2 && !isRefreshing) {
+      if (isAtTop() && !isRefreshing) {
         touchStartY.current = e.touches[0].clientY;
         scrollTopAtStartRef.current = scrollTop;
+        documentScrollTopAtStartRef.current = documentScrollTop;
         isPullingRef.current = true;
         currentPullDistanceRef.current = 0;
       } else {
@@ -84,12 +97,18 @@ export default function Dashboard() {
       if (!isPullingRef.current || isRefreshing) return;
       
       const scrollTop = mainContainer.scrollTop;
+      const documentScrollTop = getDocumentScrollTop();
       const currentY = e.touches[0].clientY;
       const deltaY = currentY - touchStartY.current;
       
       // Strict check: must still be at top AND pulling down (positive deltaY)
       // If scrollTop increased, user is scrolling down - cancel immediately
-      if (scrollTop > scrollTopAtStartRef.current || scrollTop > 2) {
+      if (
+        scrollTop > scrollTopAtStartRef.current ||
+        scrollTop > 2 ||
+        documentScrollTop > documentScrollTopAtStartRef.current ||
+        documentScrollTop > 2
+      ) {
         // User scrolled down, cancel pull-to-refresh
         isPullingRef.current = false;
         setPullDistance(0);
@@ -98,7 +117,7 @@ export default function Dashboard() {
       }
       
       // Only allow pull if we're still at the top AND pulling down
-      if (scrollTop <= 2 && deltaY > 0) {
+      if (isAtTop() && deltaY > 0) {
         const distance = deltaY;
         currentPullDistanceRef.current = distance;
         
@@ -124,9 +143,16 @@ export default function Dashboard() {
     const handleTouchEnd = () => {
       const finalDistance = currentPullDistanceRef.current;
       const scrollTop = mainContainer.scrollTop;
+      const documentScrollTop = getDocumentScrollTop();
       
       // Only trigger refresh if still at top and pulled enough
-      if (isPullingRef.current && scrollTop <= 2 && finalDistance >= 80 && !isRefreshing) {
+      if (
+        isPullingRef.current &&
+        scrollTop <= 2 &&
+        documentScrollTop <= 2 &&
+        finalDistance >= 80 &&
+        !isRefreshing
+      ) {
         handleRefresh();
       }
       
@@ -134,16 +160,19 @@ export default function Dashboard() {
       setPullDistance(0);
       currentPullDistanceRef.current = 0;
       scrollTopAtStartRef.current = 0;
+      documentScrollTopAtStartRef.current = 0;
     };
 
-    mainContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+    mainContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
     mainContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
     mainContainer.addEventListener('touchend', handleTouchEnd);
+    mainContainer.addEventListener('touchcancel', handleTouchEnd);
 
     return () => {
       mainContainer.removeEventListener('touchstart', handleTouchStart);
       mainContainer.removeEventListener('touchmove', handleTouchMove);
       mainContainer.removeEventListener('touchend', handleTouchEnd);
+      mainContainer.removeEventListener('touchcancel', handleTouchEnd);
     };
   }, [isRefreshing, handleRefresh]);
 
@@ -169,7 +198,7 @@ export default function Dashboard() {
       {/* Pull-to-refresh indicator */}
       {(pullDistance > 0 || isRefreshing) && (
         <motion.div
-          className="fixed top-0 left-0 right-0 z-50 bg-apex-black flex items-center justify-center pb-2"
+          className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center pb-2 pointer-events-none"
           style={{
             paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
           }}

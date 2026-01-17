@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import type { FuelLog, Bike } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
 import { buttonHoverProps } from '../lib/animations';
+import { useKeyboard } from '../hooks/useKeyboard';
 
 interface AddRefuelModalProps {
   isOpen: boolean;
@@ -36,8 +37,11 @@ export default function AddRefuelModal({
     total_cost?: string;
     price_per_litre?: string;
     date?: string;
+    fuel?: string;
   }>({});
-  const [isPricePerLitreManual, setIsPricePerLitreManual] = useState(false);
+  const { isKeyboardVisible, keyboardHeight } = useKeyboard();
+  const formRef = useRef<HTMLFormElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (editingLog) {
@@ -49,7 +53,6 @@ export default function AddRefuelModal({
         is_full_tank: editingLog.is_full_tank,
         date: editingLog.date,
       });
-      setIsPricePerLitreManual(true); // When editing, assume manual entry
     } else {
       // Pre-fill with current odometer and last fuel price for new logs
       setFormData({
@@ -60,23 +63,89 @@ export default function AddRefuelModal({
         is_full_tank: false,
         date: new Date().toISOString().split('T')[0],
       });
-      setIsPricePerLitreManual(false); // Start with auto-calculated
     }
     setError(null);
     setFieldErrors({});
   }, [editingLog, isOpen, bike.current_odo, bike.last_fuel_price]);
 
-  // Auto-calculate price_per_litre from total_cost/litres when not manually edited
-  // Or calculate total_cost from price_per_litre * litres when price is manually entered
-  const calculatedPricePerLitre =
-    formData.litres && formData.total_cost && !isPricePerLitreManual
-      ? parseFloat(formData.total_cost) / parseFloat(formData.litres)
-      : 0;
+  useEffect(() => {
+    const handleInputFocus = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        setTimeout(() => {
+          const scrollContainer = scrollContainerRef.current;
+          if (!scrollContainer) return;
 
-  const calculatedTotalCost =
-    formData.litres && formData.price_per_litre && isPricePerLitreManual
-      ? parseFloat(formData.litres) * parseFloat(formData.price_per_litre)
-      : 0;
+          const inputRect = target.getBoundingClientRect();
+          const viewportHeight = window.visualViewport?.height || window.innerHeight;
+          const safeAreaTop = parseInt(
+            getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)') || '0',
+            10
+          ) || 0;
+
+          const topPadding = safeAreaTop + 100;
+          const bottomPadding = 20;
+          const availableHeight = isKeyboardVisible
+            ? (window.visualViewport?.height || viewportHeight) - keyboardHeight
+            : viewportHeight;
+
+          const visibleTop = topPadding;
+          const visibleBottom = availableHeight - bottomPadding;
+
+          const inputTop = inputRect.top;
+          const inputBottom = inputRect.bottom;
+
+          if (inputBottom > visibleBottom) {
+            const scrollNeeded = inputBottom - visibleBottom + 30;
+            scrollContainer.scrollTop += scrollNeeded;
+          } else if (inputTop < visibleTop) {
+            const scrollNeeded = visibleTop - inputTop + 30;
+            scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop - scrollNeeded);
+          }
+        }, isKeyboardVisible ? 500 : 100);
+      }
+    };
+
+    const form = formRef.current;
+    if (form) {
+      form.addEventListener('focusin', handleInputFocus);
+      return () => {
+        form.removeEventListener('focusin', handleInputFocus);
+      };
+    }
+  }, [isKeyboardVisible, keyboardHeight]);
+
+  const parsePositiveNumber = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = parseFloat(trimmed);
+    return Number.isNaN(parsed) || parsed <= 0 ? null : parsed;
+  };
+
+  const litresValue = parsePositiveNumber(formData.litres);
+  const totalCostValue = parsePositiveNumber(formData.total_cost);
+  const pricePerLitreValue = parsePositiveNumber(formData.price_per_litre);
+
+  const providedFuelFields = [
+    litresValue,
+    totalCostValue,
+    pricePerLitreValue,
+  ].filter((value) => value !== null).length;
+
+  const calculatedFuelValues = {
+    litres:
+      !litresValue && totalCostValue && pricePerLitreValue
+        ? totalCostValue / pricePerLitreValue
+        : null,
+    totalCost:
+      !totalCostValue && litresValue && pricePerLitreValue
+        ? litresValue * pricePerLitreValue
+        : null,
+    pricePerLitre:
+      !pricePerLitreValue && litresValue && totalCostValue
+        ? totalCostValue / litresValue
+        : null,
+  };
 
   // Validation function
   const validateForm = (): boolean => {
@@ -95,34 +164,27 @@ export default function AddRefuelModal({
       }
     }
 
-    // Validate litres (required, must be > 0)
-    const litresValue = formData.litres.trim();
-    if (!litresValue) {
-      errors.litres = 'Litres is required';
-    } else {
-      const litresNum = parseFloat(litresValue);
-      if (isNaN(litresNum) || litresNum <= 0) {
-        errors.litres = 'Litres must be a valid number greater than 0';
-      }
+    if (formData.litres.trim() && !litresValue) {
+      errors.litres = 'Litres must be a valid number greater than 0';
     }
 
-    // Validate total_cost (required, must be >= 0)
-    const costValue = formData.total_cost.trim();
-    if (!costValue) {
-      errors.total_cost = 'Total cost is required';
-    } else {
-      const costNum = parseFloat(costValue);
-      if (isNaN(costNum) || costNum < 0) {
-        errors.total_cost = 'Total cost must be a valid number >= 0';
-      }
+    if (formData.total_cost.trim() && !totalCostValue) {
+      errors.total_cost = 'Total cost must be a valid number greater than 0';
     }
 
-    // Validate price_per_litre if manually entered (must be >= 0)
-    if (isPricePerLitreManual && formData.price_per_litre.trim()) {
-      const priceValue = formData.price_per_litre.trim();
-      const priceNum = parseFloat(priceValue);
-      if (isNaN(priceNum) || priceNum < 0) {
-        errors.price_per_litre = 'Price per litre must be a valid number >= 0';
+    if (formData.price_per_litre.trim() && !pricePerLitreValue) {
+      errors.price_per_litre = 'Price per litre must be a valid number greater than 0';
+    }
+
+    if (providedFuelFields < 2) {
+      errors.fuel = 'Enter any two: litres, price per litre, or total cost.';
+    }
+
+    if (providedFuelFields === 3 && litresValue && pricePerLitreValue && totalCostValue) {
+      const expectedTotal = litresValue * pricePerLitreValue;
+      const diff = Math.abs(totalCostValue - expectedTotal);
+      if (diff > 0.05) {
+        errors.fuel = 'Values do not match. Clear one field to auto-calculate.';
       }
     }
 
@@ -142,23 +204,11 @@ export default function AddRefuelModal({
     const odoNum = parseInt(odoValue, 10);
     if (isNaN(odoNum) || odoNum < 0) return false;
 
-    const litresValue = formData.litres.trim();
-    if (!litresValue) return false;
-    const litresNum = parseFloat(litresValue);
-    if (isNaN(litresNum) || litresNum <= 0) return false;
-
-    // If price_per_litre is manual, we need both price and it should be valid
-    if (isPricePerLitreManual) {
-      const priceValue = formData.price_per_litre.trim();
-      if (!priceValue) return false;
-      const priceNum = parseFloat(priceValue);
-      if (isNaN(priceNum) || priceNum < 0) return false;
-    } else {
-      // If auto-calculating, we need total_cost
-      const costValue = formData.total_cost.trim();
-      if (!costValue) return false;
-      const costNum = parseFloat(costValue);
-      if (isNaN(costNum) || costNum < 0) return false;
+    if (providedFuelFields < 2) return false;
+    if (providedFuelFields === 3 && litresValue && pricePerLitreValue && totalCostValue) {
+      const expectedTotal = litresValue * pricePerLitreValue;
+      const diff = Math.abs(totalCostValue - expectedTotal);
+      if (diff > 0.05) return false;
     }
 
     if (!formData.date.trim()) return false;
@@ -179,19 +229,19 @@ export default function AddRefuelModal({
     setIsSubmitting(true);
 
     try {
-      const litresNum = parseFloat(formData.litres);
-      let totalCostNum: number;
-      let pricePerLitreCalc: number;
-
-      if (isPricePerLitreManual && formData.price_per_litre.trim()) {
-        // User entered price_per_litre manually, calculate total_cost
-        pricePerLitreCalc = parseFloat(formData.price_per_litre);
-        totalCostNum = litresNum * pricePerLitreCalc;
-      } else {
-        // User entered total_cost, calculate price_per_litre
-        totalCostNum = parseFloat(formData.total_cost);
-        pricePerLitreCalc = totalCostNum / litresNum;
-      }
+      const litresNum =
+        litresValue ??
+        (totalCostValue && pricePerLitreValue
+          ? totalCostValue / pricePerLitreValue
+          : 0);
+      const totalCostNum =
+        totalCostValue ??
+        (litresValue && pricePerLitreValue
+          ? litresValue * pricePerLitreValue
+          : 0);
+      const pricePerLitreCalc =
+        pricePerLitreValue ??
+        (litresValue && totalCostValue ? totalCostValue / litresValue : 0);
 
       const logData: Omit<FuelLog, 'id' | 'created_at'> = {
         bike_id: bike.id,
@@ -241,20 +291,25 @@ export default function AddRefuelModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      ref={scrollContainerRef}
+      className="fixed inset-0 z-50 overflow-y-auto"
       style={{
-        padding: '1rem',
-        paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
-        paddingBottom: `calc(1rem + env(safe-area-inset-bottom, 0px))`,
-        paddingLeft: `calc(1rem + env(safe-area-inset-left, 0px))`,
-        paddingRight: `calc(1rem + env(safe-area-inset-right, 0px))`,
+        paddingTop: `calc(env(safe-area-inset-top, 0px) + 1rem)`,
+        paddingBottom: isKeyboardVisible
+          ? `calc(env(safe-area-inset-bottom, 0px) + ${keyboardHeight}px + 1rem)`
+          : `calc(env(safe-area-inset-bottom, 0px) + 6rem)`,
+        paddingLeft: `calc(env(safe-area-inset-left, 0px) + 1rem)`,
+        paddingRight: `calc(env(safe-area-inset-right, 0px) + 1rem)`,
       }}
     >
       <div
         className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10">
+      <div
+        className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10 flex flex-col mx-auto my-8"
+        style={{ minHeight: isKeyboardVisible ? 'auto' : 'min-content' }}
+      >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-apex-white">
             {editingLog ? 'Edit Fuel Log' : 'Add Refuel'}
@@ -276,7 +331,7 @@ export default function AddRefuelModal({
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm text-apex-white/60 mb-2">
               Current Odometer (km) *
@@ -307,10 +362,19 @@ export default function AddRefuelModal({
             )}
           </div>
 
+          <div className="space-y-2">
+            <p className="text-xs text-apex-white/60">
+              Enter any two fields below. The third value is auto-calculated.
+            </p>
+            {fieldErrors.fuel && (
+              <p className="text-xs text-apex-red">{fieldErrors.fuel}</p>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-apex-white/60 mb-2">
-                Litres *
+                Litres
               </label>
               <input
                 type="number"
@@ -318,19 +382,16 @@ export default function AddRefuelModal({
                 min="0.01"
                 value={formData.litres}
                 onChange={(e) => {
-                  const newLitres = e.target.value;
-                  setFormData({ ...formData, litres: newLitres });
-                  // If price_per_litre is manual, recalculate total_cost
-                  if (isPricePerLitreManual && formData.price_per_litre && newLitres) {
-                    const newTotal = parseFloat(newLitres) * parseFloat(formData.price_per_litre);
-                    setFormData(prev => ({ ...prev, litres: newLitres, total_cost: isNaN(newTotal) ? '' : newTotal.toFixed(2) }));
-                  }
-                  if (fieldErrors.litres) {
-                    setFieldErrors({ ...fieldErrors, litres: undefined });
+                  setFormData({ ...formData, litres: e.target.value });
+                  if (fieldErrors.litres || fieldErrors.fuel) {
+                    setFieldErrors({
+                      ...fieldErrors,
+                      litres: undefined,
+                      fuel: undefined,
+                    });
                   }
                 }}
                 onBlur={validateForm}
-                required
                 className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors font-mono ${
                   fieldErrors.litres
                     ? 'border-apex-red focus:border-apex-red'
@@ -345,118 +406,101 @@ export default function AddRefuelModal({
               )}
             </div>
 
-            {!isPricePerLitreManual ? (
-              <div>
-                <label className="block text-sm text-apex-white/60 mb-2">
-                  Total Cost *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.total_cost}
-                  onChange={(e) => {
-                    setFormData({ ...formData, total_cost: e.target.value });
-                    if (fieldErrors.total_cost) {
-                      setFieldErrors({ ...fieldErrors, total_cost: undefined });
-                    }
-                  }}
-                  onBlur={validateForm}
-                  required
-                  className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors font-mono ${
-                    fieldErrors.total_cost
-                      ? 'border-apex-red focus:border-apex-red'
-                      : 'border-apex-white/20 focus:border-apex-green'
-                  }`}
-                  placeholder="0.00"
-                />
-                {fieldErrors.total_cost && (
-                  <p className="text-xs text-apex-red mt-1">
-                    {fieldErrors.total_cost}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div>
-                <label className="block text-sm text-apex-white/60 mb-2">
-                  Price per Litre *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.price_per_litre}
-                  onChange={(e) => {
-                    const newPrice = e.target.value;
-                    setFormData({ ...formData, price_per_litre: newPrice });
-                    // Recalculate total_cost when price changes
-                    if (formData.litres && newPrice) {
-                      const newTotal = parseFloat(formData.litres) * parseFloat(newPrice);
-                      setFormData(prev => ({ ...prev, price_per_litre: newPrice, total_cost: isNaN(newTotal) ? '' : newTotal.toFixed(2) }));
-                    }
-                    if (fieldErrors.price_per_litre) {
-                      setFieldErrors({ ...fieldErrors, price_per_litre: undefined });
-                    }
-                  }}
-                  onBlur={validateForm}
-                  required
-                  className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors font-mono ${
-                    fieldErrors.price_per_litre
-                      ? 'border-apex-red focus:border-apex-red'
-                      : 'border-apex-white/20 focus:border-apex-green'
-                  }`}
-                  placeholder="0.00"
-                />
-                {fieldErrors.price_per_litre && (
-                  <p className="text-xs text-apex-red mt-1">
-                    {fieldErrors.price_per_litre}
-                  </p>
-                )}
-              </div>
-            )}
+            <div>
+              <label className="block text-sm text-apex-white/60 mb-2">
+                Price per Litre
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.price_per_litre}
+                onChange={(e) => {
+                  setFormData({ ...formData, price_per_litre: e.target.value });
+                  if (fieldErrors.price_per_litre || fieldErrors.fuel) {
+                    setFieldErrors({
+                      ...fieldErrors,
+                      price_per_litre: undefined,
+                      fuel: undefined,
+                    });
+                  }
+                }}
+                onBlur={validateForm}
+                className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors font-mono ${
+                  fieldErrors.price_per_litre
+                    ? 'border-apex-red focus:border-apex-red'
+                    : 'border-apex-white/20 focus:border-apex-green'
+                }`}
+                placeholder="0.00"
+              />
+              {fieldErrors.price_per_litre && (
+                <p className="text-xs text-apex-red mt-1">
+                  {fieldErrors.price_per_litre}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm text-apex-white/60 mb-2">
+                Total Cost
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.total_cost}
+                onChange={(e) => {
+                  setFormData({ ...formData, total_cost: e.target.value });
+                  if (fieldErrors.total_cost || fieldErrors.fuel) {
+                    setFieldErrors({
+                      ...fieldErrors,
+                      total_cost: undefined,
+                      fuel: undefined,
+                    });
+                  }
+                }}
+                onBlur={validateForm}
+                className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors font-mono ${
+                  fieldErrors.total_cost
+                    ? 'border-apex-red focus:border-apex-red'
+                    : 'border-apex-white/20 focus:border-apex-green'
+                }`}
+                placeholder="0.00"
+              />
+              {fieldErrors.total_cost && (
+                <p className="text-xs text-apex-red mt-1">
+                  {fieldErrors.total_cost}
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* Show calculated value and toggle */}
-          <div className="space-y-2">
-            {!isPricePerLitreManual && calculatedPricePerLitre > 0 && (
-              <div className="p-3 bg-apex-green/10 border border-apex-green/20 rounded-lg">
-                <p className="text-xs text-apex-white/60 mb-1">Calculated Price per Litre</p>
-                <p className="text-sm font-mono text-apex-green">
-                  ₹{calculatedPricePerLitre.toFixed(2)}/L
-                </p>
-              </div>
-            )}
-            
-            {isPricePerLitreManual && calculatedTotalCost > 0 && (
-              <div className="p-3 bg-apex-green/10 border border-apex-green/20 rounded-lg">
-                <p className="text-xs text-apex-white/60 mb-1">Calculated Total Cost</p>
-                <p className="text-sm font-mono text-apex-green">
-                  ₹{calculatedTotalCost.toFixed(2)}
-                </p>
-              </div>
-            )}
+          {calculatedFuelValues.litres !== null && (
+            <div className="p-3 bg-apex-green/10 border border-apex-green/20 rounded-lg">
+              <p className="text-xs text-apex-white/60 mb-1">Calculated Litres</p>
+              <p className="text-sm font-mono text-apex-green">
+                {calculatedFuelValues.litres.toFixed(2)} L
+              </p>
+            </div>
+          )}
 
-            <motion.button
-              type="button"
-              onClick={() => {
-                setIsPricePerLitreManual(!isPricePerLitreManual);
-                // Clear the field that's not being used
-                if (!isPricePerLitreManual) {
-                  // Switching to manual price entry
-                  setFormData(prev => ({ ...prev, total_cost: '' }));
-                } else {
-                  // Switching to auto-calculate from total cost
-                  setFormData(prev => ({ ...prev, price_per_litre: bike.last_fuel_price?.toString() || '' }));
-                }
-              }}
-              className="w-full text-xs text-apex-green hover:text-apex-green/80 transition-colors text-left"
-              {...buttonHoverProps}
-            >
-              {isPricePerLitreManual 
-                ? 'Switch to: Enter Total Cost (auto-calculate price/L)'
-                : 'Switch to: Enter Price per Litre (auto-calculate total)'}
-            </motion.button>
-          </div>
+          {calculatedFuelValues.pricePerLitre !== null && (
+            <div className="p-3 bg-apex-green/10 border border-apex-green/20 rounded-lg">
+              <p className="text-xs text-apex-white/60 mb-1">Calculated Price per Litre</p>
+              <p className="text-sm font-mono text-apex-green">
+                ₹{calculatedFuelValues.pricePerLitre.toFixed(2)}/L
+              </p>
+            </div>
+          )}
+
+          {calculatedFuelValues.totalCost !== null && (
+            <div className="p-3 bg-apex-green/10 border border-apex-green/20 rounded-lg">
+              <p className="text-xs text-apex-white/60 mb-1">Calculated Total Cost</p>
+              <p className="text-sm font-mono text-apex-green">
+                ₹{calculatedFuelValues.totalCost.toFixed(2)}
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm text-apex-white/60 mb-2">

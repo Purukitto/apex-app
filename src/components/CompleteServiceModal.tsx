@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Wrench } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { MaintenanceSchedule, Bike } from '../types/database';
 import { buttonHoverProps, itemVariants } from '../lib/animations';
 import { logger } from '../lib/logger';
+import { useKeyboard } from '../hooks/useKeyboard';
 
 interface CompleteServiceModalProps {
   isOpen: boolean;
@@ -33,6 +34,56 @@ export default function CompleteServiceModal({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { isKeyboardVisible, keyboardHeight } = useKeyboard();
+  const formRef = useRef<HTMLFormElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleInputFocus = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        setTimeout(() => {
+          const scrollContainer = scrollContainerRef.current;
+          if (!scrollContainer) return;
+
+          const inputRect = target.getBoundingClientRect();
+          const viewportHeight = window.visualViewport?.height || window.innerHeight;
+          const safeAreaTop = parseInt(
+            getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)') || '0',
+            10
+          ) || 0;
+
+          const topPadding = safeAreaTop + 100;
+          const bottomPadding = 20;
+          const availableHeight = isKeyboardVisible
+            ? (window.visualViewport?.height || viewportHeight) - keyboardHeight
+            : viewportHeight;
+
+          const visibleTop = topPadding;
+          const visibleBottom = availableHeight - bottomPadding;
+
+          const inputTop = inputRect.top;
+          const inputBottom = inputRect.bottom;
+
+          if (inputBottom > visibleBottom) {
+            const scrollNeeded = inputBottom - visibleBottom + 30;
+            scrollContainer.scrollTop += scrollNeeded;
+          } else if (inputTop < visibleTop) {
+            const scrollNeeded = visibleTop - inputTop + 30;
+            scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop - scrollNeeded);
+          }
+        }, isKeyboardVisible ? 500 : 100);
+      }
+    };
+
+    const form = formRef.current;
+    if (form) {
+      form.addEventListener('focusin', handleInputFocus);
+      return () => {
+        form.removeEventListener('focusin', handleInputFocus);
+      };
+    }
+  }, [isKeyboardVisible, keyboardHeight]);
 
   if (!isOpen) return null;
 
@@ -81,13 +132,25 @@ export default function CompleteServiceModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div
+      ref={scrollContainerRef}
+      className="fixed inset-0 z-50 overflow-y-auto"
+      style={{
+        paddingTop: `calc(env(safe-area-inset-top, 0px) + 1rem)`,
+        paddingBottom: isKeyboardVisible
+          ? `calc(env(safe-area-inset-bottom, 0px) + ${keyboardHeight}px + 1rem)`
+          : `calc(env(safe-area-inset-bottom, 0px) + 6rem)`,
+        paddingLeft: `calc(env(safe-area-inset-left, 0px) + 1rem)`,
+        paddingRight: `calc(env(safe-area-inset-right, 0px) + 1rem)`,
+      }}
+    >
       <div
         className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
       <motion.div
-        className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10"
+        className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10 flex flex-col mx-auto my-8"
+        style={{ minHeight: isKeyboardVisible ? 'auto' : 'min-content' }}
         variants={itemVariants}
         initial="hidden"
         animate="visible"
@@ -116,7 +179,7 @@ export default function CompleteServiceModal({
           </motion.button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
               htmlFor="serviceOdo"

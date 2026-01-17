@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import type { MaintenanceLog, Bike } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
 import { buttonHoverProps } from '../lib/animations';
+import { useKeyboard } from '../hooks/useKeyboard';
 
 interface MaintenanceLogModalProps {
   isOpen: boolean;
@@ -37,6 +38,9 @@ export default function MaintenanceLogModal({
     date_performed?: string;
     receipt_url?: string;
   }>({});
+  const { isKeyboardVisible, keyboardHeight } = useKeyboard();
+  const formRef = useRef<HTMLFormElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (editingLog) {
@@ -60,6 +64,53 @@ export default function MaintenanceLogModal({
     setError(null);
     setFieldErrors({});
   }, [editingLog, isOpen, bike.current_odo]);
+
+  useEffect(() => {
+    const handleInputFocus = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        setTimeout(() => {
+          const scrollContainer = scrollContainerRef.current;
+          if (!scrollContainer) return;
+
+          const inputRect = target.getBoundingClientRect();
+          const viewportHeight = window.visualViewport?.height || window.innerHeight;
+          const safeAreaTop = parseInt(
+            getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)') || '0',
+            10
+          ) || 0;
+
+          const topPadding = safeAreaTop + 100;
+          const bottomPadding = 20;
+          const availableHeight = isKeyboardVisible
+            ? (window.visualViewport?.height || viewportHeight) - keyboardHeight
+            : viewportHeight;
+
+          const visibleTop = topPadding;
+          const visibleBottom = availableHeight - bottomPadding;
+
+          const inputTop = inputRect.top;
+          const inputBottom = inputRect.bottom;
+
+          if (inputBottom > visibleBottom) {
+            const scrollNeeded = inputBottom - visibleBottom + 30;
+            scrollContainer.scrollTop += scrollNeeded;
+          } else if (inputTop < visibleTop) {
+            const scrollNeeded = visibleTop - inputTop + 30;
+            scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop - scrollNeeded);
+          }
+        }, isKeyboardVisible ? 500 : 100);
+      }
+    };
+
+    const form = formRef.current;
+    if (form) {
+      form.addEventListener('focusin', handleInputFocus);
+      return () => {
+        form.removeEventListener('focusin', handleInputFocus);
+      };
+    }
+  }, [isKeyboardVisible, keyboardHeight]);
 
   // Validation function
   const validateForm = (): boolean => {
@@ -180,21 +231,26 @@ export default function MaintenanceLogModal({
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center"
+    <div
+      ref={scrollContainerRef}
+      className="fixed inset-0 z-50 overflow-y-auto"
       style={{
-        padding: '1rem',
-        paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
-        paddingBottom: `calc(1rem + env(safe-area-inset-bottom, 0px))`,
-        paddingLeft: `calc(1rem + env(safe-area-inset-left, 0px))`,
-        paddingRight: `calc(1rem + env(safe-area-inset-right, 0px))`,
+        paddingTop: `calc(env(safe-area-inset-top, 0px) + 1rem)`,
+        paddingBottom: isKeyboardVisible
+          ? `calc(env(safe-area-inset-bottom, 0px) + ${keyboardHeight}px + 1rem)`
+          : `calc(env(safe-area-inset-bottom, 0px) + 6rem)`,
+        paddingLeft: `calc(env(safe-area-inset-left, 0px) + 1rem)`,
+        paddingRight: `calc(env(safe-area-inset-right, 0px) + 1rem)`,
       }}
     >
       <div
         className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10">
+      <div
+        className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10 flex flex-col mx-auto my-8"
+        style={{ minHeight: isKeyboardVisible ? 'auto' : 'min-content' }}
+      >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-apex-white">
             {editingLog ? 'Edit Maintenance Log' : 'Add Maintenance Log'}
@@ -216,7 +272,7 @@ export default function MaintenanceLogModal({
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm text-apex-white/60 mb-2">
               Service Type *

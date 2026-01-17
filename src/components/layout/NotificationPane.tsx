@@ -1,6 +1,6 @@
 import { X, Bell, Check } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
-import { useNotificationStore } from '../../stores/useNotificationStore';
+import { useNotifications } from '../../hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
 import { containerVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../../lib/animations';
 import { useState, useRef, useEffect } from 'react';
@@ -21,12 +21,10 @@ export default function NotificationPane({
     notifications,
     markAsRead,
     markAllAsRead,
-    removeNotification,
-    clearAll,
-    getUnreadCount,
-  } = useNotificationStore();
-
-  const unreadCount = getUnreadCount();
+    dismissNotification,
+    dismissAll,
+    unreadCount,
+  } = useNotifications();
   const y = useMotionValue(0);
   const opacity = useTransform(y, [0, 200], [1, 0.3]);
   const [isDragging, setIsDragging] = useState(false);
@@ -177,7 +175,7 @@ export default function NotificationPane({
                 <motion.button
                   onClick={(e) => {
                     e.stopPropagation();
-                    clearAll();
+                      dismissAll();
                   }}
                   className="p-2 rounded-lg text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5 transition-colors"
                   aria-label="Dismiss all notifications"
@@ -207,8 +205,8 @@ export default function NotificationPane({
                   {notifications.map((notification) => (
                     <motion.div
                       key={notification.id}
-                      className={`bg-gradient-to-br from-apex-white/5 to-transparent border rounded-lg p-4 ${
-                        !notification.read_status
+                      className={`bg-linear-to-br from-apex-white/5 to-transparent border rounded-lg p-4 ${
+                        !notification.read_at
                           ? 'border-apex-white/20'
                           : 'border-apex-white/10'
                       }`}
@@ -229,7 +227,7 @@ export default function NotificationPane({
                             >
                               {notification.type}
                             </span>
-                            {!notification.read_status && (
+                            {!notification.read_at && (
                               <span className="w-2 h-2 rounded-full bg-apex-green" />
                             )}
                           </div>
@@ -241,7 +239,7 @@ export default function NotificationPane({
                           </p>
                         </div>
                         <div className="flex items-center gap-1">
-                          {!notification.read_status && (
+                          {!notification.read_at && (
                             <motion.button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -259,7 +257,7 @@ export default function NotificationPane({
                           <motion.button
                             onClick={(e) => {
                               e.stopPropagation();
-                              removeNotification(notification.id);
+                              dismissNotification(notification.id);
                             }}
                             className="p-1.5 rounded-lg text-apex-white/40 hover:text-apex-red hover:bg-apex-white/5 transition-colors"
                             aria-label="Remove notification"

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { useNotificationStore } from '../../stores/useNotificationStore';
+import { useNotifications } from '../../hooks/useNotifications';
 import { useAppUpdateStore } from '../../stores/useAppUpdateStore';
 import NotificationPane from './NotificationPane';
 import BottomPillNav from './BottomPillNav';
@@ -16,6 +16,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { containerVariants } from '../../lib/animations';
 import { useRideStore } from '../../stores/useRideStore';
 import { isDev } from '../../lib/devtools';
+import { registerPushNotifications } from '../../services/notifications';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -24,14 +25,12 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
   const [notificationPaneOpen, setNotificationPaneOpen] = useState(false);
   const [devToolsOpen, setDevToolsOpen] = useState(false);
-  const { getUnreadCount } = useNotificationStore();
+  const { unreadCount } = useNotifications();
   const { updateInfo, showModal, setShowModal, dismissUpdate } = useAppUpdateStore();
   const { openReleasePage } = useAppUpdate();
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
   const isRecording = useRideStore((state) => state.isRecording);
-  
-  const unreadCount = getUnreadCount();
   
   // Hide navigation when recording (full-screen ride mode)
   const isRideMode = isRecording && location.pathname === '/ride';
@@ -50,6 +49,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
       mainRef.current.scrollTop = 0;
     }
   }, [location.pathname]);
+
+  useEffect(() => {
+    registerPushNotifications().catch(() => {
+      // Errors already logged in the service
+    });
+  }, []);
 
   // Get page title from route
   const getPageTitle = () => {

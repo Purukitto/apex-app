@@ -5,18 +5,25 @@ export type NotificationType = 'warning' | 'error' | 'info';
 export interface Notification {
   id: string;
   type: NotificationType;
+  title?: string;
   message: string;
-  read_status: boolean;
+  read_at: Date | null;
+  dismissed_at: Date | null;
   created_at: Date;
-  bike_id?: string; // Optional, for maintenance alerts
+  bike_id?: string;
+  schedule_id?: string;
+  source?: string;
 }
 
 interface NotificationStore {
   notifications: Notification[];
-  addNotification: (notification: Omit<Notification, 'id' | 'created_at'>) => void;
+  setNotifications: (notifications: Notification[]) => void;
+  addNotification: (
+    notification: Omit<Notification, 'id' | 'created_at' | 'read_at' | 'dismissed_at'>
+  ) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
-  removeNotification: (id: string) => void;
+  dismissNotification: (id: string) => void;
   clearAll: () => void;
   getUnreadCount: () => number;
 }
@@ -24,11 +31,17 @@ interface NotificationStore {
 export const useNotificationStore = create<NotificationStore>((set, get) => ({
   notifications: [],
 
+  setNotifications: (notifications) => {
+    set({ notifications });
+  },
+
   addNotification: (notification) => {
     const newNotification: Notification = {
       ...notification,
       id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       created_at: new Date(),
+      read_at: null,
+      dismissed_at: null,
     };
     set((state) => ({
       notifications: [newNotification, ...state.notifications],
@@ -38,7 +51,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   markAsRead: (id) => {
     set((state) => ({
       notifications: state.notifications.map((notif) =>
-        notif.id === id ? { ...notif, read_status: true } : notif
+        notif.id === id ? { ...notif, read_at: notif.read_at ?? new Date() } : notif
       ),
     }));
   },
@@ -47,14 +60,16 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     set((state) => ({
       notifications: state.notifications.map((notif) => ({
         ...notif,
-        read_status: true,
+        read_at: notif.read_at ?? new Date(),
       })),
     }));
   },
 
-  removeNotification: (id) => {
+  dismissNotification: (id) => {
     set((state) => ({
-      notifications: state.notifications.filter((notif) => notif.id !== id),
+      notifications: state.notifications.map((notif) =>
+        notif.id === id ? { ...notif, dismissed_at: new Date() } : notif
+      ),
     }));
   },
 
@@ -63,7 +78,9 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   },
 
   getUnreadCount: () => {
-    return get().notifications.filter((notif) => !notif.read_status).length;
+    return get().notifications.filter(
+      (notif) => !notif.read_at && !notif.dismissed_at
+    ).length;
   },
 }));
 

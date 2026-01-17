@@ -45,6 +45,16 @@ alwaysApply: true
 
 ## 2. Component Standards
 
+### 2.1 Data Entry Modals (Keyboard-Safe)
+- **MANDATORY**: All data-entry modals (forms with inputs/textarea/select) must be keyboard-safe on mobile.
+- **Implementation pattern (see `AddBikeModal`):**
+  - Use `useKeyboard()` from `src/hooks/useKeyboard`.
+  - Wrap modal content in a full-screen scroll container: `fixed inset-0 overflow-y-auto`.
+  - Apply safe-area padding and dynamic bottom padding when keyboard is visible.
+  - Attach a `focusin` handler on the form to scroll the active field into view.
+  - Keep content centered with `mx-auto my-8` and avoid over-styling for tiny/simple modals.
+- **Do NOT** apply this to simple confirmation/alert modals without inputs.
+
 ### Card Components
 - **MANDATORY Styling:**
   - Background: `bg-gradient-to-br from-white/5 to-transparent`

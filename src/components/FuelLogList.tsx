@@ -153,7 +153,7 @@ export default function FuelLogList({
           }
         }}
         title="Delete Fuel Log"
-        message={`Are you sure you want to delete this fuel log? This action cannot be undone.`}
+        message="This will permanently delete this fuel log. This action cannot be undone."
         confirmLabel="Delete"
         cancelLabel="Cancel"
         variant="danger"

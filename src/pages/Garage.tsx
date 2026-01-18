@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Plus, Motorbike, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBikes } from '../hooks/useBikes';
@@ -9,12 +9,15 @@ import AddRefuelModal from '../components/AddRefuelModal';
 import FuelLogList from '../components/FuelLogList';
 import ConfirmModal from '../components/ConfirmModal';
 import ApexTelemetryIcon from '../components/ui/ApexTelemetryIcon';
+import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
 import type { Bike as BikeType, FuelLog } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { logger } from '../lib/logger';
+import { useQueryClient } from '@tanstack/react-query';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 
 // Helper component for bike image with fallback
 function BikeImage({ 
@@ -56,6 +59,7 @@ export default function Garage() {
   const navigate = useNavigate();
   const { primary } = useThemeColors();
   const { bikes, isLoading, createBike, updateBike, deleteBike, getBikeRelatedDataCounts } = useBikes();
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBike, setEditingBike] = useState<BikeType | null>(null);
   
@@ -174,15 +178,22 @@ export default function Garage() {
   const handleDeleteFuelLog = async (id: string) => {
     try {
       await deleteFuelLog.mutateAsync(id);
-      apexToast.success('Fuel log deleted');
     } catch (error) {
-      apexToast.error(
-        error instanceof Error
-          ? error.message
-          : 'Failed to delete fuel log'
-      );
+      logger.error('Failed to delete fuel log', error);
     }
   };
+
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['bikes'] }),
+      queryClient.invalidateQueries({ queryKey: ['fuelLogs'] }),
+    ]);
+  }, [queryClient]);
+
+  const { pullDistance, isRefreshing } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    logLabel: 'garage',
+  });
 
   if (isLoading) {
     return <LoadingSpinner fullScreen text="Loading garage..." />;
@@ -193,6 +204,11 @@ export default function Garage() {
 
   return (
     <div className="h-full">
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+        accentColor={primary}
+      />
       <motion.div
         className="p-6 pb-32 space-y-6"
         variants={containerVariants}
@@ -294,7 +310,7 @@ export default function Garage() {
                   </motion.button>
                   <motion.button
                     onClick={() => handleDeleteClick(currentBike)}
-                    className="px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-sm hover:bg-red-500/30 transition-colors"
+                    className="px-4 py-2 bg-apex-red/20 border border-apex-red/30 rounded-lg text-apex-red text-sm hover:bg-apex-red/30 transition-colors"
                     {...buttonHoverProps}
                   >
                     Delete
@@ -373,7 +389,7 @@ export default function Garage() {
                       </motion.button>
                       <motion.button
                         onClick={() => handleDeleteClick(bike)}
-                        className="px-3 py-1.5 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-xs hover:bg-red-500/30 transition-colors"
+                        className="px-3 py-1.5 bg-apex-red/20 border border-apex-red/30 rounded-lg text-apex-red text-xs hover:bg-apex-red/30 transition-colors"
                         {...buttonHoverProps}
                       >
                         Delete
@@ -456,9 +472,16 @@ export default function Garage() {
                         {relatedDataCounts.rides > 0 && (
                           <div className="mt-3 p-3 bg-apex-red/10 border border-apex-red/20 rounded-lg">
                             <p className="text-apex-red text-sm font-semibold">
-                              ⚠️ Cannot delete: This bike has rides with GPS data. Please delete rides first.
+                              Cannot delete: This bike has rides with GPS data. Please delete rides first.
                             </p>
                           </div>
+                        )}
+                        {relatedDataCounts.rides === 0 &&
+                          (relatedDataCounts.maintenanceLogs > 0 ||
+                            relatedDataCounts.fuelLogs > 0) && (
+                          <p className="text-sm text-apex-white/70">
+                            Maintenance and fuel logs will be removed with this bike.
+                          </p>
                         )}
                       </div>
                     )}
@@ -481,7 +504,10 @@ export default function Garage() {
             cancelLabel="Cancel"
             variant="danger"
             isLoading={deleteBike.isPending || isLoadingRelatedData}
-            disabled={relatedDataCounts ? relatedDataCounts.rides > 0 : false}
+            disabled={
+              isLoadingRelatedData ||
+              (relatedDataCounts ? relatedDataCounts.rides > 0 : false)
+            }
           />
         )}
 

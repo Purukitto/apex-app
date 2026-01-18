@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useBikes } from '../hooks/useBikes';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useRides } from '../hooks/useRides';
@@ -9,9 +9,9 @@ import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps } f
 import { useNotificationHandler } from '../components/layout/NotificationContext';
 import { useThemeColors } from '../hooks/useThemeColors';
 import LoadingSpinner from '../components/LoadingSpinner';
+import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
 import { useQueryClient } from '@tanstack/react-query';
-import { Capacitor } from '@capacitor/core';
-import { logger } from '../lib/logger';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { formatDuration, formatShortDate } from '../utils/format';
 
 export default function Dashboard() {
@@ -20,161 +20,21 @@ export default function Dashboard() {
   const { rides, isLoading: ridesLoading, refetch: refetchRides } = useRides({ limit: 5 });
   const navigate = useNavigate();
   const { openNotifications, unreadCount } = useNotificationHandler();
-  const [pullDistance, setPullDistance] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const { primary, highlight } = useThemeColors();
   const queryClient = useQueryClient();
-  const touchStartY = useRef(0);
-  const isPullingRef = useRef(false);
-  const currentPullDistanceRef = useRef(0);
-  const scrollTopAtStartRef = useRef(0);
-  const documentScrollTopAtStartRef = useRef(0);
 
-  // Pull-to-refresh handler - refreshes all data
   const handleRefresh = useCallback(async () => {
-    if (isRefreshing) return;
-    
-    setIsRefreshing(true);
-    try {
-      // Refresh all dashboard data
-      await Promise.all([
-        refetchRides(),
-        queryClient.invalidateQueries({ queryKey: ['bikes'] }),
-        queryClient.invalidateQueries({ queryKey: ['userProfile'] }),
-      ]);
-    } catch (error) {
-      logger.error('Error refreshing dashboard:', error);
-      // Silent failure for pull-to-refresh
-    } finally {
-      // Small delay to show the refresh animation
-      setTimeout(() => {
-        setIsRefreshing(false);
-        setPullDistance(0);
-        currentPullDistanceRef.current = 0;
-      }, 300);
-    }
-  }, [refetchRides, queryClient, isRefreshing]);
+    await Promise.all([
+      refetchRides(),
+      queryClient.invalidateQueries({ queryKey: ['bikes'] }),
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] }),
+    ]);
+  }, [refetchRides, queryClient]);
 
-  // Pull-to-refresh touch handlers - app-only (native platforms)
-  useEffect(() => {
-    // Only enable pull-to-refresh on native platforms
-    if (!Capacitor.isNativePlatform()) {
-      return;
-    }
-
-    // Find the main scroll container (from MainLayout)
-    const mainContainer = document.querySelector('main');
-    if (!mainContainer) return;
-
-    const getDocumentScrollTop = () =>
-      document.scrollingElement?.scrollTop ?? document.documentElement.scrollTop ?? 0;
-
-    const isAtTop = () => {
-      const scrollTop = mainContainer.scrollTop;
-      const documentScrollTop = getDocumentScrollTop();
-      // Ensure both the main container and document are at top
-      return scrollTop <= 2 && documentScrollTop <= 2;
-    };
-
-    const handleTouchStart = (e: TouchEvent) => {
-      const scrollTop = mainContainer.scrollTop;
-      const documentScrollTop = getDocumentScrollTop();
-      // Only allow pull-to-refresh when exactly at the top (with small tolerance for sub-pixel)
-      // Use <= 2 to account for sub-pixel scrolling and rounding
-      if (isAtTop() && !isRefreshing) {
-        touchStartY.current = e.touches[0].clientY;
-        scrollTopAtStartRef.current = scrollTop;
-        documentScrollTopAtStartRef.current = documentScrollTop;
-        isPullingRef.current = true;
-        currentPullDistanceRef.current = 0;
-      } else {
-        // Explicitly disable if not at top
-        isPullingRef.current = false;
-      }
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isPullingRef.current || isRefreshing) return;
-      
-      const scrollTop = mainContainer.scrollTop;
-      const documentScrollTop = getDocumentScrollTop();
-      const currentY = e.touches[0].clientY;
-      const deltaY = currentY - touchStartY.current;
-      
-      // Strict check: must still be at top AND pulling down (positive deltaY)
-      // If scrollTop increased, user is scrolling down - cancel immediately
-      if (
-        scrollTop > scrollTopAtStartRef.current ||
-        scrollTop > 2 ||
-        documentScrollTop > documentScrollTopAtStartRef.current ||
-        documentScrollTop > 2
-      ) {
-        // User scrolled down, cancel pull-to-refresh
-        isPullingRef.current = false;
-        setPullDistance(0);
-        currentPullDistanceRef.current = 0;
-        return;
-      }
-      
-      // Only allow pull if we're still at the top AND pulling down
-      if (isAtTop() && deltaY > 0) {
-        const distance = deltaY;
-        currentPullDistanceRef.current = distance;
-        
-        // Prevent default scrolling while pulling down (only after threshold)
-        // This prevents the browser's native pull-to-refresh
-        if (distance > 10) {
-          e.preventDefault();
-        }
-        setPullDistance(Math.min(distance, 120)); // Cap at 120px
-      } else if (deltaY <= 0) {
-        // User is scrolling up (negative deltaY), cancel pull-to-refresh
-        isPullingRef.current = false;
-        setPullDistance(0);
-        currentPullDistanceRef.current = 0;
-      } else {
-        // Not at top anymore, cancel
-        isPullingRef.current = false;
-        setPullDistance(0);
-        currentPullDistanceRef.current = 0;
-      }
-    };
-
-    const handleTouchEnd = () => {
-      const finalDistance = currentPullDistanceRef.current;
-      const scrollTop = mainContainer.scrollTop;
-      const documentScrollTop = getDocumentScrollTop();
-      
-      // Only trigger refresh if still at top and pulled enough
-      if (
-        isPullingRef.current &&
-        scrollTop <= 2 &&
-        documentScrollTop <= 2 &&
-        finalDistance >= 80 &&
-        !isRefreshing
-      ) {
-        handleRefresh();
-      }
-      
-      isPullingRef.current = false;
-      setPullDistance(0);
-      currentPullDistanceRef.current = 0;
-      scrollTopAtStartRef.current = 0;
-      documentScrollTopAtStartRef.current = 0;
-    };
-
-    mainContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
-    mainContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
-    mainContainer.addEventListener('touchend', handleTouchEnd);
-    mainContainer.addEventListener('touchcancel', handleTouchEnd);
-
-    return () => {
-      mainContainer.removeEventListener('touchstart', handleTouchStart);
-      mainContainer.removeEventListener('touchmove', handleTouchMove);
-      mainContainer.removeEventListener('touchend', handleTouchEnd);
-      mainContainer.removeEventListener('touchcancel', handleTouchEnd);
-    };
-  }, [isRefreshing, handleRefresh]);
+  const { pullDistance, isRefreshing } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    logLabel: 'dashboard',
+  });
 
   if (isLoading) {
     return <LoadingSpinner fullScreen text="Loading dashboard..." />;
@@ -195,39 +55,11 @@ export default function Dashboard() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Pull-to-refresh indicator */}
-      {(pullDistance > 0 || isRefreshing) && (
-        <motion.div
-          className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center pb-2 pointer-events-none"
-          style={{
-            paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
-          }}
-          initial={{ opacity: 0, y: -20 }}
-          animate={{
-            opacity: isRefreshing ? 1 : Math.min(pullDistance / 80, 1),
-            y: isRefreshing ? 0 : Math.min(pullDistance * 0.5, 60),
-          }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-full px-4 py-2 flex items-center gap-2">
-            <RefreshCw
-              size={16}
-              className={`transition-colors ${isRefreshing ? 'animate-spin' : ''}`}
-              style={{
-                transform: isRefreshing ? 'none' : `rotate(${pullDistance * 4}deg)`,
-                color: pullDistance >= 80 || isRefreshing ? primary : 'currentColor',
-              }}
-            />
-            <span className="text-xs text-apex-white">
-              {isRefreshing 
-                ? 'Refreshing...' 
-                : pullDistance >= 80 
-                  ? 'Release to refresh' 
-                  : 'Pull to refresh'}
-            </span>
-          </div>
-        </motion.div>
-      )}
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+        accentColor={primary}
+      />
 
       {/* Dashboard-specific Greeting Section */}
       <div className="p-6 pb-0">

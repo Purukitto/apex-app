@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
+import { apexToast } from '../lib/toast';
 import type { MaintenanceLog, Bike } from '../types/database';
+import { logger } from '../lib/logger';
 
 export function useMaintenanceLogs(bikeId?: string) {
   const queryClient = useQueryClient();
@@ -240,12 +242,20 @@ export function useMaintenanceLogs(bikeId?: string) {
     },
     onSuccess: () => {
       // Data already optimistically removed
+      apexToast.success('Maintenance log deleted');
+      queryClient.invalidateQueries({ queryKey: ['bikes'] });
     },
-    onError: (_error, _id, context) => {
+    onError: (error, _id, context) => {
       // Rollback on error
       if (context?.previousLogs) {
         queryClient.setQueryData(['maintenanceLogs', bikeId], context.previousLogs);
       }
+      logger.error('Error deleting maintenance log:', error);
+      apexToast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to delete maintenance log'
+      );
     },
   });
 

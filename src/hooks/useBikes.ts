@@ -204,6 +204,8 @@ export function useBikes() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      logger.info('Attempting to delete bike', { bikeId: id, userId: user.id });
+
       // First, verify the bike exists and belongs to the user
       const { data: bikeCheck, error: checkError } = await supabase
         .from('bikes')
@@ -227,6 +229,10 @@ export function useBikes() {
 
       // Block deletion if rides exist (critical data with GPS paths)
       if (relatedCounts.rides > 0) {
+        logger.warn('Blocked bike deletion due to rides', {
+          bikeId: id,
+          rideCount: relatedCounts.rides,
+        });
         throw new Error(
           `Cannot delete bike: It has ${relatedCounts.rides} ride(s) with GPS data. ` +
           `Please delete rides first or contact support if you need to delete everything.`

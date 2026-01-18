@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0](https://github.com/Purukitto/apex-app/compare/v0.15.2...v1.0.0) (2026-01-18)
+
+
+### Features
+
+* add branding to shared ride images ([09f52fa](https://github.com/Purukitto/apex-app/commit/09f52fa9e99c4b3100e137535c4cd16d47eec55d))
+* add pull-to-refresh gesture and improve Garage UX ([622259a](https://github.com/Purukitto/apex-app/commit/622259a1d09b30dd9c45c1573e27223939d4dd1b))
+
+
+### Documentation
+
+* add user-focused README and developer guide ([b464d64](https://github.com/Purukitto/apex-app/commit/b464d64f77201aa3f53626f1fd12018ba93a723d))
+* update README badges for consistency ([bcd4b19](https://github.com/Purukitto/apex-app/commit/bcd4b19dfef39ac747301ff39e32c1bd03c8dd77))
+* update README to include OpenStreetMap attribution ([6116985](https://github.com/Purukitto/apex-app/commit/6116985c39756fb962b2422fc76056a17c86fde7))
+* update README to reposition OpenStreetMap attribution ([5268d16](https://github.com/Purukitto/apex-app/commit/5268d16206868790f7f503316f006fac09b6f500))
+
 ## [0.16.0](https://github.com/Purukitto/apex-app/compare/v0.15.2...v0.16.0) (2026-01-17)
 
 

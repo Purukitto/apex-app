@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.1](https://github.com/Purukitto/apex-app/compare/v1.0.0...v1.0.1) (2026-01-18)
+
+
+### Bug Fixes
+
+* **release:** enhance fallback logic for release notes generation ([50d28ca](https://github.com/Purukitto/apex-app/commit/50d28ca79f27785f62307f9159fe39fe18bd7d11))
+
+
+### Documentation
+
+* enhance README.md with new images and sections for improved user guidance ([#59](https://github.com/Purukitto/apex-app/issues/59)) ([e452329](https://github.com/Purukitto/apex-app/commit/e4523292e67341bcf683abc0dd51306b06a27eb7))
+* fix minor discrepancy ([4888bca](https://github.com/Purukitto/apex-app/commit/4888bcaf54d6858a47da67c06303c75fff4f11d6))
+
+
+### Code Refactoring
+
+* update optional fields to use null instead of undefined in various components and types ([181b935](https://github.com/Purukitto/apex-app/commit/181b9350404ee39124e94fd05d95cd812ef909fa))
+
 ## [1.0.0](https://github.com/Purukitto/apex-app/compare/v0.15.2...v1.0.0) (2026-01-18)
 
 

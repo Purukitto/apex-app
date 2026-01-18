@@ -8,7 +8,7 @@ Thank you for your interest in contributing to Apex! This document provides guid
 2. Clone your fork: `git clone <your-fork-url>`
 3. Create a branch: `git checkout -b feature/your-feature-name`
 4. Install dependencies: `npm install`
-5. Set up environment variables (see README.md)
+5. Set up environment variables (see [DEVELOPER.md](DEVELOPER.md))
 
 ## 📝 Development Workflow
 

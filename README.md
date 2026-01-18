@@ -116,4 +116,5 @@ Built with modern web technologies and designed for riders who demand precision 
 
 <div align="center">
   Made with ❤️ for the motorcycle community
+  Maps © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors
 </div>

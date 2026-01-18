@@ -167,12 +167,12 @@ export default function AddBikeModal({
       const bikeData: Omit<Bike, 'id' | 'user_id' | 'created_at'> = {
         make: formData.make.trim(),
         model: formData.model.trim(),
-        year: formData.year ? parseInt(formData.year, 10) : undefined,
-        nick_name: formData.nick_name.trim() || undefined,
+        year: formData.year ? parseInt(formData.year, 10) : null,
+        nick_name: formData.nick_name.trim() || null,
         current_odo: Math.round(parseFloat(formData.current_odo) || 0), // Round to integer to match int4 type
-        image_url: formData.image_url.trim() || undefined,
-        specs_engine: formData.specs_engine.trim() || undefined,
-        specs_power: formData.specs_power.trim() || undefined,
+        image_url: formData.image_url.trim() || null,
+        specs_engine: formData.specs_engine.trim() || null,
+        specs_power: formData.specs_power.trim() || null,
       };
 
       if (!bikeData.make || !bikeData.model) {

@@ -3,14 +3,14 @@ export type Bike = {
   user_id: string;
   make: string;
   model: string;
-  year?: number;
+  year?: number | null;
   current_odo: number; // Odometer reading in kilometers (integer)
-  nick_name?: string;
-  image_url?: string;
-  specs_engine?: string;
-  specs_power?: string;
-  avg_mileage?: number; // Average mileage in km per litre (calculated from full tank logs)
-  last_fuel_price?: number; // Most recent price per litre from fuel logs
+  nick_name?: string | null;
+  image_url?: string | null;
+  specs_engine?: string | null;
+  specs_power?: string | null;
+  avg_mileage?: number | null; // Average mileage in km per litre (calculated from full tank logs)
+  last_fuel_price?: number | null; // Most recent price per litre from fuel logs
   created_at: string;
 };
 
@@ -24,14 +24,14 @@ export type Ride = {
   bike_id: string;
   user_id: string;
   start_time: string;
-  end_time?: string;
+  end_time?: string | null;
   distance_km: number;
   max_lean_left: number;
   max_lean_right: number;
-  route_path?: GeoJSONLineString;
-  ride_name?: string;
-  notes?: string;
-  image_url?: string;
+  route_path?: GeoJSONLineString | null;
+  ride_name?: string | null;
+  notes?: string | null;
+  image_url?: string | null;
   created_at: string;
 };
 
@@ -41,8 +41,8 @@ export type MaintenanceLog = {
   service_type: string; // Required by database constraint
   odo_at_service: number;
   date_performed: string; // date format
-  notes?: string;
-  receipt_url?: string;
+  notes?: string | null;
+  receipt_url?: string | null;
   created_at: string;
 };
 
@@ -64,8 +64,8 @@ export type MaintenanceSchedule = {
   part_name: string;
   interval_km: number;
   interval_months: number;
-  last_service_date?: string; // date format, nullable
-  last_service_odo?: number; // nullable
+  last_service_date?: string | null; // date format, nullable
+  last_service_odo?: number | null; // nullable
   is_active: boolean;
   created_at: string;
 };
@@ -91,8 +91,8 @@ export type ServiceHistory = {
   schedule_id: string;
   service_date: string; // date format
   service_odo: number;
-  cost?: number; // nullable
-  notes?: string; // nullable
+  cost?: number | null; // nullable
+  notes?: string | null; // nullable
   created_at: string;
 };
 

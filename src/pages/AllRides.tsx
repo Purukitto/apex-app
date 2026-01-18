@@ -207,13 +207,13 @@ export default function AllRides() {
 
       // Only include fields that have changed or need to be set
       if (trimmedName !== (editingRide.ride_name || "")) {
-        updates.ride_name = trimmedName || undefined;
+        updates.ride_name = trimmedName || null;
       }
       if (trimmedNotes !== (editingRide.notes || "")) {
-        updates.notes = trimmedNotes || undefined;
+        updates.notes = trimmedNotes || null;
       }
       if (trimmedImageUrl !== (editingRide.image_url || "")) {
-        updates.image_url = trimmedImageUrl || undefined;
+        updates.image_url = trimmedImageUrl || null;
       }
 
       // Only update if there are changes

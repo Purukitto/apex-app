@@ -226,8 +226,8 @@ export function useMaintenanceSchedules(bikeId?: string) {
       scheduleId: string;
       bikeId: string;
       serviceOdo: number;
-      cost?: number;
-      notes?: string;
+      cost?: number | null;
+      notes?: string | null;
     }) => {
       const {
         data: { user },

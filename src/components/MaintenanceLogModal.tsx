@@ -190,8 +190,8 @@ export default function MaintenanceLogModal({
         service_type: formData.service_type.trim(),
         odo_at_service: parseInt(formData.odo_at_service, 10),
         date_performed: formData.date_performed,
-        notes: formData.notes.trim() || undefined,
-        receipt_url: formData.receipt_url.trim() || undefined,
+        notes: formData.notes.trim() || null,
+        receipt_url: formData.receipt_url.trim() || null,
       };
 
       // Use toast.promise for add (not edit)

@@ -54,8 +54,8 @@ export default function Service() {
     scheduleId: string;
     bikeId: string;
     serviceOdo: number;
-    cost?: number;
-    notes?: string;
+    cost?: number | null;
+    notes?: string | null;
   }) => {
     try {
       await completeService.mutateAsync(data);

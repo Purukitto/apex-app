@@ -25,17 +25,23 @@ Whether you're tracking your weekend rides or managing a fleet of motorcycles, A
 - **Odometer Tracking**: Monitor mileage for each bike
 - **Fuel Logging**: Track fuel consumption and efficiency
 
+<img src="docs/screenshots/garage.jpg" alt="The Garage" width="280" />
+
 ### 📍 The Recorder
 - **GPS Tracking**: Real-time route recording with detailed path visualization
 - **Telemetry**: Speed, lean angle, G-force, and altitude tracking
 - **Ride History**: View past rides with detailed statistics and maps
 - **Share Rides**: Export and share your ride data
 
+<img src="docs/screenshots/recorder.jpg" alt="The Recorder" width="280" /> <img src="docs/screenshots/rides.jpg" alt="Ride History" width="280" />
+
 ### 📊 The Dashboard
 - **Current Status**: Overview of all bikes and their maintenance status
 - **Last Ride Summary**: Quick access to recent ride data
 - **Maintenance Alerts**: Warnings for upcoming service intervals
 - **Health Monitoring**: Track the health of your entire fleet
+
+<img src="docs/screenshots/dashboard.jpg" alt="The Dashboard" width="280" />
 
 ### 🔗 Discord Integration
 - **OAuth Connection**: Link your Discord account to Apex

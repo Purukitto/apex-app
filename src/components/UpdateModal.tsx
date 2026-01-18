@@ -204,10 +204,22 @@ export default function UpdateModal({
   const formattedNotes = formatReleaseNotes(updateInfo.releaseNotes);
 
   // Parse formatted notes and render as JSX
-  const renderReleaseNotes = (notes: string) => {
+  const renderReleaseNotes = (notes: string, releaseUrl?: string | null) => {
     if (!notes || notes === 'No release notes available.') {
       return (
-        <p className="text-sm text-apex-white/60 italic">No release notes available.</p>
+        <div className="space-y-2">
+          <p className="text-sm text-apex-white/60 italic">No release notes available for this version.</p>
+          {releaseUrl && (
+            <a
+              href={releaseUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-apex-green hover:underline inline-block"
+            >
+              View release on GitHub
+            </a>
+          )}
+        </div>
       );
     }
 
@@ -295,7 +307,19 @@ export default function UpdateModal({
         className="space-y-1"
       >
         {elements.length > 0 ? elements : (
-          <p className="text-sm text-apex-white/60 italic">No release notes available.</p>
+          <div className="space-y-2">
+            <p className="text-sm text-apex-white/60 italic">No release notes available for this version.</p>
+            {releaseUrl && (
+              <a
+                href={releaseUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-apex-green hover:underline inline-block"
+              >
+                View release on GitHub
+              </a>
+            )}
+          </div>
         )}
       </motion.div>
     );
@@ -366,7 +390,7 @@ export default function UpdateModal({
                   <h4 className="text-sm font-semibold text-apex-white mb-4 uppercase tracking-wide">
                     What's New
                   </h4>
-                  {renderReleaseNotes(formattedNotes)}
+                  {renderReleaseNotes(formattedNotes, updateInfo.releaseUrl)}
                 </div>
               </div>
 

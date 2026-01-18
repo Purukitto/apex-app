@@ -7,8 +7,7 @@
   
   [![CI](https://github.com/Purukitto/apex-app/actions/workflows/ci.yml/badge.svg)](https://github.com/Purukitto/apex-app/actions)
   [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
-  [![Version](https://img.shields.io/github/v/release/Purukitto/apex-app?include_prereleases)](https://github.com/Purukitto/apex-app/releases/latest)
-  [![GitHub Release](https://img.shields.io/github/release/Purukitto/apex-app.svg)](https://github.com/Purukitto/apex-app/releases/latest)
+  [![Release](https://img.shields.io/github/v/release/Purukitto/apex-app?include_prereleases)](https://github.com/Purukitto/apex-app/releases/latest)
 </div>
 
 ## 🎯 What is Apex?

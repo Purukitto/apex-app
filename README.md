@@ -111,10 +111,10 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 ## 🙏 Acknowledgments
 
 Built with modern web technologies and designed for riders who demand precision and simplicity.
+Maps © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors
 
 ---
 
 <div align="center">
   Made with ❤️ for the motorcycle community
-  Maps © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors
 </div>

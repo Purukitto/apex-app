@@ -1,334 +1,127 @@
-# Apex: The Rider's Black Box
+<div align="center">
+  <img src="./public/apex-logo.svg" alt="Apex Logo" width="120" height="120">
+  
+  # Apex: The Rider's Black Box
+  
+  A minimalist, high-precision utility for motorcyclists. Apex is a "Flight Recorder" for the road and a "Digital Garage" for the machine.
+  
+  [![CI](https://github.com/Purukitto/apex-app/actions/workflows/ci.yml/badge.svg)](https://github.com/Purukitto/apex-app/actions)
+  [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+  [![Release](https://img.shields.io/github/v/release/Purukitto/apex-app?include_prereleases)](https://github.com/Purukitto/apex-app/releases/latest)
+</div>
 
-A minimalist, high-precision utility for motorcyclists. Apex is a "Flight Recorder" for the road and a "Digital Garage" for the machine.
+## 🎯 What is Apex?
 
-## 🎯 Vision
+Apex combines real-time ride tracking with comprehensive maintenance management, designed with the philosophy of **"The Dark Cockpit"** - optimized for OLED displays, high contrast, and instrument-grade precision.
 
-Apex combines real-time ride tracking with comprehensive maintenance management, designed with the philosophy of "The Dark Cockpit" - optimized for OLED displays, high contrast, and instrument-grade precision.
+Whether you're tracking your weekend rides or managing a fleet of motorcycles, Apex provides the tools you need to monitor your machines and your adventures.
 
 ## ✨ Features
 
-### The Garage
+### 🏍️ The Garage
 - **Multi-bike Management**: Track multiple motorcycles in your fleet
-- **Maintenance Logs**: Record service history, track service intervals
+- **Maintenance Logs**: Record service history and track service intervals
 - **Service Reminders**: Automatic notifications when maintenance is due
 - **Odometer Tracking**: Monitor mileage for each bike
+- **Fuel Logging**: Track fuel consumption and efficiency
 
-### The Recorder
-- **GPS Tracking**: Real-time route recording with PostGIS LineString storage
+### 📍 The Recorder
+- **GPS Tracking**: Real-time route recording with detailed path visualization
 - **Telemetry**: Speed, lean angle, G-force, and altitude tracking
-- **Ride History**: View past rides with detailed statistics
+- **Ride History**: View past rides with detailed statistics and maps
+- **Share Rides**: Export and share your ride data
 
-### The Dashboard
+### 📊 The Dashboard
 - **Current Status**: Overview of all bikes and their maintenance status
 - **Last Ride Summary**: Quick access to recent ride data
 - **Maintenance Alerts**: Warnings for upcoming service intervals
+- **Health Monitoring**: Track the health of your entire fleet
 
-### Discord Integration
+### 🔗 Discord Integration
 - **OAuth Connection**: Link your Discord account to Apex
-- **Status**: Basic connection implemented, Rich Presence coming soon
-- **Future Features**: Ride status sharing, maintenance reminders via Discord
-
-## 🛠️ Tech Stack
-
-- **Frontend**: React 19 + TypeScript
-- **Build Tool**: Vite 7
-- **Styling**: Tailwind CSS 4
-- **Animations**: Framer Motion
-- **State Management**: Zustand
-- **Data Fetching**: TanStack Query (React Query)
-- **Backend**: Supabase (PostgreSQL + PostGIS)
-- **Mobile**: Capacitor 8 (iOS & Android)
-- **Routing**: React Router v7
-- **Notifications**: Sonner
-- **Icons**: Lucide React
-
-## 📋 Prerequisites
-
-- **Node.js** 18+ and npm
-- **Supabase Account**: For backend services
-- **For Mobile Development**:
-  - **iOS**: Xcode 14+ (macOS only)
-  - **Android**: Android Studio with Android SDK
-
-## 🚀 Getting Started
-
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd apex-app
-```
-
-### 2. Install Dependencies
-
-```bash
-npm install
-```
-
-### 3. Environment Setup
-
-Create a `.env` file in the root directory:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and add your Supabase credentials:
-
-```env
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-**Notifications (Server + Push):**
-
-⚠️ **Important:** You must set up your own Firebase project. The placeholder values in the repo will not work.
-
-1. Create a Firebase project at https://console.firebase.google.com/
-2. Add a Web app and an Android app to your Firebase project
-3. Copy the configuration values to your `.env` file:
-
-```env
-VITE_SERVER_NOTIFICATIONS=true
-VITE_PUSH_NOTIFICATIONS=true
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-VITE_FIREBASE_VAPID_KEY=your_web_vapid_key
-```
-
-4. For Android builds, download `google-services.json` from Firebase Console and place it at `android/app/google-services.json`
-   - Use `android/app/google-services.json.example` as a template
-   - **Optional:** To keep your `google-services.json` private, uncomment line 65 in `android/.gitignore`
-
-**Note:** The `firebase-messaging-sw.js` file is automatically generated from `firebase-messaging-sw.js.template` at build time using your `VITE_FIREBASE_*` environment variables. The generated file is gitignored to prevent committing your Firebase credentials.
-
-**For Discord Integration (Optional):**
-- Create a Discord application at https://discord.com/developers/applications
-- Set redirect URI to: `https://YOUR_PROJECT.supabase.co/functions/v1/discord-oauth`
-- Add `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET` to Supabase Edge Function secrets
-- Add `APP_BASE_URL` to Edge Function secrets for production (e.g., `https://yourapp.com`)
-
-### 4. Database Setup
-
-Ensure your Supabase database has the following tables with PostGIS enabled:
-
-- `bikes` - Motorcycle profiles
-- `rides` - Ride records with GPS paths (PostGIS LineString)
-- `maintenance_logs` - Service history
-- `user_discord_connections` - Discord OAuth tokens (optional, for Discord integration)
-- `discord_oauth_states` - OAuth state management (optional, for Discord integration)
-
-**Notifications Tables (Required):**
-- `notifications` - Server-synced notification feed (read/dismiss state)
-- `push_tokens` - Device tokens for FCM delivery
-- `notification_delivery_queue` - Delivery queue processed by cron
-
-**PostgreSQL Functions (RPC):**
-The app uses secure Postgres functions with `SECURITY DEFINER` for Discord OAuth:
-- `get_oauth_state(state_token_param TEXT)` - Validates and retrieves OAuth state
-- `save_discord_tokens(user_id_param UUID, access_token_param TEXT, refresh_token_param TEXT, expires_at_param TIMESTAMPTZ)` - Securely stores Discord tokens
-- `cleanup_expired_oauth_states()` - Cleans up expired OAuth states (can be run via cron)
-
-See `ARCHITECTURE.md` for detailed schema information.
-
-### 5. Run Development Server
-
-```bash
-npm run dev
-```
-
-The app will be available at `http://localhost:5173`
-
-## 📱 Mobile Development
-
-### iOS Setup
-
-1. Install iOS dependencies:
-```bash
-npx cap sync ios
-```
-
-2. Open in Xcode:
-```bash
-npx cap open ios
-```
-
-3. Build and run from Xcode
-
-### Android Setup
-
-1. Install Android dependencies:
-```bash
-npx cap sync android
-```
-
-2. Open in Android Studio:
-```bash
-npx cap open android
-```
-
-3. Build and run from Android Studio
-
-### Building for Production
-
-1. Build the web app:
-```bash
-npm run build
-```
-
-2. Sync with Capacitor:
-```bash
-npx cap sync
-```
-
-3. Build native apps in Xcode/Android Studio
-
-## 📁 Project Structure
-
-```
-apex-app/
-├── src/
-│   ├── components/          # React components
-│   │   ├── layout/         # Layout components (MainLayout, NotificationPane)
-│   │   ├── BikeCard.tsx
-│   │   ├── AddBikeModal.tsx
-│   │   ├── MaintenanceLogList.tsx
-│   │   └── ...
-│   ├── pages/              # Page components
-│   │   ├── Dashboard.tsx
-│   │   ├── Garage.tsx
-│   │   ├── Login.tsx
-│   │   └── Profile.tsx
-│   ├── hooks/              # Custom React hooks
-│   │   ├── useBikes.ts
-│   │   ├── useRideRecorder.ts
-│   │   ├── useMaintenanceLogs.ts
-│   │   └── ...
-│   ├── stores/             # Zustand stores
-│   │   └── useNotificationStore.ts
-│   ├── lib/                # Utilities
-│   │   ├── supabaseClient.ts
-│   │   ├── toast.ts
-│   │   └── animations.ts
-│   └── types/              # TypeScript types
-│       └── database.ts
-├── android/                # Android native project
-├── ios/                    # iOS native project
-├── public/                 # Static assets
-└── capacitor.config.ts     # Capacitor configuration
-```
+- **Status Sharing**: Share your ride status (coming soon)
+- **Maintenance Reminders**: Get notified via Discord when service is due
 
 ## 🎨 Design Philosophy
 
 ### The Dark Cockpit
+
+Apex is designed with the rider in mind, especially for use on mobile devices during rides:
+
 - **OLED First**: Pure black backgrounds (`#0A0A0A`) to save battery and reduce glare
-- **High Contrast**: White and Apex Green (`#00FF41`) for critical data
-- **Instrument Grade**: Monospaced fonts (JetBrains Mono) for telemetry
+- **High Contrast**: White and Apex Green (`#00FF41`) for critical data visibility
+- **Instrument Grade**: Monospaced fonts (JetBrains Mono) for telemetry precision
 - **Glove-Friendly**: Large touch targets, long-press for destructive actions
+- **Smooth Animations**: Subtle, high-end transitions for a polished experience
 
-### UX Standards
-- All pages use staggered entry animations (Framer Motion)
-- Consistent card styling with gradient backgrounds and border hover effects
-- Toast notifications for all mutations and form submissions
-- Persistent notifications for maintenance warnings
-- Pull-to-refresh on mobile for data feeds
+For more details on the design philosophy and Discord integration, see [DOCS.md](DOCS.md).
 
-## 📝 Available Scripts
+## 📥 Download & Install
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run release` - Create a new release (uses standard-version)
-- `npm run release:patch` - Patch release
-- `npm run release:minor` - Minor release
-- `npm run release:major` - Major release
+### For End Users
 
-## 🔄 CI/CD
+Apex is available as a mobile app for iOS and Android:
 
-This project uses GitHub Actions for continuous integration:
+- **Android**: Download the latest APK from [GitHub Releases](https://github.com/Purukitto/apex-app/releases/latest)
+- **iOS**: Coming soon (App Store submission in progress)
+- **Web**: Access the web version at [your deployment URL] (if deployed)
 
-### Workflows
+### Installation Instructions
 
-- **CI** (`.github/workflows/ci.yml`): Runs on every push and PR
-  - Linting with ESLint
-  - Type checking with TypeScript
-  - Production build verification
+1. **Android**:
+   - Download the latest `apex-*.apk` file from the [releases page](https://github.com/Purukitto/apex-app/releases/latest)
+   - Enable "Install from Unknown Sources" in your Android settings
+   - Open the downloaded APK file and follow the installation prompts
 
-- **Commitlint** (`.github/workflows/commitlint.yml`): Validates commit messages
-  - Ensures commits follow [Conventional Commits](https://www.conventionalcommits.org/) format
-  - Runs on pull requests
+2. **iOS**:
+   - Installation instructions will be available once the app is published to the App Store
 
-### Local Hooks
+3. **First Launch**:
+   - Create an account or sign in
+   - Add your first motorcycle to get started
+   - Grant location permissions for ride tracking
 
-The project uses Husky for git hooks:
-- **Pre-commit**: Runs `npm run lint` before commits
-- **Commit-msg**: Validates commit message format
+## 🚀 Getting Started
 
+Once installed:
 
-### Issue & Pull Request Templates
-
-GitHub automatically uses templates when creating issues or pull requests:
-- **Issue templates** (`.github/ISSUE_TEMPLATE/`): Bug reports and feature requests
-- **Pull request template** (`.github/pull_request_template.md`): Standardized PR format
-
-No additional configuration needed - GitHub detects and uses these templates automatically.
-
-### Dependabot
-
-Automated dependency updates are configured via `.github/dependabot.yml`:
-- Weekly checks for npm dependencies
-- Grouped updates to reduce PR noise
-- Major version updates require manual review for critical packages
-
-## 🔒 Security
-
-- Row Level Security (RLS) is enforced in Supabase
-- All queries filter by `user_id` matching `auth.uid()`
-- Environment variables are never committed to version control
-- Authentication handled by Supabase Auth
-- **Discord OAuth**: Uses Postgres functions with `SECURITY DEFINER` for secure token storage
-  - OAuth state tokens are cryptographically secure (UUID v4)
-  - Tokens are stored encrypted in the database
-  - State tokens expire after 10 minutes
-  - No service_role key required - uses RLS and Postgres functions
-
-## 🧪 Development Guidelines
-
-### Code Standards
-- TypeScript with strict type checking
-- Functional components and hooks
-- Centralized state with Zustand
-- Data fetching with TanStack Query
-- All mutations must show toast notifications
-
-### Animation Standards
-- Import animation variants from `src/lib/animations.ts`
-- Use staggered animations for page content
-- Apply `buttonHoverProps` to all buttons
-- Apply `cardHoverProps` to all cards
-
-See `.cursor/rules/` for detailed coding standards.
+1. **Create an Account**: Sign up with your email or use social authentication
+2. **Add Your Bike**: Go to the Garage and add your motorcycle(s)
+3. **Set Up Maintenance**: Configure service intervals for your bike
+4. **Start Recording**: Use the Recorder to track your rides
 
 ## 📚 Documentation
 
-- `ARCHITECTURE.md` - System architecture and data flow
-- `DOCS.md` - Design philosophy and core pillars
-- `CHANGELOG.md` - Version history
+For more information:
+
+- **[DEVELOPER.md](DEVELOPER.md)** - Developer setup and technical documentation
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture and data flow
+- **[DOCS.md](DOCS.md)** - Design philosophy and core pillars
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Guidelines for contributing
+
+## ☕ Support Development
+
+Apex is free and open-source. If it helps you, consider supporting development:
+
+- **[Buy Me a Coffee](https://buymeacoffee.com/purukitto)** — One-time support ($)
+- **UPI** — `apex-app@axl` (India, ₹) — *Payee: Apex Development*
 
 ## 🤝 Contributing
 
-See `CONTRIBUTING.md` for guidelines on contributing to this project.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
 
 ## 📄 License
 
-[Add your license here]
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
 Built with modern web technologies and designed for riders who demand precision and simplicity.
+Maps © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors
+
+---
+
+<div align="center">
+  Made with ❤️ for the motorcycle community
+</div>

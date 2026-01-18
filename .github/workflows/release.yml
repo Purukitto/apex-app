@@ -213,12 +213,12 @@ jobs:
           # Cleanup
           rm -f /tmp/extract_changelog.awk
           
-          # If extraction failed or empty, create fallback with link to full changelog
-          if [ ! -s release_notes.md ]; then
+          # Fallback when: no header matched (empty), or version header exists but no list items (version bump, no changelog)
+          if [ ! -s release_notes.md ] || ! grep -qE '^\s*[-*+]\s' release_notes.md 2>/dev/null; then
             cat > release_notes.md << EOF
-          ## Changes in $VERSION
+          ## $VERSION
           
-          See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for full details.
+          No structured changelog for this version. See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for the full history.
           EOF
           fi
           

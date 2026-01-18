@@ -45,8 +45,8 @@ Whether you're tracking your weekend rides or managing a fleet of motorcycles, A
 
 ### 🔗 Discord Integration
 - **OAuth Connection**: Link your Discord account to Apex
-- **Status Sharing**: Share your ride status (coming soon)
-- **Maintenance Reminders**: Get notified via Discord when service is due
+- **Status Sharing**: Share your ride status *(coming soon)*
+- **Maintenance Reminders**: Get notified via Discord when service is due *(coming soon)*
 
 ## 🎨 Design Philosophy
 

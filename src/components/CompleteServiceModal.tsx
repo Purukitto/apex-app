@@ -15,8 +15,8 @@ interface CompleteServiceModalProps {
     scheduleId: string;
     bikeId: string;
     serviceOdo: number;
-    cost?: number;
-    notes?: string;
+    cost?: number | null;
+    notes?: string | null;
   }) => Promise<void>;
 }
 
@@ -100,7 +100,7 @@ export default function CompleteServiceModal({
 
       const cost = formData.cost.trim()
         ? parseFloat(formData.cost.trim())
-        : undefined;
+        : null;
 
       if (cost !== undefined && (isNaN(cost) || cost < 0)) {
         throw new Error('Please enter a valid cost');
@@ -111,7 +111,7 @@ export default function CompleteServiceModal({
         bikeId: bike.id,
         serviceOdo,
         cost,
-        notes: formData.notes.trim() || undefined,
+        notes: formData.notes.trim() || null,
       });
 
       // Reset form

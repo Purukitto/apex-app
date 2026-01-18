@@ -190,9 +190,34 @@ async function buildSharedResources(
     ride,
     bike,
     !!hasRoute, // Ensure boolean
+    apexBlack,
     apexWhite,
     apexGreen
   );
+
+  // Ensure logo/image assets are loaded before rendering
+  const ensureImagesLoaded = async (container: HTMLElement) => {
+    const images = Array.from(container.querySelectorAll('img'));
+    if (images.length === 0) return;
+    await Promise.all(
+      images.map((img) => new Promise<void>((resolve) => {
+        if (img.complete) {
+          resolve();
+          return;
+        }
+        const onLoad = () => resolve();
+        const onError = () => {
+          // Remove failed images to avoid html2canvas errors
+          img.remove();
+          resolve();
+        };
+        img.addEventListener('load', onLoad, { once: true });
+        img.addEventListener('error', onError, { once: true });
+      }))
+    );
+  };
+
+  await ensureImagesLoaded(contentContainer);
 
   // Generate map snapshot once if route exists
   let mapSnapshot: string | null = null;
@@ -501,40 +526,47 @@ export async function generateRideShareImage(
     convertColorsToRGB(wrapper);
     const allElements = wrapper.querySelectorAll('*');
     allElements.forEach((el) => {
-      const htmlEl = el as HTMLElement;
-      convertColorsToRGB(htmlEl);
-      
-      // Remove CSS classes that might use Tailwind/oklab colors
-      // className can be a string or DOMTokenList, so convert to string first
-      const classNameStr = String(htmlEl.className || '');
-      
-      if (classNameStr) {
-        const hasColorClasses = classNameStr.includes('bg-') || 
-                                classNameStr.includes('text-') || 
-                                classNameStr.includes('border-') ||
-                                classNameStr.includes('dark-map-tiles');
-        if (hasColorClasses) {
-          // Remove Tailwind color classes - we've already set explicit RGB
-          const classes = classNameStr.split(' ').filter((cls: string) => 
-            cls && 
-            !cls.startsWith('bg-') && 
-            !cls.startsWith('text-') && 
-            !cls.startsWith('border-') &&
-            cls !== 'dark-map-tiles' // Remove this too - we don't use filters
-          );
-          htmlEl.className = classes.join(' ');
-        }
+      try {
+        const htmlEl = el as HTMLElement;
+        convertColorsToRGB(htmlEl);
         
-        // Force inline styles to override any remaining CSS
-        const computed = window.getComputedStyle(htmlEl);
-        const bgColor = computed.backgroundColor;
-        if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-          htmlEl.style.setProperty('background-color', bgColor, 'important');
+        // Remove CSS classes that might use Tailwind/oklab colors
+        // SVG elements expose className differently, so treat them separately
+        const isSvgElement = el instanceof SVGElement;
+        const classNameStr = isSvgElement
+          ? (el.getAttribute('class') || '')
+          : String(htmlEl.className || '');
+        
+        if (classNameStr) {
+          const hasColorClasses = classNameStr.includes('bg-') || 
+                                  classNameStr.includes('text-') || 
+                                  classNameStr.includes('border-') ||
+                                  classNameStr.includes('dark-map-tiles');
+          if (hasColorClasses && !isSvgElement) {
+            // Remove Tailwind color classes - we've already set explicit RGB
+            const classes = classNameStr.split(' ').filter((cls: string) => 
+              cls && 
+              !cls.startsWith('bg-') && 
+              !cls.startsWith('text-') && 
+              !cls.startsWith('border-') &&
+              cls !== 'dark-map-tiles' // Remove this too - we don't use filters
+            );
+            htmlEl.className = classes.join(' ');
+          }
+          
+          // Force inline styles to override any remaining CSS
+          const computed = window.getComputedStyle(htmlEl);
+          const bgColor = computed.backgroundColor;
+          if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+            htmlEl.style.setProperty('background-color', bgColor, 'important');
+          }
+          const textColor = computed.color;
+          if (textColor) {
+            htmlEl.style.setProperty('color', textColor, 'important');
+          }
         }
-        const textColor = computed.color;
-        if (textColor) {
-          htmlEl.style.setProperty('color', textColor, 'important');
-        }
+      } catch {
+        // Ignore per-element conversion errors to avoid breaking rendering
       }
     });
     
@@ -868,6 +900,7 @@ function buildSharedContentContainer(
   ride: Ride,
   bike: Bike | undefined,
   hasRoute: boolean,
+  apexBlack: string,
   apexWhite: string,
   apexGreen: string
 ): HTMLElement {
@@ -955,12 +988,63 @@ function buildSharedContentContainer(
   const footer = document.createElement('div');
   footer.style.display = 'flex';
   footer.style.alignItems = 'center';
-  footer.style.gap = '16px';
+  footer.style.justifyContent = 'space-between';
   footer.style.marginTop = 'auto';
   footer.style.paddingTop = '40px';
   footer.style.borderTop = '1px solid rgba(226, 226, 226, 0.1)';
   footer.style.position = 'relative';
   footer.style.zIndex = '2';
+  
+  // Left side: Logo + APEX text
+  const leftSection = document.createElement('div');
+  leftSection.style.display = 'flex';
+  leftSection.style.alignItems = 'center';
+  
+  // App logo (SVG as string for better html2canvas compatibility)
+  const logoContainer = document.createElement('div');
+  logoContainer.style.width = '48px';
+  logoContainer.style.height = '48px';
+  logoContainer.style.display = 'flex';
+  logoContainer.style.alignItems = 'center';
+  logoContainer.style.justifyContent = 'center';
+  logoContainer.style.flexShrink = '0';
+  
+  // Use data URL image to avoid inline SVG parsing issues
+  const logoImg = document.createElement('img');
+  logoImg.dataset.shareLogo = 'true';
+  logoImg.alt = 'Apex logo';
+  logoImg.style.width = '100%';
+  logoImg.style.height = '100%';
+  logoImg.style.display = 'block';
+  logoImg.style.objectFit = 'contain';
+  logoImg.style.objectPosition = 'center';
+  logoImg.crossOrigin = 'anonymous';
+
+  logoContainer.style.backgroundColor = apexBlack;
+  logoContainer.style.borderRadius = '12px';
+  if (apexGreen.startsWith('#')) {
+    const borderColor = apexGreen.replace('#', '');
+    const r = parseInt(borderColor.substring(0, 2), 16);
+    const g = parseInt(borderColor.substring(2, 4), 16);
+    const b = parseInt(borderColor.substring(4, 6), 16);
+    logoContainer.style.border = `1px solid rgba(${r}, ${g}, ${b}, 0.2)`;
+  }
+
+  const svgString = `<svg viewBox="0 0 120 120" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+    <rect width="120" height="120" rx="24" fill="${apexBlack}" />
+    <path d="M23.4 93.8 C 35.2 93.8, 51.6 28.1, 96.6 28.1" stroke="${apexGreen}" stroke-width="8" stroke-miterlimit="10" stroke-linecap="square" fill="none" />
+    <circle cx="96.6" cy="28.1" r="6" fill="${apexGreen}" />
+  </svg>`;
+  try {
+    const svgBase64 = window.btoa(unescape(encodeURIComponent(svgString)));
+    logoImg.src = `data:image/svg+xml;base64,${svgBase64}`;
+  } catch (error) {
+    logger.warn('Failed to encode logo SVG for share image', error);
+    logoImg.src = '/apex-logo.svg';
+  }
+
+  logoContainer.appendChild(logoImg);
+  leftSection.appendChild(logoContainer);
   
   const logoText = document.createElement('div');
   logoText.textContent = 'APEX';
@@ -969,8 +1053,23 @@ function buildSharedContentContainer(
   logoText.style.color = apexGreen;
   logoText.style.letterSpacing = '4px';
   logoText.style.fontFamily = 'monospace';
+  logoText.style.marginLeft = '16px'; // Use margin instead of gap for compatibility
+  logoText.style.lineHeight = '1';
   
-  footer.appendChild(logoText);
+  leftSection.appendChild(logoText);
+  footer.appendChild(leftSection);
+  
+  // Right side: GitHub link
+  const githubLink = document.createElement('div');
+  githubLink.textContent = 'github.com/Purukitto/apex-app';
+  githubLink.style.fontSize = '18px';
+  githubLink.style.color = apexWhite;
+  githubLink.style.opacity = '0.6';
+  githubLink.style.fontFamily = 'monospace';
+  githubLink.style.textDecoration = 'none';
+  githubLink.style.cursor = 'default'; // Not clickable in image
+  
+  footer.appendChild(githubLink);
   container.appendChild(footer);
 
   return container;

@@ -147,7 +147,7 @@ export default function MaintenanceLogList({
           }
         }}
         title="Delete Maintenance Log"
-        message={`Are you sure you want to delete this maintenance log? This action cannot be undone.`}
+        message="This will permanently delete this maintenance log. This action cannot be undone."
         confirmLabel="Delete"
         cancelLabel="Cancel"
         variant="danger"

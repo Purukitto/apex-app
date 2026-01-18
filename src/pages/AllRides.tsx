@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useBikes } from "../hooks/useBikes";
 import { useRides } from "../hooks/useRides";
@@ -29,9 +29,12 @@ import ConfirmModal from "../components/ConfirmModal";
 import RideMap from "../components/RideMap";
 import LoadingSpinner from "../components/LoadingSpinner";
 import DebugPanel from "../components/DebugPanel";
+import PullToRefreshIndicator from "../components/PullToRefreshIndicator";
 import { useThemeColors } from "../hooks/useThemeColors";
 import { formatDateTime, formatDuration, formatShortDate } from "../utils/format";
 import type { Ride } from "../types/database";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh } from "../hooks/usePullToRefresh";
 
 const PAGE_SIZE = 20;
 
@@ -39,6 +42,7 @@ export default function AllRides() {
   const { primary } = useThemeColors();
   const { bikes } = useBikes();
   const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   const rideIdFromUrl = searchParams.get("rideId");
   const [page, setPage] = useState(0);
   const [expandedRideId, setExpandedRideId] = useState<string | null>(null);
@@ -50,7 +54,7 @@ export default function AllRides() {
   const [editRideImageUrl, setEditRideImageUrl] = useState("");
   const [isFindingRide, setIsFindingRide] = useState(false);
 
-  const { rides, total, isLoading, updateRide, deleteRide } = useRides({
+  const { rides, total, isLoading, updateRide, deleteRide, refetch } = useRides({
     page,
     pageSize: PAGE_SIZE,
   });
@@ -278,12 +282,29 @@ export default function AllRides() {
     }
   };
 
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([
+      refetch(),
+      queryClient.invalidateQueries({ queryKey: ["bikes"] }),
+    ]);
+  }, [refetch, queryClient]);
+
+  const { pullDistance, isRefreshing } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    logLabel: "rides",
+  });
+
   if (isLoading && rides.length === 0) {
     return <LoadingSpinner fullScreen text="Loading rides..." />;
   }
 
   return (
     <div className="h-full flex flex-col">
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+        accentColor={primary}
+      />
       <motion.div
         className="p-6 pb-32 space-y-6"
         variants={containerVariants}

@@ -100,6 +100,13 @@ For more information:
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Guidelines for contributing
 
+## ☕ Support Development
+
+Apex is free and open-source. If it helps you, consider supporting development:
+
+- **[Buy Me a Coffee](https://buymeacoffee.com/purukitto)** — One-time support ($)
+- **UPI** — `apex-app@axl` (India, ₹) — *Payee: Apex Development*
+
 ## 🤝 Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.

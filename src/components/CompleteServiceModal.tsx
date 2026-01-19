@@ -102,7 +102,7 @@ export default function CompleteServiceModal({
         ? parseFloat(formData.cost.trim())
         : null;
 
-      if (cost !== undefined && (isNaN(cost) || cost < 0)) {
+      if (cost != null && (isNaN(cost) || cost < 0)) {
         throw new Error('Please enter a valid cost');
       }
 

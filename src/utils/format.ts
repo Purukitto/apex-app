@@ -70,7 +70,7 @@ interface FormatDurationOptions {
 
 export const formatDuration = (
   start: DateInput,
-  end?: DateInput,
+  end?: DateInput | null,
   options: FormatDurationOptions = {}
 ): string => {
   if (!end) {

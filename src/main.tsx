@@ -6,6 +6,7 @@ import { StatusBar, Style } from '@capacitor/status-bar'
 import './index.css'
 import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary.tsx'
+import { SpeedInsights } from './components/SpeedInsights.tsx'
 import { isSupabaseConfigured } from './lib/supabaseClient.ts'
 import { initializeTheme } from './lib/theme.ts'
 import { initializeVersion } from './lib/version.ts'
@@ -49,6 +50,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
+        <SpeedInsights />
         <App />
       </QueryClientProvider>
     </ErrorBoundary>

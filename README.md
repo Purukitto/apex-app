@@ -44,9 +44,9 @@ Whether you're tracking your weekend rides or managing a fleet of motorcycles, A
 <img src="docs/screenshots/dashboard.jpg" alt="The Dashboard" width="280" />
 
 ### 🔗 Discord Integration
-- **OAuth Connection**: Link your Discord account to Apex
-- **Status Sharing**: Share your ride status *(coming soon)*
-- **Maintenance Reminders**: Get notified via Discord when service is due *(coming soon)*
+- **Status Sharing (Android, experimental)**: Share your ride status
+
+> Warning: This app uses the Discord Gateway connection. Use this at your own risk. However people have been using custom rich presence for past 4-5 years and there is still no case of account getting terminated.
 
 ## 🎨 Design Philosophy
 
@@ -125,6 +125,7 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 
 Built with modern web technologies and designed for riders who demand precision and simplicity.
 Maps © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors
+Discord RPC gateway approach inspired by [Kizzy](https://github.com/dead8309/Kizzy)
 
 ---
 

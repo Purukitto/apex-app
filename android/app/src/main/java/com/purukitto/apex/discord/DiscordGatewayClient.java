@@ -50,7 +50,8 @@ class DiscordGatewayClient {
     }
 
     void clearPresence() {
-        if (socket == null) {
+        WebSocket activeSocket = socket;
+        if (activeSocket == null) {
             Log.d(TAG, "Gateway not connected, skip clear");
             return;
         }
@@ -66,7 +67,7 @@ class DiscordGatewayClient {
         } catch (JSONException ignored) {
             return;
         }
-        socket.send(payload.toString());
+        activeSocket.send(payload.toString());
         Log.d(TAG, "Presence cleared");
     }
 
@@ -172,20 +173,22 @@ class DiscordGatewayClient {
     }
 
     private void sendHeartbeat() {
-        if (socket == null) {
+        WebSocket activeSocket = socket;
+        if (activeSocket == null) {
             return;
         }
         try {
             JSONObject payload = new JSONObject();
             payload.put("op", 1);
             payload.put("d", sequenceNumber == null ? JSONObject.NULL : sequenceNumber);
-            socket.send(payload.toString());
+            activeSocket.send(payload.toString());
         } catch (JSONException ignored) {
         }
     }
 
     private void sendPresence(PendingPresence presence) {
-        if (socket == null) {
+        WebSocket activeSocket = socket;
+        if (activeSocket == null) {
             Log.d(TAG, "Presence send skipped, socket missing");
             return;
         }
@@ -209,7 +212,7 @@ class DiscordGatewayClient {
             data.put("afk", false);
             payload.put("op", 3);
             payload.put("d", data);
-            socket.send(payload.toString());
+            activeSocket.send(payload.toString());
         } catch (JSONException ignored) {
             Log.d(TAG, "Presence send failed");
         }

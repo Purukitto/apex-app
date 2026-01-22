@@ -232,13 +232,13 @@ class DiscordGatewayClient {
         @Override
         public void onFailure(WebSocket webSocket, Throwable t, Response response) {
             Log.d(TAG, "Gateway failure: " + t.getMessage());
-            disconnect();
+            mainHandler.post(() -> disconnect());
         }
 
         @Override
         public void onClosed(WebSocket webSocket, int code, String reason) {
             Log.d(TAG, "Gateway closed: " + code + " " + reason);
-            disconnect();
+            mainHandler.post(() -> disconnect());
         }
     }
 

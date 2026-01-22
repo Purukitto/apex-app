@@ -91,14 +91,12 @@ Ensure your Supabase database has the following tables with PostGIS enabled:
 - `bikes` - Motorcycle profiles
 - `rides` - Ride records with GPS paths (PostGIS LineString)
 - `maintenance_logs` - Service history
-No Discord OAuth tables are required for Discord RPC.
 
 **Notifications Tables (Required):**
 - `notifications` - Server-synced notification feed (read/dismiss state)
 - `push_tokens` - Device tokens for FCM delivery
 - `notification_delivery_queue` - Delivery queue processed by cron
 
-No Discord OAuth RPC functions are required for Discord RPC.
 
 ### 5. Run Development Server
 

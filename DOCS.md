@@ -18,7 +18,6 @@ A minimalist, high-precision utility for motorcyclists. Apex is a "Flight Record
 
 ### Current Status
 - ✅ **Discord RPC (Android)**: Uses a locally stored Discord Gateway token
-- ⚠️ **Warning**: Uses Discord Gateway connection. Use at your own risk.
 - ✅ **Battery Friendly**: Updates only on ride start/end
 
 ### Architecture

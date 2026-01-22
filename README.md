@@ -123,9 +123,9 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 
 ## 🙏 Acknowledgments
 
-Built with modern web technologies and designed for riders who demand precision and simplicity.
 Maps © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors
-Discord RPC gateway approach inspired by [Kizzy](https://github.com/dead8309/Kizzy)
+
+Discord RPC approach inspired by [Kizzy](https://github.com/dead8309/Kizzy)
 
 ---
 

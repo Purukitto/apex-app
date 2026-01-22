@@ -5,7 +5,7 @@
 2. **Local State:** Zustand (`useRideStore`) manages the "Active Ride" buffer.
 3. **Storage:** Rides are persisted to Supabase via PostGIS `ST_GeomFromText` for LineStrings.
 4. **Maintenance:** Standard CRUD via Supabase JS client.
-5. **Discord RPC (Android):** Local token storage and gateway presence updates.
+5. **Discord RPC (Android):** Gateway presence updates.
 
 ## Key Screens
 - **Dashboard:** Current bike status, last ride summary.
@@ -21,10 +21,10 @@
 - `maintenance_logs` - Service history
 
 ### Discord Integration
-- Discord RPC tokens are stored locally on device (no server storage).
+- Discord RPC tokens are stored locally on device.
 
 ## Discord RPC Notes
-- Uses a locally stored Discord Gateway token (Android only).
+- Uses a locally stored Discord Gateway token.
 
 ## Security Architecture
 

@@ -35,6 +35,7 @@ public class DiscordRpcPlugin extends Plugin {
         intent.setAction(DiscordRpcService.ACTION_UPDATE);
         intent.putExtra(DiscordRpcService.EXTRA_DETAILS, call.getString("details"));
         intent.putExtra(DiscordRpcService.EXTRA_STATE, call.getString("state"));
+        intent.putExtra(DiscordRpcService.EXTRA_APP_ID, call.getString("appId"));
         ContextCompat.startForegroundService(getContext(), intent);
         call.resolve();
     }

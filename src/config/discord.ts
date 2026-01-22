@@ -3,3 +3,12 @@ export const DISCORD_RPC_ENABLED =
 
 export const isDiscordRpcEnabledForPlatform = (platform: string) =>
   DISCORD_RPC_ENABLED && platform === 'android';
+
+const normalizeEnvValue = (value?: string) => {
+  const trimmed = value?.toString().trim();
+  return trimmed ? trimmed : undefined;
+};
+
+export const DISCORD_RPC_APP_ID = normalizeEnvValue(
+  import.meta.env.VITE_DISCORD_RPC_APP_ID
+);

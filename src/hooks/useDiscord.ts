@@ -4,7 +4,7 @@ import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { logger } from '../lib/logger';
 import { useDiscordRpcStore } from '../stores/useDiscordRpcStore';
-import { isDiscordRpcEnabledForPlatform } from '../config/discord';
+import { DISCORD_RPC_APP_ID, isDiscordRpcEnabledForPlatform } from '../config/discord';
 import {
   clearDiscordPresence,
   connectDiscordRpc,
@@ -143,7 +143,7 @@ export function useDiscord() {
       }
 
       await connectDiscordRpc(preferences.rpcToken);
-      await updateDiscordPresence(details, state);
+      await updateDiscordPresence(details, state, DISCORD_RPC_APP_ID);
     },
     onError: (error: Error) => {
       // Don't show toast for presence updates - they're background operations

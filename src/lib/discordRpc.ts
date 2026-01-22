@@ -3,7 +3,7 @@ import { logger } from './logger';
 
 interface DiscordRpcPlugin {
   connect(options: { token: string }): Promise<void>;
-  updatePresence(options: { details?: string; state?: string }): Promise<void>;
+  updatePresence(options: { details?: string; state?: string; appId?: string }): Promise<void>;
   clearPresence(): Promise<void>;
   disconnect(): Promise<void>;
 }
@@ -30,12 +30,16 @@ export const connectDiscordRpc = async (token: string) => {
   }
 };
 
-export const updateDiscordPresence = async (details?: string, state?: string) => {
+export const updateDiscordPresence = async (
+  details?: string,
+  state?: string,
+  appId?: string
+) => {
   if (!isDiscordRpcSupported()) {
     return;
   }
   try {
-    await DiscordRpc.updatePresence({ details, state });
+    await DiscordRpc.updatePresence({ details, state, appId });
   } catch (error) {
     logger.error('Discord RPC update failed:', error);
   }

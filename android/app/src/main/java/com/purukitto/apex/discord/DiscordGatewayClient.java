@@ -39,8 +39,12 @@ class DiscordGatewayClient {
         socket = client.newWebSocket(request, new GatewayListener());
     }
 
-    void updatePresence(@Nullable String details, @Nullable String state) {
-        PendingPresence presence = new PendingPresence(details, state);
+    void updatePresence(
+        @Nullable String details,
+        @Nullable String state,
+        @Nullable String appId
+    ) {
+        PendingPresence presence = new PendingPresence(details, state, appId);
         if (!isReady) {
             Log.d(TAG, "Gateway not ready, queueing presence");
             pendingPresence = presence;
@@ -205,6 +209,9 @@ class DiscordGatewayClient {
             if (presence.state != null) {
                 activity.put("state", presence.state);
             }
+            if (presence.appId != null && !presence.appId.isEmpty()) {
+                activity.put("application_id", presence.appId);
+            }
             activities.put(activity);
             data.put("since", JSONObject.NULL);
             data.put("activities", activities);
@@ -247,10 +254,17 @@ class DiscordGatewayClient {
         final String details;
         @Nullable
         final String state;
+        @Nullable
+        final String appId;
 
-        PendingPresence(@Nullable String details, @Nullable String state) {
+        PendingPresence(
+            @Nullable String details,
+            @Nullable String state,
+            @Nullable String appId
+        ) {
             this.details = details;
             this.state = state;
+            this.appId = appId;
         }
     }
 }

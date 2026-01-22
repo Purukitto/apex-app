@@ -22,6 +22,7 @@ public class DiscordRpcService extends Service {
     static final String EXTRA_TOKEN = "extra_token";
     static final String EXTRA_DETAILS = "extra_details";
     static final String EXTRA_STATE = "extra_state";
+    static final String EXTRA_APP_ID = "extra_app_id";
 
     private static final String CHANNEL_ID = "discord_rpc";
     private static final int NOTIFICATION_ID = 4127;
@@ -61,8 +62,9 @@ public class DiscordRpcService extends Service {
         } else if (ACTION_UPDATE.equals(action)) {
             String details = intent.getStringExtra(EXTRA_DETAILS);
             String state = intent.getStringExtra(EXTRA_STATE);
+            String appId = intent.getStringExtra(EXTRA_APP_ID);
             Log.d(TAG, "Updating presence");
-            gatewayClient.updatePresence(details, state);
+            gatewayClient.updatePresence(details, state, appId);
         } else if (ACTION_CLEAR.equals(action)) {
             Log.d(TAG, "Clearing presence");
             gatewayClient.clearPresence();

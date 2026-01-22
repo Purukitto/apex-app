@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.1](https://github.com/Purukitto/apex-app/compare/v1.1.0...v1.1.1) (2026-01-22)
+
+
+### Bug Fixes
+
+* ensure safe disconnection handling in DiscordGatewayClient by posting to mainHandler ([0e51bd9](https://github.com/Purukitto/apex-app/commit/0e51bd95d8a224718e850e20d27360287ccc0365))
+* include app id in Discord RPC presence ([5705502](https://github.com/Purukitto/apex-app/commit/57055026226b5b956ce45c493ddafe07df70eb11))
+* update foreground service handling in DiscordRpcService ([ec71fd9](https://github.com/Purukitto/apex-app/commit/ec71fd9d52f655ef0868d31851c54a6043549232))
+
+
+### Code Refactoring
+
+* optimize socket handling in DiscordGatewayClient ([664bb75](https://github.com/Purukitto/apex-app/commit/664bb758ec9b4fd109927f60ad3d40a28af32374))
+
+
+### Miscellaneous Chores
+
+* allow cleartext in debug builds ([b9097d5](https://github.com/Purukitto/apex-app/commit/b9097d5d28b7e4b2b41e9c62493c8aa89423daf2))
+* **deps-dev:** bump the development-dependencies group across 1 directory with 3 updates ([#65](https://github.com/Purukitto/apex-app/issues/65)) ([914c398](https://github.com/Purukitto/apex-app/commit/914c398285684e2e6d6de5b81873d62223d34a62))
+* **deps:** bump the production-dependencies group with 5 updates ([#63](https://github.com/Purukitto/apex-app/issues/63)) ([9c287b0](https://github.com/Purukitto/apex-app/commit/9c287b0a5d0327fc1947c6920f9b59e2525257f6))
+* fix package ([29986a5](https://github.com/Purukitto/apex-app/commit/29986a544a5665b4353bf821180dbb7b8605fef0))
+* remove cleartext traffic usage from AndroidManifest.xml ([e3283b1](https://github.com/Purukitto/apex-app/commit/e3283b18e902a84a3aa7c397d3b4b5d5e1f18c4c))
+* update capacitor-swift-pm dependency to version 8.0.1 ([e377c61](https://github.com/Purukitto/apex-app/commit/e377c61714c3f386c2cc4262a454588d11620605))
+* update package-lock.json for version 1.1.0 ([d1ecbcf](https://github.com/Purukitto/apex-app/commit/d1ecbcf1c9b0ec3bf706789d46ef0d89e15d20d0))
+
 ## [1.1.0](https://github.com/Purukitto/apex-app/compare/v1.0.0...v1.1.0) (2026-01-22)
 
 

@@ -37,6 +37,9 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
   const [logLevel, setLogLevel] = useState<LogLevel>(() => logger.getLevel() as LogLevel);
   const [searchFilter, setSearchFilter] = useState('');
   const consoleEndRef = useRef<HTMLDivElement>(null);
+  const consoleScrollRef = useRef<HTMLDivElement>(null);
+  const isAtBottomRef = useRef(true);
+  const [isAtBottom, setIsAtBottom] = useState(true);
   const [notificationType, setNotificationType] = useState<'info' | 'warning' | 'error'>('info');
   const [notificationTitle, setNotificationTitle] = useState('DevTools Test');
   const [notificationMessage, setNotificationMessage] = useState('This is a test notification.');
@@ -224,9 +227,33 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
     });
   }, [consoleLogs, logLevel, searchFilter]);
 
-  // Auto-scroll console to bottom when new logs arrive
+  // Track whether user is at bottom of console (for conditional auto-scroll)
+  const handleConsoleScroll = useCallback(() => {
+    const el = consoleScrollRef.current;
+    if (!el) return;
+    const threshold = 50;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
+    if (atBottom !== isAtBottomRef.current) {
+      isAtBottomRef.current = atBottom;
+      setIsAtBottom(atBottom);
+    }
+  }, []);
+
+  // Sync isAtBottom when switching to console tab (scroll handler may not have run yet)
   useEffect(() => {
-    if (activeTab === 'console' && consoleEndRef.current && filteredLogs.length > 0) {
+    if (activeTab !== 'console') return;
+    const el = consoleScrollRef.current;
+    if (el) {
+      const threshold = 50;
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
+      isAtBottomRef.current = atBottom;
+      setIsAtBottom(atBottom);
+    }
+  }, [activeTab]);
+
+  // Auto-scroll console to bottom only when user is already at bottom
+  useEffect(() => {
+    if (activeTab === 'console' && consoleEndRef.current && filteredLogs.length > 0 && isAtBottomRef.current) {
       consoleEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [consoleLogs.length, activeTab, filteredLogs.length]);
@@ -785,7 +812,11 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                   </div>
 
                   {/* Scrollable Logs Container */}
-                  <div className="flex-1 overflow-y-auto p-4">
+                  <div
+                    ref={consoleScrollRef}
+                    onScroll={handleConsoleScroll}
+                    className="flex-1 overflow-y-auto p-4 relative"
+                  >
                     <div className="space-y-1 font-mono text-xs">
                       {filteredLogs.length === 0 ? (
                         <p className="text-apex-white/40 text-center py-8">
@@ -827,6 +858,21 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                       )}
                       <div ref={consoleEndRef} />
                     </div>
+                    <AnimatePresence>
+                      {!isAtBottom && filteredLogs.length > 0 && (
+                        <motion.button
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          onClick={() => consoleEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                          className="absolute bottom-4 right-4 z-10 p-2 rounded-lg bg-apex-black border border-apex-green/40 text-apex-green hover:bg-apex-green/10"
+                          {...buttonHoverProps}
+                          title="Scroll to bottom"
+                        >
+                          <ChevronDown size={18} />
+                        </motion.button>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
               )}

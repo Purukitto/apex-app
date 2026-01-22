@@ -4,13 +4,6 @@ import { logger } from './logger';
 
 const DISCORD_LOGIN_URL = 'https://discord.com/login';
 
-/**
- * Mirrors AnymeX discord_login.dart (https://github.com/RyanYuuki/AnymeX/blob/0eb1433ece02ad8adc191569d913f694cddb87a3/lib/controllers/discord/discord_login.dart):
- * - onLoadStart: window.LOCAL_STORAGE = localStorage (alias before Discord can overwrite)
- * - on /login: clear LOCAL_STORAGE + sessionStorage
- * - when URL != /login: wait 2s, getItem('token'), postMessage
- * We use one script; executeScript returns void so we postMessage instead of return.
- */
 const SCRIPT = `
 (function() {
   try { window.LOCAL_STORAGE = window.LOCAL_STORAGE || localStorage; } catch (e) {}

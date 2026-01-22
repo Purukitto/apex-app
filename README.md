@@ -8,6 +8,7 @@
   [![CI](https://github.com/Purukitto/apex-app/actions/workflows/ci.yml/badge.svg)](https://github.com/Purukitto/apex-app/actions)
   [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
   [![Release](https://img.shields.io/github/v/release/Purukitto/apex-app?include_prereleases)](https://github.com/Purukitto/apex-app/releases/latest)
+  [![Deployed on Vercel](https://img.shields.io/badge/deployed%20on-vercel-black?logo=vercel)](https://apex.purukitto.xyz)
 </div>
 
 ## 🎯 What is Apex?
@@ -70,7 +71,7 @@ Apex is available as a mobile app for iOS and Android:
 
 - **Android**: Download the latest APK from [GitHub Releases](https://github.com/Purukitto/apex-app/releases/latest)
 - **iOS**: Coming soon (App Store submission in progress)
-- **Web**: Access the web version at [your deployment URL] (if deployed)
+- **Web**: Access the web version at [apex.purukitto.xyz](https://apex.purukitto.xyz)
 
 ### Installation Instructions
 

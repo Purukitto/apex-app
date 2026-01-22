@@ -35,7 +35,6 @@ class DiscordGatewayClient {
             return;
         }
         this.token = token;
-        Log.d(TAG, "Connecting to Discord gateway");
         Request request = new Request.Builder().url(GATEWAY_URL).build();
         socket = client.newWebSocket(request, new GatewayListener());
     }
@@ -98,16 +97,13 @@ class DiscordGatewayClient {
             switch (op) {
                 case 10:
                     heartbeatInterval = data.getJSONObject("d").getInt("heartbeat_interval");
-                    Log.d(TAG, "Gateway hello, heartbeat " + heartbeatInterval);
                     identify();
                     startHeartbeat();
                     break;
                 case 0:
                     String event = data.optString("t", "");
-                    Log.d(TAG, "Gateway event: " + event);
                     if ("READY".equals(event)) {
                         isReady = true;
-                        Log.d(TAG, "Gateway ready");
                         if (pendingPresence != null) {
                             sendPresence(pendingPresence);
                             pendingPresence = null;
@@ -115,10 +111,8 @@ class DiscordGatewayClient {
                     }
                     break;
                 case 11:
-                    Log.d(TAG, "Heartbeat acknowledged");
                     break;
                 case 7:
-                    Log.d(TAG, "Gateway requested reconnect");
                     String t = this.token;
                     disconnect();
                     connect(t);
@@ -128,7 +122,6 @@ class DiscordGatewayClient {
                     identify();
                     break;
                 default:
-                    Log.d(TAG, "Gateway op: " + op);
                     break;
             }
         } catch (JSONException ignored) {
@@ -157,7 +150,6 @@ class DiscordGatewayClient {
             payload.put("op", 2);
             payload.put("d", data);
             socket.send(payload.toString());
-            Log.d(TAG, "Identify sent");
         } catch (JSONException ignored) {
             Log.d(TAG, "Identify failed");
         }
@@ -177,7 +169,6 @@ class DiscordGatewayClient {
                 sendHeartbeat();
             }
         }, heartbeatInterval, heartbeatInterval);
-        Log.d(TAG, "Heartbeat started");
     }
 
     private void sendHeartbeat() {
@@ -189,9 +180,7 @@ class DiscordGatewayClient {
             payload.put("op", 1);
             payload.put("d", sequenceNumber == null ? JSONObject.NULL : sequenceNumber);
             socket.send(payload.toString());
-            Log.d(TAG, "Heartbeat sent");
         } catch (JSONException ignored) {
-            Log.d(TAG, "Heartbeat send failed");
         }
     }
 
@@ -221,7 +210,6 @@ class DiscordGatewayClient {
             payload.put("op", 3);
             payload.put("d", data);
             socket.send(payload.toString());
-            Log.d(TAG, "Presence sent");
         } catch (JSONException ignored) {
             Log.d(TAG, "Presence send failed");
         }

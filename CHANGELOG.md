@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/Purukitto/apex-app/compare/v1.0.0...v1.1.0) (2026-01-22)
+
+
+### Features
+
+* add Android Discord RPC presence ([c5de4c4](https://github.com/Purukitto/apex-app/commit/c5de4c4c4b9e2cfd74949b62025eb80b04e06f10))
+* improve devtools console scrolling ([cf7f31c](https://github.com/Purukitto/apex-app/commit/cf7f31c6e70ca78e382dc0ddf6700fb175769db1))
+
+
+### Bug Fixes
+
+* update cost validation to handle null values and enhance type safety in formatDuration function ([#62](https://github.com/Purukitto/apex-app/issues/62)) ([effff6a](https://github.com/Purukitto/apex-app/commit/effff6a1615c7942dd616661d91459675a2070cc))
+
+
+### Code Refactoring
+
+* remove debug logging from DiscordGatewayClient ([a7fc830](https://github.com/Purukitto/apex-app/commit/a7fc830445492f605b73c4e3a7770fa5b65a07f2))
+* remove outdated comments from discordLogin.ts ([78ec30a](https://github.com/Purukitto/apex-app/commit/78ec30af86ae73009605829e261005362ec25729))
+
+
+### Documentation
+
+* enhance README.md with new images and sections for improved user guidance ([#59](https://github.com/Purukitto/apex-app/issues/59)) ([e452329](https://github.com/Purukitto/apex-app/commit/e4523292e67341bcf683abc0dd51306b06a27eb7))
+* refine Discord RPC documentation and remove outdated OAuth references ([0163c6a](https://github.com/Purukitto/apex-app/commit/0163c6ad28deb93ac6111060023fbec9b93a7e05))
+* update Discord RPC documentation ([a443398](https://github.com/Purukitto/apex-app/commit/a443398ab5a1bce12c8231284ef175c2bd8224a2))
+* update README.md to include Vercel deployment badge and provide direct web access link ([5781963](https://github.com/Purukitto/apex-app/commit/57819637c78e971841a7e3ea8041d07b2c6f4763))
+
 ### [1.0.1](https://github.com/Purukitto/apex-app/compare/v1.0.0...v1.0.1) (2026-01-18)
 
 

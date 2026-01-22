@@ -83,6 +83,12 @@ Before submitting a PR, ensure:
 - [ ] Animations use shared library variants
 - [ ] Toast notifications are implemented for mutations
 
+## ⚠️ Discord RPC (Android, Experimental)
+
+- Uses a Discord Gateway token stored locally on device.
+- This follows the approach popularized by [Kizzy](https://github.com/dead8309/Kizzy) and is provided as-is.
+- Contributors must not add automated token extraction or server-side storage for this token.
+
 ## 📦 Pull Request Process
 
 1. Update documentation if needed

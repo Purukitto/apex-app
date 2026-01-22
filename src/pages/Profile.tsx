@@ -1,26 +1,27 @@
 import { useState, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { useDiscord } from '../hooks/useDiscord';
+import { useDiscordRpcStore } from '../stores/useDiscordRpcStore';
+import { isDiscordRpcEnabledForPlatform } from '../config/discord';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useAppUpdate } from '../hooks/useAppUpdate';
 import { useAppUpdateStore } from '../stores/useAppUpdateStore';
 import { useNavigate } from 'react-router-dom';
-import { Mail, LogOut, Save, User, MessageCircle, Link2, Unlink, Download, RefreshCw, Palette } from 'lucide-react';
+import { Mail, LogOut, Save, User, MessageCircle, Download, RefreshCw, Palette, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { containerVariants, itemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
 import DonationCard from '../components/profile/DonationCard';
 import { useThemeStore, PRIMARY_COLORS, BACKGROUND_COLORS, type BackgroundTheme, type PrimaryTheme } from '../stores/useThemeStore';
 import { applyTheme } from '../lib/theme';
 import { getAppVersion } from '../lib/version';
-import { logger } from '../lib/logger';
-
-const DISCORD_BLURPLE = '#5865F2';
+import { isDiscordLoginSupported, openDiscordLogin } from '../lib/discordLogin';
+import { apexToast } from '../lib/toast';
 
 export default function Profile() {
   const isNative = Capacitor.isNativePlatform();
+  const platform = Capacitor.getPlatform();
+  const isDiscordRpcSupported = isDiscordRpcEnabledForPlatform(platform);
   const { profile, isLoading, updateRiderName, signOut } = useUserProfile();
-  const { isConnected, isLoading: isDiscordLoading, linkDiscord, unlinkDiscord } = useDiscord();
   const { isChecking, checkForUpdate, hasCheckedNoUpdate } = useAppUpdate();
   const { updateInfo, setShowModal } = useAppUpdateStore();
   const navigate = useNavigate();
@@ -29,6 +30,18 @@ export default function Profile() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { background, primary, setBackground, setPrimary } = useThemeStore();
+  const {
+    enabled: rpcEnabled,
+    shareRideStatus,
+    shareBikeName,
+    shareCity,
+    rpcToken,
+    setEnabled: setRpcEnabled,
+    setShareRideStatus,
+    setShareBikeName,
+    setShareCity,
+    setRpcToken,
+  } = useDiscordRpcStore();
   
 
   // Update local state when profile changes
@@ -66,24 +79,6 @@ export default function Profile() {
     }
   };
 
-  const handleLinkDiscord = async () => {
-    try {
-      await linkDiscord.mutateAsync();
-    } catch (err) {
-      // Error is handled by the hook's onError
-      logger.error('Failed to link Discord:', err);
-    }
-  };
-
-  const handleUnlinkDiscord = async () => {
-    try {
-      await unlinkDiscord.mutateAsync();
-    } catch (err) {
-      // Error is handled by the hook's onError
-      logger.error('Failed to unlink Discord:', err);
-    }
-  };
-
   const handleCheckForUpdate = async () => {
     const result = await checkForUpdate(true, true);
     if (result?.isAvailable) {
@@ -102,6 +97,140 @@ export default function Profile() {
     applyTheme();
   };
 
+  const discordRpcSettings = (
+    <div className="space-y-3 pt-2 border-t border-apex-white/20">
+      <p className="text-xs text-apex-white/60">
+        Rich Presence updates only on ride start and end to preserve battery.
+      </p>
+      {!isDiscordRpcSupported ? (
+        <div className="text-xs text-apex-white/40">
+          Discord RPC is available on Android only.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-apex-white">Discord</p>
+              {rpcToken ? (
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5 text-apex-green text-sm">
+                    <CheckCircle size={16} />
+                    Connected
+                  </span>
+                  <motion.button
+                    type="button"
+                    onClick={() => setRpcToken('')}
+                    className="text-xs text-apex-white/50 hover:text-apex-white/80 underline transition-colors"
+                    {...buttonHoverProps}
+                  >
+                    Disconnect
+                  </motion.button>
+                </div>
+              ) : (
+                isDiscordLoginSupported() && (
+                  <motion.button
+                    type="button"
+                    onClick={() =>
+                      openDiscordLogin({
+                        onTokenExtracted: (token) => {
+                          setRpcToken(token);
+                          apexToast.success('Connected');
+                        },
+                      })
+                    }
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#5865F2]/60 bg-[#5865F2]/10 text-apex-white text-sm"
+                    {...buttonHoverProps}
+                  >
+                    <MessageCircle size={16} />
+                    Login with Discord
+                  </motion.button>
+                )
+              )}
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-apex-white">Enable Rich Presence</p>
+              <p className="text-xs text-apex-white/40">Toggle Discord updates during rides.</p>
+            </div>
+            <motion.button
+              onClick={() => setRpcEnabled(!rpcEnabled)}
+              className={`relative h-6 w-11 rounded-full border transition-colors ${
+                rpcEnabled ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
+              }`}
+              {...buttonHoverProps}
+            >
+              <span
+                className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${
+                  rpcEnabled ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
+                }`}
+              />
+            </motion.button>
+          </div>
+          <div className={`space-y-3 ${rpcEnabled ? '' : 'opacity-50'}`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-apex-white">Ride Status</p>
+                <p className="text-xs text-apex-white/40">Share start/end status.</p>
+              </div>
+              <motion.button
+                onClick={() => rpcEnabled && setShareRideStatus(!shareRideStatus)}
+                className={`relative h-6 w-11 rounded-full border transition-colors ${
+                  shareRideStatus ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
+                }`}
+                {...buttonHoverProps}
+              >
+                <span
+                  className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${
+                    shareRideStatus ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
+                  }`}
+                />
+              </motion.button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-apex-white">Bike Name</p>
+                <p className="text-xs text-apex-white/40">Share your selected bike.</p>
+              </div>
+              <motion.button
+                onClick={() => rpcEnabled && setShareBikeName(!shareBikeName)}
+                className={`relative h-6 w-11 rounded-full border transition-colors ${
+                  shareBikeName ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
+                }`}
+                {...buttonHoverProps}
+              >
+                <span
+                  className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${
+                    shareBikeName ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
+                  }`}
+                />
+              </motion.button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-apex-white">City</p>
+                <p className="text-xs text-apex-white/40">Share your current city if available.</p>
+              </div>
+              <motion.button
+                onClick={() => rpcEnabled && setShareCity(!shareCity)}
+                className={`relative h-6 w-11 rounded-full border transition-colors ${
+                  shareCity ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
+                }`}
+                {...buttonHoverProps}
+              >
+                <span
+                  className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${
+                    shareCity ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
+                  }`}
+                />
+              </motion.button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   if (isLoading) {
     return <LoadingSpinner fullScreen text="Loading profile..." />;
   }
@@ -119,7 +248,7 @@ export default function Profile() {
         <motion.div className="space-y-4" variants={containerVariants}>
           {/* Account Section */}
           <motion.div
-            className="bg-gradient-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
+            className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
             variants={itemVariants}
             {...cardHoverProps}
           >
@@ -139,7 +268,7 @@ export default function Profile() {
 
           {/* Rider Name Section */}
           <motion.div
-            className="bg-gradient-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
+            className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
             variants={itemVariants}
             {...cardHoverProps}
           >
@@ -205,7 +334,7 @@ export default function Profile() {
 
           {/* Theme Settings Section */}
           <motion.div
-            className="bg-gradient-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
+            className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
             variants={itemVariants}
             {...cardHoverProps}
           >
@@ -283,65 +412,24 @@ export default function Profile() {
 
           {/* Discord Integration Section */}
           <motion.div
-            className="bg-gradient-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
+            className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
             variants={itemVariants}
             {...cardHoverProps}
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg" style={{ backgroundColor: `${DISCORD_BLURPLE}20` }}>
-                <MessageCircle size={20} style={{ color: DISCORD_BLURPLE }} />
+              <div className="p-2 rounded-lg bg-apex-green/10">
+                <MessageCircle size={20} className="text-apex-green" />
               </div>
               <h2 className="text-lg font-semibold text-apex-white">Discord Integration</h2>
             </div>
 
-            {isDiscordLoading ? (
-              <div className="flex items-center justify-center py-4">
-                <LoadingSpinner size="sm" />
-              </div>
-            ) : !isConnected ? (
-              <div className="space-y-4">
-                <p className="text-sm text-apex-white/60">
-                  Connect your Discord account to share your ride data.
-                </p>
-                <motion.button
-                  onClick={handleLinkDiscord}
-                  disabled={linkDiscord.isPending}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-apex-white transition-colors w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: DISCORD_BLURPLE }}
-                  {...(linkDiscord.isPending ? {} : buttonHoverProps)}
-                >
-                  <Link2 size={18} />
-                  {linkDiscord.isPending ? 'Connecting...' : 'Link Discord'}
-                </motion.button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: DISCORD_BLURPLE }} />
-                    <span className="text-sm text-apex-white">Discord Connected</span>
-                  </div>
-                  <motion.button
-                    onClick={handleUnlinkDiscord}
-                    disabled={unlinkDiscord.isPending}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm border border-apex-white/20 text-apex-white/60 hover:bg-apex-white/5 hover:text-apex-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    {...(unlinkDiscord.isPending ? {} : buttonHoverProps)}
-                  >
-                    <Unlink size={16} />
-                    {unlinkDiscord.isPending ? 'Unlinking...' : 'Unlink'}
-                  </motion.button>
-                </div>
-                <p className="text-xs text-apex-white/40 pt-2 border-t border-apex-white/20">
-                  Your Discord account is connected. Rich Presence features will be available in a future update.
-                </p>
-              </div>
-            )}
+            {discordRpcSettings}
           </motion.div>
 
           {/* App Updates Section - Only show on native platforms */}
           {isNative && (
             <motion.div
-              className="bg-gradient-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
+              className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
               variants={itemVariants}
               {...cardHoverProps}
             >
@@ -388,7 +476,7 @@ export default function Profile() {
 
           {/* Sign Out Section */}
           <motion.div
-            className="bg-gradient-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
+            className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
             variants={itemVariants}
             {...cardHoverProps}
           >

@@ -8,6 +8,7 @@
   [![CI](https://github.com/Purukitto/apex-app/actions/workflows/ci.yml/badge.svg)](https://github.com/Purukitto/apex-app/actions)
   [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
   [![Release](https://img.shields.io/github/v/release/Purukitto/apex-app?include_prereleases)](https://github.com/Purukitto/apex-app/releases/latest)
+  [![Deployed on Vercel](https://img.shields.io/badge/deployed%20on-vercel-black?logo=vercel)](https://apex.purukitto.xyz)
 </div>
 
 ## 🎯 What is Apex?
@@ -44,9 +45,9 @@ Whether you're tracking your weekend rides or managing a fleet of motorcycles, A
 <img src="docs/screenshots/dashboard.jpg" alt="The Dashboard" width="280" />
 
 ### 🔗 Discord Integration
-- **OAuth Connection**: Link your Discord account to Apex
-- **Status Sharing**: Share your ride status *(coming soon)*
-- **Maintenance Reminders**: Get notified via Discord when service is due *(coming soon)*
+- **Status Sharing (Android, experimental)**: Share your ride status
+
+> Warning: This app uses the Discord Gateway connection. Use this at your own risk. However people have been using custom rich presence for past 4-5 years and there is still no case of account getting terminated.
 
 ## 🎨 Design Philosophy
 
@@ -70,7 +71,7 @@ Apex is available as a mobile app for iOS and Android:
 
 - **Android**: Download the latest APK from [GitHub Releases](https://github.com/Purukitto/apex-app/releases/latest)
 - **iOS**: Coming soon (App Store submission in progress)
-- **Web**: Access the web version at [your deployment URL] (if deployed)
+- **Web**: Access the web version at [apex.purukitto.xyz](https://apex.purukitto.xyz)
 
 ### Installation Instructions
 
@@ -123,8 +124,9 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 
 ## 🙏 Acknowledgments
 
-Built with modern web technologies and designed for riders who demand precision and simplicity.
 Maps © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors
+
+Discord RPC approach inspired by [Kizzy](https://github.com/dead8309/Kizzy)
 
 ---
 

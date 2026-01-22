@@ -3,7 +3,9 @@ import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { useRideTracking } from '../hooks/useRideTracking';
 import { useBikes } from '../hooks/useBikes';
+import { useDiscord } from '../hooks/useDiscord';
 import { useRideStore } from '../stores/useRideStore';
+import { useDiscordRpcStore } from '../stores/useDiscordRpcStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
@@ -16,6 +18,7 @@ import { usePocketModeDetection } from '../hooks/usePocketModeDetection';
 import { RideStartupAnimation } from '../components/RideStartupAnimation';
 import DebugPanel from '../components/DebugPanel';
 import { logger } from '../lib/logger';
+import { getCityFromCoords } from '../utils/geocode';
 
 /**
  * Web Fallback Component
@@ -209,7 +212,7 @@ const BikeSelectionModal = ({
                     <motion.button
                       key={bike.id}
                       onClick={() => onSelect(bike)}
-                      className="w-full text-left p-4 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg hover-border-theme transition-colors"
+                      className="w-full text-left p-4 bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg hover-border-theme transition-colors"
                       variants={itemVariants}
                       {...buttonHoverProps}
                     >
@@ -333,6 +336,8 @@ const LongPressStopButton = ({ onLongPress, disabled }: LongPressButtonProps) =>
 export default function Ride() {
   const isNative = Capacitor.isNativePlatform();
   const { bikes, isLoading: bikesLoading } = useBikes();
+  const { updatePresence } = useDiscord();
+  const rpcEnabled = useDiscordRpcStore((state) => state.enabled);
   const {
     isRecording,
     isPaused,
@@ -364,6 +369,12 @@ export default function Ride() {
   const [currentDuration, setCurrentDuration] = useState(0);
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [showStartupAnimation, setShowStartupAnimation] = useState(false);
+  const hasTriedCityRef = useRef(false);
+
+  const getBikeDisplayName = (bike: BikeType | null) => {
+    if (!bike) return undefined;
+    return bike.nick_name || `${bike.make} ${bike.model}`;
+  };
 
   // Restore state from Zustand store on mount
   useEffect(() => {
@@ -371,7 +382,7 @@ export default function Ride() {
     
     // Restore selected bike if it exists in store
     if (store.selectedBike && !selectedBike) {
-      logger.debug('Restoring selected bike from store');
+      logger.trace('Restoring selected bike from store');
       setSelectedBike(store.selectedBike);
     }
     
@@ -399,18 +410,6 @@ export default function Ride() {
     store.setCurrentLean(currentLean);
     store.updateMaxLean(maxLeanLeft, maxLeanRight);
     store.setDistanceKm(distanceKm);
-    
-    // Debug log state changes
-    if (isRecording) {
-      logger.debug('Ride state sync:', {
-        isRecording,
-        isPaused,
-        coords: coords.length,
-        speed: currentSpeed,
-        lean: currentLean.toFixed(1),
-        distance: distanceKm.toFixed(2),
-      });
-    }
   }, [isRecording, isPaused, startTime, currentLean, maxLeanLeft, maxLeanRight, distanceKm, coords.length, currentSpeed]);
 
   // Speed change detection for pulse animation
@@ -422,6 +421,26 @@ export default function Ride() {
       setPreviousSpeed(currentSpeed);
     }
   }, [currentSpeed, isRecording]);
+
+  // Resolve city from first coord and update Discord presence (when shareCity enabled, buildPresenceDetails uses it)
+  useEffect(() => {
+    if (!isRecording) {
+      hasTriedCityRef.current = false;
+      return;
+    }
+    if (!rpcEnabled || coords.length < 1 || !selectedBike || hasTriedCityRef.current) return;
+    hasTriedCityRef.current = true;
+    const c = coords[0];
+    getCityFromCoords(c.latitude, c.longitude).then((city) => {
+      if (city) {
+        updatePresence.mutateAsync({
+          type: 'start',
+          bikeName: getBikeDisplayName(selectedBike) ?? undefined,
+          city,
+        }).catch((e) => logger.trace('Discord RPC city update failed:', e));
+      }
+    });
+  }, [isRecording, rpcEnabled, coords, selectedBike, updatePresence]);
 
   // Fade out safety warning after 5 seconds of recording
   useEffect(() => {
@@ -474,7 +493,7 @@ export default function Ride() {
 
     // Bike is selected, start the ride
     try {
-      logger.debug('Starting ride with bike:', selectedBike.id);
+      logger.trace('Starting ride with bike:', selectedBike.id);
       // Show startup animation first
       setShowStartupAnimation(true);
       // Start ride will be triggered after animation completes
@@ -498,6 +517,18 @@ export default function Ride() {
     // Don't auto-start - let user click Start Ride button
   };
 
+  const clearRpcPresence = async (bike: BikeType | null) => {
+    if (!rpcEnabled) return;
+    try {
+      await updatePresence.mutateAsync({
+        type: 'end',
+        bikeName: getBikeDisplayName(bike),
+      });
+    } catch (rpcError) {
+      logger.error('Discord RPC end update failed:', rpcError);
+    }
+  };
+
   const handleStopRide = async () => {
     if (!selectedBike) {
       apexToast.error('No bike selected. Cannot save ride.');
@@ -505,7 +536,7 @@ export default function Ride() {
     }
 
     try {
-      logger.debug('Stopping ride...');
+      logger.trace('Stopping ride...');
       await stopRide(selectedBike.id, true);
       // Don't show toast here - saveRide mutation handles it via onSuccess/onError
       
@@ -543,6 +574,8 @@ export default function Ride() {
         apexToast.error(errorMessage);
       }
       // Don't reset UI state if save failed - keep ride data visible so user can retry
+    } finally {
+      await clearRpcPresence(selectedBike);
     }
   };
 
@@ -617,6 +650,17 @@ export default function Ride() {
             // Start ride after animation completes
             try {
               await startRide();
+              if (rpcEnabled) {
+                try {
+                  await updatePresence.mutateAsync({
+                    type: 'start',
+                    bikeName: getBikeDisplayName(selectedBike),
+                    city: undefined,
+                  });
+                } catch (error) {
+                  logger.error('Discord RPC start update failed:', error);
+                }
+              }
             } catch (error) {
               // Log technical details for debugging
               logger.error('Error starting ride:', error);
@@ -655,7 +699,7 @@ export default function Ride() {
         <AnimatePresence>
           {showSafetyWarning && isRecording && (
             <motion.div
-              className="fixed left-1/2 -translate-x-1/2 z-[100] bg-apex-black/95 backdrop-blur-sm border border-apex-green/40 rounded-lg px-6 py-3 max-w-md"
+              className="fixed left-1/2 -translate-x-1/2 z-100 bg-apex-black/95 backdrop-blur-sm border border-apex-green/40 rounded-lg px-6 py-3 max-w-md"
               style={{ top: 'calc(3.5rem + max(env(safe-area-inset-top), 24px))' }}
               initial={{ opacity: 1, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -695,7 +739,7 @@ export default function Ride() {
 
           {/* Always show selected bike or prompt to select */}
           <motion.div
-            className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-6 max-w-sm w-full"
+            className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-6 max-w-sm w-full"
             variants={itemVariants}
           >
             {selectedBike ? (
@@ -735,9 +779,9 @@ export default function Ride() {
 
           <motion.button
             onClick={handleStartRide}
-            className="bg-apex-green text-apex-black font-bold py-4 px-8 rounded-lg text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-apex-green text-apex-black font-bold py-4 px-8 rounded-lg text-lg disabled:bg-apex-white/10 disabled:text-apex-white/50 disabled:cursor-not-allowed"
             variants={itemVariants}
-            {...buttonHoverProps}
+            {...((selectedBike && !isRecording) ? buttonHoverProps : {})}
             disabled={!selectedBike || isRecording}
           >
             {isRecording ? 'Recording...' : selectedBike ? 'Start Ride' : 'Select Bike First'}
@@ -850,7 +894,7 @@ export default function Ride() {
               variants={containerVariants}
             >
               <motion.div
-                className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-4 text-center"
+                className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-4 text-center"
                 variants={itemVariants}
               >
                 <p className="text-xs text-apex-white/60 mb-1 uppercase tracking-wide">
@@ -862,7 +906,7 @@ export default function Ride() {
                 <p className="text-xs text-apex-white/40 mt-1">km</p>
               </motion.div>
               <motion.div
-                className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-4 text-center"
+                className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-4 text-center"
                 variants={itemVariants}
               >
                 <p className="text-xs text-apex-white/60 mb-1 uppercase tracking-wide">
@@ -1004,6 +1048,8 @@ export default function Ride() {
                   } catch (error) {
                     logger.error('Error discarding ride:', error);
                     apexToast.error('Failed to discard ride');
+                  } finally {
+                    await clearRpcPresence(selectedBike);
                   }
                 }}
                 disabled={saveRide.isPending}

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Capacitor } from '@capacitor/core';
 import { apexToast } from '../lib/toast';
 import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
@@ -39,9 +40,18 @@ export default function Login() {
     setLoading(true);
     setError(null);
 
+    // Determine redirect URL:
+    // - If in mobile app: always use production web URL (email links should open in browser)
+    // - If on web: use current origin (localhost in dev, production in prod)
+    // - Can be overridden via VITE_RESET_PASSWORD_URL env var
+    const redirectUrl = import.meta.env.VITE_RESET_PASSWORD_URL || 
+      (Capacitor.isNativePlatform() 
+        ? 'https://apex.purukitto.xyz/reset-password'
+        : `${window.location.origin}/reset-password`);
+
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://apex.purukitto.xyz/reset-password',
+        redirectTo: redirectUrl,
       });
 
       if (resetError) {

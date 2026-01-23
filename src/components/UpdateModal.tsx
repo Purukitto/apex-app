@@ -8,14 +8,24 @@ interface UpdateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDownload: () => void;
+  onDeleteApk: () => void;
   updateInfo: UpdateInfo;
+  downloadState: 'idle' | 'downloading' | 'installing';
+  downloadProgress: number;
+  canDirectDownload: boolean;
+  hasDownloadedApk: boolean;
 }
 
 export default function UpdateModal({
   isOpen,
   onClose,
   onDownload,
+  onDeleteApk,
   updateInfo,
+  downloadState,
+  downloadProgress,
+  canDirectDownload,
+  hasDownloadedApk,
 }: UpdateModalProps) {
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -33,6 +43,13 @@ export default function UpdateModal({
   }, [isOpen]);
 
   if (!isOpen) return null;
+  const isDownloading = downloadState === 'downloading';
+  const isInstalling = downloadState === 'installing';
+  const isBusy = isDownloading || isInstalling;
+  const handleClose = () => {
+    if (isBusy) return;
+    onClose();
+  };
 
   // Parse release notes (markdown-like formatting)
   // Combines sections from multiple versions into a single organized changelog
@@ -354,32 +371,33 @@ export default function UpdateModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={handleClose}
           />
 
           {/* Modal */}
           <div 
-            className="fixed inset-0 z-100 flex items-center justify-center"
+            className="fixed inset-0 z-100 flex items-start justify-center overflow-hidden"
             style={{
               padding: '1rem',
-              paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
-              paddingBottom: `calc(6rem + env(safe-area-inset-bottom, 0px))`,
+              paddingTop: `calc(2.25rem + env(safe-area-inset-top, 0px))`,
+              paddingBottom: `calc(3rem + env(safe-area-inset-bottom, 0px))`,
               paddingLeft: `calc(1rem + env(safe-area-inset-left, 0px))`,
               paddingRight: `calc(1rem + env(safe-area-inset-right, 0px))`,
             }}
           >
             <motion.div
-              className="bg-apex-black border border-apex-green/40 rounded-lg p-6 w-full max-w-lg relative z-100 max-h-[85vh] flex flex-col"
+              className="bg-apex-black border border-apex-green/40 rounded-lg p-6 w-full max-w-xl sm:max-w-2xl relative z-100 max-h-[82vh] flex flex-col overflow-hidden"
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
             >
               {/* Close Button */}
               <motion.button
-                onClick={onClose}
+                onClick={handleClose}
                 className="absolute top-4 right-4 p-2 text-apex-white/60 hover:text-apex-white transition-colors"
                 aria-label="Close"
                 {...buttonHoverProps}
+                disabled={isBusy}
               >
                 <X size={20} />
               </motion.button>
@@ -404,7 +422,7 @@ export default function UpdateModal({
               </div>
 
               {/* Release Notes */}
-              <div className="flex-1 overflow-y-auto mb-6 min-h-0">
+              <div className="flex-1 overflow-y-auto mb-6 min-h-0 overscroll-contain pr-1">
                 <div className="bg-linear-to-br from-white/5 to-transparent rounded-md p-4 border border-apex-white/10">
                   <h4 className="text-sm font-semibold text-apex-white mb-4 uppercase tracking-wide">
                     What's New
@@ -416,30 +434,66 @@ export default function UpdateModal({
               {/* Actions */}
               <div className="flex gap-3 mt-auto pt-4 border-t border-apex-white/10">
                 <motion.button
-                  onClick={onClose}
-                  className="flex-1 px-4 py-2.5 text-apex-white/60 hover:text-apex-white border border-apex-white/10 hover:border-apex-white/20 rounded-lg transition-colors"
+                  onClick={handleClose}
+                  className="flex-1 px-4 py-2.5 text-apex-white/60 hover:text-apex-white border border-apex-white/10 hover:border-apex-white/20 rounded-lg transition-colors disabled:opacity-50 disabled:hover:text-apex-white/60"
                   {...buttonHoverProps}
+                  disabled={isBusy}
                 >
                   Later
                 </motion.button>
-                <motion.button
-                  onClick={onDownload}
-                  className="flex-1 px-4 py-2.5 font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 bg-apex-green text-apex-black hover:bg-apex-green/90"
-                  {...buttonHoverProps}
-                >
-                  {updateInfo.downloadUrl ? (
-                    <>
-                      <Download size={18} />
-                      Download
-                    </>
-                  ) : (
-                    <>
-                      <ExternalLink size={18} />
-                      View Release
-                    </>
-                  )}
-                </motion.button>
+                {isBusy ? (
+                  <div className="flex-1 px-4 py-2.5 rounded-lg border border-apex-white/10 bg-apex-black/80">
+                    <div className="flex items-center justify-between text-xs text-apex-white/70 mb-2">
+                      <span>{isInstalling ? 'Opening installer...' : 'Downloading update...'}</span>
+                      {!isInstalling && (
+                        <span className="font-mono text-apex-white/80">{downloadProgress}%</span>
+                      )}
+                    </div>
+                    {!isInstalling && (
+                      <div className="h-2 rounded-full bg-apex-white/10 overflow-hidden">
+                        <div
+                          className="h-full bg-apex-green transition-[width] duration-200"
+                          style={{ width: `${downloadProgress}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <motion.button
+                    onClick={onDownload}
+                    className="flex-1 px-4 py-2.5 font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 bg-apex-green text-apex-black hover:bg-apex-green/90"
+                    {...buttonHoverProps}
+                  >
+                    {canDirectDownload ? (
+                      <>
+                        <Download size={18} />
+                        Download
+                      </>
+                    ) : (
+                      <>
+                        <ExternalLink size={18} />
+                        View Release
+                      </>
+                    )}
+                  </motion.button>
+                )}
               </div>
+              {canDirectDownload && (
+                <div className="mt-3 flex items-center justify-between gap-3 text-[11px] text-apex-white/50">
+                  <span>
+                    If the installer does not appear, enable &quot;Install unknown apps&quot; for Apex in Android settings.
+                  </span>
+                  {hasDownloadedApk && (
+                    <motion.button
+                      onClick={onDeleteApk}
+                      className="shrink-0 text-[11px] text-apex-red/70 hover:text-apex-red underline underline-offset-4"
+                      {...buttonHoverProps}
+                    >
+                      Delete Downloaded APK
+                    </motion.button>
+                  )}
+                </div>
+              )}
             </motion.div>
           </div>
         </>

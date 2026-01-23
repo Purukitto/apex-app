@@ -2,9 +2,14 @@ import { useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 import { Browser } from '@capacitor/browser';
+import { Directory, Filesystem } from '@capacitor/filesystem';
+import { FileTransfer } from '@capacitor/file-transfer';
+import { FileOpener } from '@capacitor-community/file-opener';
+import type { PluginListenerHandle } from '@capacitor/core';
 import { getAppVersion } from '../lib/version';
 import { useAppUpdateStore } from '../stores/useAppUpdateStore';
 import { logger } from '../lib/logger';
+import { apexToast } from '../lib/toast';
 
 const GITHUB_REPO = 'Purukitto/apex-app';
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
@@ -32,6 +37,52 @@ export interface UpdateInfo {
   releaseUrl: string;
   downloadUrl?: string;
 }
+
+const APK_MIME_TYPE = 'application/vnd.android.package-archive';
+
+const getApkFileName = (downloadUrl: string, latestVersion: string): string => {
+  try {
+    const url = new URL(downloadUrl);
+    const lastSegment = url.pathname.split('/').pop();
+    if (lastSegment && lastSegment.endsWith('.apk')) {
+      return lastSegment;
+    }
+  } catch {
+    // Ignore URL parsing errors, fallback below
+  }
+  const cleanVersion = latestVersion.replace(/^v/, '');
+  return `apex-${cleanVersion}.apk`;
+};
+
+const getDownloadUrlForPlatform = (
+  release: GitHubRelease,
+  platform: string
+): string | undefined => {
+  const platformAsset = release.assets.find(asset => {
+    const name = asset.name.toLowerCase();
+    if (platform === 'android') {
+      return name.includes('.apk') || name.includes('android');
+    }
+    if (platform === 'ios') {
+      return name.includes('.ipa') || name.includes('ios');
+    }
+    return false;
+  });
+
+  return platformAsset?.browser_download_url;
+};
+
+const createUpdateInfo = (release: GitHubRelease): UpdateInfo => {
+  const platform = Capacitor.getPlatform();
+  return {
+    isAvailable: true,
+    latestVersion: release.tag_name,
+    currentVersion: getAppVersion(),
+    releaseNotes: release.body || 'No release notes available.',
+    releaseUrl: release.html_url,
+    downloadUrl: getDownloadUrlForPlatform(release, platform),
+  };
+};
 
 /**
  * Compares two semantic version strings
@@ -221,34 +272,7 @@ export function useAppUpdate() {
       await setLastCheckTime(Date.now());
 
       if (hasUpdate) {
-        // Find download URL for current platform
-        const platform = Capacitor.getPlatform();
-        let downloadUrl: string | undefined;
-        
-        // Look for platform-specific assets
-        const platformAsset = release.assets.find(asset => {
-          const name = asset.name.toLowerCase();
-          if (platform === 'android') {
-            return name.includes('.apk') || name.includes('android');
-          }
-          if (platform === 'ios') {
-            return name.includes('.ipa') || name.includes('ios');
-          }
-          return false;
-        });
-
-        if (platformAsset) {
-          downloadUrl = platformAsset.browser_download_url;
-        }
-
-        const info: UpdateInfo = {
-          isAvailable: true,
-          latestVersion,
-          currentVersion: getAppVersion(),
-          releaseNotes: release.body || 'No release notes available.',
-          releaseUrl: release.html_url,
-          downloadUrl,
-        };
+        const info = createUpdateInfo(release);
 
         setUpdateInfo(info);
         setIsChecking(false);
@@ -288,6 +312,123 @@ export function useAppUpdate() {
     }
   }, []);
 
+  const getLatestReleaseInfo = useCallback(async (): Promise<UpdateInfo | null> => {
+    const release = await fetchLatestRelease();
+    if (!release) return null;
+    return createUpdateInfo(release);
+  }, []);
+
+  const deleteDownloadedApk = async () => {
+    const { lastDownloadedPath: downloadedPath, setLastDownloadedPath: setPath } = useAppUpdateStore.getState();
+    if (!downloadedPath) return;
+
+    try {
+      await Filesystem.deleteFile({ path: downloadedPath });
+      setPath(null);
+      apexToast.success('APK removed');
+    } catch (error) {
+      logger.error('Failed to delete APK:', error);
+      apexToast.error('Could not remove APK');
+    }
+  };
+
+  const runDownloadUpdate = async (): Promise<void> => {
+    const {
+      updateInfo: currentUpdateInfo,
+      setDownloadProgress,
+      setDownloadState,
+      resetDownload,
+      lastDownloadedPath,
+      setLastDownloadedPath,
+    } = useAppUpdateStore.getState();
+
+    if (!currentUpdateInfo?.downloadUrl) {
+      await openReleasePage();
+      return;
+    }
+
+    if (Capacitor.getPlatform() !== 'android') {
+      await openReleasePage();
+      return;
+    }
+
+    let progressHandle: PluginListenerHandle | null = null;
+
+    try {
+      if (lastDownloadedPath) {
+        try {
+          await Filesystem.deleteFile({ path: lastDownloadedPath });
+        } catch (cleanupError) {
+          logger.warn('Failed to remove previous APK:', cleanupError);
+        }
+        setLastDownloadedPath(null);
+      }
+
+      setDownloadState('downloading');
+      setDownloadProgress(0);
+
+      const fileName = getApkFileName(currentUpdateInfo.downloadUrl, currentUpdateInfo.latestVersion);
+      const filePath = `updates/${fileName}`;
+
+      const targetDirectory = Capacitor.getPlatform() === 'android'
+        ? Directory.ExternalCache
+        : Directory.Cache;
+
+      const { uri } = await Filesystem.getUri({
+        path: filePath,
+        directory: targetDirectory,
+      });
+
+      progressHandle = await FileTransfer.addListener('progress', (progress) => {
+        if (!progress.contentLength) {
+          return;
+        }
+        const percent = Math.min(
+          100,
+          Math.max(0, Math.round((progress.bytes / progress.contentLength) * 100))
+        );
+        setDownloadProgress(percent);
+      });
+
+      const downloadResult = await FileTransfer.downloadFile({
+        url: currentUpdateInfo.downloadUrl,
+        path: uri,
+        progress: true,
+      });
+
+      await progressHandle.remove();
+      progressHandle = null;
+      setDownloadProgress(100);
+
+      setDownloadState('installing');
+      const installerPath = downloadResult.path || uri;
+      logger.debug('APK downloaded to:', installerPath);
+      setLastDownloadedPath(installerPath);
+      await FileOpener.open({
+        filePath: installerPath,
+        contentType: APK_MIME_TYPE,
+        openWithDefault: true,
+      });
+
+      resetDownload();
+      apexToast.success('Installer opened');
+    } catch (error) {
+      if (progressHandle) {
+        await progressHandle.remove();
+      }
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error('Update download failed:', errorMessage, error);
+      resetDownload();
+      apexToast.error('Update failed. Please try again.', {
+        action: { label: 'Retry', onClick: () => { void runDownloadUpdate(); } },
+      });
+    }
+  };
+
+  const downloadUpdate = async () => {
+    await runDownloadUpdate();
+  };
+
   const dismissUpdate = useCallback(async () => {
     const currentUpdateInfo = useAppUpdateStore.getState().updateInfo;
     if (currentUpdateInfo?.latestVersion) {
@@ -306,6 +447,9 @@ export function useAppUpdate() {
     error,
     hasCheckedNoUpdate,
     checkForUpdate,
+    getLatestReleaseInfo,
+    downloadUpdate,
+    deleteDownloadedApk,
     openReleasePage,
     dismissUpdate,
   };

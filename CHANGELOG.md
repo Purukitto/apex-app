@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.3.0) (2026-01-23)
+
+
+### Features
+
+* implement direct in-app APK download and installer for Android updates ([d7547e1](https://github.com/Purukitto/apex-app/commit/d7547e12d10af1ac1a5a02483415d99362cff146))
+
 ## [1.2.0](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.2.0) (2026-01-23)
 
 

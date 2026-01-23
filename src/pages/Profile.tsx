@@ -81,6 +81,10 @@ export default function Profile() {
   };
 
   const handleCheckForUpdate = async () => {
+    if (updateInfo?.isAvailable) {
+      setShowModal(true);
+      return;
+    }
     const result = await checkForUpdate(true, true);
     if (result?.isAvailable) {
       setShowModal(true);
@@ -444,6 +448,8 @@ export default function Profile() {
                     ? 'Checking...'
                     : hasCheckedNoUpdate
                     ? 'No updates available'
+                    : updateInfo?.isAvailable
+                    ? 'Download Update'
                     : 'Check for Updates'}
                 </motion.button>
                 {updateInfo?.isAvailable && (

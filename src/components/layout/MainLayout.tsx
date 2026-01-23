@@ -67,6 +67,13 @@ export default function MainLayout({ children }: MainLayoutProps) {
     return 'Apex';
   };
 
+  // Update document title dynamically based on route
+  useEffect(() => {
+    const pageTitle = getPageTitle();
+    // Format: "Page Name | Apex" for specific pages, or just "Apex" for default
+    document.title = pageTitle === 'Apex' ? 'Apex' : `${pageTitle} | Apex`;
+  }, [location.pathname]);
+
   return (
     <NotificationContext.Provider
       value={{

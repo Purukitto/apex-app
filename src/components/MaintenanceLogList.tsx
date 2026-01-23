@@ -3,10 +3,11 @@ import type { MaintenanceLog, Bike } from '../types/database';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { listContainerVariants, fastItemVariants, buttonHoverProps, getCardHoverProps } from '../lib/animations';
+import { listContainerVariants, buttonHoverProps } from '../lib/animations';
 import { useThemeColors } from '../hooks/useThemeColors';
 import ConfirmModal from './ConfirmModal';
 import { LoadingSkeleton } from './LoadingSpinner';
+import { Card } from './ui/Card';
 
 interface MaintenanceLogListProps {
   logs: MaintenanceLog[];
@@ -54,17 +55,17 @@ export default function MaintenanceLogList({
       variants={listContainerVariants}
     >
       {logs.map((log) => (
-        <motion.div
+        <Card
           key={log.id}
-          className="border border-apex-white/20 rounded-lg p-4 bg-gradient-to-br from-white/5 to-transparent hover-border-theme transition-colors group"
-          variants={fastItemVariants}
-          {...getCardHoverProps()}
+          padding="sm"
+          animate="fastItem"
+          className="group"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-3">
                 <div 
-                  className="p-1.5 rounded-lg transition-colors group-hover:opacity-80" 
+                  className="p-1.5 rounded-md transition-colors group-hover:opacity-80" 
                   style={{ backgroundColor: `${primary}1A` }}
                 >
                   <Wrench size={16} style={{ color: primary }} />
@@ -128,7 +129,7 @@ export default function MaintenanceLogList({
               </motion.button>
             </div>
           </div>
-        </motion.div>
+        </Card>
       ))}
 
       <ConfirmModal

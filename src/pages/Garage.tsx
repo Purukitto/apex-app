@@ -13,11 +13,12 @@ import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
 import type { Bike as BikeType, FuelLog } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
-import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
+import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { logger } from '../lib/logger';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { Card } from '../components/ui/Card';
 
 // Helper component for bike image with fallback
 function BikeImage({ 
@@ -222,9 +223,9 @@ export default function Garage() {
             className="flex flex-col items-center justify-center py-16 text-center"
             variants={itemVariants}
           >
-            <div className="p-4 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex mb-4">
+            <Card padding="sm" animate="none" className="mb-4">
               <Motorbike size={48} style={{ color: primary }} />
-            </div>
+            </Card>
             <h2 className="text-xl font-semibold text-white mb-2">
               No bikes yet
             </h2>
@@ -245,10 +246,9 @@ export default function Garage() {
           <>
             {/* Hero Card - Current Bike */}
             {currentBike && (
-              <motion.div
-                className="bg-gradient-to-br from-white/5 to-transparent rounded-apex p-6 border border-apex-white/20"
-                variants={itemVariants}
-                {...cardHoverProps}
+              <Card
+                padding="md"
+                animate="item"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -316,7 +316,7 @@ export default function Garage() {
                     Delete
                   </motion.button>
                 </div>
-              </motion.div>
+              </Card>
             )}
 
             {/* Other Bikes Grid */}
@@ -326,11 +326,10 @@ export default function Garage() {
                 variants={containerVariants}
               >
                 {otherBikes.map((bike) => (
-                  <motion.div
+                  <Card
                     key={bike.id}
-                    className="bg-gradient-to-br from-white/5 to-transparent rounded-apex p-5 border border-apex-white/20"
-                    variants={fastItemVariants}
-                    {...cardHoverProps}
+                    padding="sm"
+                    animate="fastItem"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
@@ -395,7 +394,7 @@ export default function Garage() {
                         Delete
                       </motion.button>
                     </div>
-                  </motion.div>
+                  </Card>
                 ))}
               </motion.div>
             )}

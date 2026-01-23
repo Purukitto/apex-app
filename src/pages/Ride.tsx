@@ -212,7 +212,7 @@ const BikeSelectionModal = ({
                     <motion.button
                       key={bike.id}
                       onClick={() => onSelect(bike)}
-                      className="w-full text-left p-4 bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg hover-border-theme transition-colors"
+                      className="w-full text-left p-4 bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md hover-border-theme transition-colors"
                       variants={itemVariants}
                       {...buttonHoverProps}
                     >
@@ -739,7 +739,7 @@ export default function Ride() {
 
           {/* Always show selected bike or prompt to select */}
           <motion.div
-            className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-6 max-w-sm w-full"
+            className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md p-6 max-w-sm w-full"
             variants={itemVariants}
           >
             {selectedBike ? (
@@ -894,7 +894,7 @@ export default function Ride() {
               variants={containerVariants}
             >
               <motion.div
-                className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-4 text-center"
+                className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md p-4 text-center"
                 variants={itemVariants}
               >
                 <p className="text-xs text-apex-white/60 mb-1 uppercase tracking-wide">
@@ -906,7 +906,7 @@ export default function Ride() {
                 <p className="text-xs text-apex-white/40 mt-1">km</p>
               </motion.div>
               <motion.div
-                className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-4 text-center"
+                className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md p-4 text-center"
                 variants={itemVariants}
               >
                 <p className="text-xs text-apex-white/60 mb-1 uppercase tracking-wide">

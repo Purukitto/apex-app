@@ -3,11 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { Coffee, IndianRupee, X, Copy, Check } from 'lucide-react';
-import { itemVariants, buttonHoverProps, cardHoverProps } from '../../lib/animations';
+import { buttonHoverProps } from '../../lib/animations';
 import { DONATION_CONFIG } from '../../config/donation';
 import QRCode from 'react-qr-code';
 import { apexToast } from '../../lib/toast';
 import { logger } from '../../lib/logger';
+import { Card } from '../ui/Card';
 
 export default function DonationCard() {
   const [showUPIModal, setShowUPIModal] = useState(false);
@@ -137,11 +138,7 @@ export default function DonationCard() {
 
   return (
     <>
-      <motion.div
-        className="bg-gradient-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
-        variants={itemVariants}
-        {...cardHoverProps}
-      >
+      <Card padding="md" animate="item">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 rounded-lg bg-apex-green/10">
             <Coffee size={20} className="text-apex-green" />
@@ -180,7 +177,7 @@ export default function DonationCard() {
             Buy me a Coffee ($)
           </motion.button>
         </div>
-      </motion.div>
+      </Card>
 
       {/* UPI Payment Modal (for web and fallback) */}
       <AnimatePresence>

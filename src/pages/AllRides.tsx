@@ -22,7 +22,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   containerVariants,
   itemVariants,
-  fastItemVariants,
   buttonHoverProps,
 } from "../lib/animations";
 import ConfirmModal from "../components/ConfirmModal";
@@ -35,6 +34,7 @@ import { formatDateTime, formatDuration, formatShortDate } from "../utils/format
 import type { Ride } from "../types/database";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
+import { Card } from "../components/ui/Card";
 
 const PAGE_SIZE = 20;
 
@@ -322,15 +322,12 @@ export default function AllRides() {
 
         {/* Rides List */}
         {rides.length === 0 ? (
-          <motion.div
-            className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex p-8 text-center"
-            variants={itemVariants}
-          >
+          <Card padding="lg" animate="item" className="text-center">
             <Timer className="mx-auto mb-3 text-white/20" size={32} />
             <p className="text-sm text-white/40">
               No rides recorded yet. Start tracking your rides to see them here.
             </p>
-          </motion.div>
+          </Card>
         ) : (
           <motion.div className="space-y-3" variants={containerVariants}>
             {rides.map((ride) => {
@@ -343,11 +340,12 @@ export default function AllRides() {
               const isExpanded = expandedRideId === ride.id;
 
               return (
-                <motion.div
+                <Card
                   key={ride.id}
                   data-ride-id={ride.id}
-                  className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex overflow-hidden"
-                  variants={fastItemVariants}
+                  padding="none"
+                  animate="fastItem"
+                  className="overflow-hidden"
                   layout
                 >
                   {/* Card Header - Always Visible */}
@@ -484,7 +482,7 @@ export default function AllRides() {
                               <p className="text-xs text-white/60 mb-2">
                                 Image
                               </p>
-                              <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-apex-white/20 bg-gradient-to-br from-white/5 to-transparent">
+                              <div className="relative w-full aspect-video rounded-md overflow-hidden border border-apex-white/20 bg-gradient-to-br from-white/5 to-transparent">
                                 <img
                                   src={ride.image_url}
                                   alt="Ride image"
@@ -526,7 +524,7 @@ export default function AllRides() {
                                   height="250px"
                                 />
                               ) : (
-                                <div className="p-4 bg-apex-black/30 border border-apex-white/10 rounded-lg text-center">
+                                <div className="p-4 bg-apex-black/30 border border-apex-white/10 rounded-md text-center">
                                   <p className="text-xs text-apex-white/60 font-mono">
                                     Route data format not recognized
                                   </p>
@@ -592,7 +590,7 @@ export default function AllRides() {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </motion.div>
+                </Card>
               );
             })}
           </motion.div>

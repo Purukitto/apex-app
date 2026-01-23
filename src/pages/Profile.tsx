@@ -9,8 +9,9 @@ import { useAppUpdateStore } from '../stores/useAppUpdateStore';
 import { useNavigate } from 'react-router-dom';
 import { Mail, LogOut, Save, User, MessageCircle, Download, RefreshCw, Palette, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { containerVariants, itemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
+import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 import DonationCard from '../components/profile/DonationCard';
+import { Card } from '../components/ui/Card';
 import { useThemeStore, PRIMARY_COLORS, BACKGROUND_COLORS, type BackgroundTheme, type PrimaryTheme } from '../stores/useThemeStore';
 import { applyTheme } from '../lib/theme';
 import { getAppVersion } from '../lib/version';
@@ -247,11 +248,7 @@ export default function Profile() {
 
         <motion.div className="space-y-4" variants={containerVariants}>
           {/* Account Section */}
-          <motion.div
-            className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
-            variants={itemVariants}
-            {...cardHoverProps}
-          >
+          <Card padding="md" animate="item">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 rounded-lg bg-apex-green/10">
                 <Mail size={20} className="text-apex-green" />
@@ -264,13 +261,10 @@ export default function Profile() {
                 <p className="text-apex-white font-mono">{profile?.email || 'N/A'}</p>
               </div>
             </div>
-          </motion.div>
+          </Card>
 
           {/* Rider Name Section */}
-          <motion.div
-            className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
-            variants={itemVariants}
-            {...cardHoverProps}
+          <Card padding="md" animate="item"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 rounded-lg bg-apex-green/10">
@@ -328,15 +322,12 @@ export default function Profile() {
                 </motion.button>
               </div>
             )}
-          </motion.div>
+          </Card>
 
           
 
           {/* Theme Settings Section */}
-          <motion.div
-            className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
-            variants={itemVariants}
-            {...cardHoverProps}
+          <Card padding="md" animate="item"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 rounded-lg bg-apex-green/10">
@@ -408,13 +399,12 @@ export default function Profile() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </Card>
 
           {/* Discord Integration Section */}
-          <motion.div
-            className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
-            variants={itemVariants}
-            {...cardHoverProps}
+          <Card
+            padding="md"
+            animate="item"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 rounded-lg bg-apex-green/10">
@@ -424,15 +414,11 @@ export default function Profile() {
             </div>
 
             {discordRpcSettings}
-          </motion.div>
+          </Card>
 
           {/* App Updates Section - Only show on native platforms */}
           {isNative && (
-            <motion.div
-              className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
-              variants={itemVariants}
-              {...cardHoverProps}
-            >
+            <Card padding="md" animate="item">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 rounded-lg bg-apex-green/10">
                   <Download size={20} className="text-apex-green" />
@@ -468,17 +454,16 @@ export default function Profile() {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </Card>
           )}
 
           {/* Support Development Section */}
           <DonationCard />
 
           {/* Sign Out Section */}
-          <motion.div
-            className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-6 border border-apex-white/20"
-            variants={itemVariants}
-            {...cardHoverProps}
+          <Card
+            padding="md"
+            animate="item"
           >
             <motion.button
               onClick={handleSignOut}
@@ -489,7 +474,7 @@ export default function Profile() {
               <LogOut size={18} />
               {signOut.isPending ? 'Signing out...' : 'Sign Out'}
             </motion.button>
-          </motion.div>
+          </Card>
 
           {/* Made with Love Footer */}
           <motion.div

@@ -2,8 +2,9 @@ import { X, Bell, Check, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { useNotifications } from '../../hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
-import { containerVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../../lib/animations';
+import { containerVariants, buttonHoverProps } from '../../lib/animations';
 import { useState, useRef, useEffect } from 'react';
+import { Card } from '../ui/Card';
 
 interface NotificationPaneProps {
   isOpen: boolean;
@@ -225,15 +226,11 @@ export default function NotificationPane({
                   animate="visible"
                 >
                   {notifications.map((notification) => (
-                    <motion.div
+                    <Card
                       key={notification.id}
-                      className={`bg-linear-to-br from-apex-white/5 to-transparent border rounded-lg p-4 ${
-                        !notification.read_at
-                          ? 'border-apex-white/20'
-                          : 'border-apex-white/10'
-                      }`}
-                      variants={fastItemVariants}
-                      {...cardHoverProps}
+                      padding="sm"
+                      animate="fastItem"
+                      className={!notification.read_at ? 'border-apex-white/20' : 'border-apex-white/10'}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
@@ -291,7 +288,7 @@ export default function NotificationPane({
                           </motion.button>
                         </div>
                       </div>
-                    </motion.div>
+                    </Card>
                   ))}
                 </motion.div>
               )}

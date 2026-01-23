@@ -125,7 +125,7 @@ export default function UpdatePasswordPage() {
 
           <motion.div
             variants={itemVariants}
-            className="bg-linear-to-br from-apex-white/5 to-transparent border border-apex-white/20 rounded-lg p-6 text-center"
+            className="bg-linear-to-br from-apex-white/5 to-transparent border border-apex-white/20 rounded-md p-6 text-center"
           >
             <p className="text-apex-white/80 mb-4">{error || 'Invalid or expired reset link'}</p>
             <button

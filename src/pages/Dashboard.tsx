@@ -5,13 +5,14 @@ import { useRides } from '../hooks/useRides';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Timer, TrendingUp, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { containerVariants, itemVariants, fastItemVariants } from '../lib/animations';
+import { containerVariants, itemVariants } from '../lib/animations';
 import { useThemeColors } from '../hooks/useThemeColors';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { formatDuration, formatShortDate } from '../utils/format';
+import { Card } from '../components/ui/Card';
 
 export default function Dashboard() {
   const { bikes, isLoading } = useBikes();
@@ -90,9 +91,10 @@ export default function Dashboard() {
           variants={containerVariants}
         >
           {/* Hero Card - Distance (Non-clickable) */}
-          <motion.div
-            className="col-span-2 md:col-span-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex p-6"
-            variants={itemVariants}
+          <Card
+            padding="md"
+            animate="item"
+            className="col-span-2 md:col-span-2"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -105,7 +107,7 @@ export default function Dashboard() {
                 <p className="text-sm font-mono" style={{ color: primary }}>km</p>
               </div>
             </div>
-          </motion.div>
+          </Card>
 
           {/* Stat Tiles - Bento Grid */}
           <motion.div
@@ -113,9 +115,10 @@ export default function Dashboard() {
             variants={containerVariants}
           >
             {/* Bikes in Garage Tile (Clickable) */}
-            <motion.div
-              className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex p-5 cursor-pointer transition-all"
-              variants={itemVariants}
+            <Card
+              padding="sm"
+              animate="item"
+              clickable
               onClick={() => navigate('/garage')}
               whileHover={{ borderColor: highlight, scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -129,12 +132,13 @@ export default function Dashboard() {
               <p className="text-xs md:text-sm mt-1" style={{ color: primary }}>
                 {bikeCount === 1 ? 'machine' : 'machines'}
               </p>
-            </motion.div>
+            </Card>
 
             {/* Total Rides Tile (Clickable) */}
-            <motion.div
-              className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex p-5 cursor-pointer transition-all"
-              variants={itemVariants}
+            <Card
+              padding="sm"
+              animate="item"
+              clickable
               onClick={() => navigate('/rides')}
               whileHover={{ borderColor: highlight, scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -148,7 +152,7 @@ export default function Dashboard() {
               <p className="text-xs md:text-sm mt-1" style={{ color: primary }}>
                 {totalRides === 1 ? 'ride' : 'rides'}
               </p>
-            </motion.div>
+            </Card>
           </motion.div>
         </motion.div>
 
@@ -159,12 +163,12 @@ export default function Dashboard() {
         >
           <h2 className="text-xl font-semibold text-white">Recent Rides</h2>
           {ridesLoading ? (
-            <div className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex p-8 text-center">
+            <Card padding="lg" animate="none" className="text-center">
               <div className="animate-spin mx-auto mb-3">
                 <RefreshCw size={32} className="text-white/20" />
               </div>
               <LoadingSpinner size="sm" text="Loading rides..." />
-            </div>
+            </Card>
           ) : rides && rides.length > 0 ? (
             <motion.div
               className="space-y-3"
@@ -176,10 +180,11 @@ export default function Dashboard() {
                 const maxLean = Math.max(ride.max_lean_left, ride.max_lean_right);
 
                 return (
-                  <motion.div
+                  <Card
                     key={ride.id}
-                    className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex overflow-hidden"
-                    variants={fastItemVariants}
+                    padding="none"
+                    animate="fastItem"
+                    className="overflow-hidden"
                     layout
                   >
                     {/* Card Header - Same as AllRides but navigates on click */}
@@ -227,17 +232,17 @@ export default function Dashboard() {
                         </span>
                       </div>
                     </motion.div>
-                  </motion.div>
+                  </Card>
                 );
               })}
             </motion.div>
           ) : (
-            <div className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex p-8 text-center">
+            <Card padding="lg" animate="none" className="text-center">
               <Timer className="mx-auto mb-3 text-white/20" size={32} />
               <p className="text-sm text-white/40">
                 No rides recorded yet. Start tracking your rides to see them here.
               </p>
-            </div>
+            </Card>
           )}
         </motion.div>
       </motion.div>

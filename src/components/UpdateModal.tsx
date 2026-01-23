@@ -405,7 +405,7 @@ export default function UpdateModal({
 
               {/* Release Notes */}
               <div className="flex-1 overflow-y-auto mb-6 min-h-0">
-                <div className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-4 border border-apex-white/10">
+                <div className="bg-linear-to-br from-white/5 to-transparent rounded-md p-4 border border-apex-white/10">
                   <h4 className="text-sm font-semibold text-apex-white mb-4 uppercase tracking-wide">
                     What's New
                   </h4>

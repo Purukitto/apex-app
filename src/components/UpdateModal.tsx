@@ -253,7 +253,11 @@ export default function UpdateModal({
           >
             {currentListItems.map((item, idx) => {
               // Remove list marker (*, -, or +) and clean up the text
-              const cleanText = item.replace(/^[*\-+]\s+/, '').trim();
+              let cleanText = item.replace(/^[*\-+]\s+/, '').trim();
+              // Capitalize first character
+              if (cleanText.length > 0) {
+                cleanText = cleanText.charAt(0).toUpperCase() + cleanText.slice(1);
+              }
               return (
                 <motion.li
                   key={idx}

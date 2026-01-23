@@ -1,4 +1,4 @@
-import { X, Bell, Check } from 'lucide-react';
+import { X, Bell, Check, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { useNotifications } from '../../hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
@@ -157,28 +157,50 @@ export default function NotificationPane({
                 )}
               </div>
               <div className="flex items-center gap-2">
-                {unreadCount > 0 && (
-                  <motion.button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      markAllAsRead();
-                    }}
-                    className="p-2 rounded-lg text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5 transition-colors"
-                    aria-label="Mark all as read"
-                    {...buttonHoverProps}
-                    type="button"
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <Check size={18} />
-                  </motion.button>
+                {notifications.length > 0 && (
+                  <>
+                    <motion.button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (unreadCount > 0) {
+                          markAllAsRead();
+                        }
+                      }}
+                      className={`p-2 rounded-lg transition-colors ${
+                        unreadCount > 0
+                          ? 'text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5'
+                          : 'text-apex-white/30 cursor-not-allowed'
+                      }`}
+                      aria-label="Mark all as read"
+                      {...(unreadCount > 0 ? buttonHoverProps : {})}
+                      type="button"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      disabled={unreadCount === 0}
+                    >
+                      <Check size={18} />
+                    </motion.button>
+                    <motion.button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        dismissAll();
+                      }}
+                      className="p-2 rounded-lg text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5 transition-colors"
+                      aria-label="Dismiss all notifications"
+                      {...buttonHoverProps}
+                      type="button"
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      <Trash2 size={18} />
+                    </motion.button>
+                  </>
                 )}
                 <motion.button
                   onClick={(e) => {
                     e.stopPropagation();
-                      dismissAll();
+                    handleClose();
                   }}
                   className="p-2 rounded-lg text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5 transition-colors"
-                  aria-label="Dismiss all notifications"
+                  aria-label="Close notifications"
                   {...buttonHoverProps}
                   type="button"
                   onPointerDown={(e) => e.stopPropagation()}

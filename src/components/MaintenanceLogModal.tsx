@@ -262,7 +262,7 @@ export default function MaintenanceLogModal({
         <form ref={formRef} onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col">
           <div
             ref={scrollContainerRef}
-            className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 space-y-4"
+            className="modal-scroll-body flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 space-y-4"
           >
             <div className="mb-4 p-3 bg-apex-white/5 rounded-lg border border-apex-white/10">
               <p className="text-sm text-apex-white/60 mb-1">Bike</p>

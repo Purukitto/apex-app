@@ -313,7 +313,7 @@ export default function AddBikeModal({
         >
           <div
             ref={scrollContainerRef}
-            className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 space-y-4"
+            className="modal-scroll-body flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 space-y-4"
           >
           {/* Bike Search - Only show when adding (not editing) */}
           {!editingBike && (

@@ -204,3 +204,10 @@ body {
   pointer-events: none !important;
   touch-action: pan-y !important;
 }
+
+/* Allow dragging to scroll when touching inputs in modal bodies */
+.modal-scroll-body input,
+.modal-scroll-body textarea,
+.modal-scroll-body select {
+  touch-action: pan-y;
+}

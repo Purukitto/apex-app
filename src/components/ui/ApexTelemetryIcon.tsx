@@ -35,17 +35,17 @@ export default function ApexTelemetryIcon({
   const getThemeColors = () => {
     if (typeof window === 'undefined') {
       return {
-        green: '#bef264',
-        red: '#FF3B30',
-        black: '#0A0A0A',
+        green: 'var(--color-apex-green)',
+        red: 'var(--color-apex-red)',
+        black: 'var(--color-apex-black)',
       };
     }
     const root = document.documentElement;
     const computedStyle = getComputedStyle(root);
     return {
       green: primary, // Use reactive primary color from hook
-      red: computedStyle.getPropertyValue('--color-apex-red').trim() || '#FF3B30',
-      black: computedStyle.getPropertyValue('--color-apex-black').trim() || '#0A0A0A',
+      red: computedStyle.getPropertyValue('--color-apex-red').trim() || 'var(--color-apex-red)',
+      black: computedStyle.getPropertyValue('--color-apex-black').trim() || 'var(--color-apex-black)',
     };
   };
   

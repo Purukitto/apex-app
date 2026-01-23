@@ -56,11 +56,11 @@ Make sure your code passes linting before committing.
 ### Design System
 - **Background**: Always use `bg-apex-black` (#0A0A0A)
 - **Text**: `text-apex-white` for primary text
-- **Accents**: `text-apex-green` (#00FF41) for telemetry and highlights
+- **Accents**: `text-apex-green` (#3DBF6F) for telemetry and highlights
 - **Fonts**: `font-mono` (JetBrains Mono) for numbers/telemetry
 
 ### Component Standards
-- All cards must use gradient backgrounds and border hover effects
+- All cards must use the shared `Card` component with subtle raised depth
 - All buttons must use `{...buttonHoverProps}` from animations library
 - All pages must use staggered entry animations
 - Toast notifications required for all mutations

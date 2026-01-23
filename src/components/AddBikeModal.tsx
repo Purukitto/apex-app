@@ -4,7 +4,8 @@ import type { Bike } from '../types/database';
 import type { GlobalBikeSpec } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
-import { buttonHoverProps, cardHoverProps } from '../lib/animations';
+import { buttonHoverProps } from '../lib/animations';
+import { Card } from './ui/Card';
 import { searchGlobalBikesMultiple, reportBikeSpec } from '../services/bikeLibrary';
 import { logger } from '../lib/logger';
 import { useKeyboard } from '../hooks/useKeyboard';
@@ -43,8 +44,9 @@ export default function AddBikeModal({
   const [reportingBikeId, setReportingBikeId] = useState<string | null>(null);
   const { isKeyboardVisible, keyboardHeight } = useKeyboard();
   const formRef = useRef<HTMLFormElement>(null);
-  const modalContentRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const keyboardPadding =
+    typeof window !== 'undefined' && window.visualViewport ? 0 : keyboardHeight;
 
   useEffect(() => {
     if (editingBike) {
@@ -217,7 +219,7 @@ export default function AddBikeModal({
     }
   };
 
-  // Handle input focus to scroll into view when keyboard appears
+  // Handle input focus to scroll into view within the modal body
   useEffect(() => {
     const handleInputFocus = (e: FocusEvent) => {
       const target = e.target as HTMLElement;
@@ -228,18 +230,12 @@ export default function AddBikeModal({
           if (!scrollContainer) return;
           
           const inputRect = target.getBoundingClientRect();
-          const viewportHeight = window.visualViewport?.height || window.innerHeight;
-          const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)') || '0', 10) || 0;
-          
-          // Calculate available space above keyboard
-          const topPadding = safeAreaTop + 100; // Header space
-          const bottomPadding = 20; // Padding above keyboard
-          const availableHeight = isKeyboardVisible 
-            ? (window.visualViewport?.height || viewportHeight) - keyboardHeight
-            : viewportHeight;
-          
-          const visibleTop = topPadding;
-          const visibleBottom = availableHeight - bottomPadding;
+          const containerRect = scrollContainer.getBoundingClientRect();
+          const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+          const keyboardOffset = window.visualViewport ? 0 : (isKeyboardVisible ? keyboardHeight : 0);
+          const visibleTop = containerRect.top + 16;
+          const visibleBottom = Math.min(containerRect.bottom, viewportHeight - keyboardOffset) - 16;
+          if (visibleBottom <= visibleTop) return;
           
           const inputTop = inputRect.top;
           const inputBottom = inputRect.bottom;
@@ -247,11 +243,11 @@ export default function AddBikeModal({
           // Check if input needs scrolling
           if (inputBottom > visibleBottom) {
             // Input is below visible area - scroll down
-            const scrollNeeded = inputBottom - visibleBottom + 30;
+            const scrollNeeded = inputBottom - visibleBottom + 24;
             scrollContainer.scrollTop += scrollNeeded;
           } else if (inputTop < visibleTop) {
             // Input is above visible area (behind header) - scroll up
-            const scrollNeeded = visibleTop - inputTop + 30;
+            const scrollNeeded = visibleTop - inputTop + 24;
             scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop - scrollNeeded);
           }
         }, isKeyboardVisible ? 500 : 100);
@@ -273,29 +269,28 @@ export default function AddBikeModal({
   if (!isOpen) return null;
 
   return (
-    <div 
-      ref={scrollContainerRef}
-      className="fixed inset-0 z-[100] overflow-y-auto"
-      style={{
-        paddingTop: `calc(env(safe-area-inset-top, 0px) + 1rem)`,
-        paddingBottom: isKeyboardVisible 
-          ? `calc(env(safe-area-inset-bottom, 0px) + ${keyboardHeight}px + 1rem)` 
-          : `calc(env(safe-area-inset-bottom, 0px) + 6rem)`,
-        paddingLeft: `calc(env(safe-area-inset-left, 0px) + 1rem)`,
-        paddingRight: `calc(env(safe-area-inset-right, 0px) + 1rem)`,
-      }}
-    >
+    <div className="fixed inset-0 z-100">
       <div
         className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div 
-        ref={modalContentRef}
-        className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10 flex flex-col mx-auto my-8"
+      <div
+        className="fixed inset-0 flex"
         style={{
-          minHeight: isKeyboardVisible ? 'auto' : 'min-content',
+          paddingTop: `calc(env(safe-area-inset-top, 0px) + 1rem)`,
+          paddingBottom: isKeyboardVisible
+            ? `calc(env(safe-area-inset-bottom, 0px) + ${keyboardPadding}px + 1rem)`
+            : `calc(env(safe-area-inset-bottom, 0px) + 6rem)`,
+          paddingLeft: `calc(env(safe-area-inset-left, 0px) + 1rem)`,
+          paddingRight: `calc(env(safe-area-inset-right, 0px) + 1rem)`,
         }}
       >
+        <div
+          className={`relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10 flex flex-col mx-auto max-h-full overflow-hidden ${isKeyboardVisible ? 'my-2' : 'my-8'}`}
+          style={{
+            minHeight: isKeyboardVisible ? 'auto' : 'min-content',
+          }}
+        >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-apex-white">
             {editingBike ? 'Edit Bike' : 'Add Bike'}
@@ -310,12 +305,16 @@ export default function AddBikeModal({
           </motion.button>
         </div>
 
-        <form 
+        <form
           id="add-bike-form"
-          ref={formRef} 
-          onSubmit={handleSubmit} 
-          className="space-y-4 flex-1 min-h-0"
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className="flex-1 min-h-0 flex flex-col"
         >
+          <div
+            ref={scrollContainerRef}
+            className="modal-scroll-body flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 space-y-4"
+          >
           {/* Bike Search - Only show when adding (not editing) */}
           {!editingBike && (
             <div>
@@ -340,11 +339,13 @@ export default function AddBikeModal({
               {globalBikeResults.length > 0 && !showManualEntry && (
                 <div className="mt-2 space-y-2 max-h-64 overflow-y-auto">
                   {globalBikeResults.map((bike) => (
-                    <motion.div
+                    <Card
                       key={bike.id}
-                      className="p-3 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg cursor-pointer hover:border-apex-green/40 transition-colors group"
+                      padding="sm"
+                      animate="none"
+                      clickable
                       onClick={() => handleSelectBike(bike)}
-                      {...cardHoverProps}
+                      className="group"
                     >
                       <div className="flex items-start gap-3">
                         {bike.image_url && (
@@ -400,7 +401,7 @@ export default function AddBikeModal({
                           )}
                         </motion.button>
                       </div>
-                    </motion.div>
+                    </Card>
                   ))}
                 </div>
               )}
@@ -446,7 +447,7 @@ export default function AddBikeModal({
 
           {/* Selected Bike Display - show when a bike was selected from search */}
           {selectedBike && showManualEntry && (
-            <div className="p-3 bg-gradient-to-br from-white/5 to-transparent border border-apex-green/40 rounded-lg">
+            <div className="p-3 bg-linear-to-br from-apex-white/5 to-transparent border border-apex-green/40 rounded-md">
               <div className="flex items-start gap-3">
                 {selectedBike.image_url && (
                   <img
@@ -632,53 +633,55 @@ export default function AddBikeModal({
           {error && (
             <div className="text-apex-red text-sm">{error}</div>
           )}
-        </form>
-
-        {/* Action buttons - sticky at bottom of modal */}
-        {/* Only show buttons when manual entry is visible or editing */}
-        {(editingBike || !searchQuery || showManualEntry) && (
-          <div className="flex gap-3 pt-4 mt-4 border-t border-apex-white/10 shrink-0">
-            <motion.button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
-              {...buttonHoverProps}
-            >
-              Cancel
-            </motion.button>
-            <motion.button
-              type="button"
-              onClick={() => {
-                if (!canSubmit && !editingBike) {
-                  apexToast.error('Please fill in Make and Model fields');
-                  return;
-                }
-                // Create a synthetic submit event
-                const form = formRef.current;
-                if (form) {
-                  // Create a minimal event object that satisfies the type
-                  // Using double cast through 'unknown' as TypeScript requires
-                  const syntheticEvent = {
-                    preventDefault: () => {},
-                    currentTarget: form,
-                    target: form,
-                  } as unknown as React.FormEvent<HTMLFormElement>;
-                  handleSubmit(syntheticEvent);
-                }
-              }}
-              disabled={isSubmitting || (!canSubmit && !editingBike)}
-              className="flex-1 px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              {...(isSubmitting ? {} : buttonHoverProps)}
-            >
-              {isSubmitting
-                ? 'Saving...'
-                : editingBike
-                  ? 'Update'
-                  : 'Add Bike'}
-            </motion.button>
           </div>
-        )}
+
+          {/* Action buttons - sticky at bottom of modal */}
+          {/* Only show buttons when manual entry is visible or editing */}
+          {(editingBike || !searchQuery || showManualEntry) && (
+            <div className="flex gap-3 pt-4 mt-4 border-t border-apex-white/10 shrink-0">
+              <motion.button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
+                {...buttonHoverProps}
+              >
+                Cancel
+              </motion.button>
+              <motion.button
+                type="button"
+                onClick={() => {
+                  if (!canSubmit && !editingBike) {
+                    apexToast.error('Please fill in Make and Model fields');
+                    return;
+                  }
+                  // Create a synthetic submit event
+                  const form = formRef.current;
+                  if (form) {
+                    // Create a minimal event object that satisfies the type
+                    // Using double cast through 'unknown' as TypeScript requires
+                    const syntheticEvent = {
+                      preventDefault: () => {},
+                      currentTarget: form,
+                      target: form,
+                    } as unknown as React.FormEvent<HTMLFormElement>;
+                    handleSubmit(syntheticEvent);
+                  }
+                }}
+                disabled={isSubmitting || (!canSubmit && !editingBike)}
+                className="flex-1 px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                {...(isSubmitting ? {} : buttonHoverProps)}
+              >
+                {isSubmitting
+                  ? 'Saving...'
+                  : editingBike
+                    ? 'Update'
+                    : 'Add Bike'}
+              </motion.button>
+            </div>
+          )}
+        </form>
       </div>
+    </div>
     </div>
   );
 }

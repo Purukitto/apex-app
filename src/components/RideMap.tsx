@@ -93,13 +93,13 @@ export default function RideMap({
   // Get theme color for polyline
   const getPolylineColor = (): string => {
     if (typeof window === 'undefined') {
-      return '#00FF41'; // apex-green fallback
+      return 'var(--color-apex-green)';
     }
     const root = document.documentElement;
     const color = getComputedStyle(root)
       .getPropertyValue('--color-apex-green')
       .trim();
-    return color || '#00FF41';
+    return color || 'var(--color-apex-green)';
   };
 
   const polylineColor = getPolylineColor();

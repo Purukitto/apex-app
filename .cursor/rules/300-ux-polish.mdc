@@ -49,25 +49,51 @@ alwaysApply: true
 - **MANDATORY**: All data-entry modals (forms with inputs/textarea/select) must be keyboard-safe on mobile.
 - **Implementation pattern (see `AddBikeModal`):**
   - Use `useKeyboard()` from `src/hooks/useKeyboard`.
-  - Wrap modal content in a full-screen scroll container: `fixed inset-0 overflow-y-auto`.
+- Keep the modal container fixed and scroll only the inner form body (fields/results).
+- Use a full-screen wrapper for safe-area padding, but avoid scrolling the entire modal.
   - Apply safe-area padding and dynamic bottom padding when keyboard is visible.
   - Attach a `focusin` handler on the form to scroll the active field into view.
   - Keep content centered with `mx-auto my-8` and avoid over-styling for tiny/simple modals.
 - **Do NOT** apply this to simple confirmation/alert modals without inputs.
 
 ### Card Components
-- **MANDATORY Styling:**
-  - Background: `bg-linear-to-br from-apex-white/5 to-transparent`
-  - Border: `border border-apex-white/20`
-  - Hover: `hover:border-apex-green/40` with framer-motion `whileHover`
-  - Padding: `p-4` or `p-6` depending on content density
-  - Rounded: `rounded-lg`
+- **MANDATORY**: Always use the `Card` component from `src/components/ui/Card.tsx` for all card instances.
+- **NEVER** create inline card styling with `bg-gradient-to-br`, `border`, etc. - use the `Card` component instead.
+- **Card Look:** Raised, rounded-2xl, subtle dark gradient, soft border, and a gentle shadow for depth.
+- **Usage:**
+ ```typescript
+ import { Card } from '../components/ui/Card';
+ 
+ // Basic card
+ <Card padding="md">
+   <h3>Card Title</h3>
+   <p>Content</p>
+ </Card>
+ 
+ // Clickable card
+ <Card padding="sm" clickable onClick={handleClick}>
+   <h3>Clickable Card</h3>
+ </Card>
+ 
+ // With custom animation
+ <Card padding="md" animate="item" variants={customVariants}>
+   <h3>Custom Animation</h3>
+ </Card>
+ ```
+- **Props:**
+  - `padding`: `'sm'` (p-4), `'md'` (p-6), or `'lg'` (p-8) - default: `'md'`
+  - `clickable`: boolean - adds cursor-pointer and group classes
+  - `animate`: `'none'` | `'item'` | `'fastItem'` - default: `'fastItem'`
+  - `hover`: boolean - enable/disable hover border effect - default: `true`
+  - `variants`: Custom framer-motion variants (overrides animate)
+  - All standard `motion.div` props are supported (onClick, className, etc.)
 
 - **Icon Containers:**
   - Background: `bg-apex-green/10`
   - Hover: `group-hover:bg-apex-green/20`
   - Padding: `p-2` or `p-1.5` for smaller icons
-  - Rounded: `rounded-lg`
+  - Rounded: `rounded-md`
+  - **Note**: Icon containers are NOT cards - use inline styling for icon containers within cards.
 
 - **Action Buttons:**
   - Desktop: Hidden by default, show on group-hover: `opacity-100 md:opacity-0 md:group-hover:opacity-100`
@@ -85,11 +111,11 @@ alwaysApply: true
   7. Use `{...cardHoverProps}` for all cards
 
 ### Consistency Rules
-- **All cards must look cohesive:** Use the same gradient, border, and hover patterns.
+- **All cards must use the `Card` component:** No inline card styling - always use `Card` from `src/components/ui/Card.tsx`.
 - **All buttons must use `{...buttonHoverProps}`:** No inline animation definitions.
-- **All cards must use `{...cardHoverProps}`:** No inline hover definitions.
 - **All lists must have staggered animations:** Use `listContainerVariants` and `fastItemVariants` for list items.
 - **No duplicate animation code:** Always import from `src/lib/animations.ts`.
+- **Exception:** Only use inline card styling if the `Card` component cannot accommodate the specific use case (e.g., special layouts, complex nested structures). Document why inline styling was necessary.
 
 ### Custom Dropdowns
 - **MANDATORY**: For non-native dropdowns, use a button + popover pattern with `AnimatePresence`.
@@ -98,7 +124,7 @@ alwaysApply: true
 - **Interaction**: Apply `{...buttonHoverProps}` on the trigger and options.
 
 ## 3. Visual Hierarchy & Polish
-- **Borders over Shadows:** Avoid heavy shadows. Use `border border-white/10` or `border-white/20` for containers.
+- **Borders over Shadows:** Avoid heavy shadows. Use subtle raised shadows only for cards and rely on `border-apex-white/10` or `border-apex-white/20` for structure.
 - **Typography:**
   - Header: `font-sans font-bold tracking-tight`.
   - Telemetry: Always `font-mono text-apex-green`.
@@ -110,16 +136,16 @@ alwaysApply: true
 - **MANDATORY**: Never use hardcoded hex colors in components. Always use theme colors from CSS variables.
 - **Theme Colors Available:**
   - `apex-black`: `#0A0A0A` - Primary background
-  - `apex-white`: `#E2E2E2` - Primary text
-  - `apex-green`: `#00FF41` - Primary accent (data, success, active states)
-  - `apex-red`: `#FF3B30` - Error, warning, danger states
+  - `apex-white`: `#f5f5dc` - Primary text
+  - `apex-green`: `#3DBF6F` - Primary accent (data, success, active states)
+  - `apex-red`: `#E35B5B` - Error, warning, danger states
 - **Usage:**
   - **Tailwind Classes:** Prefer `text-apex-green`, `bg-apex-red`, etc. when possible.
   - **CSS Variables:** For SVG or inline styles, use `getComputedStyle(document.documentElement).getPropertyValue('--color-apex-green')` or access via `var(--color-apex-green)`.
   - **SVG Elements:** Use CSS variables or `currentColor` with Tailwind classes on parent.
 - **Color Transitions:** When colors change based on state (e.g., lean angle), use smooth transitions (0.3s ease-in-out).
 - **Deprecated Colors:**
-  - **DO NOT** use `NEON_LIME` (`#bef264`) or any other hardcoded green colors. Always use `apex-green` (`#00FF41`) instead.
+  - **DO NOT** use `NEON_LIME` (`#bef264`) or any other hardcoded green colors. Always use `apex-green` instead.
   - **DO NOT** use `zinc-*` or other Tailwind color utilities for backgrounds/borders. Use `apex-black`, `apex-white`, `apex-green`, or `apex-red` with appropriate opacity modifiers.
   - **DO NOT** use generic `white`, `black`, `red-*`, `green-*` classes. Always use the `apex-*` prefixed theme colors.
 

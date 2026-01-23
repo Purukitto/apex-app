@@ -13,10 +13,10 @@ interface ThemeStore {
 
 // Theme color definitions
 export const PRIMARY_COLORS: Record<PrimaryTheme, string> = {
-  'apex-green': '#bef264',
-  'cyan': '#00D9FF',
-  'orange': '#FF6B35',
-  'amber': '#FFD700',
+  'apex-green': '#3DBF6F',
+  'cyan': '#2DA8C7',
+  'orange': '#E08A4C',
+  'amber': '#D9B85B',
 };
 
 export const BACKGROUND_COLORS: Record<BackgroundTheme, string> = {

@@ -436,7 +436,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                   {stores.map((store) => (
                     <div
                       key={store.name}
-                      className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-4"
+                      className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md p-4"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="text-sm font-semibold text-apex-green font-mono">
@@ -460,7 +460,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                     </div>
                   ))}
 
-                  <div className="bg-linear-to-br from-apex-white/5 to-transparent border border-apex-white/20 rounded-lg p-4 space-y-4">
+                  <div className="bg-linear-to-br from-apex-white/5 to-transparent border border-apex-white/20 rounded-md p-4 space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-semibold text-apex-green font-mono">
                         Notification Sender
@@ -563,7 +563,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                   {/* Fixed Controls Section */}
                   <div className="shrink-0 p-4 space-y-4 border-b border-apex-white/10">
                     {/* Logger Session Info */}
-                    <div className="p-3 rounded-lg bg-linear-to-br from-white/5 to-transparent border border-apex-white/20">
+                    <div className="p-3 rounded-md bg-linear-to-br from-white/5 to-transparent border border-apex-white/20">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-xs font-semibold text-apex-green font-mono">Logger Session</p>
                         <motion.button
@@ -638,7 +638,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                     </div>
 
                     {/* Log Level Selector */}
-                    <div className="p-3 rounded-lg bg-linear-to-br from-white/5 to-transparent border border-apex-white/20">
+                    <div className="p-3 rounded-md bg-linear-to-br from-white/5 to-transparent border border-apex-white/20">
                       <div className="flex items-center gap-2 mb-2">
                         <Filter size={14} className="text-apex-green" />
                         <p className="text-xs font-semibold text-apex-green font-mono">Log Level</p>
@@ -815,7 +815,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                   <div
                     ref={consoleScrollRef}
                     onScroll={handleConsoleScroll}
-                    className="flex-1 overflow-y-auto p-4 relative"
+                    className="flex-1 overflow-y-auto overflow-x-hidden p-4 relative"
                   >
                     <div className="space-y-1 font-mono text-xs">
                       {filteredLogs.length === 0 ? (
@@ -839,16 +839,16 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                           return (
                             <div
                               key={log.id}
-                              className="p-2 rounded bg-apex-white/5 border border-apex-white/10"
+                              className="p-2 rounded bg-apex-white/5 border border-apex-white/10 overflow-hidden"
                             >
-                              <div className="flex items-start gap-2">
+                              <div className="flex items-start gap-2 min-w-0">
                                 <span className={`text-[10px] ${colorClass} shrink-0`}>
                                   {log.type.toUpperCase()}
                                 </span>
                                 <span className="text-apex-white/40 shrink-0">
                                   {log.timestamp.toLocaleTimeString()}
                                 </span>
-                                <span className={`flex-1 ${colorClass} wrap-break-word`}>
+                                <span className={`flex-1 ${colorClass} break-words min-w-0`}>
                                   {log.message}
                                 </span>
                               </div>

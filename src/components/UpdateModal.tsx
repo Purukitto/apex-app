@@ -1,4 +1,4 @@
-import { type ReactElement } from 'react';
+import { type ReactElement, useEffect } from 'react';
 import { X, Download, ExternalLink, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { buttonHoverProps, fastItemVariants, listContainerVariants } from '../lib/animations';
@@ -17,6 +17,21 @@ export default function UpdateModal({
   onDownload,
   updateInfo,
 }: UpdateModalProps) {
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Store original overflow value
+      const originalOverflow = document.body.style.overflow;
+      // Lock body scroll
+      document.body.style.overflow = 'hidden';
+      
+      // Cleanup: restore original overflow when modal closes or component unmounts
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   // Parse release notes (markdown-like formatting)
@@ -238,7 +253,11 @@ export default function UpdateModal({
           >
             {currentListItems.map((item, idx) => {
               // Remove list marker (*, -, or +) and clean up the text
-              const cleanText = item.replace(/^[*\-+]\s+/, '').trim();
+              let cleanText = item.replace(/^[*\-+]\s+/, '').trim();
+              // Capitalize first character
+              if (cleanText.length > 0) {
+                cleanText = cleanText.charAt(0).toUpperCase() + cleanText.slice(1);
+              }
               return (
                 <motion.li
                   key={idx}
@@ -386,7 +405,7 @@ export default function UpdateModal({
 
               {/* Release Notes */}
               <div className="flex-1 overflow-y-auto mb-6 min-h-0">
-                <div className="bg-linear-to-br from-white/5 to-transparent rounded-lg p-4 border border-apex-white/10">
+                <div className="bg-linear-to-br from-white/5 to-transparent rounded-md p-4 border border-apex-white/10">
                   <h4 className="text-sm font-semibold text-apex-white mb-4 uppercase tracking-wide">
                     What's New
                   </h4>

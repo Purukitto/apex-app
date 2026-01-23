@@ -1,7 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from '@vercel/analytics/react';
+import { Toaster } from 'sonner';
 import Login from './pages/Login';
+import ConfirmAccount from './pages/ConfirmAccount';
+import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import Dashboard from './pages/Dashboard';
 import Garage from './pages/Garage';
 import Service from './pages/Service';
@@ -20,6 +23,8 @@ function App() {
       <AppUpdateChecker />
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/confirmed" element={<ConfirmAccount />} />
+        <Route path="/reset-password" element={<UpdatePasswordPage />} />
         <Route
           path="/dashboard"
           element={
@@ -82,6 +87,24 @@ function App() {
         />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
+      <Toaster
+        theme="dark"
+        position="top-center"
+        expand={false}
+        visibleToasts={5}
+        gap={8}
+        richColors={false}
+        toastOptions={{
+          className: 'apex-toast',
+          style: {
+            background: 'var(--color-apex-black, #0A0A0A)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            color: 'var(--color-apex-white, #f5f5dc)',
+            fontFamily: 'inherit',
+          },
+          duration: 3000,
+        }}
+      />
       <SpeedInsights />
       <Analytics />
     </BrowserRouter>

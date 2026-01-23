@@ -105,7 +105,7 @@ export default function Service() {
             className="text-center py-16"
             variants={itemVariants}
           >
-            <div className="p-4 bg-apex-white/5 rounded-lg inline-block mb-4">
+            <div className="p-4 bg-apex-white/5 rounded-md inline-block mb-4">
               <Wrench size={48} className="text-apex-white/20" />
             </div>
             <p className="text-apex-white/60 text-sm">

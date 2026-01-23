@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
 import { Wrench, AlertCircle } from 'lucide-react';
 import type { MaintenanceSchedule, Bike } from '../types/database';
-import { buttonHoverProps, fastItemVariants, getCardHoverProps } from '../lib/animations';
+import { buttonHoverProps } from '../lib/animations';
 import { useThemeColors } from '../hooks/useThemeColors';
+import { Card } from './ui/Card';
 
 interface HealthCardProps {
   schedule: MaintenanceSchedule;
@@ -73,9 +74,13 @@ function calculateHealth(
  * Get color based on health percentage
  */
 function getHealthColor(health: number): string {
-  if (health >= 60) return '#00FF41'; // apex-green
-  if (health >= 20) return '#FFA500'; // orange/yellow
-  return '#FF3B30'; // apex-red
+  const green = 'var(--color-apex-green)';
+  const amber = 'var(--color-apex-amber)';
+  const red = 'var(--color-apex-red)';
+
+  if (health >= 60) return green;
+  if (health >= 20) return amber;
+  return red;
 }
 
 export default function HealthCard({
@@ -92,15 +97,11 @@ export default function HealthCard({
   const needsService = health < 20;
 
   return (
-    <motion.div
-      className="bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-4 hover:border-apex-green/40 transition-colors group"
-      variants={fastItemVariants}
-      {...getCardHoverProps()}
-    >
+    <Card padding="sm" animate="fastItem" className="group">
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div
-            className="p-1.5 rounded-lg transition-colors group-hover:opacity-80"
+            className="p-1.5 rounded-md transition-colors group-hover:opacity-80"
             style={{ backgroundColor: `${primary}1A` }}
           >
             <Wrench size={16} style={{ color: primary }} />
@@ -194,6 +195,6 @@ export default function HealthCard({
           Mark Done
         </motion.button>
       )}
-    </motion.div>
+    </Card>
   );
 }

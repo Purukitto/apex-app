@@ -1,9 +1,10 @@
-import { X, Bell, Check } from 'lucide-react';
+import { X, Bell, Check, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { useNotifications } from '../../hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
-import { containerVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../../lib/animations';
+import { containerVariants, buttonHoverProps } from '../../lib/animations';
 import { useState, useRef, useEffect } from 'react';
+import { Card } from '../ui/Card';
 
 interface NotificationPaneProps {
   isOpen: boolean;
@@ -157,28 +158,50 @@ export default function NotificationPane({
                 )}
               </div>
               <div className="flex items-center gap-2">
-                {unreadCount > 0 && (
-                  <motion.button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      markAllAsRead();
-                    }}
-                    className="p-2 rounded-lg text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5 transition-colors"
-                    aria-label="Mark all as read"
-                    {...buttonHoverProps}
-                    type="button"
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <Check size={18} />
-                  </motion.button>
+                {notifications.length > 0 && (
+                  <>
+                    <motion.button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (unreadCount > 0) {
+                          markAllAsRead();
+                        }
+                      }}
+                      className={`p-2 rounded-lg transition-colors ${
+                        unreadCount > 0
+                          ? 'text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5'
+                          : 'text-apex-white/30 cursor-not-allowed'
+                      }`}
+                      aria-label="Mark all as read"
+                      {...(unreadCount > 0 ? buttonHoverProps : {})}
+                      type="button"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      disabled={unreadCount === 0}
+                    >
+                      <Check size={18} />
+                    </motion.button>
+                    <motion.button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        dismissAll();
+                      }}
+                      className="p-2 rounded-lg text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5 transition-colors"
+                      aria-label="Dismiss all notifications"
+                      {...buttonHoverProps}
+                      type="button"
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      <Trash2 size={18} />
+                    </motion.button>
+                  </>
                 )}
                 <motion.button
                   onClick={(e) => {
                     e.stopPropagation();
-                      dismissAll();
+                    handleClose();
                   }}
                   className="p-2 rounded-lg text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5 transition-colors"
-                  aria-label="Dismiss all notifications"
+                  aria-label="Close notifications"
                   {...buttonHoverProps}
                   type="button"
                   onPointerDown={(e) => e.stopPropagation()}
@@ -203,15 +226,11 @@ export default function NotificationPane({
                   animate="visible"
                 >
                   {notifications.map((notification) => (
-                    <motion.div
+                    <Card
                       key={notification.id}
-                      className={`bg-linear-to-br from-apex-white/5 to-transparent border rounded-lg p-4 ${
-                        !notification.read_at
-                          ? 'border-apex-white/20'
-                          : 'border-apex-white/10'
-                      }`}
-                      variants={fastItemVariants}
-                      {...cardHoverProps}
+                      padding="sm"
+                      animate="fastItem"
+                      className={!notification.read_at ? 'border-apex-white/20' : 'border-apex-white/10'}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
@@ -269,7 +288,7 @@ export default function NotificationPane({
                           </motion.button>
                         </div>
                       </div>
-                    </motion.div>
+                    </Card>
                   ))}
                 </motion.div>
               )}

@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Toaster } from 'sonner';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useAppUpdateStore } from '../../stores/useAppUpdateStore';
 import NotificationPane from './NotificationPane';
@@ -57,7 +56,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }, []);
 
   // Get page title from route
-  const getPageTitle = () => {
+  const pageTitle = useMemo(() => {
     const path = location.pathname;
     if (path === '/dashboard') return 'Dashboard';
     if (path === '/garage') return 'Garage';
@@ -65,7 +64,13 @@ export default function MainLayout({ children }: MainLayoutProps) {
     if (path === '/ride') return 'Ride';
     if (path === '/rides') return 'All Rides';
     return 'Apex';
-  };
+  }, [location.pathname]);
+
+  // Update document title dynamically based on route
+  useEffect(() => {
+    // Format: "Page Name | Apex" for specific pages, or just "Apex" for default
+    document.title = pageTitle === 'Apex' ? 'Apex' : `${pageTitle} | Apex`;
+  }, [pageTitle]);
 
   return (
     <NotificationContext.Provider
@@ -89,7 +94,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
               initial="hidden"
               animate="visible"
             >
-              <PageHeader title={getPageTitle()} />
+              <PageHeader title={pageTitle} />
             </motion.div>
           </div>
         )}
@@ -107,26 +112,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
         {/* Floating Bottom Pill Navigation - Hidden in ride mode */}
         {!isRideMode && <BottomPillNav />}
-
-        {/* Toast Notifications */}
-        <Toaster
-          theme="dark"
-          position="top-center"
-          expand={false}
-          visibleToasts={5}
-          gap={8}
-          richColors={false}
-          toastOptions={{
-            className: 'apex-toast',
-            style: {
-              background: '#0A0A0A',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              color: '#E2E2E2',
-              fontFamily: 'inherit',
-            },
-            duration: 3000,
-          }}
-        />
 
         {/* Notification Pane */}
         <NotificationPane

@@ -54,7 +54,7 @@ export function RideStartupAnimation({ onComplete }: RideStartupAnimationProps) 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 bg-apex-black z-[100] flex flex-col items-center justify-center"
+        className="fixed inset-0 bg-apex-black z-100 flex flex-col items-center justify-center"
         initial={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3 }}
@@ -122,7 +122,7 @@ export function RideStartupAnimation({ onComplete }: RideStartupAnimationProps) 
                   cy="100"
                   r="90"
                   fill="none"
-                  stroke="#00FF41"
+                  stroke="var(--color-apex-green)"
                   strokeWidth="4"
                   strokeDasharray={`${2 * Math.PI * 90}`}
                   strokeDashoffset={2 * Math.PI * 90 * (1 - gaugeProgress)}

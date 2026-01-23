@@ -3,15 +3,20 @@
 @theme {
   /* Base Colors */
   --color-apex-black: #0A0A0A;
-  --color-apex-white: #E2E2E2;
+  --color-apex-white: #f5f5dc;
   
   /* Data Accent Colors */
-  --color-apex-green: #bef264;
-  --color-apex-red: #FF3B30;
+  --color-apex-green: #3DBF6F;
+  --color-apex-cyan: #2DA8C7;
+  --color-apex-orange: #E08A4C;
+  --color-apex-amber: #D9B85B;
+  --color-apex-red: #E35B5B;
+  --color-apex-green-highlight: #247048;
   
   /* Bento Grid Design Tokens */
   --spacing-apex: 1.5rem;
   --radius-apex: 2.5rem;
+  --shadow-apex-card: 0 14px 36px rgba(0, 0, 0, 0.45);
 }
 
 /* Safe Area Insets - for notches and punch-holes */
@@ -34,7 +39,7 @@ body {
 [data-sonner-toast] {
   background: var(--color-apex-black, #0A0A0A) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  color: var(--color-apex-white, #E2E2E2) !important;
+  color: var(--color-apex-white, #f5f5dc) !important;
   font-family: inherit !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
   margin-bottom: 0 !important;
@@ -61,26 +66,26 @@ body {
 
 /* Type-specific border colors */
 [data-sonner-toast][data-type="success"] {
-  border-color: var(--color-apex-green, #00FF41) !important;
+  border-color: var(--color-apex-green, #3DBF6F) !important;
 }
 
 [data-sonner-toast][data-type="error"] {
-  border-color: var(--color-apex-red, #FF3B30) !important;
+  border-color: var(--color-apex-red, #E35B5B) !important;
 }
 
 [data-sonner-toast] [data-description] {
-  color: var(--color-apex-white, #E2E2E2) !important;
+  color: var(--color-apex-white, #f5f5dc) !important;
 }
 
 /* Ensure toast content is visible and properly styled */
 [data-sonner-toast] [data-title] {
-  color: var(--color-apex-white, #E2E2E2) !important;
+  color: var(--color-apex-white, #f5f5dc) !important;
   opacity: 1 !important;
   visibility: visible !important;
 }
 
 [data-sonner-toast] [data-content] {
-  color: var(--color-apex-white, #E2E2E2) !important;
+  color: var(--color-apex-white, #f5f5dc) !important;
   opacity: 1 !important;
   visibility: visible !important;
 }
@@ -99,7 +104,7 @@ body {
 [data-sonner-toast] p,
 [data-sonner-toast] span,
 [data-sonner-toast] div {
-  color: var(--color-apex-white, #E2E2E2) !important;
+  color: var(--color-apex-white, #f5f5dc) !important;
   opacity: 1 !important;
 }
 
@@ -166,7 +171,7 @@ body {
 }
 
 .hover-border-theme:hover {
-  border-color: var(--color-apex-green-highlight, rgba(114, 145, 60, 0.4)) !important;
+  border-color: var(--color-apex-green-highlight, rgba(36, 112, 72, 0.4)) !important;
 }
 
 /* Apex Dark Map Style - Inverts OSM tiles to dark theme */
@@ -198,4 +203,27 @@ body {
 .map-non-interactive * {
   pointer-events: none !important;
   touch-action: pan-y !important;
+}
+
+/* Allow dragging to scroll when touching inputs in modal bodies */
+.modal-scroll-body input,
+.modal-scroll-body textarea,
+.modal-scroll-body select {
+  touch-action: pan-y;
+}
+
+/* Prevent browser autofill from applying bright background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-apex-white, #f5f5dc) !important;
+  box-shadow: 0 0 0px 1000px var(--color-apex-black, #0A0A0A) inset !important;
+  caret-color: var(--color-apex-white, #f5f5dc);
+  transition: background-color 9999s ease-out 0s;
 }

@@ -24,7 +24,8 @@
         <service
             android:name=".discord.DiscordRpcService"
             android:exported="false"
-            android:foregroundServiceType="dataSync" />
+            android:foregroundServiceType="dataSync"
+        />
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -41,6 +41,8 @@ export default function MaintenanceLogModal({
   const { isKeyboardVisible, keyboardHeight } = useKeyboard();
   const formRef = useRef<HTMLFormElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const keyboardPadding =
+    typeof window !== 'undefined' && window.visualViewport ? 0 : keyboardHeight;
 
   useEffect(() => {
     if (editingLog) {
@@ -74,29 +76,21 @@ export default function MaintenanceLogModal({
           if (!scrollContainer) return;
 
           const inputRect = target.getBoundingClientRect();
-          const viewportHeight = window.visualViewport?.height || window.innerHeight;
-          const safeAreaTop = parseInt(
-            getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)') || '0',
-            10
-          ) || 0;
-
-          const topPadding = safeAreaTop + 100;
-          const bottomPadding = 20;
-          const availableHeight = isKeyboardVisible
-            ? (window.visualViewport?.height || viewportHeight) - keyboardHeight
-            : viewportHeight;
-
-          const visibleTop = topPadding;
-          const visibleBottom = availableHeight - bottomPadding;
+          const containerRect = scrollContainer.getBoundingClientRect();
+          const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+          const keyboardOffset = window.visualViewport ? 0 : (isKeyboardVisible ? keyboardHeight : 0);
+          const visibleTop = containerRect.top + 16;
+          const visibleBottom = Math.min(containerRect.bottom, viewportHeight - keyboardOffset) - 16;
+          if (visibleBottom <= visibleTop) return;
 
           const inputTop = inputRect.top;
           const inputBottom = inputRect.bottom;
 
           if (inputBottom > visibleBottom) {
-            const scrollNeeded = inputBottom - visibleBottom + 30;
+            const scrollNeeded = inputBottom - visibleBottom + 24;
             scrollContainer.scrollTop += scrollNeeded;
           } else if (inputTop < visibleTop) {
-            const scrollNeeded = visibleTop - inputTop + 30;
+            const scrollNeeded = visibleTop - inputTop + 24;
             scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop - scrollNeeded);
           }
         }, isKeyboardVisible ? 500 : 100);
@@ -231,26 +225,26 @@ export default function MaintenanceLogModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      ref={scrollContainerRef}
-      className="fixed inset-0 z-50 overflow-y-auto"
-      style={{
-        paddingTop: `calc(env(safe-area-inset-top, 0px) + 1rem)`,
-        paddingBottom: isKeyboardVisible
-          ? `calc(env(safe-area-inset-bottom, 0px) + ${keyboardHeight}px + 1rem)`
-          : `calc(env(safe-area-inset-bottom, 0px) + 6rem)`,
-        paddingLeft: `calc(env(safe-area-inset-left, 0px) + 1rem)`,
-        paddingRight: `calc(env(safe-area-inset-right, 0px) + 1rem)`,
-      }}
-    >
+    <div className="fixed inset-0 z-50">
       <div
         className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
       <div
-        className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10 flex flex-col mx-auto my-8"
-        style={{ minHeight: isKeyboardVisible ? 'auto' : 'min-content' }}
+        className="fixed inset-0 flex"
+        style={{
+          paddingTop: `calc(env(safe-area-inset-top, 0px) + 1rem)`,
+          paddingBottom: isKeyboardVisible
+            ? `calc(env(safe-area-inset-bottom, 0px) + ${keyboardPadding}px + 1rem)`
+            : `calc(env(safe-area-inset-bottom, 0px) + 6rem)`,
+          paddingLeft: `calc(env(safe-area-inset-left, 0px) + 1rem)`,
+          paddingRight: `calc(env(safe-area-inset-right, 0px) + 1rem)`,
+        }}
       >
+        <div
+          className={`relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10 flex flex-col mx-auto max-h-full overflow-hidden ${isKeyboardVisible ? 'my-2' : 'my-8'}`}
+          style={{ minHeight: isKeyboardVisible ? 'auto' : 'min-content' }}
+        >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-apex-white">
             {editingLog ? 'Edit Maintenance Log' : 'Add Maintenance Log'}
@@ -265,14 +259,17 @@ export default function MaintenanceLogModal({
           </motion.button>
         </div>
 
-        <div className="mb-4 p-3 bg-apex-white/5 rounded-lg border border-apex-white/10">
-          <p className="text-sm text-apex-white/60 mb-1">Bike</p>
-          <p className="text-apex-white font-medium">
-            {bike.nick_name || `${bike.make} ${bike.model}`}
-          </p>
-        </div>
-
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col">
+          <div
+            ref={scrollContainerRef}
+            className="modal-scroll-body flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 space-y-4"
+          >
+            <div className="mb-4 p-3 bg-apex-white/5 rounded-lg border border-apex-white/10">
+              <p className="text-sm text-apex-white/60 mb-1">Bike</p>
+              <p className="text-apex-white font-medium">
+                {bike.nick_name || `${bike.make} ${bike.model}`}
+              </p>
+            </div>
           <div>
             <label className="block text-sm text-apex-white/60 mb-2">
               Service Type *
@@ -411,8 +408,9 @@ export default function MaintenanceLogModal({
           </div>
 
           {error && <div className="text-apex-red text-sm">{error}</div>}
+          </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 mt-4 border-t border-apex-white/10 shrink-0">
             <motion.button
               type="button"
               onClick={onClose}
@@ -436,6 +434,7 @@ export default function MaintenanceLogModal({
           </div>
         </form>
       </div>
+    </div>
     </div>
   );
 }

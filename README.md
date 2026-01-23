@@ -56,7 +56,7 @@ Whether you're tracking your weekend rides or managing a fleet of motorcycles, A
 Apex is designed with the rider in mind, especially for use on mobile devices during rides:
 
 - **OLED First**: Pure black backgrounds (`#0A0A0A`) to save battery and reduce glare
-- **High Contrast**: White and Apex Green (`#00FF41`) for critical data visibility
+- **High Contrast**: White and Apex Green (`#3DBF6F`) for critical data visibility
 - **Instrument Grade**: Monospaced fonts (JetBrains Mono) for telemetry precision
 - **Glove-Friendly**: Large touch targets, long-press for destructive actions
 - **Smooth Animations**: Subtle, high-end transitions for a polished experience
@@ -106,6 +106,10 @@ For more information:
 - **[DOCS.md](DOCS.md)** - Design philosophy and core pillars
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Guidelines for contributing
+
+## 📊 Analytics
+
+Apex uses [Vercel Analytics](https://vercel.com/analytics) to collect anonymous usage statistics and performance metrics. This helps us understand how the app is being used and identify areas for improvement. All analytics data is collected in compliance with privacy best practices and does not include personally identifiable information.
 
 ## ☕ Support Development
 

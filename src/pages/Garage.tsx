@@ -13,11 +13,12 @@ import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
 import type { Bike as BikeType, FuelLog } from '../types/database';
 import { apexToast } from '../lib/toast';
 import { motion } from 'framer-motion';
-import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps, cardHoverProps } from '../lib/animations';
+import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 import { useThemeColors } from '../hooks/useThemeColors';
 import { logger } from '../lib/logger';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import { Card } from '../components/ui/Card';
 
 // Helper component for bike image with fallback
 function BikeImage({ 
@@ -222,9 +223,9 @@ export default function Garage() {
             className="flex flex-col items-center justify-center py-16 text-center"
             variants={itemVariants}
           >
-            <div className="p-4 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-apex mb-4">
+            <Card padding="sm" animate="none" className="mb-4">
               <Motorbike size={48} style={{ color: primary }} />
-            </div>
+            </Card>
             <h2 className="text-xl font-semibold text-white mb-2">
               No bikes yet
             </h2>
@@ -245,10 +246,9 @@ export default function Garage() {
           <>
             {/* Hero Card - Current Bike */}
             {currentBike && (
-              <motion.div
-                className="bg-gradient-to-br from-white/5 to-transparent rounded-apex p-6 border border-apex-white/20"
-                variants={itemVariants}
-                {...cardHoverProps}
+              <Card
+                padding="md"
+                animate="item"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -286,37 +286,37 @@ export default function Garage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap justify-start gap-2 mx-auto max-w-fit">
                   <motion.button
                     onClick={() => handleViewMaintenance(currentBike)}
-                    className="flex-1 px-4 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-sm hover:bg-apex-white/20 transition-colors"
+                    className="px-3 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors whitespace-nowrap"
                     {...buttonHoverProps}
                   >
                     Maintenance
                   </motion.button>
                   <motion.button
                     onClick={() => handleViewFuel(currentBike)}
-                    className="flex-1 px-4 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-sm hover:bg-apex-white/20 transition-colors"
+                    className="px-3 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors whitespace-nowrap"
                     {...buttonHoverProps}
                   >
                     Fuel
                   </motion.button>
                   <motion.button
                     onClick={() => handleEditBike(currentBike)}
-                    className="flex-1 px-4 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-sm hover:bg-apex-white/20 transition-colors"
+                    className="px-3 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors whitespace-nowrap"
                     {...buttonHoverProps}
                   >
                     Edit
                   </motion.button>
                   <motion.button
                     onClick={() => handleDeleteClick(currentBike)}
-                    className="px-4 py-2 bg-apex-red/20 border border-apex-red/30 rounded-lg text-apex-red text-sm hover:bg-apex-red/30 transition-colors"
+                    className="px-3 py-2 bg-apex-red/20 border border-apex-red/30 rounded-lg text-apex-red text-xs hover:bg-apex-red/30 transition-colors whitespace-nowrap"
                     {...buttonHoverProps}
                   >
                     Delete
                   </motion.button>
                 </div>
-              </motion.div>
+              </Card>
             )}
 
             {/* Other Bikes Grid */}
@@ -326,11 +326,10 @@ export default function Garage() {
                 variants={containerVariants}
               >
                 {otherBikes.map((bike) => (
-                  <motion.div
+                  <Card
                     key={bike.id}
-                    className="bg-gradient-to-br from-white/5 to-transparent rounded-apex p-5 border border-apex-white/20"
-                    variants={fastItemVariants}
-                    {...cardHoverProps}
+                    padding="sm"
+                    animate="fastItem"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
@@ -365,37 +364,37 @@ export default function Garage() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap justify-start gap-2 mx-auto max-w-fit">
                       <motion.button
                         onClick={() => handleViewMaintenance(bike)}
-                        className="flex-1 px-3 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors"
+                        className="px-2 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors whitespace-nowrap"
                         {...buttonHoverProps}
                       >
                         Maint
                       </motion.button>
                       <motion.button
                         onClick={() => handleViewFuel(bike)}
-                        className="flex-1 px-3 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors"
+                        className="px-2 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors whitespace-nowrap"
                         {...buttonHoverProps}
                       >
                         Fuel
                       </motion.button>
                       <motion.button
                         onClick={() => handleEditBike(bike)}
-                        className="flex-1 px-3 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors"
+                        className="px-2 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors whitespace-nowrap"
                         {...buttonHoverProps}
                       >
                         Edit
                       </motion.button>
                       <motion.button
                         onClick={() => handleDeleteClick(bike)}
-                        className="px-3 py-1.5 bg-apex-red/20 border border-apex-red/30 rounded-lg text-apex-red text-xs hover:bg-apex-red/30 transition-colors"
+                        className="px-2 py-1.5 bg-apex-red/20 border border-apex-red/30 rounded-lg text-apex-red text-xs hover:bg-apex-red/30 transition-colors whitespace-nowrap"
                         {...buttonHoverProps}
                       >
                         Delete
                       </motion.button>
                     </div>
-                  </motion.div>
+                  </Card>
                 ))}
               </motion.div>
             )}

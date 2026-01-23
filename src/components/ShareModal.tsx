@@ -235,7 +235,7 @@ export default function ShareModal({
                     </h3>
                     {/* Preview */}
                     <div
-                      className="mt-6 aspect-square bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg overflow-hidden relative cursor-pointer"
+                      className="mt-6 aspect-square bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md overflow-hidden relative cursor-pointer"
                       onClick={() =>
                         !previewImages[mode.id] &&
                         !isGeneratingPreviews[mode.id] &&

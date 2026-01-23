@@ -73,7 +73,7 @@ export function LoadingSkeleton({
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className={`bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg p-4 ${className}`}
+          className={`bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md p-4 ${className}`}
         >
           <div className="space-y-3">
             <div className="h-4 bg-apex-white/10 rounded animate-shimmer relative overflow-hidden">

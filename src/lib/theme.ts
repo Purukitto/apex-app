@@ -11,7 +11,7 @@ const hexToRgb = (hex: string): [number, number, number] => {
         parseInt(result[2], 16),
         parseInt(result[3], 16),
       ]
-    : [190, 242, 100]; // Default to apex-green (NEON_LIME)
+    : [61, 191, 111]; // Default to apex-green
 };
 
 /**

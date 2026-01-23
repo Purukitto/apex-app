@@ -223,6 +223,9 @@ export default function Login() {
         <motion.div className="mb-8 text-center" variants={itemVariants}>
           <h1 className="text-3xl font-bold text-apex-white mb-2">Apex</h1>
           <p className="text-apex-white/60">The Rider's Black Box</p>
+          <p className="mt-3 text-sm font-semibold uppercase tracking-[0.2em] text-apex-green">
+            {isSignUp ? 'Create Account' : 'Sign In'}
+          </p>
         </motion.div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

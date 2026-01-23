@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -14,8 +14,12 @@ export default function ConfirmAccount() {
   const [status, setStatus] = useState<ConfirmationStatus>('checking');
   const [message, setMessage] = useState<string | null>(null);
   const navigate = useNavigate();
+  const hasChecked = useRef(false);
 
   useEffect(() => {
+    if (hasChecked.current) return;
+    hasChecked.current = true;
+
     const verifyConfirmation = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();

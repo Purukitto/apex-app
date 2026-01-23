@@ -30,10 +30,14 @@ export default function BottomPillNav() {
     <AnimatePresence>
       {!shouldHide && (
         <motion.div
-          className="fixed left-1/2 -translate-x-1/2 z-50 bg-apex-white/10 backdrop-blur-md rounded-full px-4 py-3 flex items-center gap-4 mx-4 pointer-events-auto"
+          className="fixed left-1/2 -translate-x-1/2 z-50 bg-apex-white/10 backdrop-blur-md rounded-full flex items-center pointer-events-auto"
           style={{
             bottom: 'calc(2.5rem + env(safe-area-inset-bottom, 0px))',
-            maxWidth: 'calc(100vw - 2rem)',
+            maxWidth: 'calc(100vw - clamp(0.25rem, 0.5vw, 0.75rem) * 2)',
+            padding: `clamp(0.75rem, 2.5vw, 1.25rem) clamp(1.25rem, 3vw, 2rem)`,
+            gap: `clamp(1rem, 2.5vw, 2rem)`,
+            marginLeft: `clamp(0.25rem, 0.5vw, 0.75rem)`,
+            marginRight: `clamp(0.25rem, 0.5vw, 0.75rem)`,
           }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -54,11 +58,27 @@ export default function BottomPillNav() {
                 e.stopPropagation();
                 navigate(item.path, { replace: true });
               }}
-              className="px-5 py-2.5 rounded-full font-semibold text-apex-black flex items-center gap-1.5 shadow-lg text-sm"
-              style={{ backgroundColor: primary }}
+              className="rounded-full font-semibold text-apex-black flex items-center shadow-lg"
+              style={{
+                backgroundColor: primary,
+                padding: `clamp(0.625rem, 2vw, 1rem) clamp(1.25rem, 3vw, 2.25rem)`,
+                gap: `clamp(0.5rem, 1.2vw, 1rem)`,
+                fontSize: `clamp(1rem, 2.5vw, 1.125rem)`,
+              }}
               {...buttonHoverProps}
             >
-              <Radio size={18} />
+              <span 
+                className="shrink-0"
+                style={{ 
+                  width: 'clamp(22px, 5.5vw, 28px)', 
+                  height: 'clamp(22px, 5.5vw, 28px)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Radio size={28} style={{ width: '100%', height: '100%' }} />
+              </span>
               <span>RIDE</span>
             </motion.button>
           );
@@ -72,14 +92,28 @@ export default function BottomPillNav() {
               e.stopPropagation();
               navigate(item.path, { replace: true });
             }}
-            className={`p-2 rounded-full transition-colors ${
+            className={`rounded-full transition-colors ${
               active
                 ? 'text-apex-white bg-apex-white/10'
                 : 'text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5'
             }`}
+            style={{
+              padding: `clamp(0.625rem, 2vw, 1rem)`,
+            }}
             {...buttonHoverProps}
           >
-            <Icon size={18} />
+            <span 
+              className="shrink-0"
+              style={{ 
+                width: 'clamp(22px, 5.5vw, 28px)', 
+                height: 'clamp(22px, 5.5vw, 28px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Icon size={28} style={{ width: '100%', height: '100%' }} />
+            </span>
           </motion.button>
         );
       })}

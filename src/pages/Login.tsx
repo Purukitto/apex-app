@@ -14,6 +14,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Calculate password strength for signup validation
@@ -141,8 +142,13 @@ export default function Login() {
         if (needsEmailConfirmation) {
           // Email confirmation required - don't navigate, show message
           apexToast.success('Please check your email to confirm your account');
+          setConfirmationMessage(
+            'Account created. Check your email to confirm, then sign in.'
+          );
+          setIsSignUp(false);
           setEmail('');
           setPassword('');
+          setError(null);
           return;
         }
 
@@ -159,8 +165,13 @@ export default function Login() {
         // If no session exists, it means email confirmation is required
         if (!session) {
           apexToast.success('Please check your email to confirm your account');
+          setConfirmationMessage(
+            'Account created. Check your email to confirm, then sign in.'
+          );
+          setIsSignUp(false);
           setEmail('');
           setPassword('');
+          setError(null);
           return;
         }
 
@@ -228,6 +239,14 @@ export default function Login() {
             {isSignUp ? 'Create Account' : 'Sign In'}
           </p>
         </motion.div>
+
+        {confirmationMessage && !isSignUp && (
+          <motion.div variants={itemVariants} className="mb-4">
+            <div className="rounded-lg border border-apex-green/40 bg-apex-green/10 px-4 py-3 text-sm text-apex-white">
+              {confirmationMessage}
+            </div>
+          </motion.div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <motion.div variants={itemVariants}>
@@ -304,6 +323,7 @@ export default function Login() {
               setIsSignUp(!isSignUp);
               setError(null); // Clear error when switching modes
               setPassword(''); // Clear password when switching modes
+              setConfirmationMessage(null);
             }}
             className="text-apex-green hover:text-apex-green/80 text-sm transition-colors"
           >

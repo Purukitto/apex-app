@@ -54,6 +54,15 @@ export default function UpdatePasswordPage() {
     checkSession();
   }, []);
 
+  useEffect(() => {
+    if (!success) return;
+    const redirectTimer = setTimeout(() => {
+      navigate('/login', { replace: true });
+    }, 1200);
+
+    return () => clearTimeout(redirectTimer);
+  }, [success, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from '@vercel/analytics/react';
+import { Toaster } from 'sonner';
 import Login from './pages/Login';
 import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import Dashboard from './pages/Dashboard';
@@ -84,6 +85,24 @@ function App() {
         />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
+      <Toaster
+        theme="dark"
+        position="top-center"
+        expand={false}
+        visibleToasts={5}
+        gap={8}
+        richColors={false}
+        toastOptions={{
+          className: 'apex-toast',
+          style: {
+            background: '#0A0A0A',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            color: '#E2E2E2',
+            fontFamily: 'inherit',
+          },
+          duration: 3000,
+        }}
+      />
       <SpeedInsights />
       <Analytics />
     </BrowserRouter>

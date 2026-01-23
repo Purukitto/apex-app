@@ -3,7 +3,6 @@ import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Capacitor } from '@capacitor/core';
 import { apexToast } from '../lib/toast';
 import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
@@ -30,6 +29,18 @@ export default function Login() {
     });
   }, [navigate]);
 
+  const waitForSession = async (): Promise<boolean> => {
+    // Supabase session persistence can take a moment on some platforms (webview/storage)
+    // Avoid navigating into AuthGuard until we can read the session back.
+    const maxAttempts = 5;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) return true;
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    return false;
+  };
+
   const forgotPassword = async () => {
     if (!email) {
       setError('Please enter your email address');
@@ -41,13 +52,10 @@ export default function Login() {
     setError(null);
 
     // Determine redirect URL:
-    // - If in mobile app: always use production web URL (email links should open in browser)
-    // - If on web: use current origin (localhost in dev, production in prod)
-    // - Can be overridden via VITE_RESET_PASSWORD_URL env var
-    const redirectUrl = import.meta.env.VITE_RESET_PASSWORD_URL || 
-      (Capacitor.isNativePlatform() 
-        ? 'https://apex.purukitto.xyz/reset-password'
-        : `${window.location.origin}/reset-password`);
+    // - Default: current origin + /reset-password (localhost in dev, prod in prod)
+    // - Override via VITE_RESET_PASSWORD_URL if needed (e.g. custom domain)
+    const redirectUrl =
+      import.meta.env.VITE_RESET_PASSWORD_URL || `${window.location.origin}/reset-password`;
 
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
@@ -188,6 +196,11 @@ export default function Login() {
         }
         
         apexToast.success('Signed in');
+
+        const sessionReady = await waitForSession();
+        if (!sessionReady) {
+          throw new Error('Sign-in completed, but session was not available yet. Please try again.');
+        }
         navigate('/dashboard');
       }
     } catch (err) {

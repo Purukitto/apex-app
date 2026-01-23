@@ -3,10 +3,9 @@ import { useBikes } from '../hooks/useBikes';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useRides } from '../hooks/useRides';
 import { useNavigate } from 'react-router-dom';
-import { User, Bell, MapPin, Timer, TrendingUp, RefreshCw } from 'lucide-react';
+import { MapPin, Timer, TrendingUp, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { containerVariants, itemVariants, fastItemVariants, buttonHoverProps } from '../lib/animations';
-import { useNotificationHandler } from '../components/layout/NotificationContext';
+import { containerVariants, itemVariants, fastItemVariants } from '../lib/animations';
 import { useThemeColors } from '../hooks/useThemeColors';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
@@ -19,7 +18,6 @@ export default function Dashboard() {
   const { profile } = useUserProfile();
   const { rides, isLoading: ridesLoading, refetch: refetchRides } = useRides({ limit: 5 });
   const navigate = useNavigate();
-  const { openNotifications, unreadCount } = useNotificationHandler();
   const { primary, highlight } = useThemeColors();
   const queryClient = useQueryClient();
 
@@ -64,7 +62,7 @@ export default function Dashboard() {
       {/* Dashboard-specific Greeting Section */}
       <div className="p-6 pb-0">
         <motion.div
-          className="flex items-center justify-between"
+          className="flex items-center"
           variants={itemVariants}
         >
           <div className="flex flex-col">
@@ -74,30 +72,6 @@ export default function Dashboard() {
             <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
               {riderName}!
             </h2>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Profile Button */}
-            <motion.button
-              onClick={() => navigate('/profile')}
-              className="w-10 h-10 rounded-full border-2 border-white/20 flex items-center justify-center text-white/60 hover:border-white/40 transition-colors"
-              {...buttonHoverProps}
-            >
-              <User size={20} />
-            </motion.button>
-            {/* Notifications Button */}
-            <motion.button
-              onClick={openNotifications}
-              className="relative w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
-              style={{ backgroundColor: primary }}
-              {...buttonHoverProps}
-            >
-              <Bell size={20} className="text-apex-black" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-apex-black text-apex-white text-[10px] font-mono font-bold rounded-full flex items-center justify-center border-2 border-apex-white">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </motion.button>
           </div>
         </motion.div>
       </div>

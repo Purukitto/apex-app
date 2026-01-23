@@ -536,13 +536,13 @@ export default function AllRides() {
                           )}
 
                           {/* Action Buttons */}
-                          <div className="flex gap-2 pt-2 flex-wrap">
+                          <div className="flex flex-wrap justify-start gap-2 pt-2 mx-auto max-w-fit">
                             <motion.button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleShareClick(ride);
                               }}
-                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-apex-green text-sm hover:bg-apex-green/20 transition-colors min-w-[100px]"
+                              className="flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-apex-green text-sm hover:bg-apex-green/20 transition-colors whitespace-nowrap"
                               {...buttonHoverProps}
                             >
                               <Share2 size={16} />
@@ -554,7 +554,7 @@ export default function AllRides() {
                                   e.stopPropagation();
                                   handleExportGPX(ride);
                                 }}
-                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-apex-green text-sm hover:bg-apex-green/20 transition-colors min-w-[100px]"
+                                className="flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-apex-green text-sm hover:bg-apex-green/20 transition-colors whitespace-nowrap"
                                 {...buttonHoverProps}
                               >
                                 <Download size={16} />
@@ -570,7 +570,7 @@ export default function AllRides() {
                                   rides.find((r) => r.id === ride.id) || ride;
                                 handleEditClick(currentRide);
                               }}
-                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-sm hover:bg-apex-white/20 transition-colors min-w-[100px]"
+                              className="flex items-center justify-center gap-2 px-4 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-sm hover:bg-apex-white/20 transition-colors whitespace-nowrap"
                               {...buttonHoverProps}
                             >
                               <Edit2 size={16} />
@@ -581,7 +581,7 @@ export default function AllRides() {
                                 e.stopPropagation();
                                 handleDeleteClick(ride);
                               }}
-                              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-sm hover:bg-red-500/30 transition-colors min-w-[100px]"
+                              className="flex items-center justify-center gap-2 px-4 py-2 bg-apex-red/20 border border-apex-red/30 rounded-lg text-apex-red text-sm hover:bg-apex-red/30 transition-colors whitespace-nowrap"
                               {...buttonHoverProps}
                             >
                               <Trash2 size={16} />

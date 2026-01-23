@@ -42,6 +42,8 @@ export default function AddRefuelModal({
   const { isKeyboardVisible, keyboardHeight } = useKeyboard();
   const formRef = useRef<HTMLFormElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const keyboardPadding =
+    typeof window !== 'undefined' && window.visualViewport ? 0 : keyboardHeight;
 
   useEffect(() => {
     if (editingLog) {
@@ -78,8 +80,11 @@ export default function AddRefuelModal({
 
           const inputRect = target.getBoundingClientRect();
           const containerRect = scrollContainer.getBoundingClientRect();
+          const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+          const keyboardOffset = window.visualViewport ? 0 : (isKeyboardVisible ? keyboardHeight : 0);
           const visibleTop = containerRect.top + 16;
-          const visibleBottom = containerRect.bottom - 16;
+          const visibleBottom = Math.min(containerRect.bottom, viewportHeight - keyboardOffset) - 16;
+          if (visibleBottom <= visibleTop) return;
 
           const inputTop = inputRect.top;
           const inputBottom = inputRect.bottom;
@@ -289,14 +294,14 @@ export default function AddRefuelModal({
         style={{
           paddingTop: `calc(env(safe-area-inset-top, 0px) + 1rem)`,
           paddingBottom: isKeyboardVisible
-            ? `calc(env(safe-area-inset-bottom, 0px) + ${keyboardHeight}px + 1rem)`
+            ? `calc(env(safe-area-inset-bottom, 0px) + ${keyboardPadding}px + 1rem)`
             : `calc(env(safe-area-inset-bottom, 0px) + 6rem)`,
           paddingLeft: `calc(env(safe-area-inset-left, 0px) + 1rem)`,
           paddingRight: `calc(env(safe-area-inset-right, 0px) + 1rem)`,
         }}
       >
         <div
-          className="relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10 flex flex-col mx-auto my-8 max-h-full"
+          className={`relative bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md z-10 flex flex-col mx-auto max-h-full overflow-hidden ${isKeyboardVisible ? 'my-2' : 'my-8'}`}
           style={{ minHeight: isKeyboardVisible ? 'auto' : 'min-content' }}
         >
         <div className="flex items-center justify-between mb-6">
@@ -316,7 +321,7 @@ export default function AddRefuelModal({
         <form ref={formRef} onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col">
           <div
             ref={scrollContainerRef}
-            className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-4"
+            className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 space-y-4"
           >
             <div className="mb-4 p-3 bg-apex-white/5 rounded-lg border border-apex-white/10">
               <p className="text-sm text-apex-white/60 mb-1">Bike</p>

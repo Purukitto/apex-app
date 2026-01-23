@@ -19,6 +19,10 @@ export default function Login() {
   // Calculate password strength for signup validation
   const passwordStrength = calculatePasswordStrength(password);
   const isPasswordValid = isSignUp ? passwordStrength.isValid : true;
+  // Determine redirect URL:
+  // - Default: current origin (localhost in dev, prod in prod)
+  // - Override via VITE_WEBSITE_BASE_URL if needed (e.g. custom domain)
+  const baseUrl = import.meta.env.VITE_WEBSITE_BASE_URL || `${window.location.origin}`;
 
   useEffect(() => {
     // Redirect if already authenticated
@@ -51,15 +55,9 @@ export default function Login() {
     setLoading(true);
     setError(null);
 
-    // Determine redirect URL:
-    // - Default: current origin + /reset-password (localhost in dev, prod in prod)
-    // - Override via VITE_RESET_PASSWORD_URL if needed (e.g. custom domain)
-    const redirectUrl =
-      import.meta.env.VITE_RESET_PASSWORD_URL || `${window.location.origin}/reset-password`;
-
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl,
+        redirectTo: `${baseUrl}/reset-password`,
       });
 
       if (resetError) {
@@ -79,7 +77,7 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Prevent submission if password is invalid in signup mode
     if (isSignUp && !isPasswordValid) {
       setError('Password does not meet all requirements');
@@ -94,16 +92,19 @@ export default function Login() {
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${baseUrl}/confirmed`,
+          },
         });
-        
+
         if (signUpError) {
           // Handle specific Supabase errors
           let errorMessage = 'Failed to create account';
-          
+
           // Check error message and code for duplicate email
           const errorMsg = signUpError.message?.toLowerCase() || '';
           const errorCode = signUpError.status?.toString() || '';
-          
+
           if (
             errorMsg.includes('already registered') ||
             errorMsg.includes('already exists') ||
@@ -117,26 +118,26 @@ export default function Login() {
           } else if (signUpError.message) {
             errorMessage = signUpError.message;
           }
-          
+
           throw new Error(errorMessage);
         }
-        
+
         // Check if user was actually created
         if (!signUpData.user) {
           throw new Error('This email is already registered');
         }
-        
+
         // KEY: Check if identities array is empty - this indicates duplicate email
         // Supabase returns user object with empty identities array for duplicate emails
         // to prevent email enumeration attacks
         if (!signUpData.user.identities || signUpData.user.identities.length === 0) {
           throw new Error('This email is already registered');
         }
-        
+
         // Check if email confirmation is required
         // If confirmation_sent_at exists but no session, user needs to confirm email
         const needsEmailConfirmation = signUpData.user.confirmation_sent_at && !signUpData.session;
-        
+
         if (needsEmailConfirmation) {
           // Email confirmation required - don't navigate, show message
           apexToast.success('Please check your email to confirm your account');
@@ -144,17 +145,17 @@ export default function Login() {
           setPassword('');
           return;
         }
-        
+
         // Check if we have a session (user is automatically signed in)
         // Wait a brief moment for session to be established
         await new Promise(resolve => setTimeout(resolve, 300));
-        
+
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+
         if (sessionError) {
           throw new Error(sessionError.message || 'Failed to create session');
         }
-        
+
         // If no session exists, it means email confirmation is required
         if (!session) {
           apexToast.success('Please check your email to confirm your account');
@@ -162,17 +163,17 @@ export default function Login() {
           setPassword('');
           return;
         }
-        
+
         // Verify the session user matches the signup user
         if (session.user.id !== signUpData.user.id) {
           throw new Error('This email is already registered');
         }
-        
+
         // Ensure session is valid before navigating
         if (!session.access_token) {
           throw new Error('Invalid session. This email may already be registered.');
         }
-        
+
         // After sign up, user is automatically signed in
         // Show toast and give it time to display before navigating
         apexToast.success('Account created');
@@ -184,7 +185,7 @@ export default function Login() {
           email,
           password,
         });
-        
+
         if (signInError) {
           let errorMessage = 'Failed to sign in';
           if (signInError.message.includes('Invalid login')) {
@@ -194,7 +195,7 @@ export default function Login() {
           }
           throw new Error(errorMessage);
         }
-        
+
         apexToast.success('Signed in');
 
         const sessionReady = await waitForSession();

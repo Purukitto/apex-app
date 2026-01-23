@@ -3,6 +3,7 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from '@vercel/analytics/react';
 import { Toaster } from 'sonner';
 import Login from './pages/Login';
+import ConfirmAccount from './pages/ConfirmAccount';
 import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import Dashboard from './pages/Dashboard';
 import Garage from './pages/Garage';
@@ -22,6 +23,7 @@ function App() {
       <AppUpdateChecker />
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/confirmed" element={<ConfirmAccount />} />
         <Route path="/reset-password" element={<UpdatePasswordPage />} />
         <Route
           path="/dashboard"

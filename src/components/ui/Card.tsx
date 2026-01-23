@@ -41,9 +41,10 @@ export interface CardProps extends Omit<HTMLMotionProps<'div'>, 'variants'> {
  * Standard Apex Card Component
  * 
  * Follows the mandatory card styling from UX polish rules:
- * - Background: bg-gradient-to-br from-white/5 to-transparent
- * - Border: border border-apex-white/20
- * - Rounded: rounded-md
+ * - Background: soft dark gradient with subtle highlight
+ * - Border: border border-apex-white/10
+ * - Rounded: rounded-2xl
+ * - Shadow: subtle raised depth via theme shadow
  * - Hover: Uses theme highlight color via getCardHoverProps()
  * 
  * @example
@@ -84,7 +85,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
 
     // Base card classes
     const baseClasses =
-      'bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md transition-colors';
+      'bg-gradient-to-br from-apex-white/10 via-apex-black/70 to-apex-black/90 border border-apex-white/10 rounded-2xl shadow-[var(--shadow-apex-card)] transition-colors';
 
     // Clickable classes
     const clickableClasses = clickable || onClick

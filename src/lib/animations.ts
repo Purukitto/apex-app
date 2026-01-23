@@ -57,7 +57,7 @@ export const listContainerVariants: Variants = {
 const getThemeHighlightColor = (): string => {
   if (typeof window === 'undefined') {
     // Default darker shade of apex-green (60% brightness)
-    return 'rgba(114, 145, 60, 0.4)';
+    return 'rgba(36, 112, 72, 0.4)';
   }
   
   const root = document.documentElement;
@@ -67,7 +67,7 @@ const getThemeHighlightColor = (): string => {
   
   if (!highlightColor) {
     // Fallback to darker shade of apex-green (60% brightness)
-    return 'rgba(114, 145, 60, 0.4)';
+    return 'rgba(36, 112, 72, 0.4)';
   }
   
   // Convert hex to rgba with 0.4 opacity

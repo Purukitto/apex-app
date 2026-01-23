@@ -117,8 +117,8 @@ const WebFallback = () => {
               value={downloadUrl}
               size={qrSize}
               level="M"
-              bgColor="#FFFFFF"
-              fgColor="#0A0A0A"
+              bgColor="var(--color-apex-white)"
+              fgColor="var(--color-apex-black)"
             />
           </div>
           

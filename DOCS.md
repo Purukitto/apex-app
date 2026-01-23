@@ -5,7 +5,7 @@ A minimalist, high-precision utility for motorcyclists. Apex is a "Flight Record
 
 ## Design Philosophy: "The Dark Cockpit"
 - **OLED First:** Pure black backgrounds (#0A0A0A) to save battery and reduce glare.
-- **High Contrast:** White and 'Apex Green' (#00FF41) for critical data.
+- **High Contrast:** White and 'Apex Green' (#3DBF6F) for critical data.
 - **Instrument Grade:** Use monospaced fonts for telemetry.
 - **Glove-Friendly:** Large touch targets, long-press for destructive actions.
 

@@ -26,9 +26,9 @@ export const apexToast = {
     return toast.success(message, {
       className: 'apex-toast-success',
       style: {
-        background: '#0A0A0A',
-        border: '1px solid var(--color-apex-green, #00FF41)',
-        color: '#E2E2E2',
+        background: 'var(--color-apex-black, #0A0A0A)',
+        border: '1px solid var(--color-apex-green, #3DBF6F)',
+        color: 'var(--color-apex-white, #f5f5dc)',
       },
       duration: 3000,
     });
@@ -42,9 +42,9 @@ export const apexToast = {
     return toast.error(truncatedMessage, {
       className: 'apex-toast-error',
       style: {
-        background: '#0A0A0A',
-        border: '1px solid #FF3B30',
-        color: '#E2E2E2',
+        background: 'var(--color-apex-black, #0A0A0A)',
+        border: '1px solid var(--color-apex-red, #E35B5B)',
+        color: 'var(--color-apex-white, #f5f5dc)',
       },
       action: options?.action,
       duration: 4000,
@@ -64,9 +64,9 @@ export const apexToast = {
     const toastId = toast.loading(messages.loading, {
       className: 'apex-toast-promise',
       style: {
-        background: '#0A0A0A',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        color: '#E2E2E2',
+        background: 'var(--color-apex-black, #0A0A0A)',
+        border: '1px solid rgba(226, 226, 226, 0.2)',
+        color: 'var(--color-apex-white, #f5f5dc)',
       },
       duration: 3000,
     });
@@ -81,9 +81,9 @@ export const apexToast = {
           id: toastId,
           className: 'apex-toast-promise',
           style: {
-            background: '#0A0A0A',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            color: '#E2E2E2',
+            background: 'var(--color-apex-black, #0A0A0A)',
+            border: '1px solid rgba(226, 226, 226, 0.2)',
+            color: 'var(--color-apex-white, #f5f5dc)',
           },
           duration: 3000,
         });
@@ -104,9 +104,9 @@ export const apexToast = {
             id: toastId,
             className: 'apex-toast-promise',
             style: {
-              background: '#0A0A0A',
-              border: '1px solid #FF3B30',
-              color: '#E2E2E2',
+              background: 'var(--color-apex-black, #0A0A0A)',
+              border: '1px solid var(--color-apex-red, #E35B5B)',
+              color: 'var(--color-apex-white, #f5f5dc)',
             },
             duration: 4000,
           });

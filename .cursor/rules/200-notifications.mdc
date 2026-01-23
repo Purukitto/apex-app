@@ -45,9 +45,9 @@ alwaysApply: true
 
 ### Visual Style
 - **Background**: `#0A0A0A` (apex-black)
-- **Success border**: `#00FF41` (apex-green)
-- **Error border**: `#FF3B30` (apex-red)
-- **Text color**: `#E2E2E2` (apex-white)
+- **Success border**: `#3DBF6F` (apex-green)
+- **Error border**: `#E35B5B` (apex-red)
+- **Text color**: `#f5f5dc` (apex-white)
 - **Font**: Inherit from theme (use `font-mono` for numbers/data in toast content)
 
 ## Persistent Notifications (Server-Synced)

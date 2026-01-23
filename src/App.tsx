@@ -95,9 +95,9 @@ function App() {
         toastOptions={{
           className: 'apex-toast',
           style: {
-            background: '#0A0A0A',
+            background: 'var(--color-apex-black, #0A0A0A)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
-            color: '#E2E2E2',
+            color: 'var(--color-apex-white, #f5f5dc)',
             fontFamily: 'inherit',
           },
           duration: 3000,

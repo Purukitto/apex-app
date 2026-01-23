@@ -167,9 +167,9 @@ async function buildSharedResources(
 ): Promise<SharedResources> {
   // Get theme colors from CSS variables
   const root = document.documentElement;
-  const apexBlack = getComputedStyle(root).getPropertyValue('--color-apex-black').trim() || '#0A0A0A';
-  const apexWhite = getComputedStyle(root).getPropertyValue('--color-apex-white').trim() || '#E2E2E2';
-  const apexGreen = getComputedStyle(root).getPropertyValue('--color-apex-green').trim() || '#00FF41';
+  const apexBlack = getComputedStyle(root).getPropertyValue('--color-apex-black').trim() || 'var(--color-apex-black)';
+  const apexWhite = getComputedStyle(root).getPropertyValue('--color-apex-white').trim() || 'var(--color-apex-white)';
+  const apexGreen = getComputedStyle(root).getPropertyValue('--color-apex-green').trim() || 'var(--color-apex-green)';
 
   // Check if route data is available
   const hasRoute = ride.route_path && 

@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react';
  */
 export const useThemeColors = () => {
   const [colors, setColors] = useState({
-    primary: '#bef264',
-    highlight: 'rgba(114, 145, 60, 0.4)',
+    primary: '#3DBF6F',
+    highlight: 'rgba(36, 112, 72, 0.4)',
   });
 
   useEffect(() => {
@@ -17,8 +17,8 @@ export const useThemeColors = () => {
       const root = document.documentElement;
       const computedStyle = getComputedStyle(root);
       
-      const primary = computedStyle.getPropertyValue('--color-apex-green').trim() || '#bef264';
-      const highlightHex = computedStyle.getPropertyValue('--color-apex-green-highlight').trim() || '#72913C';
+      const primary = computedStyle.getPropertyValue('--color-apex-green').trim() || '#3DBF6F';
+      const highlightHex = computedStyle.getPropertyValue('--color-apex-green-highlight').trim() || '#247048';
       
       // Convert highlight hex to rgba with 0.4 opacity
       const hex = highlightHex.replace('#', '');

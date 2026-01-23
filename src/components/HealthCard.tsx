@@ -74,9 +74,13 @@ function calculateHealth(
  * Get color based on health percentage
  */
 function getHealthColor(health: number): string {
-  if (health >= 60) return '#00FF41'; // apex-green
-  if (health >= 20) return '#FFA500'; // orange/yellow
-  return '#FF3B30'; // apex-red
+  const green = 'var(--color-apex-green)';
+  const amber = 'var(--color-apex-amber)';
+  const red = 'var(--color-apex-red)';
+
+  if (health >= 60) return green;
+  if (health >= 20) return amber;
+  return red;
 }
 
 export default function HealthCard({

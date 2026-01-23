@@ -59,6 +59,7 @@ alwaysApply: true
 ### Card Components
 - **MANDATORY**: Always use the `Card` component from `src/components/ui/Card.tsx` for all card instances.
 - **NEVER** create inline card styling with `bg-gradient-to-br`, `border`, etc. - use the `Card` component instead.
+- **Card Look:** Raised, rounded-2xl, subtle dark gradient, soft border, and a gentle shadow for depth.
 - **Usage:**
  ```typescript
  import { Card } from '../components/ui/Card';
@@ -123,7 +124,7 @@ alwaysApply: true
 - **Interaction**: Apply `{...buttonHoverProps}` on the trigger and options.
 
 ## 3. Visual Hierarchy & Polish
-- **Borders over Shadows:** Avoid heavy shadows. Use `border border-white/10` or `border-white/20` for containers.
+- **Borders over Shadows:** Avoid heavy shadows. Use subtle raised shadows only for cards and rely on `border-apex-white/10` or `border-apex-white/20` for structure.
 - **Typography:**
   - Header: `font-sans font-bold tracking-tight`.
   - Telemetry: Always `font-mono text-apex-green`.
@@ -135,16 +136,16 @@ alwaysApply: true
 - **MANDATORY**: Never use hardcoded hex colors in components. Always use theme colors from CSS variables.
 - **Theme Colors Available:**
   - `apex-black`: `#0A0A0A` - Primary background
-  - `apex-white`: `#E2E2E2` - Primary text
-  - `apex-green`: `#00FF41` - Primary accent (data, success, active states)
-  - `apex-red`: `#FF3B30` - Error, warning, danger states
+  - `apex-white`: `#f5f5dc` - Primary text
+  - `apex-green`: `#3DBF6F` - Primary accent (data, success, active states)
+  - `apex-red`: `#E35B5B` - Error, warning, danger states
 - **Usage:**
   - **Tailwind Classes:** Prefer `text-apex-green`, `bg-apex-red`, etc. when possible.
   - **CSS Variables:** For SVG or inline styles, use `getComputedStyle(document.documentElement).getPropertyValue('--color-apex-green')` or access via `var(--color-apex-green)`.
   - **SVG Elements:** Use CSS variables or `currentColor` with Tailwind classes on parent.
 - **Color Transitions:** When colors change based on state (e.g., lean angle), use smooth transitions (0.3s ease-in-out).
 - **Deprecated Colors:**
-  - **DO NOT** use `NEON_LIME` (`#bef264`) or any other hardcoded green colors. Always use `apex-green` (`#00FF41`) instead.
+  - **DO NOT** use `NEON_LIME` (`#bef264`) or any other hardcoded green colors. Always use `apex-green` instead.
   - **DO NOT** use `zinc-*` or other Tailwind color utilities for backgrounds/borders. Use `apex-black`, `apex-white`, `apex-green`, or `apex-red` with appropriate opacity modifiers.
   - **DO NOT** use generic `white`, `black`, `red-*`, `green-*` classes. Always use the `apex-*` prefixed theme colors.
 

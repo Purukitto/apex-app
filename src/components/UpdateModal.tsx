@@ -1,4 +1,4 @@
-import { type ReactElement } from 'react';
+import { type ReactElement, useEffect } from 'react';
 import { X, Download, ExternalLink, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { buttonHoverProps, fastItemVariants, listContainerVariants } from '../lib/animations';
@@ -17,6 +17,21 @@ export default function UpdateModal({
   onDownload,
   updateInfo,
 }: UpdateModalProps) {
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Store original overflow value
+      const originalOverflow = document.body.style.overflow;
+      // Lock body scroll
+      document.body.style.overflow = 'hidden';
+      
+      // Cleanup: restore original overflow when modal closes or component unmounts
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   // Parse release notes (markdown-like formatting)

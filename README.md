@@ -107,6 +107,10 @@ For more information:
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Guidelines for contributing
 
+## 📊 Analytics
+
+Apex uses [Vercel Analytics](https://vercel.com/analytics) to collect anonymous usage statistics and performance metrics. This helps us understand how the app is being used and identify areas for improvement. All analytics data is collected in compliance with privacy best practices and does not include personally identifiable information.
+
 ## ☕ Support Development
 
 Apex is free and open-source. If it helps you, consider supporting development:

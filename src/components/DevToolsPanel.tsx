@@ -5,6 +5,9 @@ import { useRideStore } from '../stores/useRideStore';
 import { useThemeStore } from '../stores/useThemeStore';
 import { useNotificationStore } from '../stores/useNotificationStore';
 import { useAppUpdateStore } from '../stores/useAppUpdateStore';
+import { useAppUpdate } from '../hooks/useAppUpdate';
+import type { UpdateInfo } from '../hooks/useAppUpdate';
+import { getAppVersion } from '../lib/version';
 import { isDev } from '../lib/devtools';
 import { buttonHoverProps } from '../lib/animations';
 import { logger } from '../lib/logger';
@@ -55,6 +58,72 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
   const themeStore = useThemeStore();
   const notificationStore = useNotificationStore();
   const appUpdateStore = useAppUpdateStore();
+  const { checkForUpdate, getLatestReleaseInfo } = useAppUpdate();
+
+  const mockUpdateInfo = useMemo<UpdateInfo>(() => ({
+    isAvailable: true,
+    latestVersion: 'v9.9.9',
+    currentVersion: getAppVersion(),
+    releaseNotes: [
+      '## [9.9.9]',
+      '### Features',
+      '* Instant launch with cached route data',
+      '* New ride highlights carousel',
+      '* Smart download scheduler for updates',
+      '### Bug Fixes',
+      '* Fix occasional GPS spike at low speed',
+      '* Prevent duplicate toast on retry',
+      '* Smooth out card hover flicker',
+      '### Performance',
+      '* Reduce main thread work during ride start',
+      '* Smaller bundle for analytics',
+      '### Security',
+      '* Hardened session refresh handling',
+    ].join('\n'),
+    releaseUrl: 'https://github.com/Purukitto/apex-app/releases/latest',
+    downloadUrl: Capacitor.getPlatform() === 'android'
+      ? 'https://github.com/Purukitto/apex-app/releases/latest/download/apex-v9.9.9.apk'
+      : undefined,
+  }), []);
+
+  const showMockUpdateModal = useCallback(() => {
+    appUpdateStore.setUpdateInfo(mockUpdateInfo);
+    appUpdateStore.setShowModal(true);
+  }, [appUpdateStore, mockUpdateInfo]);
+
+  const showLiveUpdateModal = useCallback(async () => {
+    if (!Capacitor.isNativePlatform()) {
+      apexToast.error('Update checks are native-only for now.', {
+        action: { label: 'Show Mock', onClick: showMockUpdateModal },
+      });
+      return;
+    }
+
+    const update = await checkForUpdate(true, true);
+    if (!update) {
+      apexToast.error('No update available right now.', {
+        action: { label: 'Show Mock', onClick: showMockUpdateModal },
+      });
+    }
+  }, [checkForUpdate, showMockUpdateModal]);
+
+  const forceDownloadUpdate = useCallback(async () => {
+    if (Capacitor.getPlatform() !== 'android') {
+      apexToast.error('Direct install is Android-only.', {
+        action: { label: 'Show Mock', onClick: showMockUpdateModal },
+      });
+      return;
+    }
+
+    const latestInfo = await getLatestReleaseInfo();
+    if (!latestInfo?.downloadUrl) {
+      apexToast.error('No APK found for the latest release.');
+      return;
+    }
+
+    appUpdateStore.setUpdateInfo(latestInfo);
+    appUpdateStore.setShowModal(true);
+  }, [appUpdateStore, getLatestReleaseInfo, showMockUpdateModal]);
 
   // Flush queued logs to state
   const flushLogs = useCallback(() => {
@@ -460,6 +529,40 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                     </div>
                   ))}
 
+                  <div className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-apex-green font-mono">
+                        App Update Tester
+                      </h3>
+                    </div>
+                    <p className="text-xs text-apex-white/60">
+                      Trigger the update modal with live data or a mock payload.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <motion.button
+                        onClick={() => { void showLiveUpdateModal(); }}
+                        className="flex-1 px-3 py-2 text-xs font-semibold text-apex-black bg-apex-green rounded-lg border border-apex-green/60 hover:border-apex-green transition-colors"
+                        {...buttonHoverProps}
+                      >
+                        Check & Show Update
+                      </motion.button>
+                      <motion.button
+                        onClick={showMockUpdateModal}
+                        className="flex-1 px-3 py-2 text-xs font-semibold text-apex-white/80 bg-apex-white/5 rounded-lg border border-apex-white/10 hover:border-apex-white/20 transition-colors"
+                        {...buttonHoverProps}
+                      >
+                        Show Mock Modal
+                      </motion.button>
+                      <motion.button
+                        onClick={forceDownloadUpdate}
+                        className="flex-1 px-3 py-2 text-xs font-semibold text-apex-white/90 bg-apex-black rounded-lg border border-apex-green/40 hover:border-apex-green/70 transition-colors"
+                        {...buttonHoverProps}
+                      >
+                        Force Update Modal
+                      </motion.button>
+                    </div>
+                  </div>
+
                   <div className="bg-linear-to-br from-apex-white/5 to-transparent border border-apex-white/20 rounded-md p-4 space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-semibold text-apex-green font-mono">
@@ -848,7 +951,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                                 <span className="text-apex-white/40 shrink-0">
                                   {log.timestamp.toLocaleTimeString()}
                                 </span>
-                                <span className={`flex-1 ${colorClass} break-words min-w-0`}>
+                                <span className={`flex-1 ${colorClass} wrap-break-word min-w-0`}>
                                   {log.message}
                                 </span>
                               </div>

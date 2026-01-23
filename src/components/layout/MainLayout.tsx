@@ -11,6 +11,7 @@ import UpdateModal from '../UpdateModal';
 import DevToolsPanel from '../DevToolsPanel';
 import DevToolsButton from '../DevToolsButton';
 import { useAppUpdate } from '../../hooks/useAppUpdate';
+import { Capacitor } from '@capacitor/core';
 import { AnimatePresence, motion } from 'framer-motion';
 import { containerVariants } from '../../lib/animations';
 import { useRideStore } from '../../stores/useRideStore';
@@ -25,21 +26,22 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const [notificationPaneOpen, setNotificationPaneOpen] = useState(false);
   const [devToolsOpen, setDevToolsOpen] = useState(false);
   const { unreadCount } = useNotifications();
-  const { updateInfo, showModal, setShowModal, dismissUpdate } = useAppUpdateStore();
-  const { openReleasePage } = useAppUpdate();
+  const { updateInfo, showModal, setShowModal, dismissUpdate, downloadState, downloadProgress, lastDownloadedPath } = useAppUpdateStore();
+  const { openReleasePage, downloadUpdate, deleteDownloadedApk } = useAppUpdate();
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
   const isRecording = useRideStore((state) => state.isRecording);
   
   // Hide navigation when recording (full-screen ride mode)
   const isRideMode = isRecording && location.pathname === '/ride';
+  const canDirectDownload = Boolean(updateInfo?.downloadUrl) && Capacitor.getPlatform() === 'android';
 
   const handleUpdateDownload = () => {
-    if (updateInfo?.downloadUrl) {
-      openReleasePage();
-    } else {
-      openReleasePage();
+    if (canDirectDownload) {
+      void downloadUpdate();
+      return;
     }
+    void openReleasePage();
   };
 
   // Reset scroll position on route change
@@ -129,6 +131,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
             }}
             onDownload={handleUpdateDownload}
             updateInfo={updateInfo}
+            downloadState={downloadState}
+            downloadProgress={downloadProgress}
+            canDirectDownload={canDirectDownload}
+            onDeleteApk={() => { void deleteDownloadedApk(); }}
+            hasDownloadedApk={Boolean(lastDownloadedPath)}
           />
         )}
 

@@ -2,6 +2,53 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.2.0) (2026-01-23)
+
+
+### Features
+
+* add account confirmation page and update login flow ([2a15c1e](https://github.com/Purukitto/apex-app/commit/2a15c1e5910ab363e14a8e95f03e9d7d326a0514))
+* add dynamic sign-in/sign-up label to Login component ([73e090e](https://github.com/Purukitto/apex-app/commit/73e090e1a01f57b1b575fae15402b182e77a115d))
+* add password reset functionality and update password page ([6d699a8](https://github.com/Purukitto/apex-app/commit/6d699a81507c3f9330a78ed5d79811a5cca2db8b))
+* add update availability check and button label in Profile component ([691384c](https://github.com/Purukitto/apex-app/commit/691384c12adc5ef79494882770d94703308fd0b3))
+* capitalize first character of list items in UpdateModal ([b7a25c2](https://github.com/Purukitto/apex-app/commit/b7a25c2831cd9132c955f657216e5b6f0eb34388))
+* enhance Garage component button styling and layout ([70db5ec](https://github.com/Purukitto/apex-app/commit/70db5ec77efcb6d8c798c7b99403cc34c9fb8bae))
+* enhance Login component with confirmation message and autofill styling ([9018639](https://github.com/Purukitto/apex-app/commit/90186399b63fafec561c7bbddd9d6d9324345170))
+* enhance modal scrolling behavior for better user experience ([c09f78f](https://github.com/Purukitto/apex-app/commit/c09f78f1a6f898e807386dcc8b2e208166540e20))
+* enhance NotificationPane with additional button functionality and improved styling ([4e91668](https://github.com/Purukitto/apex-app/commit/4e916687fe0d2478803997c827cfd172c4e297f5))
+* enhance PageHeader with profile and notifications buttons ([59d4509](https://github.com/Purukitto/apex-app/commit/59d4509efc425efc6f7f900a86daad91787f3008))
+* improve BottomPillNav responsiveness and styling ([471d901](https://github.com/Purukitto/apex-app/commit/471d901363381151d9e9bae990616db054bc567d))
+* improve keyboard handling and layout in modals ([c1a1b1d](https://github.com/Purukitto/apex-app/commit/c1a1b1d991dcb7492edad6ef855ea6d27b756587))
+* integrate Toaster for notifications and enhance AuthGuard session handling ([f7851b3](https://github.com/Purukitto/apex-app/commit/f7851b36b61cecd69f1c679a9351f8f25348f9da))
+* lock body scroll when UpdateModal is open ([23c4fb8](https://github.com/Purukitto/apex-app/commit/23c4fb8a0fbd45f3ac21421b2c57b3b97f6cc2de))
+* optimize account confirmation logic in ConfirmAccount component ([11740b7](https://github.com/Purukitto/apex-app/commit/11740b76d42de1ac92f3ca0911831f13fd25fcf8))
+* refine BottomPillNav styling and layout ([4ce0ddc](https://github.com/Purukitto/apex-app/commit/4ce0ddc0b163ceb3f1dc7b541aad1194cad91601))
+* theme update with better colours and card layout changes ([949f81c](https://github.com/Purukitto/apex-app/commit/949f81cccaeead6f73f055dfc987851ce6849dd5))
+* update button styling in AllRides component for improved layout and consistency ([e0f4da8](https://github.com/Purukitto/apex-app/commit/e0f4da80712712e5bccded306b480ed3b6c7a659))
+* update document title dynamically based on route and change default title to "Apex" ([a65ddbc](https://github.com/Purukitto/apex-app/commit/a65ddbc2723d3348d2a6d11aa5bf0936713bc58e))
+* update password reset functionality in Login component ([6e9da1f](https://github.com/Purukitto/apex-app/commit/6e9da1fe3a890fdae0a4abb7a5f4951bddd32617))
+
+
+### Bug Fixes
+
+* enhance DevToolsPanel styling for better log display ([761c7e4](https://github.com/Purukitto/apex-app/commit/761c7e401665c2b49bbbc10c36ead4fe0757b50f))
+
+
+### Documentation
+
+* add analytics section to README.md for Vercel usage tracking ([4ff9f3f](https://github.com/Purukitto/apex-app/commit/4ff9f3f0edaa5f40386ce8bd716cf7ff9edfe967))
+
+
+### Code Refactoring
+
+* migrate all cards to use reusable Card component ([b9f0f77](https://github.com/Purukitto/apex-app/commit/b9f0f77b68dc50a2e5b45f5c4c7c481682d0070a))
+
+
+### Miscellaneous Chores
+
+* add environment variables for password reset and Discord RPC integration in release workflow ([62d4885](https://github.com/Purukitto/apex-app/commit/62d4885c5d13fd644a641ce6193a76078e51c9ed))
+* generated updated assets ([a1dc996](https://github.com/Purukitto/apex-app/commit/a1dc996b75f03d28368416cec1dd9cfe81fba462))
+
 ### [1.1.1](https://github.com/Purukitto/apex-app/compare/v1.1.0...v1.1.1) (2026-01-22)
 
 

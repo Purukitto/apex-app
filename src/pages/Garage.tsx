@@ -286,31 +286,31 @@ export default function Garage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap justify-start gap-2 mx-auto max-w-fit">
                   <motion.button
                     onClick={() => handleViewMaintenance(currentBike)}
-                    className="flex-1 px-4 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-sm hover:bg-apex-white/20 transition-colors"
+                    className="px-3 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors whitespace-nowrap"
                     {...buttonHoverProps}
                   >
                     Maintenance
                   </motion.button>
                   <motion.button
                     onClick={() => handleViewFuel(currentBike)}
-                    className="flex-1 px-4 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-sm hover:bg-apex-white/20 transition-colors"
+                    className="px-3 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors whitespace-nowrap"
                     {...buttonHoverProps}
                   >
                     Fuel
                   </motion.button>
                   <motion.button
                     onClick={() => handleEditBike(currentBike)}
-                    className="flex-1 px-4 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-sm hover:bg-apex-white/20 transition-colors"
+                    className="px-3 py-2 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors whitespace-nowrap"
                     {...buttonHoverProps}
                   >
                     Edit
                   </motion.button>
                   <motion.button
                     onClick={() => handleDeleteClick(currentBike)}
-                    className="px-4 py-2 bg-apex-red/20 border border-apex-red/30 rounded-lg text-apex-red text-sm hover:bg-apex-red/30 transition-colors"
+                    className="px-3 py-2 bg-apex-red/20 border border-apex-red/30 rounded-lg text-apex-red text-xs hover:bg-apex-red/30 transition-colors whitespace-nowrap"
                     {...buttonHoverProps}
                   >
                     Delete
@@ -365,31 +365,31 @@ export default function Garage() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap justify-start gap-2 mx-auto max-w-fit">
                       <motion.button
                         onClick={() => handleViewMaintenance(bike)}
-                        className="flex-1 px-3 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors"
+                        className="px-2 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors whitespace-nowrap"
                         {...buttonHoverProps}
                       >
                         Maint
                       </motion.button>
                       <motion.button
                         onClick={() => handleViewFuel(bike)}
-                        className="flex-1 px-3 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors"
+                        className="px-2 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors whitespace-nowrap"
                         {...buttonHoverProps}
                       >
                         Fuel
                       </motion.button>
                       <motion.button
                         onClick={() => handleEditBike(bike)}
-                        className="flex-1 px-3 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors"
+                        className="px-2 py-1.5 bg-apex-white/10 border border-apex-white/20 rounded-lg text-apex-white text-xs hover:bg-apex-white/20 transition-colors whitespace-nowrap"
                         {...buttonHoverProps}
                       >
                         Edit
                       </motion.button>
                       <motion.button
                         onClick={() => handleDeleteClick(bike)}
-                        className="px-3 py-1.5 bg-apex-red/20 border border-apex-red/30 rounded-lg text-apex-red text-xs hover:bg-apex-red/30 transition-colors"
+                        className="px-2 py-1.5 bg-apex-red/20 border border-apex-red/30 rounded-lg text-apex-red text-xs hover:bg-apex-red/30 transition-colors whitespace-nowrap"
                         {...buttonHoverProps}
                       >
                         Delete

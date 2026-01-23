@@ -815,7 +815,7 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                   <div
                     ref={consoleScrollRef}
                     onScroll={handleConsoleScroll}
-                    className="flex-1 overflow-y-auto p-4 relative"
+                    className="flex-1 overflow-y-auto overflow-x-hidden p-4 relative"
                   >
                     <div className="space-y-1 font-mono text-xs">
                       {filteredLogs.length === 0 ? (
@@ -839,16 +839,16 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
                           return (
                             <div
                               key={log.id}
-                              className="p-2 rounded bg-apex-white/5 border border-apex-white/10"
+                              className="p-2 rounded bg-apex-white/5 border border-apex-white/10 overflow-hidden"
                             >
-                              <div className="flex items-start gap-2">
+                              <div className="flex items-start gap-2 min-w-0">
                                 <span className={`text-[10px] ${colorClass} shrink-0`}>
                                   {log.type.toUpperCase()}
                                 </span>
                                 <span className="text-apex-white/40 shrink-0">
                                   {log.timestamp.toLocaleTimeString()}
                                 </span>
-                                <span className={`flex-1 ${colorClass} wrap-break-word`}>
+                                <span className={`flex-1 ${colorClass} break-words min-w-0`}>
                                   {log.message}
                                 </span>
                               </div>

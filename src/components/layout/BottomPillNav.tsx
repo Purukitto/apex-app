@@ -30,9 +30,10 @@ export default function BottomPillNav() {
     <AnimatePresence>
       {!shouldHide && (
         <motion.div
-          className="fixed left-1/2 -translate-x-1/2 z-50 bg-apex-white/10 backdrop-blur-md rounded-full px-8 py-3 flex items-center gap-8 pointer-events-auto"
+          className="fixed left-1/2 -translate-x-1/2 z-50 bg-apex-white/10 backdrop-blur-md rounded-full px-4 py-3 flex items-center gap-4 mx-4 pointer-events-auto"
           style={{
             bottom: 'calc(2.5rem + env(safe-area-inset-bottom, 0px))',
+            maxWidth: 'calc(100vw - 2rem)',
           }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -53,11 +54,11 @@ export default function BottomPillNav() {
                 e.stopPropagation();
                 navigate(item.path, { replace: true });
               }}
-              className="px-8 py-3 rounded-full font-semibold text-apex-black flex items-center gap-2 shadow-lg"
+              className="px-5 py-2.5 rounded-full font-semibold text-apex-black flex items-center gap-1.5 shadow-lg text-sm"
               style={{ backgroundColor: primary }}
               {...buttonHoverProps}
             >
-              <Radio size={20} />
+              <Radio size={18} />
               <span>RIDE</span>
             </motion.button>
           );
@@ -78,7 +79,7 @@ export default function BottomPillNav() {
             }`}
             {...buttonHoverProps}
           >
-            <Icon size={20} />
+            <Icon size={18} />
           </motion.button>
         );
       })}

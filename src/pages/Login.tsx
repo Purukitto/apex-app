@@ -29,6 +29,36 @@ export default function Login() {
     });
   }, [navigate]);
 
+  const forgotPassword = async () => {
+    if (!email) {
+      setError('Please enter your email address');
+      apexToast.error('Please enter your email address');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://apex.purukitto.xyz/reset-password',
+      });
+
+      if (resetError) {
+        throw new Error(resetError.message || 'Failed to send reset email');
+      }
+
+      apexToast.success('Password reset email sent. Check your inbox.');
+      setEmail('');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send reset email';
+      setError(errorMessage);
+      apexToast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -228,6 +258,18 @@ export default function Login() {
             )}
           </motion.button>
         </form>
+
+        {!isSignUp && (
+          <motion.div className="mt-4 text-center" variants={itemVariants}>
+            <button
+              onClick={forgotPassword}
+              disabled={loading}
+              className="text-apex-white/60 hover:text-apex-green text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Forgot Password?
+            </button>
+          </motion.div>
+        )}
 
         <motion.div className="mt-6 text-center" variants={itemVariants}>
           <button

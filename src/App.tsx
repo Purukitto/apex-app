@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from '@vercel/analytics/react';
 import Login from './pages/Login';
+import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import Dashboard from './pages/Dashboard';
 import Garage from './pages/Garage';
 import Service from './pages/Service';
@@ -20,6 +21,7 @@ function App() {
       <AppUpdateChecker />
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/reset-password" element={<UpdatePasswordPage />} />
         <Route
           path="/dashboard"
           element={

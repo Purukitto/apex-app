@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.1](https://github.com/Purukitto/apex-app/compare/v1.4.0...v1.4.1) (2026-01-24)
+
+
+### Code Refactoring
+
+* enhance BikeImage component and update sizes in Garage ([4464c82](https://github.com/Purukitto/apex-app/commit/4464c822ade18a7466fb7bbbb7e5142ad919dc0d))
+
+## [1.4.0](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.4.0) (2026-01-24)
+
+
+### Features
+
+* add OtpInput component and enhance user profile management ([6e7f33f](https://github.com/Purukitto/apex-app/commit/6e7f33f4a45fc9d8012987357fcb901f586b0115))
+
+
+### Documentation
+
+* update readme ([fd7d161](https://github.com/Purukitto/apex-app/commit/fd7d161bff54a6acf9f1762694ab716667f4bdbf))
+
+
+### Code Refactoring
+
+* update typography and UI components for consistency ([3d0e8dd](https://github.com/Purukitto/apex-app/commit/3d0e8dda3398ee86ca73f8a0ea875c0bcd03cd9a))
+
 ## [1.3.0](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.3.0) (2026-01-23)
 
 

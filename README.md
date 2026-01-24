@@ -21,10 +21,11 @@ Whether you're tracking your weekend rides or managing a fleet of motorcycles, A
 
 ### 🏍️ The Garage
 - **Multi-bike Management**: Track multiple motorcycles in your fleet
-- **Maintenance Logs**: Record service history and track service intervals
-- **Service Reminders**: Automatic notifications when maintenance is due
-- **Odometer Tracking**: Monitor mileage for each bike
-- **Fuel Logging**: Track fuel consumption and efficiency
+- **Maintenance Logs**: Comprehensive service history tracking with detailed records of all maintenance work performed, including parts replaced, service dates, costs, and odometer readings at service time
+- **Maintenance Schedules**: Set up custom service intervals (time-based and distance-based) for different parts and components
+- **Service Reminders**: Automatic notifications when maintenance is due based on time or mileage thresholds
+- **Odometer Tracking**: Monitor mileage for each bike with automatic updates from ride recordings
+- **Fuel Logging**: Track every refuel with fuel consumption, efficiency (km/L or MPG), cost per kilometer, and fuel price history. Calculate average mileage and identify trends in fuel economy
 
 <img src="docs/screenshots/garage.jpg" alt="The Garage" width="280" />
 

@@ -126,9 +126,17 @@ alwaysApply: true
 ## 3. Visual Hierarchy & Polish
 - **Borders over Shadows:** Avoid heavy shadows. Use subtle raised shadows only for cards and rely on `border-apex-white/10` or `border-apex-white/20` for structure.
 - **Typography:**
-  - Header: `font-sans font-bold tracking-tight`.
-  - Telemetry: Always `font-mono text-apex-green`.
-  - Card Titles: `font-semibold` for consistency.
+  - **MANDATORY**: Follow the comprehensive typography system defined in `.cursor/rules/350-typography.mdc`
+  - **Quick Reference:**
+    - Page headers: `text-xl md:text-2xl font-bold tracking-tight`
+    - Section titles: `text-lg font-semibold`
+    - Card titles: `text-base font-semibold`
+    - Body text: `text-sm` (14px) for general content
+    - Inputs/Buttons: `text-base` (16px minimum - MANDATORY for accessibility)
+    - Telemetry: Always `font-mono text-apex-green`
+    - Secondary text: `text-xs text-apex-white/60`
+    - Labels: `text-xs text-apex-white/60 uppercase tracking-wide`
+  - **Key Principle**: Use appropriate sizes to prevent unnecessary wrapping and wasted space. Avoid oversized text.
 - **Empty States:** Never show a blank screen. Use minimalist line-art or subtle Lucide icons with "muted" text.
 - **Skeleton Loaders:** Use "Shimmer" effects (`.animate-shimmer`) for data fetching instead of generic loading spinners.
 

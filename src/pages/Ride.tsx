@@ -731,8 +731,8 @@ export default function Ride() {
             className="text-center space-y-4"
             variants={itemVariants}
           >
-            <h1 className="text-3xl font-bold text-apex-white">Ready to Ride</h1>
-            <p className="text-apex-white/60">
+            <h1 className="text-xl md:text-2xl font-bold text-apex-white">Ready to Ride</h1>
+            <p className="text-sm text-apex-white/60">
               Select a bike and start tracking your ride
             </p>
           </motion.div>

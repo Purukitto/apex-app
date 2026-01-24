@@ -1,0 +1,292 @@
+# Apex Typography System
+
+## Overview
+
+This document defines the typography scale and usage guidelines for Apex, based on 2026 mobile-first best practices. The system prioritizes readability, prevents unnecessary text wrapping, and maintains visual hierarchy while minimizing wasted space.
+
+## Core Principles
+
+1. **Mobile-First**: All sizes are optimized for mobile screens first, with responsive scaling for larger devices.
+2. **Accessibility**: Minimum 16px for body text and inputs to prevent iOS zoom and ensure readability.
+3. **Consistency**: Use the defined type scale consistently across all pages and components.
+4. **Efficiency**: Avoid oversized text that causes wrapping or wastes vertical space.
+5. **Relative Units**: Use `rem`-based Tailwind classes (which use rem internally) for user resizing support.
+
+## Type Scale
+
+### Mobile-First Scale (Base: 16px = 1rem)
+
+| Scale | Tailwind Class | Size (px) | Size (rem) | Use Case |
+|-------|---------------|-----------|------------|----------|
+| **xs** | `text-xs` | 12px | 0.75rem | Labels, captions, metadata, fine print |
+| **sm** | `text-sm` | 14px | 0.875rem | Secondary text, helper text, dense UI only |
+| **base** | `text-base` | 16px | 1rem | **Default body text, inputs, buttons** |
+| **lg** | `text-lg` | 18px | 1.125rem | Emphasized body, card content, section descriptions |
+| **xl** | `text-xl` | 20px | 1.25rem | Section titles, card titles, important content |
+| **2xl** | `text-2xl` | 24px | 1.5rem | Page headers (mobile), large card titles |
+| **3xl** | `text-3xl` | 30px | 1.875rem | Page headers (desktop), hero numbers |
+| **4xl** | `text-4xl` | 36px | 2.25rem | Large hero numbers, dashboard stats |
+| **5xl** | `text-5xl` | 48px | 3rem | Extra large hero numbers (sparingly) |
+
+### Responsive Typography
+
+For elements that need to scale between mobile and desktop:
+
+```typescript
+// Page headers
+className="text-2xl md:text-3xl"  // 24px mobile → 30px desktop
+
+// Section titles
+className="text-xl md:text-2xl"    // 20px mobile → 24px desktop
+
+// Body text (rarely needs scaling)
+className="text-base md:text-lg"   // 16px mobile → 18px desktop (only if needed)
+```
+
+**Guideline**: Only scale up for page headers and major section titles. Most body text should remain at `text-base` (16px) on all screen sizes.
+
+## Usage Guidelines by Element Type
+
+### Page Headers
+- **Mobile**: `text-xl` (20px) - `text-xl font-bold tracking-tight`
+- **Desktop**: `text-2xl` (24px) - `text-xl md:text-2xl font-bold tracking-tight`
+- **Example**: `<h1 className="text-xl md:text-2xl font-bold text-white tracking-tight">Profile</h1>`
+- **DO NOT** use `text-3xl` or larger for page headers - they cause unnecessary wrapping and waste space.
+
+### Section Titles (Card Headers, Major Sections)
+- **Standard**: `text-lg` (18px) - `text-lg font-semibold`
+- **Responsive**: `text-lg md:text-xl` (18px → 20px) for very important sections only
+- **Example**: `<h2 className="text-lg font-semibold text-apex-white">Rider Name</h2>`
+- **DO NOT** use `text-xl` or larger on mobile - causes wrapping in cards.
+
+### Card Titles (Within Cards)
+- **Standard**: `text-base` (16px) - `text-base font-semibold`
+- **Example**: `<h3 className="text-base font-semibold text-apex-white">Current Bike</h3>`
+- **Alternative**: `text-sm font-semibold` (14px) for compact cards with limited space.
+
+### Body Text (Default Content)
+- **Standard**: `text-sm` (14px) - This is the default for general body text
+- **Example**: `<p className="text-sm text-apex-white">Content here</p>`
+- **MANDATORY for Inputs/Buttons**: `text-base` (16px) - Required for inputs and buttons to prevent iOS zoom
+- **Why**: 16px prevents iOS zoom on input focus and ensures accessibility. General body text can be smaller.
+- **DO NOT** use `text-xs` (12px) for primary body text - only for labels and metadata.
+
+### Secondary Text (Muted, Helper, Metadata)
+- **Standard**: `text-sm` (14px) - `text-sm text-apex-white/60`
+- **Use Cases**: Helper text, descriptions, timestamps, metadata
+- **Example**: `<p className="text-sm text-apex-white/60">Last updated 2 hours ago</p>`
+
+### Labels (Form Labels, Uppercase Labels)
+- **Standard**: `text-xs` (12px) - `text-xs text-apex-white/60 uppercase tracking-wide`
+- **Use Cases**: Form field labels, section labels, metadata labels
+- **Example**: `<label className="text-xs text-apex-white/60 uppercase tracking-wide mb-1">Email</label>`
+
+### Telemetry & Numbers
+- **Small Numbers**: `text-base font-mono` (16px) - `text-base font-mono text-apex-green`
+- **Medium Numbers**: `text-lg font-mono` (18px) or `text-xl font-mono` (20px)
+- **Large Stats**: `text-2xl font-mono` (24px) or `text-3xl font-mono` (30px)
+- **Hero Numbers**: `text-4xl font-mono` (36px) or `text-5xl font-mono` (48px) - use sparingly
+- **Example**: `<p className="text-2xl font-mono font-bold text-white">1,234</p>`
+- **Always use `font-mono`** for numbers and telemetry data.
+
+### Buttons
+- **Standard**: `text-base` (16px) - `text-base font-semibold`
+- **Small Buttons**: `text-sm` (14px) - `text-sm font-semibold` (for compact UI only)
+- **Large CTA**: `text-lg` (18px) - `text-lg font-semibold` (for primary actions only)
+- **Example**: `<button className="text-base font-semibold text-apex-black bg-apex-green">Save</button>`
+- **MANDATORY**: All input fields and buttons must be at least `text-base` (16px) to prevent iOS zoom.
+
+### Input Fields
+- **MANDATORY**: `text-base` (16px) minimum - `text-base` or `text-lg`
+- **Example**: `<input className="text-base text-apex-white" />`
+- **Why**: iOS Safari zooms in on inputs smaller than 16px, breaking UX.
+
+### Empty States
+- **Title**: `text-lg font-semibold` (18px)
+- **Description**: `text-sm text-apex-white/60` (14px)
+- **Example**: 
+  ```tsx
+  <h2 className="text-xl font-semibold text-white mb-2">No bikes yet</h2>
+  <p className="text-base text-apex-white/60">Add your first machine...</p>
+  ```
+
+## Font Families
+
+### Sans Serif (Default)
+- **Usage**: Headers, body text, UI elements
+- **Classes**: `font-sans` (default, no class needed) or `font-bold`, `font-semibold`
+- **Headers**: `font-sans font-bold tracking-tight`
+- **Body**: `font-sans` (default)
+
+### Monospace (Telemetry)
+- **Usage**: Numbers, telemetry data, code, technical values
+- **Classes**: `font-mono`
+- **Always combine with**: `text-apex-green` for telemetry values
+- **Example**: `<span className="font-mono text-apex-green">45.2 km/h</span>`
+
+## Line Height & Spacing
+
+### Line Height
+- Tailwind's default line heights are appropriate for most use cases.
+- **Dense Text**: Use `leading-tight` for headers if needed.
+- **Body Text**: Default line height (1.5) is optimal for readability.
+
+### Letter Spacing
+- **Headers**: `tracking-tight` for large headers (page titles)
+- **Labels**: `tracking-wide` for uppercase labels
+- **Body**: Default tracking (no class needed)
+
+## Text Colors
+
+### Primary Text
+- **Default**: `text-apex-white` - Use for all primary content
+- **Muted**: `text-apex-white/60` - Secondary text, descriptions
+- **Subtle**: `text-apex-white/40` - Metadata, timestamps, helper text
+
+### Accent Text
+- **Telemetry**: `text-apex-green` - Always with `font-mono`
+- **Errors**: `text-apex-red` - Error messages, warnings
+- **Theme Colors**: Use theme colors for accents (via `useThemeColors` hook)
+
+## Common Patterns
+
+### Card Content Structure
+```tsx
+<Card padding="md">
+  {/* Section Label */}
+  <p className="text-xs text-apex-white/60 uppercase tracking-wide mb-1">
+    Odometer
+  </p>
+  
+  {/* Value */}
+  <p className="text-xl font-mono font-bold text-white">
+    12,345 km
+  </p>
+  
+  {/* Description */}
+  <p className="text-sm text-apex-white/40 mt-1">
+    Last updated 2 hours ago
+  </p>
+</Card>
+```
+
+### Page Header Pattern
+```tsx
+<h1 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+  Profile
+</h1>
+```
+
+### Section Title Pattern
+```tsx
+<h2 className="text-lg font-semibold text-apex-white">
+  Rider Name
+</h2>
+```
+
+### Button Pattern
+```tsx
+<button className="text-base font-semibold text-apex-black bg-apex-green">
+  Save
+</button>
+```
+
+## Anti-Patterns (What NOT to Do)
+
+### ❌ DON'T Use Oversized Text
+- **DON'T**: Use `text-4xl` or `text-5xl` for page headers
+- **DON'T**: Use `text-3xl` for section titles on mobile
+- **DON'T**: Use `text-2xl` for card titles
+- **Why**: Causes unnecessary wrapping, wastes space, breaks mobile layouts
+
+### ❌ DON'T Use Undersized Text
+- **DON'T**: Use `text-sm` (14px) for primary body text
+- **DON'T**: Use `text-xs` (12px) for body content
+- **DON'T**: Use inputs smaller than `text-base` (16px)
+- **Why**: Accessibility issues, iOS zoom problems, poor readability
+
+### ❌ DON'T Inconsistent Scaling
+- **DON'T**: Mix different scales without reason
+- **DON'T**: Use `text-lg` in one place and `text-xl` for the same element type elsewhere
+- **DO**: Use the defined scale consistently
+
+### ❌ DON'T Skip Responsive Scaling
+- **DON'T**: Use fixed sizes that don't scale between mobile/desktop for headers
+- **DO**: Use responsive classes like `text-2xl md:text-3xl` for page headers
+
+### ❌ DON'T Use Wrong Font Family
+- **DON'T**: Use `font-mono` for non-numeric content
+- **DON'T**: Use `font-sans` for telemetry numbers
+- **DO**: Always use `font-mono` for numbers and telemetry
+
+## Migration Guide
+
+When updating existing components:
+
+1. **Page Headers**: Change `text-2xl md:text-3xl` → `text-xl md:text-2xl`
+2. **Section Titles**: Change `text-xl` → `text-lg` (or `text-lg md:text-xl` if needed)
+3. **Card Titles**: Change `text-lg` → `text-base` (or `text-sm font-semibold` for compact)
+4. **Body Text**: Change `text-base` → `text-sm` for general body text (keep `text-base` for inputs/buttons)
+5. **Buttons**: Ensure all buttons use `text-base` minimum (16px)
+6. **Inputs**: Ensure all inputs use `text-base` minimum (16px)
+
+## Examples from Codebase
+
+### ✅ Good: Page Header
+```tsx
+// PageHeader.tsx
+<h1 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+  {title}
+</h1>
+```
+
+### ✅ Good: Card Title
+```tsx
+// Profile.tsx
+<h2 className="text-base font-semibold text-apex-white">Rider Name</h2>
+```
+
+### ✅ Good: Body Text
+```tsx
+// Profile.tsx
+<p className="text-sm text-apex-white">
+  {profile?.riderName || <span className="text-apex-white/40 italic">Not set</span>}
+</p>
+```
+
+### ✅ Good: Telemetry
+```tsx
+// Dashboard.tsx
+<p className="text-2xl font-mono font-bold text-white">
+  {totalKm.toLocaleString()}
+</p>
+<p className="text-sm font-mono" style={{ color: primary }}>km</p>
+```
+
+### ❌ Bad: Oversized Header (Fix This)
+```tsx
+// DON'T DO THIS
+<h1 className="text-3xl font-bold">Profile</h1>
+```
+
+### ❌ Bad: Undersized Input/Button (Fix This)
+```tsx
+// DON'T DO THIS - inputs/buttons must be text-base (16px)
+<input className="text-sm" />
+<button className="text-sm">Click</button>
+```
+
+## Summary Checklist
+
+When adding or updating text elements:
+
+- [ ] Page headers use `text-xl md:text-2xl`
+- [ ] Section titles use `text-lg` (or `text-base` for cards)
+- [ ] Body text uses `text-sm` (14px) for general content
+- [ ] Buttons and inputs use `text-base` (16px) minimum (MANDATORY)
+- [ ] Numbers use `font-mono`
+- [ ] Telemetry uses `font-mono text-apex-green`
+- [ ] Secondary text uses `text-xs text-apex-white/60`
+- [ ] Labels use `text-xs uppercase tracking-wide`
+- [ ] No oversized text causing unnecessary wrapping
+- [ ] Responsive scaling applied where appropriate

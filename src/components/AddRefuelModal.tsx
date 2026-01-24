@@ -330,7 +330,7 @@ export default function AddRefuelModal({
               </p>
             </div>
           <div>
-            <label className="block text-sm text-apex-white/60 mb-2">
+            <label className="block text-xs text-apex-white/60 uppercase tracking-wide mb-2">
               Current Odometer (km) *
             </label>
             <input
@@ -345,7 +345,7 @@ export default function AddRefuelModal({
               onBlur={validateForm}
               required
               min="0"
-              className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors font-mono ${
+              className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors font-mono ${
                 fieldErrors.odometer
                   ? 'border-apex-red focus:border-apex-red'
                   : 'border-apex-white/20 focus:border-apex-green'
@@ -370,7 +370,7 @@ export default function AddRefuelModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-apex-white/60 mb-2">
+              <label className="block text-xs text-apex-white/60 uppercase tracking-wide mb-2">
                 Litres
               </label>
               <input
@@ -389,7 +389,7 @@ export default function AddRefuelModal({
                   }
                 }}
                 onBlur={validateForm}
-                className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors font-mono ${
+                className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors font-mono ${
                   fieldErrors.litres
                     ? 'border-apex-red focus:border-apex-red'
                     : 'border-apex-white/20 focus:border-apex-green'
@@ -404,7 +404,7 @@ export default function AddRefuelModal({
             </div>
 
             <div>
-              <label className="block text-sm text-apex-white/60 mb-2">
+              <label className="block text-xs text-apex-white/60 uppercase tracking-wide mb-2">
                 Price per Litre
               </label>
               <input
@@ -423,7 +423,7 @@ export default function AddRefuelModal({
                   }
                 }}
                 onBlur={validateForm}
-                className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors font-mono ${
+                className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors font-mono ${
                   fieldErrors.price_per_litre
                     ? 'border-apex-red focus:border-apex-red'
                     : 'border-apex-white/20 focus:border-apex-green'
@@ -438,7 +438,7 @@ export default function AddRefuelModal({
             </div>
 
             <div>
-              <label className="block text-sm text-apex-white/60 mb-2">
+              <label className="block text-xs text-apex-white/60 uppercase tracking-wide mb-2">
                 Total Cost
               </label>
               <input
@@ -457,7 +457,7 @@ export default function AddRefuelModal({
                   }
                 }}
                 onBlur={validateForm}
-                className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors font-mono ${
+                className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors font-mono ${
                   fieldErrors.total_cost
                     ? 'border-apex-red focus:border-apex-red'
                     : 'border-apex-white/20 focus:border-apex-green'
@@ -500,7 +500,7 @@ export default function AddRefuelModal({
           )}
 
           <div>
-            <label className="block text-sm text-apex-white/60 mb-2">
+            <label className="block text-xs text-apex-white/60 uppercase tracking-wide mb-2">
               Date *
             </label>
             <input
@@ -515,7 +515,7 @@ export default function AddRefuelModal({
               onBlur={validateForm}
               required
               max={new Date().toISOString().split('T')[0]}
-              className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors ${
+              className={`w-full px-4 py-2 bg-apex-black border rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none transition-colors ${
                 fieldErrors.date
                   ? 'border-apex-red focus:border-apex-red'
                   : 'border-apex-white/20 focus:border-apex-green'
@@ -539,7 +539,7 @@ export default function AddRefuelModal({
             />
             <label
               htmlFor="is_full_tank"
-              className="flex-1 text-sm text-apex-white cursor-pointer"
+              className="flex-1 text-base text-apex-white cursor-pointer"
             >
               <span className="font-semibold">Full Tank?</span>
               <span className="block text-xs text-apex-white/60 mt-1">
@@ -557,7 +557,7 @@ export default function AddRefuelModal({
             <motion.button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
+              className="flex-1 px-4 py-2 border border-apex-white/20 text-base text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
               {...buttonHoverProps}
             >
               Cancel
@@ -565,7 +565,7 @@ export default function AddRefuelModal({
             <motion.button
               type="submit"
               disabled={isSubmitting || !isFormValid()}
-              className="flex-1 px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-4 py-2 bg-apex-green text-base text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               {...(isSubmitting || !isFormValid() ? {} : buttonHoverProps)}
             >
               {isSubmitting

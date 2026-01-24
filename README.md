@@ -56,7 +56,7 @@ Whether you're tracking your weekend rides or managing a fleet of motorcycles, A
 
 Apex is designed with the rider in mind, especially for use on mobile devices during rides:
 
-- **OLED First**: Pure black backgrounds (`#0A0A0A`) to save battery and reduce glare
+- **OLED First**: OLED black backgrounds (`#0A0A0A`) to save battery and reduce glare
 - **High Contrast**: White and Apex Green (`#3DBF6F`) for critical data visibility
 - **Instrument Grade**: Monospaced fonts (JetBrains Mono) for telemetry precision
 - **Glove-Friendly**: Large touch targets, long-press for destructive actions

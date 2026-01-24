@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.6.0](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.6.0) (2026-01-24)
+
+
+### Features
+
+* add APK installation functionality and update UpdateModal UI ([fc46578](https://github.com/Purukitto/apex-app/commit/fc46578d55fdb3368f40fd7bd0e84a2144935134))
+
+
+### Documentation
+
+* remove health monitoring section from README.md ([0104894](https://github.com/Purukitto/apex-app/commit/0104894a9a87cea1091f3b85868ab4d7ebb7a4d8))
+
+
+### Code Refactoring
+
+* enhance BottomPillNav styling for improved visual consistency ([b24245d](https://github.com/Purukitto/apex-app/commit/b24245d4225e674fef700b5d1e05dc0d7cb45a54))
+* update MainLayout to conditionally show BottomPillNav and improve Profile component layout ([5d190ed](https://github.com/Purukitto/apex-app/commit/5d190ed5d973d79c9e3ca388ef22652bf87fbb97))
+
 ## [1.5.0](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.5.0) (2026-01-24)
 
 

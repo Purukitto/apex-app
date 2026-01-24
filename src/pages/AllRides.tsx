@@ -359,7 +359,7 @@ export default function AllRides() {
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-white truncate">
+                        <h3 className="text-base font-semibold text-white truncate">
                           {ride.ride_name || bikeName}
                         </h3>
                         {ride.ride_name && (
@@ -540,7 +540,7 @@ export default function AllRides() {
                                 e.stopPropagation();
                                 handleShareClick(ride);
                               }}
-                              className="flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-apex-green text-sm hover:bg-apex-green/20 transition-colors whitespace-nowrap"
+                              className="flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-base text-apex-green hover:bg-apex-green/20 transition-colors whitespace-nowrap"
                               {...buttonHoverProps}
                             >
                               <Share2 size={16} />
@@ -552,7 +552,7 @@ export default function AllRides() {
                                   e.stopPropagation();
                                   handleExportGPX(ride);
                                 }}
-                                className="flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-apex-green text-sm hover:bg-apex-green/20 transition-colors whitespace-nowrap"
+                                className="flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-base text-apex-green hover:bg-apex-green/20 transition-colors whitespace-nowrap"
                                 {...buttonHoverProps}
                               >
                                 <Download size={16} />
@@ -579,7 +579,7 @@ export default function AllRides() {
                                 e.stopPropagation();
                                 handleDeleteClick(ride);
                               }}
-                              className="flex items-center justify-center gap-2 px-4 py-2 bg-apex-red/20 border border-apex-red/30 rounded-lg text-apex-red text-sm hover:bg-apex-red/30 transition-colors whitespace-nowrap"
+                              className="flex items-center justify-center gap-2 px-4 py-2 bg-apex-red/20 border border-apex-red/30 rounded-lg text-base text-apex-red hover:bg-apex-red/30 transition-colors whitespace-nowrap"
                               {...buttonHoverProps}
                             >
                               <Trash2 size={16} />
@@ -605,7 +605,7 @@ export default function AllRides() {
             <motion.button
               onClick={() => handlePageChange(page - 1)}
               disabled={page === 0}
-              className="px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-apex-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-white/10 transition-colors"
+              className="px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-base text-apex-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-white/10 transition-colors"
               {...(page === 0 ? {} : buttonHoverProps)}
             >
               Previous
@@ -616,7 +616,7 @@ export default function AllRides() {
             <motion.button
               onClick={() => handlePageChange(page + 1)}
               disabled={page >= totalPages - 1}
-              className="px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-apex-white text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-white/10 transition-colors"
+              className="px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-base text-apex-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-white/10 transition-colors"
               {...(page >= totalPages - 1 ? {} : buttonHoverProps)}
             >
               Next
@@ -669,7 +669,7 @@ export default function AllRides() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm text-apex-white/60 mb-2">
+                    <label className="block text-xs text-apex-white/60 uppercase tracking-wide mb-2">
                       Ride Name
                     </label>
                     <input
@@ -677,12 +677,12 @@ export default function AllRides() {
                       value={editRideName}
                       onChange={(e) => setEditRideName(e.target.value)}
                       placeholder="Enter ride name (optional)"
-                      className="w-full px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-apex-white placeholder:text-apex-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
+                      className="w-full px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-base text-apex-white placeholder:text-apex-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm text-apex-white/60 mb-2">
+                    <label className="block text-xs text-apex-white/60 uppercase tracking-wide mb-2">
                       Notes
                     </label>
                     <textarea
@@ -690,12 +690,12 @@ export default function AllRides() {
                       onChange={(e) => setEditRideNotes(e.target.value)}
                       placeholder="Add notes about this ride (optional)"
                       rows={4}
-                      className="w-full px-4 py-2 bg-zinc-900 border border-white/5 rounded-lg text-apex-white placeholder:text-white/40 focus:outline-none focus:border-apex-green/40 transition-colors resize-none"
+                      className="w-full px-4 py-2 bg-zinc-900 border border-white/5 rounded-lg text-base text-apex-white placeholder:text-white/40 focus:outline-none focus:border-apex-green/40 transition-colors resize-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm text-apex-white/60 mb-2">
+                    <label className="block text-xs text-apex-white/60 uppercase tracking-wide mb-2">
                       Image URL
                     </label>
                     <input

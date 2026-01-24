@@ -233,8 +233,8 @@ export default function Login() {
         animate="visible"
       >
         <motion.div className="mb-8 text-center" variants={itemVariants}>
-          <h1 className="text-3xl font-bold text-apex-white mb-2">Apex</h1>
-          <p className="text-apex-white/60">The Rider's Black Box</p>
+          <h1 className="text-xl md:text-2xl font-bold text-apex-white mb-2">Apex</h1>
+          <p className="text-sm text-apex-white/60">The Rider's Black Box</p>
           <p className="mt-3 text-sm font-semibold uppercase tracking-[0.2em] text-apex-green">
             {isSignUp ? 'Create Account' : 'Sign In'}
           </p>
@@ -256,7 +256,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 bg-apex-black border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
+              className="w-full px-4 py-3 bg-apex-black border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
             />
           </motion.div>
 
@@ -268,7 +268,7 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete={isSignUp ? 'new-password' : 'current-password'}
-              className="w-full px-4 py-3 bg-apex-black border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
+              className="w-full px-4 py-3 bg-apex-black border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
             />
             {isSignUp && password && (
               <div className="mt-3">
@@ -292,7 +292,7 @@ export default function Login() {
             {...buttonHoverProps}
             type="submit"
             disabled={loading || !isPasswordValid}
-            className="w-full py-3 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-apex-green text-base text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {loading ? (
               'Loading...'

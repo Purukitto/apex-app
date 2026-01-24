@@ -226,15 +226,15 @@ export default function Garage() {
             <Card padding="sm" animate="none" className="mb-4">
               <Motorbike size={48} style={{ color: primary }} />
             </Card>
-            <h2 className="text-xl font-semibold text-white mb-2">
+            <h2 className="text-lg font-semibold text-white mb-2">
               No bikes yet
             </h2>
-            <p className="text-white/60 mb-6 max-w-md">
+            <p className="text-sm text-white/60 mb-6 max-w-md">
               Add your first machine to start tracking rides and maintenance.
             </p>
             <motion.button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-apex-black"
+              className="flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold text-apex-black"
               style={{ backgroundColor: primary }}
               {...buttonHoverProps}
             >
@@ -255,7 +255,7 @@ export default function Garage() {
                     <h2 className="text-sm text-white/60 uppercase tracking-wide mb-2">
                       Current Bike
                     </h2>
-                    <h3 className="text-2xl font-semibold text-white mb-1">
+                    <h3 className="text-lg font-semibold text-white mb-1">
                       {currentBike.nick_name || `${currentBike.make} ${currentBike.model}`}
                     </h3>
                     {currentBike.nick_name && (
@@ -333,7 +333,7 @@ export default function Garage() {
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-white truncate">
+                        <h3 className="text-base font-semibold text-white truncate">
                           {bike.nick_name || `${bike.make} ${bike.model}`}
                         </h3>
                         {bike.nick_name && (
@@ -406,7 +406,7 @@ export default function Garage() {
             >
               <motion.button
                 onClick={() => setIsModalOpen(true)}
-                className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-apex-black"
+                className="flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold text-apex-black"
                 style={{ backgroundColor: primary }}
                 {...buttonHoverProps}
               >

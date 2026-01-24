@@ -75,8 +75,8 @@ export default function ConfirmAccount() {
           animate="visible"
         >
           <motion.div className="mb-8 text-center" variants={itemVariants}>
-            <h1 className="text-3xl font-bold text-apex-white mb-2">Apex</h1>
-            <p className="text-apex-white/60">The Rider's Black Box</p>
+            <h1 className="text-xl md:text-2xl font-bold text-apex-white mb-2">Apex</h1>
+            <p className="text-sm text-apex-white/60">The Rider's Black Box</p>
           </motion.div>
 
           <Card padding="md" animate="item" className="text-center">
@@ -118,14 +118,14 @@ export default function ConfirmAccount() {
           >
             <CheckCircle2 size={48} className="text-apex-green" />
           </motion.div>
-          <h2 className="text-xl font-semibold text-apex-white mb-2">Account Confirmed</h2>
-          <p className="text-apex-white/80 mb-6">
+          <h2 className="text-lg font-semibold text-apex-white mb-2">Account Confirmed</h2>
+          <p className="text-sm text-apex-white/80 mb-6">
             Your email is verified. Please sign in to continue.
           </p>
           <motion.button
             {...buttonHoverProps}
             onClick={() => navigate('/login')}
-            className="w-full py-3 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 transition-colors"
+            className="w-full py-3 bg-apex-green text-base text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 transition-colors"
           >
             Go to Login
           </motion.button>

@@ -70,7 +70,7 @@ export default function Dashboard() {
             <span className="text-sm md:text-base text-white/60 font-normal">
               Hi,
             </span>
-            <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+            <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
               {riderName}!
             </h2>
           </div>
@@ -161,7 +161,7 @@ export default function Dashboard() {
           className="space-y-4"
           variants={itemVariants}
         >
-          <h2 className="text-xl font-semibold text-white">Recent Rides</h2>
+          <h2 className="text-lg font-semibold text-white">Recent Rides</h2>
           {ridesLoading ? (
             <Card padding="lg" animate="none" className="text-center">
               <div className="animate-spin mx-auto mb-3">
@@ -196,7 +196,7 @@ export default function Dashboard() {
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-semibold text-white truncate">
+                          <h3 className="text-base font-semibold text-white truncate">
                             {ride.ride_name || bikeName}
                           </h3>
                           {ride.ride_name && (
@@ -239,7 +239,7 @@ export default function Dashboard() {
           ) : (
             <Card padding="lg" animate="none" className="text-center">
               <Timer className="mx-auto mb-3 text-white/20" size={32} />
-              <p className="text-sm text-white/40">
+              <p className="text-sm text-white/60">
                 No rides recorded yet. Start tracking your rides to see them here.
               </p>
             </Card>

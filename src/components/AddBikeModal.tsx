@@ -318,7 +318,7 @@ export default function AddBikeModal({
           {/* Bike Search - Only show when adding (not editing) */}
           {!editingBike && (
             <div>
-              <label className="block text-sm text-apex-white/60 mb-2">
+              <label className="block text-xs text-apex-white/60 uppercase tracking-wide mb-2">
                 Search Bike Database (optional)
               </label>
               <div className="relative">
@@ -419,7 +419,7 @@ export default function AddBikeModal({
                   onClick={() => {
                     setShowManualEntry(true);
                   }}
-                  className="mt-3 w-full px-4 py-2 border border-apex-green/40 text-apex-green rounded-lg hover:bg-apex-green/10 transition-colors text-sm font-medium"
+                  className="mt-3 w-full px-4 py-2 border border-apex-green/40 text-base text-apex-green rounded-lg hover:bg-apex-green/10 transition-colors font-medium"
                   {...buttonHoverProps}
                 >
                   {globalBikeResults.length > 0 
@@ -514,7 +514,7 @@ export default function AddBikeModal({
           {(editingBike || !searchQuery || showManualEntry) && (
             <>
               <div>
-                <label className="block text-sm text-apex-white/60 mb-2">
+                <label className="block text-xs text-apex-white/60 uppercase tracking-wide mb-2">
                   Make *
                 </label>
             <input
@@ -596,33 +596,33 @@ export default function AddBikeModal({
               type="url"
               value={formData.image_url}
               onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-              className="w-full px-4 py-2 bg-apex-black border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors text-sm"
+              className="w-full px-4 py-2 bg-apex-black border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
               placeholder="https://..."
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-apex-white/60 mb-2">
+              <label className="block text-xs text-apex-white/60 uppercase tracking-wide mb-2">
                 Engine Specs
               </label>
               <input
                 type="text"
                 value={formData.specs_engine}
                 onChange={(e) => setFormData({ ...formData, specs_engine: e.target.value })}
-                className="w-full px-4 py-2 bg-apex-black border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors text-sm"
+                className="w-full px-4 py-2 bg-apex-black border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
                 placeholder="e.g., 373cc"
               />
             </div>
             <div>
-              <label className="block text-sm text-apex-white/60 mb-2">
+              <label className="block text-xs text-apex-white/60 uppercase tracking-wide mb-2">
                 Power Specs
               </label>
               <input
                 type="text"
                 value={formData.specs_power}
                 onChange={(e) => setFormData({ ...formData, specs_power: e.target.value })}
-                className="w-full px-4 py-2 bg-apex-black border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors text-sm"
+                className="w-full px-4 py-2 bg-apex-black border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
                 placeholder="e.g., 40 PS"
               />
             </div>
@@ -642,7 +642,7 @@ export default function AddBikeModal({
               <motion.button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
+                className="flex-1 px-4 py-2 border border-apex-white/20 text-base text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
                 {...buttonHoverProps}
               >
                 Cancel
@@ -668,7 +668,7 @@ export default function AddBikeModal({
                   }
                 }}
                 disabled={isSubmitting || (!canSubmit && !editingBike)}
-                className="flex-1 px-4 py-2 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 px-4 py-2 bg-apex-green text-base text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 {...(isSubmitting ? {} : buttonHoverProps)}
               >
                 {isSubmitting

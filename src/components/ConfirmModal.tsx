@@ -97,15 +97,15 @@ export default function ConfirmModal({
                   <AlertTriangle size={24} className={styles.icon} />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-apex-white mb-2">
+                  <h3 className="text-lg font-bold text-apex-white mb-2">
                     {title}
                   </h3>
                   {typeof message === 'string' ? (
-                    <p className="text-apex-white/60 text-sm">
+                    <p className="text-sm text-apex-white/60">
                       {message}
                     </p>
                   ) : (
-                    <div className="text-apex-white/60 text-sm">
+                    <div className="text-sm text-apex-white/60">
                       {message}
                     </div>
                   )}
@@ -125,7 +125,7 @@ export default function ConfirmModal({
                 <motion.button
                   onClick={handleConfirm}
                   disabled={isLoading || disabled}
-                  className={`px-4 py-2 font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${styles.button}`}
+                  className={`px-4 py-2 text-base font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${styles.button}`}
                   {...(isLoading || disabled ? {} : buttonHoverProps)}
                 >
                   {isLoading ? 'Processing...' : confirmLabel}

@@ -143,7 +143,7 @@ export default function Profile() {
                         },
                       })
                     }
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#5865F2]/60 bg-[#5865F2]/10 text-apex-white text-sm"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#5865F2]/60 bg-[#5865F2]/10 text-sm text-apex-white"
                     {...buttonHoverProps}
                   >
                     <MessageCircle size={16} />
@@ -155,7 +155,7 @@ export default function Profile() {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-apex-white">Enable Rich Presence</p>
+                <p className="text-sm text-apex-white">Enable Rich Presence</p>
               <p className="text-xs text-apex-white/40">Toggle Discord updates during rides.</p>
             </div>
             <motion.button
@@ -213,7 +213,7 @@ export default function Profile() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-apex-white">City</p>
+                <p className="text-base text-apex-white">City</p>
                 <p className="text-xs text-apex-white/40">Share your current city if available.</p>
               </div>
               <motion.button
@@ -257,12 +257,12 @@ export default function Profile() {
               <div className="p-2 rounded-lg bg-apex-green/10">
                 <Mail size={20} className="text-apex-green" />
               </div>
-              <h2 className="text-lg font-semibold text-apex-white">Account</h2>
+              <h2 className="text-base font-semibold text-apex-white">Account</h2>
             </div>
             <div className="space-y-4">
               <div>
                 <p className="text-xs text-apex-white/60 uppercase tracking-wide mb-1">Email</p>
-                <p className="text-apex-white font-mono">{profile?.email || 'N/A'}</p>
+                <p className="text-sm text-apex-white font-mono">{profile?.email || 'N/A'}</p>
               </div>
             </div>
           </Card>
@@ -274,7 +274,7 @@ export default function Profile() {
               <div className="p-2 rounded-lg bg-apex-green/10">
                 <User size={20} className="text-apex-green" />
               </div>
-              <h2 className="text-lg font-semibold text-apex-white">Rider Name</h2>
+              <h2 className="text-base font-semibold text-apex-white">Rider Name</h2>
             </div>
 
             {isEditing ? (
@@ -284,7 +284,7 @@ export default function Profile() {
                   value={riderName}
                   onChange={(e) => setRiderName(e.target.value)}
                   placeholder="Enter your rider name"
-                  className="w-full px-4 py-2 bg-apex-black/50 border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
+                  className="w-full px-4 py-2 bg-apex-black/50 border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
                   autoFocus
                 />
                 {error && (
@@ -294,7 +294,7 @@ export default function Profile() {
                   <motion.button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-apex-black bg-apex-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full text-base font-semibold text-apex-black bg-apex-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     {...(isSaving ? {} : buttonHoverProps)}
                   >
                     <Save size={18} />
@@ -303,7 +303,7 @@ export default function Profile() {
                   <motion.button
                     onClick={handleCancel}
                     disabled={isSaving}
-                    className="px-4 py-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors disabled:opacity-50"
+                    className="px-4 py-2 border border-apex-white/20 text-base text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors disabled:opacity-50"
                     {...(isSaving ? {} : buttonHoverProps)}
                   >
                     Cancel
@@ -312,14 +312,14 @@ export default function Profile() {
               </div>
             ) : (
               <div className="flex items-center justify-between">
-                <p className="text-apex-white">
+                <p className="text-sm text-apex-white">
                   {profile?.riderName || (
                     <span className="text-apex-white/40 italic">Not set</span>
                   )}
                 </p>
                 <motion.button
                   onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
+                  className="px-4 py-2 border border-apex-white/20 text-base text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
                   {...buttonHoverProps}
                 >
                   Edit
@@ -337,7 +337,7 @@ export default function Profile() {
               <div className="p-2 rounded-lg bg-apex-green/10">
                 <Palette size={20} className="text-apex-green" />
               </div>
-              <h2 className="text-lg font-semibold text-apex-white">Theme</h2>
+              <h2 className="text-base font-semibold text-apex-white">Theme</h2>
             </div>
 
             <div className="space-y-6">
@@ -414,7 +414,7 @@ export default function Profile() {
               <div className="p-2 rounded-lg bg-apex-green/10">
                 <MessageCircle size={20} className="text-apex-green" />
               </div>
-              <h2 className="text-lg font-semibold text-apex-white">Discord Integration</h2>
+              <h2 className="text-base font-semibold text-apex-white">Discord Integration</h2>
             </div>
 
             {discordRpcSettings}
@@ -427,7 +427,7 @@ export default function Profile() {
                 <div className="p-2 rounded-lg bg-apex-green/10">
                   <Download size={20} className="text-apex-green" />
                 </div>
-                <h2 className="text-lg font-semibold text-apex-white">App Updates</h2>
+                <h2 className="text-base font-semibold text-apex-white">App Updates</h2>
               </div>
               <div className="space-y-4">
                 <p className="text-sm text-apex-white/60">
@@ -436,7 +436,7 @@ export default function Profile() {
                 <motion.button
                   onClick={handleCheckForUpdate}
                   disabled={isChecking || hasCheckedNoUpdate}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-base font-semibold transition-colors w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
                     hasCheckedNoUpdate && !isChecking
                       ? 'text-apex-white/60 bg-apex-white/10'
                       : 'text-apex-black bg-apex-green'
@@ -474,7 +474,7 @@ export default function Profile() {
             <motion.button
               onClick={handleSignOut}
               disabled={signOut.isPending}
-              className="flex items-center gap-2 px-4 py-2 text-apex-red hover:bg-apex-red/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
+              className="flex items-center gap-2 px-4 py-2 text-base text-apex-red hover:bg-apex-red/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
               {...(signOut.isPending ? {} : buttonHoverProps)}
             >
               <LogOut size={18} />

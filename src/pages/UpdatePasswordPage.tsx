@@ -119,8 +119,8 @@ export default function UpdatePasswordPage() {
           animate="visible"
         >
           <motion.div className="mb-8 text-center" variants={itemVariants}>
-            <h1 className="text-3xl font-bold text-apex-white mb-2">Apex</h1>
-            <p className="text-apex-white/60">The Rider's Black Box</p>
+            <h1 className="text-xl md:text-2xl font-bold text-apex-white mb-2">Apex</h1>
+            <p className="text-sm text-apex-white/60">The Rider's Black Box</p>
           </motion.div>
 
           <motion.div
@@ -150,8 +150,8 @@ export default function UpdatePasswordPage() {
           animate="visible"
         >
           <motion.div className="mb-8 text-center" variants={itemVariants}>
-            <h1 className="text-3xl font-bold text-apex-white mb-2">Apex</h1>
-            <p className="text-apex-white/60">The Rider's Black Box</p>
+            <h1 className="text-xl md:text-2xl font-bold text-apex-white mb-2">Apex</h1>
+            <p className="text-sm text-apex-white/60">The Rider's Black Box</p>
           </motion.div>
 
           <motion.div
@@ -166,11 +166,11 @@ export default function UpdatePasswordPage() {
             >
               <CheckCircle2 size={48} className="text-apex-green" />
             </motion.div>
-            <h2 className="text-xl font-semibold text-apex-white mb-2">Password Changed!</h2>
-            <p className="text-apex-white/80 mb-4">
+            <h2 className="text-lg font-semibold text-apex-white mb-2">Password Changed!</h2>
+            <p className="text-sm text-apex-white/80 mb-4">
               Your password has been successfully updated.
             </p>
-            <p className="text-apex-white/60 text-sm mb-6">
+            <p className="text-sm text-apex-white/60 mb-6">
               Open the mobile app to log in with your new password.
             </p>
             <button
@@ -207,7 +207,7 @@ export default function UpdatePasswordPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="new-password"
-              className="w-full px-4 py-3 bg-apex-black border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
+              className="w-full px-4 py-3 bg-apex-black border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
             />
             {password && (
               <div className="mt-3">
@@ -224,7 +224,7 @@ export default function UpdatePasswordPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               autoComplete="new-password"
-              className="w-full px-4 py-3 bg-apex-black border border-apex-white/20 rounded-lg text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
+              className="w-full px-4 py-3 bg-apex-black border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
             />
             {confirmPassword && !passwordsMatch && (
               <p className="mt-2 text-sm text-apex-red">Passwords do not match</p>
@@ -246,7 +246,7 @@ export default function UpdatePasswordPage() {
             {...buttonHoverProps}
             type="submit"
             disabled={loading || !isPasswordValid || !passwordsMatch}
-            className="w-full py-3 bg-apex-green text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-apex-green text-base text-apex-black font-semibold rounded-lg hover:bg-apex-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {loading ? (
               'Updating...'

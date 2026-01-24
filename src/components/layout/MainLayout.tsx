@@ -34,6 +34,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
   
   // Hide navigation when recording (full-screen ride mode)
   const isRideMode = isRecording && location.pathname === '/ride';
+  const pillRoutes = ['/dashboard', '/garage', '/rides', '/ride'];
+  const isPillRoute = pillRoutes.includes(location.pathname);
+  const showBottomNav = !isRideMode && isPillRoute;
   const canDirectDownload = Boolean(updateInfo?.downloadUrl) && Capacitor.getPlatform() === 'android';
 
   const handleUpdateDownload = () => {
@@ -62,7 +65,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
     const path = location.pathname;
     if (path === '/dashboard') return 'Dashboard';
     if (path === '/garage') return 'Garage';
-    if (path === '/profile') return 'Profile';
     if (path === '/ride') return 'Ride';
     if (path === '/rides') return 'All Rides';
     return 'Apex';
@@ -104,7 +106,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
         {/* Main Content */}
         <main 
           ref={mainRef} 
-          className={`flex-1 min-h-0 transition-all overflow-y-auto bg-apex-black ${isRideMode ? 'pb-0' : 'pb-32'}`}
+          className={`flex-1 min-h-0 transition-all overflow-y-auto bg-apex-black ${
+            isRideMode ? 'pb-0' : showBottomNav ? 'pb-32' : 'pb-10'
+          }`}
           style={{ overscrollBehaviorY: 'contain' }}
         >
           <AnimatePresence mode="wait" key={location.pathname}>
@@ -113,7 +117,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         </main>
 
         {/* Floating Bottom Pill Navigation - Hidden in ride mode */}
-        {!isRideMode && <BottomPillNav />}
+        {showBottomNav && <BottomPillNav />}
 
         {/* Notification Pane */}
         <NotificationPane

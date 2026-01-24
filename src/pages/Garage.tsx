@@ -40,19 +40,23 @@ function BikeImage({
   }
 
   return (
-    <img
-      src={imageUrl}
-      alt={alt}
-      className={`object-cover rounded-lg border border-apex-white/20 ${className}`}
+    <div
+      className={`rounded-lg overflow-hidden ${className}`}
       style={{ width: size, height: size }}
-      onError={(e) => {
-        logger.error('Failed to load bike image', {
-          imageUrl,
-          imgSrc: (e.target as HTMLImageElement).src,
-        });
-        setFailedImageUrl(imageUrl ?? null);
-      }}
-    />
+    >
+      <img
+        src={imageUrl}
+        alt={alt}
+        className="h-full w-full object-contain"
+        onError={(e) => {
+          logger.error('Failed to load bike image', {
+            imageUrl,
+            imgSrc: (e.target as HTMLImageElement).src,
+          });
+          setFailedImageUrl(imageUrl ?? null);
+        }}
+      />
+    </div>
   );
 }
 
@@ -268,7 +272,7 @@ export default function Garage() {
                     <BikeImage
                       imageUrl={currentBike.image_url}
                       alt={currentBike.nick_name || `${currentBike.make} ${currentBike.model}`}
-                      size={64}
+                      size={72}
                     />
                   </div>
                 </div>
@@ -346,7 +350,7 @@ export default function Garage() {
                         <BikeImage
                           imageUrl={bike.image_url}
                           alt={bike.nick_name || `${bike.make} ${bike.model}`}
-                          size={48}
+                          size={56}
                         />
                       </div>
                     </div>

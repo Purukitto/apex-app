@@ -30,7 +30,7 @@ export default function BottomPillNav() {
     <AnimatePresence>
       {!shouldHide && (
         <motion.div
-          className="fixed left-1/2 -translate-x-1/2 z-50 bg-apex-white/10 backdrop-blur-md rounded-full flex items-center pointer-events-auto"
+          className="fixed left-1/2 -translate-x-1/2 z-50 bg-apex-white/10 backdrop-blur-xl border-2 border-apex-white/10 shadow-(--shadow-apex-card) rounded-full flex items-center pointer-events-auto"
           style={{
             bottom: 'calc(2.5rem + env(safe-area-inset-bottom, 0px))',
             maxWidth: 'calc(100vw - clamp(0.25rem, 0.5vw, 0.75rem) * 2)',

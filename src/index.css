@@ -4,6 +4,7 @@
   /* Base Colors */
   --color-apex-black: #09090b;
   --color-apex-white: #f5f5dc;
+  --color-apex-white-rgb: 245 245 220;
   
   /* Data Accent Colors */
   --color-apex-green: #3DBF6F;
@@ -14,6 +15,7 @@
   --color-apex-red: #E35B5B;
   --color-apex-green-highlight: #247048;
   --color-apex-surface: rgba(24, 24, 27, 0.5);
+  --color-apex-glass: rgba(24, 24, 27, 0.4);
   
   /* Bento Grid Design Tokens */
   --spacing-apex: 1.5rem;

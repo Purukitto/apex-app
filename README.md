@@ -41,7 +41,6 @@ Whether you're tracking your weekend rides or managing a fleet of motorcycles, A
 - **Current Status**: Overview of all bikes and their maintenance status
 - **Last Ride Summary**: Quick access to recent ride data
 - **Maintenance Alerts**: Warnings for upcoming service intervals
-- **Health Monitoring**: Track the health of your entire fleet
 
 <img src="docs/screenshots/dashboard.jpg" alt="The Dashboard" width="280" />
 

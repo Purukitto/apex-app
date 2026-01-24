@@ -3,23 +3,27 @@ import { useBikes } from '../hooks/useBikes';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useRides } from '../hooks/useRides';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Timer, TrendingUp, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { containerVariants, itemVariants } from '../lib/animations';
+import {
+  buttonHoverProps,
+  containerVariants,
+  listContainerVariants,
+} from '../lib/animations';
 import { useThemeColors } from '../hooks/useThemeColors';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { formatDuration, formatShortDate } from '../utils/format';
-import { Card } from '../components/ui/Card';
+import { BentoCard } from '../components/ui/BentoCard';
+import RideMap from '../components/RideMap';
 
 export default function Dashboard() {
   const { bikes, isLoading } = useBikes();
   const { profile } = useUserProfile();
   const { rides, isLoading: ridesLoading, refetch: refetchRides } = useRides({ limit: 5 });
   const navigate = useNavigate();
-  const { primary, highlight } = useThemeColors();
+  const { primary } = useThemeColors();
   const queryClient = useQueryClient();
 
   const handleRefresh = useCallback(async () => {
@@ -47,8 +51,23 @@ export default function Dashboard() {
   const formatRideDate = (dateString: string): string =>
     formatShortDate(dateString, { includeYear: false, useRelative: true });
 
-  // Create a map of bike IDs to bike objects for quick lookup
-  const bikeMap = new Map(bikes.map((bike) => [bike.id, bike]));
+  const lastRide = rides?.[0];
+  const lastRideBike = lastRide ? bikes.find((bike) => bike.id === lastRide.bike_id) : undefined;
+  const lastRideBikeLabel = lastRideBike
+    ? lastRideBike.nick_name || `${lastRideBike.make} ${lastRideBike.model}`
+    : 'Unknown bike';
+  const lastRideDuration = lastRide
+    ? formatDuration(lastRide.start_time, lastRide.end_time)
+    : '--';
+  const lastRideMaxLean = lastRide
+    ? Math.max(lastRide.max_lean_left, lastRide.max_lean_right)
+    : 0;
+  const lastRideCoordinates =
+    lastRide?.route_path?.coordinates &&
+    Array.isArray(lastRide.route_path.coordinates) &&
+    lastRide.route_path.coordinates.length > 0
+      ? lastRide.route_path.coordinates.map(([lng, lat]: [number, number]) => [lat, lng] as [number, number])
+      : [];
 
   const riderName = profile?.riderName || 'Rider';
 
@@ -60,23 +79,6 @@ export default function Dashboard() {
         accentColor={primary}
       />
 
-      {/* Dashboard-specific Greeting Section */}
-      <div className="p-6 pb-0">
-        <motion.div
-          className="flex items-center"
-          variants={itemVariants}
-        >
-          <div className="flex flex-col">
-            <span className="text-sm md:text-base text-white/60 font-normal">
-              Hi,
-            </span>
-            <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
-              {riderName}!
-            </h2>
-          </div>
-        </motion.div>
-      </div>
-
       {/* Scrollable Content */}
       <motion.div
         className="p-6 pb-32 space-y-6"
@@ -84,166 +86,124 @@ export default function Dashboard() {
         initial="hidden"
         animate="visible"
       >
-
-        {/* Top Grid: Hero Card + Stat Tiles */}
         <motion.div
-          className="grid grid-cols-2 md:grid-cols-3 gap-4"
-          variants={containerVariants}
+          className="grid grid-cols-12 gap-4"
+          variants={listContainerVariants}
         >
-          {/* Hero Card - Distance (Non-clickable) */}
-          <Card
+          <BentoCard
             padding="md"
-            animate="item"
-            className="col-span-2 md:col-span-2"
+            animate="fastItem"
+            className="col-span-12 lg:col-span-8"
           >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h2 className="text-sm text-white/60 uppercase tracking-wide mb-2">
-                  Distance
-                </h2>
-                <p className="text-5xl font-mono font-bold text-white mb-2">
-                  {totalKm.toLocaleString()}
-                </p>
-                <p className="text-sm font-mono" style={{ color: primary }}>km</p>
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-wrap items-start justify-between gap-6">
+                <div>
+                  <p className="text-sm text-apex-white/60">Welcome back</p>
+                  <h2 className="text-xl md:text-2xl font-bold tracking-tight text-apex-white">
+                    {riderName}
+                  </h2>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-apex-white/60">Total distance</p>
+                  <p className="text-4xl md:text-5xl font-mono font-bold text-apex-white tabular-nums">
+                    {totalKm.toLocaleString()}
+                  </p>
+                  <p className="text-sm font-mono text-apex-white/60">km</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <motion.button
+                  type="button"
+                  onClick={() => navigate('/garage')}
+                  className="rounded-2xl bg-apex-black/40 border border-apex-white/5 p-4 text-left transition-colors hover:bg-apex-black/60"
+                  {...buttonHoverProps}
+                >
+                  <p className="text-sm text-apex-white/60">Bikes</p>
+                  <p className="text-2xl font-mono font-bold text-apex-white tabular-nums">
+                    {bikeCount}
+                  </p>
+                  <p className="text-sm text-apex-white/60">
+                    {bikeCount === 1 ? 'machine' : 'machines'}
+                  </p>
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => navigate('/rides')}
+                  className="rounded-2xl bg-apex-black/40 border border-apex-white/5 p-4 text-left transition-colors hover:bg-apex-black/60"
+                  {...buttonHoverProps}
+                >
+                  <p className="text-sm text-apex-white/60">Total rides</p>
+                  <p className="text-2xl font-mono font-bold text-apex-white tabular-nums">
+                    {totalRides}
+                  </p>
+                  <p className="text-sm text-apex-white/60">
+                    {totalRides === 1 ? 'ride' : 'rides'}
+                  </p>
+                </motion.button>
               </div>
             </div>
-          </Card>
-
-          {/* Stat Tiles - Bento Grid */}
-          <motion.div
-            className="col-span-2 md:col-span-1 grid grid-cols-2 gap-4 md:flex md:flex-col md:space-y-4"
-            variants={containerVariants}
+          </BentoCard>
+          <BentoCard
+            padding="md"
+            animate="fastItem"
+            className="col-span-12 lg:col-span-5"
+            clickable
+            onClick={() => {
+              if (lastRide) {
+                navigate(`/rides?rideId=${lastRide.id}`);
+              }
+            }}
           >
-            {/* Bikes in Garage Tile (Clickable) */}
-            <Card
-              padding="sm"
-              animate="item"
-              clickable
-              onClick={() => navigate('/garage')}
-              whileHover={{ borderColor: highlight, scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <h3 className="text-xs text-white/60 uppercase tracking-wide mb-2">
-                Bikes in Garage
-              </h3>
-              <p className="text-3xl md:text-4xl font-mono font-bold text-white">
-                {bikeCount}
-              </p>
-              <p className="text-xs md:text-sm mt-1" style={{ color: primary }}>
-                {bikeCount === 1 ? 'machine' : 'machines'}
-              </p>
-            </Card>
-
-            {/* Total Rides Tile (Clickable) */}
-            <Card
-              padding="sm"
-              animate="item"
-              clickable
-              onClick={() => navigate('/rides')}
-              whileHover={{ borderColor: highlight, scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <h3 className="text-xs text-white/60 uppercase tracking-wide mb-2">
-                Total Rides
-              </h3>
-              <p className="text-3xl md:text-4xl font-mono font-bold text-white">
-                {totalRides}
-              </p>
-              <p className="text-xs md:text-sm mt-1" style={{ color: primary }}>
-                {totalRides === 1 ? 'ride' : 'rides'}
-              </p>
-            </Card>
-          </motion.div>
-        </motion.div>
-
-        {/* Recent Rides Section */}
-        <motion.div
-          className="space-y-4"
-          variants={itemVariants}
-        >
-          <h2 className="text-lg font-semibold text-white">Recent Rides</h2>
-          {ridesLoading ? (
-            <Card padding="lg" animate="none" className="text-center">
-              <div className="animate-spin mx-auto mb-3">
-                <RefreshCw size={32} className="text-white/20" />
+            <div className="flex h-full flex-col">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm text-apex-white/60">Last ride</p>
+                  <h3 className="text-lg font-semibold tracking-tight text-apex-white">
+                    {lastRide ? lastRide.ride_name || formatRideDate(lastRide.start_time) : 'No rides yet'}
+                  </h3>
+                  {lastRide && (
+                    <p className="text-sm text-apex-white/60">
+                      {lastRideBikeLabel}
+                    </p>
+                  )}
+                </div>
+                {lastRide && (
+                  <span className="text-sm font-mono text-apex-white/60 tabular-nums">
+                    {lastRide.distance_km.toFixed(1)} km
+                  </span>
+                )}
               </div>
-              <LoadingSpinner size="sm" text="Loading rides..." />
-            </Card>
-          ) : rides && rides.length > 0 ? (
-            <motion.div
-              className="space-y-3"
-              variants={containerVariants}
-            >
-              {rides.map((ride) => {
-                const bike = bikeMap.get(ride.bike_id);
-                const bikeName = bike?.nick_name || bike ? `${bike.make} ${bike.model}` : 'Unknown Bike';
-                const maxLean = Math.max(ride.max_lean_left, ride.max_lean_right);
-
-                return (
-                  <Card
-                    key={ride.id}
-                    padding="none"
-                    animate="fastItem"
-                    className="overflow-hidden"
-                    layout
-                  >
-                    {/* Card Header - Same as AllRides but navigates on click */}
-                    <motion.div
-                      className="p-5 cursor-pointer"
-                      onClick={() => navigate(`/rides?rideId=${ride.id}`)}
-                      whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}
-                      whileTap={{ backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-base font-semibold text-white truncate">
-                            {ride.ride_name || bikeName}
-                          </h3>
-                          {ride.ride_name && (
-                            <p className="text-sm text-white/40 truncate mt-1">
-                              {bikeName}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <MapPin size={16} style={{ color: primary }} />
-                          <span className="text-sm text-white/80 font-mono">
-                            {ride.distance_km.toFixed(1)} km
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Timer size={16} style={{ color: primary }} />
-                          <span className="text-sm text-white/80">
-                            {formatDuration(ride.start_time, ride.end_time)}
-                          </span>
-                        </div>
-                        {maxLean > 0 && (
-                          <div className="flex items-center gap-2">
-                            <TrendingUp size={16} style={{ color: primary }} />
-                            <span className="text-sm text-white/80 font-mono">
-                              {maxLean.toFixed(1)}°
-                            </span>
-                          </div>
-                        )}
-                        <span className="text-xs text-white/40 font-mono">
-                          {formatRideDate(ride.start_time)}
-                        </span>
-                      </div>
-                    </motion.div>
-                  </Card>
-                );
-              })}
-            </motion.div>
-          ) : (
-            <Card padding="lg" animate="none" className="text-center">
-              <Timer className="mx-auto mb-3 text-white/20" size={32} />
-              <p className="text-sm text-white/60">
-                No rides recorded yet. Start tracking your rides to see them here.
-              </p>
-            </Card>
-          )}
+              {lastRide && (
+                <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-apex-white/70">
+                  <span className="font-mono tabular-nums">{lastRideDuration}</span>
+                  {lastRideMaxLean > 0 && (
+                    <span className="font-mono tabular-nums">{lastRideMaxLean.toFixed(1)}°</span>
+                  )}
+                  <span className="text-apex-white/60">{formatRideDate(lastRide.start_time)}</span>
+                </div>
+              )}
+              <div className="mt-4 flex-1">
+                {ridesLoading ? (
+                  <div className="h-[220px] rounded-2xl border border-apex-white/5 bg-apex-black/40 flex items-center justify-center">
+                    <LoadingSpinner size="sm" text="Loading map..." />
+                  </div>
+                ) : lastRideCoordinates.length > 0 ? (
+                  <RideMap
+                    coordinates={lastRideCoordinates}
+                    className="w-full"
+                    interactive={false}
+                    height="220px"
+                  />
+                ) : (
+                  <div className="h-[220px] rounded-2xl border border-apex-white/5 bg-apex-black/40 flex items-center justify-center">
+                    <p className="text-sm text-apex-white/60 font-mono">
+                      No route data available
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </BentoCard>
         </motion.div>
       </motion.div>
     </div>

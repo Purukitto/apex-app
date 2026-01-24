@@ -81,7 +81,16 @@ export default function MainLayout({ children }: MainLayoutProps) {
         unreadCount,
       }}
     >
-      <div className={`min-h-screen bg-apex-black flex flex-col ${isRideMode ? 'fixed inset-0 overflow-hidden' : ''}`}>
+      <div className={`h-screen bg-apex-black flex flex-col overflow-hidden ${isRideMode ? 'fixed inset-0' : ''}`}>
+        <div
+          className="pointer-events-none fixed inset-0 -z-10 bg-noise"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at 50% 0%, rgba(var(--color-apex-green-rgb), 0.15), transparent 70%), var(--apex-noise-image)',
+            backgroundRepeat: 'no-repeat, repeat',
+            backgroundSize: '100% 100%, 120px 120px',
+          }}
+        />
         {/* Sticky Page Header - Hidden in ride mode */}
         {!isRideMode && (
           <div 

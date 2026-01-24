@@ -85,7 +85,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
 
     // Base card classes
     const baseClasses =
-      'bg-gradient-to-br from-apex-white/10 via-apex-black/70 to-apex-black/90 border border-apex-white/10 rounded-2xl shadow-[var(--shadow-apex-card)] transition-colors';
+      'bg-gradient-to-br from-apex-surface via-apex-black/80 to-apex-black/95 border border-apex-white/10 rounded-2xl shadow-[var(--shadow-apex-card)] transition-colors';
 
     // Clickable classes
     const clickableClasses = clickable || onClick

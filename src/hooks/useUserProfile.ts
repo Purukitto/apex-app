@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../lib/supabaseClient';
 import type { User } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabaseClient';
 
 interface UserProfile {
   email: string;
@@ -47,6 +47,60 @@ export function useUserProfile() {
     },
   });
 
+  const updateEmail = useMutation({
+    mutationFn: async (email: string) => {
+      const { data, error } = await supabase.auth.updateUser({ email });
+      if (error) throw error;
+      return data.user as User;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+    },
+  });
+
+  const reauthenticate = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.auth.reauthenticate();
+      if (error) throw error;
+    },
+  });
+
+  const updatePasswordWithNonce = useMutation({
+    mutationFn: async (input: { password: string; nonce: string }) => {
+      const { data, error } = await supabase.auth.updateUser({
+        password: input.password,
+        nonce: input.nonce,
+      });
+      if (error) throw error;
+      return data.user as User;
+    },
+  });
+
+  const verifyEmailChangeOtp = useMutation({
+    mutationFn: async (input: { email: string; token: string }) => {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: input.email,
+        token: input.token,
+        type: 'email_change',
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+    },
+  });
+
+  const resendEmailChangeOtp = useMutation({
+    mutationFn: async (email: string) => {
+      const { error } = await supabase.auth.resend({
+        type: 'email_change',
+        email,
+      });
+      if (error) throw error;
+    },
+  });
+
   // Sign out
   const signOut = useMutation({
     mutationFn: async () => {
@@ -67,6 +121,11 @@ export function useUserProfile() {
     profile,
     isLoading,
     updateRiderName,
+    updateEmail,
+    reauthenticate,
+    updatePasswordWithNonce,
+    verifyEmailChangeOtp,
+    resendEmailChangeOtp,
     signOut,
   };
 }

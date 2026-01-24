@@ -7,8 +7,8 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { useAppUpdate } from '../hooks/useAppUpdate';
 import { useAppUpdateStore } from '../stores/useAppUpdateStore';
 import { useNavigate } from 'react-router-dom';
-import { Mail, LogOut, Save, User, MessageCircle, Download, RefreshCw, Palette, CheckCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Mail, LogOut, Save, MessageCircle, Download, RefreshCw, Palette, CheckCircle, Pencil, X, Lock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 import DonationCard from '../components/profile/DonationCard';
 import { Card } from '../components/ui/Card';
@@ -17,20 +17,56 @@ import { applyTheme } from '../lib/theme';
 import { getAppVersion } from '../lib/version';
 import { isDiscordLoginSupported, openDiscordLogin } from '../lib/discordLogin';
 import { apexToast } from '../lib/toast';
+import { logger } from '../lib/logger';
+import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
+import { calculatePasswordStrength } from '../lib/passwordStrength';
+import OtpInput from '../components/OtpInput';
 
 export default function Profile() {
   const isNative = Capacitor.isNativePlatform();
   const platform = Capacitor.getPlatform();
   const isDiscordRpcSupported = isDiscordRpcEnabledForPlatform(platform);
-  const { profile, isLoading, updateRiderName, signOut } = useUserProfile();
+  const {
+    profile,
+    isLoading,
+    updateRiderName,
+    updateEmail,
+    reauthenticate,
+    updatePasswordWithNonce,
+    verifyEmailChangeOtp,
+    resendEmailChangeOtp,
+    signOut,
+  } = useUserProfile();
   const { isChecking, checkForUpdate, hasCheckedNoUpdate } = useAppUpdate();
   const { updateInfo, setShowModal } = useAppUpdateStore();
   const navigate = useNavigate();
   const [riderName, setRiderName] = useState(profile?.riderName || '');
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState(profile?.email || '');
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [emailOtpCurrent, setEmailOtpCurrent] = useState('');
+  const [emailOtpNew, setEmailOtpNew] = useState('');
+  const [passwordOtp, setPasswordOtp] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isSavingName, setIsSavingName] = useState(false);
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [isEmailOtpSent, setIsEmailOtpSent] = useState(false);
+  const [isPasswordOtpSent, setIsPasswordOtpSent] = useState(false);
+  const [isVerifyingEmailOtp, setIsVerifyingEmailOtp] = useState(false);
+  const [isVerifyingPasswordOtp, setIsVerifyingPasswordOtp] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const { background, primary, setBackground, setPrimary } = useThemeStore();
+
+  const otpLength = 6;
+  const passwordStrength = calculatePasswordStrength(password);
+  const isPasswordValid = passwordStrength.isValid;
+  const passwordsMatch = password === passwordConfirm;
   const {
     enabled: rpcEnabled,
     shareRideStatus,
@@ -47,36 +83,309 @@ export default function Profile() {
 
   // Update local state when profile changes
   useEffect(() => {
-    if (profile?.riderName !== undefined && !isEditing) {
-      setRiderName(profile.riderName || '');
+    if (!isEditingName) {
+      setRiderName(profile?.riderName || '');
     }
-  }, [profile?.riderName, isEditing]);
+  }, [profile?.riderName, isEditingName]);
 
-  const handleSave = async () => {
-    setError(null);
-    setIsSaving(true);
+  useEffect(() => {
+    if (!isEditingEmail) {
+      setEmail(profile?.email || '');
+    }
+  }, [profile?.email, isEditingEmail]);
+
+  const handleSaveRiderName = async () => {
+    setNameError(null);
+    const trimmedName = riderName.trim();
+    if (trimmedName === (profile?.riderName || '')) {
+      apexToast.error('No changes to save');
+      return;
+    }
+
+    setIsSavingName(true);
     try {
-      await updateRiderName.mutateAsync(riderName.trim() || '');
-      setIsEditing(false);
+      await apexToast.promise(
+        updateRiderName.mutateAsync(trimmedName),
+        {
+          loading: 'Saving...',
+          success: 'Rider Name Updated',
+          error: 'Update failed. Please try again.',
+        },
+        {
+          errorAction: {
+            label: 'Retry',
+            onClick: () => {
+              void handleSaveRiderName();
+            },
+          },
+        }
+      );
+      setIsEditingName(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update rider name');
+      logger.error('Rider name update failed:', err);
     } finally {
-      setIsSaving(false);
+      setIsSavingName(false);
     }
   };
 
-  const handleCancel = () => {
+  const handleCancelRiderName = () => {
     setRiderName(profile?.riderName || '');
-    setIsEditing(false);
-    setError(null);
+    setIsEditingName(false);
+    setNameError(null);
+  };
+
+  const handleSaveEmail = async () => {
+    setEmailError(null);
+    const trimmedEmail = email.trim();
+    if (trimmedEmail.length === 0) {
+      setEmailError('Email is required');
+      apexToast.error('Email is required');
+      return;
+    }
+
+    if (trimmedEmail === (profile?.email || '')) {
+      apexToast.error('No changes to save');
+      return;
+    }
+
+    setIsSavingEmail(true);
+    try {
+      await apexToast.promise(
+        updateEmail.mutateAsync(trimmedEmail),
+        {
+          loading: 'Sending code...',
+          success: 'Code Sent',
+          error: 'Update failed. Please try again.',
+        },
+        {
+          errorAction: {
+            label: 'Retry',
+            onClick: () => {
+              void handleSaveEmail();
+            },
+          },
+        }
+      );
+      setPendingEmail(trimmedEmail);
+      setIsEmailOtpSent(true);
+      setEmailOtpCurrent('');
+      setEmailOtpNew('');
+    } catch (err) {
+      logger.error('Email update failed:', err);
+    } finally {
+      setIsSavingEmail(false);
+    }
+  };
+
+  const handleVerifyEmailOtp = async () => {
+    if (!pendingEmail) {
+      apexToast.error('Missing email for verification');
+      return;
+    }
+    const currentEmail = profile?.email || '';
+    const currentToken = emailOtpCurrent.trim();
+    const newToken = emailOtpNew.trim();
+    if (currentEmail.length === 0) {
+      setEmailError('Missing current email');
+      apexToast.error('Missing current email');
+      return;
+    }
+    if (currentToken.length !== otpLength || newToken.length !== otpLength) {
+      setEmailError('Enter both codes');
+      apexToast.error('Enter both codes');
+      return;
+    }
+    setEmailError(null);
+    setIsVerifyingEmailOtp(true);
+    try {
+      await apexToast.promise(
+        (async () => {
+          await verifyEmailChangeOtp.mutateAsync({ email: currentEmail, token: currentToken });
+          await verifyEmailChangeOtp.mutateAsync({ email: pendingEmail, token: newToken });
+        })(),
+        {
+          loading: 'Verifying...',
+          success: 'Email Verified',
+          error: 'Invalid code. Please try again.',
+        },
+        {
+          errorAction: {
+            label: 'Retry',
+            onClick: () => {
+              void handleVerifyEmailOtp();
+            },
+          },
+        }
+      );
+      setIsEmailOtpSent(false);
+      setIsEditingEmail(false);
+      setPendingEmail(null);
+      setEmailOtpCurrent('');
+      setEmailOtpNew('');
+    } catch (err) {
+      logger.error('Email OTP verification failed:', err);
+    } finally {
+      setIsVerifyingEmailOtp(false);
+    }
+  };
+
+  const handleResendEmailOtp = async () => {
+    if (!pendingEmail) {
+      apexToast.error('Missing email for resend');
+      return;
+    }
+    try {
+      await apexToast.promise(
+        resendEmailChangeOtp.mutateAsync(pendingEmail),
+        {
+          loading: 'Resending...',
+          success: 'Code Resent',
+          error: 'Resend failed. Please try again.',
+        },
+        {
+          errorAction: {
+            label: 'Retry',
+            onClick: () => {
+              void handleResendEmailOtp();
+            },
+          },
+        }
+      );
+    } catch (err) {
+      logger.error('Email OTP resend failed:', err);
+    }
+  };
+
+  const handleCancelEmail = () => {
+    setEmail(profile?.email || '');
+    setIsEditingEmail(false);
+    setEmailError(null);
+    setPendingEmail(null);
+    setIsEmailOtpSent(false);
+    setEmailOtpCurrent('');
+    setEmailOtpNew('');
+  };
+
+  const handleSavePassword = async () => {
+    setPasswordError(null);
+    const trimmedPassword = password.trim();
+    if (trimmedPassword.length === 0) {
+      apexToast.error('Password is required');
+      return;
+    }
+
+    if (!isPasswordValid) {
+      setPasswordError('Password does not meet requirements');
+      apexToast.error('Password does not meet requirements');
+      return;
+    }
+
+    if (trimmedPassword !== passwordConfirm) {
+      setPasswordError('Passwords do not match');
+      apexToast.error('Passwords do not match');
+      return;
+    }
+
+    setIsSavingPassword(true);
+    try {
+      await apexToast.promise(
+        reauthenticate.mutateAsync(),
+        {
+          loading: 'Sending code...',
+          success: 'Code Sent',
+          error: 'Reauthentication failed. Please try again.',
+        },
+        {
+          errorAction: {
+            label: 'Retry',
+            onClick: () => {
+              void handleSavePassword();
+            },
+          },
+        }
+      );
+      setIsPasswordOtpSent(true);
+      setPasswordOtp('');
+    } catch (err) {
+      logger.error('Password reauthentication failed:', err);
+    } finally {
+      setIsSavingPassword(false);
+    }
+  };
+
+  const handleVerifyPasswordOtp = async () => {
+    const trimmedPassword = password.trim();
+    const token = passwordOtp.trim();
+    if (trimmedPassword.length === 0) {
+      apexToast.error('Password is required');
+      return;
+    }
+    if (token.length !== otpLength) {
+      setPasswordError('Enter the code from your email');
+      apexToast.error('Enter the code from your email');
+      return;
+    }
+    setPasswordError(null);
+    setIsVerifyingPasswordOtp(true);
+    try {
+      await apexToast.promise(
+        updatePasswordWithNonce.mutateAsync({ password: trimmedPassword, nonce: token }),
+        {
+          loading: 'Saving...',
+          success: 'Password Updated',
+          error: 'Invalid code. Please try again.',
+        },
+        {
+          errorAction: {
+            label: 'Retry',
+            onClick: () => {
+              void handleVerifyPasswordOtp();
+            },
+          },
+        }
+      );
+      setIsPasswordOtpSent(false);
+      setPassword('');
+      setPasswordConfirm('');
+      setPasswordOtp('');
+      setIsPasswordModalOpen(false);
+    } catch (err) {
+      logger.error('Password OTP verification failed:', err);
+    } finally {
+      setIsVerifyingPasswordOtp(false);
+    }
+  };
+
+  const handleCancelPassword = () => {
+    setPassword('');
+    setPasswordConfirm('');
+    setPasswordError(null);
+    setPasswordOtp('');
+    setIsPasswordOtpSent(false);
+    setIsPasswordModalOpen(false);
   };
 
   const handleSignOut = async () => {
     try {
-      await signOut.mutateAsync();
+      await apexToast.promise(
+        signOut.mutateAsync(),
+        {
+          loading: 'Signing out...',
+          success: 'Signed Out',
+          error: 'Sign out failed. Please try again.',
+        },
+        {
+          errorAction: {
+            label: 'Retry',
+            onClick: () => {
+              void handleSignOut();
+            },
+          },
+        }
+      );
       navigate('/login');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign out');
+      logger.error('Sign out failed:', err);
     }
   };
 
@@ -253,79 +562,195 @@ export default function Profile() {
         <motion.div className="space-y-4" variants={containerVariants}>
           {/* Account Section */}
           <Card padding="md" animate="item">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-apex-green/10">
-                <Mail size={20} className="text-apex-green" />
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-apex-green/10">
+                  <Mail size={20} className="text-apex-green" />
+                </div>
+                <h2 className="text-base font-semibold text-apex-white">Account</h2>
               </div>
-              <h2 className="text-base font-semibold text-apex-white">Account</h2>
             </div>
             <div className="space-y-4">
-              <div>
-                <p className="text-xs text-apex-white/60 uppercase tracking-wide mb-1">Email</p>
-                <p className="text-sm text-apex-white font-mono">{profile?.email || 'N/A'}</p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Rider Name Section */}
-          <Card padding="md" animate="item"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-apex-green/10">
-                <User size={20} className="text-apex-green" />
-              </div>
-              <h2 className="text-base font-semibold text-apex-white">Rider Name</h2>
-            </div>
-
-            {isEditing ? (
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  value={riderName}
-                  onChange={(e) => setRiderName(e.target.value)}
-                  placeholder="Enter your rider name"
-                  className="w-full px-4 py-2 bg-apex-black/50 border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
-                  autoFocus
-                />
-                {error && (
-                  <div className="text-apex-red text-sm">{error}</div>
-                )}
-                <div className="flex gap-3">
-                  <motion.button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full text-base font-semibold text-apex-black bg-apex-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    {...(isSaving ? {} : buttonHoverProps)}
-                  >
-                    <Save size={18} />
-                    {isSaving ? 'Saving...' : 'Save'}
-                  </motion.button>
-                  <motion.button
-                    onClick={handleCancel}
-                    disabled={isSaving}
-                    className="px-4 py-2 border border-apex-white/20 text-base text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors disabled:opacity-50"
-                    {...(isSaving ? {} : buttonHoverProps)}
-                  >
-                    Cancel
-                  </motion.button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-apex-white">
-                  {profile?.riderName || (
-                    <span className="text-apex-white/40 italic">Not set</span>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <p className="text-xs text-apex-white/60 uppercase tracking-wide mb-1">Rider Name</p>
+                  {isEditingName ? (
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        value={riderName}
+                        onChange={(e) => setRiderName(e.target.value)}
+                        placeholder="Enter your rider name"
+                        className="w-full px-4 py-2 bg-apex-black/50 border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
+                        autoFocus
+                      />
+                      {nameError && <div className="text-apex-red text-sm">{nameError}</div>}
+                      <div className="flex flex-wrap gap-3">
+                        <motion.button
+                          onClick={handleSaveRiderName}
+                          disabled={isSavingName}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-base font-semibold text-apex-black bg-apex-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          {...(isSavingName ? {} : buttonHoverProps)}
+                        >
+                          <Save size={18} />
+                          {isSavingName ? 'Saving...' : 'Save'}
+                        </motion.button>
+                        <motion.button
+                          onClick={handleCancelRiderName}
+                          disabled={isSavingName}
+                          className="px-3 py-1.5 border border-apex-white/20 text-base text-apex-white rounded-md hover:bg-apex-white/5 transition-colors disabled:opacity-50"
+                          {...(isSavingName ? {} : buttonHoverProps)}
+                        >
+                          Cancel
+                        </motion.button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-apex-white">
+                      {profile?.riderName || <span className="text-apex-white/40 italic">Not set</span>}
+                    </p>
                   )}
-                </p>
+                </div>
+                {!isEditingName && (
+                  <motion.button
+                    onClick={() => setIsEditingName(true)}
+                    className="p-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
+                    aria-label="Edit rider name"
+                    {...buttonHoverProps}
+                  >
+                    <Pencil size={16} />
+                  </motion.button>
+                )}
+              </div>
+
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <p className="text-xs text-apex-white/60 uppercase tracking-wide mb-1">Email</p>
+                  {isEditingEmail ? (
+                    <div className="space-y-3">
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter your email"
+                        disabled={isEmailOtpSent}
+                        className="w-full px-4 py-2 bg-apex-black/50 border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors font-mono disabled:opacity-60"
+                      />
+                      {emailError && <div className="text-apex-red text-sm">{emailError}</div>}
+                      {!isEmailOtpSent ? (
+                        <div className="flex flex-wrap gap-3">
+                          <motion.button
+                            onClick={handleSaveEmail}
+                            disabled={isSavingEmail}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-base font-semibold text-apex-black bg-apex-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            {...(isSavingEmail ? {} : buttonHoverProps)}
+                          >
+                            <Save size={18} />
+                            {isSavingEmail ? 'Sending...' : 'Send Code'}
+                          </motion.button>
+                          <motion.button
+                            onClick={handleCancelEmail}
+                            disabled={isSavingEmail}
+                            className="px-3 py-1.5 border border-apex-white/20 text-base text-apex-white rounded-md hover:bg-apex-white/5 transition-colors disabled:opacity-50"
+                            {...(isSavingEmail ? {} : buttonHoverProps)}
+                          >
+                            Cancel
+                          </motion.button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-3">
+                          <motion.button
+                            onClick={handleCancelEmail}
+                            disabled={isVerifyingEmailOtp}
+                            className="px-3 py-1.5 border border-apex-white/20 text-base text-apex-white rounded-md hover:bg-apex-white/5 transition-colors disabled:opacity-50"
+                            {...(isVerifyingEmailOtp ? {} : buttonHoverProps)}
+                          >
+                            Cancel
+                          </motion.button>
+                        </div>
+                      )}
+                      {isEmailOtpSent ? (
+                        <div className="space-y-3 pt-1">
+                          <p className="text-xs text-apex-white/60">
+                            Enter both codes to confirm the change.
+                          </p>
+                          <div className="space-y-2">
+                            <label className="text-xs text-apex-white/60 uppercase tracking-wide">
+                              Current Email Code
+                            </label>
+                            <OtpInput
+                              length={otpLength}
+                              value={emailOtpCurrent}
+                              onChange={setEmailOtpCurrent}
+                              ariaLabel="Current email code"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs text-apex-white/60 uppercase tracking-wide">
+                              New Email Code
+                            </label>
+                            <OtpInput
+                              length={otpLength}
+                              value={emailOtpNew}
+                              onChange={setEmailOtpNew}
+                              ariaLabel="New email code"
+                            />
+                          </div>
+                          <div className="flex flex-wrap gap-3">
+                            <motion.button
+                              onClick={handleVerifyEmailOtp}
+                              disabled={isVerifyingEmailOtp}
+                              className="flex items-center gap-2 px-3 py-1.5 rounded-md text-base font-semibold text-apex-black bg-apex-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              {...(isVerifyingEmailOtp ? {} : buttonHoverProps)}
+                            >
+                              <Save size={18} />
+                              {isVerifyingEmailOtp ? 'Verifying...' : 'Verify'}
+                            </motion.button>
+                            <motion.button
+                              onClick={handleResendEmailOtp}
+                              disabled={isVerifyingEmailOtp}
+                              className="px-3 py-1.5 border border-apex-white/20 text-base text-apex-white rounded-md hover:bg-apex-white/5 transition-colors disabled:opacity-50"
+                              {...(isVerifyingEmailOtp ? {} : buttonHoverProps)}
+                            >
+                              Resend
+                            </motion.button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-apex-white/40">Email changes require confirmation.</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-apex-white font-mono">{profile?.email || 'N/A'}</p>
+                  )}
+                </div>
+                {!isEditingEmail && (
+                  <motion.button
+                    onClick={() => setIsEditingEmail(true)}
+                    className="p-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
+                    aria-label="Edit email"
+                    {...buttonHoverProps}
+                  >
+                    <Pencil size={16} />
+                  </motion.button>
+                )}
+              </div>
+
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <p className="text-xs text-apex-white/60 uppercase tracking-wide mb-1">Password</p>
+                  <p className="text-sm text-apex-white/40">••••••••</p>
+                </div>
                 <motion.button
-                  onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 border border-apex-white/20 text-base text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
+                  onClick={() => setIsPasswordModalOpen(true)}
+                  className="p-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors"
+                  aria-label="Edit password"
                   {...buttonHoverProps}
                 >
-                  Edit
+                  <Pencil size={16} />
                 </motion.button>
               </div>
-            )}
+            </div>
           </Card>
 
           
@@ -517,6 +942,119 @@ export default function Profile() {
           </motion.div>
         </motion.div>
       </motion.div>
+
+      <AnimatePresence>
+        {isPasswordModalOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-apex-black/80 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="w-full max-w-md"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Card padding="md" animate="none" hover={false}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-apex-green/10">
+                      <Lock size={18} className="text-apex-green" />
+                    </div>
+                    <h3 className="text-base font-semibold text-apex-white">Update Password</h3>
+                  </div>
+                  <motion.button
+                    onClick={handleCancelPassword}
+                    disabled={isSavingPassword || isVerifyingPasswordOtp}
+                    className="p-2 border border-apex-white/20 text-apex-white rounded-lg hover:bg-apex-white/5 transition-colors disabled:opacity-50"
+                    {...buttonHoverProps}
+                  >
+                    <X size={16} />
+                  </motion.button>
+                </div>
+
+                <div className="space-y-3">
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="New password"
+                    className="w-full px-4 py-2 bg-apex-black/50 border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
+                  />
+                  {password && (
+                    <PasswordStrengthIndicator password={password} />
+                  )}
+                  <input
+                    type="password"
+                    value={passwordConfirm}
+                    onChange={(e) => setPasswordConfirm(e.target.value)}
+                    placeholder="Confirm new password"
+                    className="w-full px-4 py-2 bg-apex-black/50 border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
+                  />
+                  {passwordConfirm && !passwordsMatch && (
+                    <p className="text-sm text-apex-red">Passwords do not match</p>
+                  )}
+                  {passwordError && <div className="text-apex-red text-sm">{passwordError}</div>}
+
+                  {!isPasswordOtpSent ? (
+                    <div className="flex flex-wrap gap-3">
+                      <motion.button
+                        onClick={handleSavePassword}
+                        disabled={isSavingPassword}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-md text-base font-semibold text-apex-black bg-apex-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        {...(isSavingPassword ? {} : buttonHoverProps)}
+                      >
+                        <Save size={18} />
+                        {isSavingPassword ? 'Sending...' : 'Send Code'}
+                      </motion.button>
+                      <motion.button
+                        onClick={handleCancelPassword}
+                        disabled={isSavingPassword}
+                        className="px-3 py-1.5 border border-apex-white/20 text-base text-apex-white rounded-md hover:bg-apex-white/5 transition-colors disabled:opacity-50"
+                        {...(isSavingPassword ? {} : buttonHoverProps)}
+                      >
+                        Cancel
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-xs text-apex-white/60">Enter the code from your email.</p>
+                      <OtpInput
+                        length={otpLength}
+                        value={passwordOtp}
+                        onChange={setPasswordOtp}
+                        ariaLabel="Password code"
+                      />
+                      <div className="flex flex-wrap gap-3">
+                        <motion.button
+                          onClick={handleVerifyPasswordOtp}
+                          disabled={isVerifyingPasswordOtp}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-base font-semibold text-apex-black bg-apex-green disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          {...(isVerifyingPasswordOtp ? {} : buttonHoverProps)}
+                        >
+                          <Save size={18} />
+                          {isVerifyingPasswordOtp ? 'Verifying...' : 'Verify'}
+                        </motion.button>
+                        <motion.button
+                          onClick={handleCancelPassword}
+                          disabled={isVerifyingPasswordOtp}
+                          className="px-3 py-1.5 border border-apex-white/20 text-base text-apex-white rounded-md hover:bg-apex-white/5 transition-colors disabled:opacity-50"
+                          {...(isVerifyingPasswordOtp ? {} : buttonHoverProps)}
+                        >
+                          Cancel
+                        </motion.button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

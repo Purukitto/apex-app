@@ -7,7 +7,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { useAppUpdate } from '../hooks/useAppUpdate';
 import { useAppUpdateStore } from '../stores/useAppUpdateStore';
 import { useNavigate } from 'react-router-dom';
-import { Mail, LogOut, Save, MessageCircle, Download, RefreshCw, Palette, CheckCircle, Pencil, X, Lock } from 'lucide-react';
+import { Mail, LogOut, Save, MessageCircle, Download, RefreshCw, Palette, CheckCircle, Pencil, X, Lock, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 import DonationCard from '../components/profile/DonationCard';
@@ -79,7 +79,7 @@ export default function Profile() {
     setShareCity,
     setRpcToken,
   } = useDiscordRpcStore();
-  
+
 
   // Update local state when profile changes
   useEffect(() => {
@@ -464,20 +464,18 @@ export default function Profile() {
           </div>
           <div className="flex items-center justify-between">
             <div>
-                <p className="text-sm text-apex-white">Enable Rich Presence</p>
+              <p className="text-sm text-apex-white">Enable Rich Presence</p>
               <p className="text-xs text-apex-white/40">Toggle Discord updates during rides.</p>
             </div>
             <motion.button
               onClick={() => setRpcEnabled(!rpcEnabled)}
-              className={`relative h-6 w-11 rounded-full border transition-colors ${
-                rpcEnabled ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
-              }`}
+              className={`relative h-6 w-11 rounded-full border transition-colors ${rpcEnabled ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
+                }`}
               {...buttonHoverProps}
             >
               <span
-                className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${
-                  rpcEnabled ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
-                }`}
+                className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${rpcEnabled ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
+                  }`}
               />
             </motion.button>
           </div>
@@ -489,15 +487,13 @@ export default function Profile() {
               </div>
               <motion.button
                 onClick={() => rpcEnabled && setShareRideStatus(!shareRideStatus)}
-                className={`relative h-6 w-11 rounded-full border transition-colors ${
-                  shareRideStatus ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
-                }`}
+                className={`relative h-6 w-11 rounded-full border transition-colors ${shareRideStatus ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
+                  }`}
                 {...buttonHoverProps}
               >
                 <span
-                  className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${
-                    shareRideStatus ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
-                  }`}
+                  className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${shareRideStatus ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
+                    }`}
                 />
               </motion.button>
             </div>
@@ -508,15 +504,13 @@ export default function Profile() {
               </div>
               <motion.button
                 onClick={() => rpcEnabled && setShareBikeName(!shareBikeName)}
-                className={`relative h-6 w-11 rounded-full border transition-colors ${
-                  shareBikeName ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
-                }`}
+                className={`relative h-6 w-11 rounded-full border transition-colors ${shareBikeName ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
+                  }`}
                 {...buttonHoverProps}
               >
                 <span
-                  className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${
-                    shareBikeName ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
-                  }`}
+                  className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${shareBikeName ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
+                    }`}
                 />
               </motion.button>
             </div>
@@ -527,15 +521,13 @@ export default function Profile() {
               </div>
               <motion.button
                 onClick={() => rpcEnabled && setShareCity(!shareCity)}
-                className={`relative h-6 w-11 rounded-full border transition-colors ${
-                  shareCity ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
-                }`}
+                className={`relative h-6 w-11 rounded-full border transition-colors ${shareCity ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
+                  }`}
                 {...buttonHoverProps}
               >
                 <span
-                  className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${
-                    shareCity ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
-                  }`}
+                  className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${shareCity ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
+                    }`}
                 />
               </motion.button>
             </div>
@@ -557,9 +549,28 @@ export default function Profile() {
         initial="hidden"
         animate="visible"
       >
-        {/* Page Header with Logo */}
-
         <motion.div className="space-y-4" variants={containerVariants}>
+          {/* Page Header */}
+          <motion.div
+            className="flex items-center gap-4"
+            variants={itemVariants}
+          >
+            <motion.button
+              onClick={() => navigate(-1)}
+              className="p-2 text-apex-white/60 hover:text-apex-white transition-colors"
+              {...buttonHoverProps}
+            >
+              <ArrowLeft size={24} />
+            </motion.button>
+            <div className="flex-1">
+              <h1 className="text-xl md:text-2xl font-bold text-apex-white tracking-tight">
+                Profile
+              </h1>
+              <p className="text-sm text-apex-white/60 mt-1">
+                Manage your account and preferences.
+              </p>
+            </div>
+          </motion.div>
           {/* Account Section */}
           <Card padding="md" animate="item">
             <div className="flex items-start justify-between gap-4 mb-4">
@@ -753,7 +764,7 @@ export default function Profile() {
             </div>
           </Card>
 
-          
+
 
           {/* Theme Settings Section */}
           <Card padding="md" animate="item"
@@ -774,11 +785,10 @@ export default function Profile() {
                     <motion.button
                       key={bg}
                       onClick={() => handleBackgroundChange(bg)}
-                      className={`flex-1 flex items-center justify-start gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                        background === bg
+                      className={`flex-1 flex items-center justify-start gap-2 px-4 py-3 rounded-lg border-2 transition-all ${background === bg
                           ? 'border-apex-green bg-apex-green/10'
                           : 'border-apex-white/20 hover:border-apex-white/40'
-                      }`}
+                        }`}
                       {...buttonHoverProps}
                     >
                       <div
@@ -804,11 +814,10 @@ export default function Profile() {
                       <motion.button
                         key={prim}
                         onClick={() => handlePrimaryChange(prim)}
-                        className={`flex items-center justify-start gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                          isSelected
+                        className={`flex items-center justify-start gap-2 px-4 py-3 rounded-lg border-2 transition-all ${isSelected
                             ? ''
                             : 'border-apex-white/20 hover:border-apex-white/40'
-                        }`}
+                          }`}
                         style={{
                           borderColor: isSelected ? primColor : undefined,
                           backgroundColor: isSelected ? `${primColor}20` : undefined,
@@ -861,21 +870,20 @@ export default function Profile() {
                 <motion.button
                   onClick={handleCheckForUpdate}
                   disabled={isChecking || hasCheckedNoUpdate}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-base font-semibold transition-colors w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
-                    hasCheckedNoUpdate && !isChecking
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-base font-semibold transition-colors w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed ${hasCheckedNoUpdate && !isChecking
                       ? 'text-apex-white/60 bg-apex-white/10'
                       : 'text-apex-black bg-apex-green'
-                  }`}
+                    }`}
                   {...(isChecking || hasCheckedNoUpdate ? {} : buttonHoverProps)}
                 >
                   <RefreshCw size={18} className={isChecking ? 'animate-spin' : ''} />
                   {isChecking
                     ? 'Checking...'
                     : hasCheckedNoUpdate
-                    ? 'No updates available'
-                    : updateInfo?.isAvailable
-                    ? 'Download Update'
-                    : 'Check for Updates'}
+                      ? 'No updates available'
+                      : updateInfo?.isAvailable
+                        ? 'Download Update'
+                        : 'Check for Updates'}
                 </motion.button>
                 {updateInfo?.isAvailable && (
                   <div className="p-3 bg-apex-green/10 border border-apex-green/20 rounded-lg">

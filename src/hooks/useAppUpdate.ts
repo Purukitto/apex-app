@@ -429,6 +429,38 @@ export function useAppUpdate() {
     await runDownloadUpdate();
   };
 
+  const installDownloadedApk = async (): Promise<void> => {
+    const { lastDownloadedPath, setDownloadState, resetDownload } = useAppUpdateStore.getState();
+
+    if (!lastDownloadedPath) {
+      await runDownloadUpdate();
+      return;
+    }
+
+    if (Capacitor.getPlatform() !== 'android') {
+      await openReleasePage();
+      return;
+    }
+
+    try {
+      setDownloadState('installing');
+      await FileOpener.open({
+        filePath: lastDownloadedPath,
+        contentType: APK_MIME_TYPE,
+        openWithDefault: true,
+      });
+      resetDownload();
+      apexToast.success('Installer opened');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error('Open APK failed:', errorMessage, error);
+      resetDownload();
+      apexToast.error('Install failed. Please try again.', {
+        action: { label: 'Retry', onClick: () => { void installDownloadedApk(); } },
+      });
+    }
+  };
+
   const dismissUpdate = useCallback(async () => {
     const currentUpdateInfo = useAppUpdateStore.getState().updateInfo;
     if (currentUpdateInfo?.latestVersion) {
@@ -449,6 +481,7 @@ export function useAppUpdate() {
     checkForUpdate,
     getLatestReleaseInfo,
     downloadUpdate,
+    installDownloadedApk,
     deleteDownloadedApk,
     openReleasePage,
     dismissUpdate,

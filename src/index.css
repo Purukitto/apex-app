@@ -2,16 +2,18 @@
 
 @theme {
   /* Base Colors */
-  --color-apex-black: #0A0A0A;
+  --color-apex-black: #09090b;
   --color-apex-white: #f5f5dc;
   
   /* Data Accent Colors */
   --color-apex-green: #3DBF6F;
+  --color-apex-green-rgb: 61 191 111;
   --color-apex-cyan: #2DA8C7;
   --color-apex-orange: #E08A4C;
   --color-apex-amber: #D9B85B;
   --color-apex-red: #E35B5B;
   --color-apex-green-highlight: #247048;
+  --color-apex-surface: rgba(24, 24, 27, 0.5);
   
   /* Bento Grid Design Tokens */
   --spacing-apex: 1.5rem;
@@ -30,9 +32,16 @@
 /* Global dark background - will be overridden by theme */
 html,
 body {
-  background-color: var(--color-apex-black, #0A0A0A);
+  background-color: var(--color-apex-black, #09090b);
   margin: 0;
   padding: 0;
+}
+
+.bg-noise {
+  --apex-noise-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMjAnIGhlaWdodD0nMTIwJyB2aWV3Qm94PScwIDAgMTIwIDEyMCc+PGZpbHRlciBpZD0nbic+PGZlVHVyYnVsZW5jZSB0eXBlPSdmcmFjdGFsTm9pc2UnIGJhc2VGcmVxdWVuY3k9JzAuOCcgbnVtT2N0YXZlcz0nNCcgc3RpdGNoVGlsZXM9J3N0aXRjaCcvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPScxMjAnIGhlaWdodD0nMTIwJyBmaWx0ZXI9J3VybCgjbiknIG9wYWNpdHk9JzAuMDUnLz48L3N2Zz4=");
+  background-image: var(--apex-noise-image);
+  background-repeat: repeat;
+  background-size: 120px 120px;
 }
 
 /* Sonner Toast Styling for Apex */

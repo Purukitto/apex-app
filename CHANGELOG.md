@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.5.0) (2026-01-24)
+
+
+### Features
+
+* enhance NotificationPane with new button icons and improved styling ([91a4c71](https://github.com/Purukitto/apex-app/commit/91a4c71ee611ae752e64c766060cdc6f6f29730b))
+* introduce BentoCard component and enhance Dashboard layout ([dca8cfb](https://github.com/Purukitto/apex-app/commit/dca8cfbc61eaf69ef2781a0a4b8b28c786558fdb))
+
+
+### Bug Fixes
+
+* update documentation and theme references for OLED backgrounds ([8707bce](https://github.com/Purukitto/apex-app/commit/8707bce6f15acf7ca7fb6fd44365047480864b78))
+
+
+### Styles
+
+* update color variables and enhance background effects ([b70b95d](https://github.com/Purukitto/apex-app/commit/b70b95da7ed85cdfa4c3426aa598d1c88deb4c57)), closes [#0A0A0](https://github.com/Purukitto/apex-app/issues/0A0A0) [#09090](https://github.com/Purukitto/apex-app/issues/09090)
+* update layout and overflow properties for improved responsiveness ([c4eea59](https://github.com/Purukitto/apex-app/commit/c4eea5950c92f9fc6fd2be18b2904fe6049734b4))
+
 ### [1.4.1](https://github.com/Purukitto/apex-app/compare/v1.4.0...v1.4.1) (2026-01-24)
 
 

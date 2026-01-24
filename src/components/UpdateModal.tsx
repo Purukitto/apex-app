@@ -376,7 +376,7 @@ export default function UpdateModal({
 
           {/* Modal */}
           <div 
-            className="fixed inset-0 z-100 flex items-start justify-center overflow-hidden"
+            className="fixed inset-0 z-100 flex items-center justify-center overflow-hidden"
             style={{
               padding: '1rem',
               paddingTop: `calc(2.25rem + env(safe-area-inset-top, 0px))`,
@@ -467,7 +467,7 @@ export default function UpdateModal({
                     {canDirectDownload ? (
                       <>
                         <Download size={18} />
-                        Download
+                        {hasDownloadedApk ? 'Install' : 'Download'}
                       </>
                     ) : (
                       <>

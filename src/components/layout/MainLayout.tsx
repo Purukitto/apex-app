@@ -27,7 +27,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const [devToolsOpen, setDevToolsOpen] = useState(false);
   const { unreadCount } = useNotifications();
   const { updateInfo, showModal, setShowModal, dismissUpdate, downloadState, downloadProgress, lastDownloadedPath } = useAppUpdateStore();
-  const { openReleasePage, downloadUpdate, deleteDownloadedApk } = useAppUpdate();
+  const { openReleasePage, downloadUpdate, deleteDownloadedApk, installDownloadedApk } = useAppUpdate();
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
   const isRecording = useRideStore((state) => state.isRecording);
@@ -41,6 +41,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   const handleUpdateDownload = () => {
     if (canDirectDownload) {
+      if (lastDownloadedPath) {
+        void installDownloadedApk();
+        return;
+      }
       void downloadUpdate();
       return;
     }

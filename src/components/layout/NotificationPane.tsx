@@ -1,4 +1,4 @@
-import { X, Bell, Check, Trash2 } from 'lucide-react';
+import { X, Bell, Check, CheckCheck, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate, type PanInfo } from 'framer-motion';
 import { useNotifications } from '../../hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
@@ -167,7 +167,7 @@ export default function NotificationPane({
                           markAllAsRead();
                         }
                       }}
-                      className={`p-2 rounded-lg transition-colors ${
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
                         unreadCount > 0
                           ? 'text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5'
                           : 'text-apex-white/30 cursor-not-allowed'
@@ -178,20 +178,22 @@ export default function NotificationPane({
                       onPointerDown={(e) => e.stopPropagation()}
                       disabled={unreadCount === 0}
                     >
-                      <Check size={18} />
+                      <CheckCheck size={18} />
+                      <span className="hidden sm:inline">Mark all read</span>
                     </motion.button>
                     <motion.button
                       onClick={(e) => {
                         e.stopPropagation();
                         dismissAll();
                       }}
-                      className="p-2 rounded-lg text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5 transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-apex-white/60 hover:text-apex-white hover:bg-apex-white/5 transition-colors text-sm"
                       aria-label="Dismiss all notifications"
                       {...buttonHoverProps}
                       type="button"
                       onPointerDown={(e) => e.stopPropagation()}
                     >
                       <Trash2 size={18} />
+                      <span className="hidden sm:inline">Dismiss all</span>
                     </motion.button>
                   </>
                 )}
@@ -279,12 +281,12 @@ export default function NotificationPane({
                               dismissNotification(notification.id);
                             }}
                             className="p-1.5 rounded-lg text-apex-white/40 hover:text-apex-red hover:bg-apex-white/5 transition-colors"
-                            aria-label="Remove notification"
+                            aria-label="Dismiss notification"
                             {...buttonHoverProps}
                             type="button"
                             onPointerDown={(e) => e.stopPropagation()}
                           >
-                            <X size={16} />
+                            <Trash2 size={16} />
                           </motion.button>
                         </div>
                       </div>

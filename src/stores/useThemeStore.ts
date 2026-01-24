@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { logger } from '../lib/logger';
 
-export type BackgroundTheme = 'apex-black' | 'pure-black';
+export type BackgroundTheme = 'apex-black' | 'oled-black';
 export type PrimaryTheme = 'apex-green' | 'cyan' | 'orange' | 'amber';
 
 interface ThemeStore {
@@ -21,7 +21,7 @@ export const PRIMARY_COLORS: Record<PrimaryTheme, string> = {
 
 export const BACKGROUND_COLORS: Record<BackgroundTheme, string> = {
   'apex-black': '#0A0A0A',
-  'pure-black': '#000000',
+  'oled-black': '#000000',
 };
 
 const STORAGE_KEY = 'apex-theme-storage';

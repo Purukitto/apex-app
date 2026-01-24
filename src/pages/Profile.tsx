@@ -781,7 +781,7 @@ export default function Profile() {
               <div>
                 <p className="text-xs text-apex-white/60 uppercase tracking-wide mb-3">Background</p>
                 <div className="flex gap-3">
-                  {(['apex-black', 'pure-black'] as BackgroundTheme[]).map((bg) => (
+                  {(['apex-black', 'oled-black'] as BackgroundTheme[]).map((bg) => (
                     <motion.button
                       key={bg}
                       onClick={() => handleBackgroundChange(bg)}
@@ -796,7 +796,7 @@ export default function Profile() {
                         style={{ backgroundColor: BACKGROUND_COLORS[bg] }}
                       />
                       <span className="text-sm font-medium text-apex-white">
-                        {bg === 'pure-black' ? 'Pure Black' : 'Apex Black'}
+                        {bg === 'oled-black' ? 'OLED Black' : 'Apex Black'}
                       </span>
                     </motion.button>
                   ))}

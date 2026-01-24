@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.1](https://github.com/Purukitto/apex-app/compare/v1.4.0...v1.4.1) (2026-01-24)
+
+
+### Code Refactoring
+
+* enhance BikeImage component and update sizes in Garage ([4464c82](https://github.com/Purukitto/apex-app/commit/4464c822ade18a7466fb7bbbb7e5142ad919dc0d))
+
 ## [1.4.0](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.4.0) (2026-01-24)
 
 

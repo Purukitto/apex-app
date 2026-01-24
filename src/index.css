@@ -37,6 +37,13 @@ body {
   background-color: var(--color-apex-black, #09090b);
   margin: 0;
   padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
 }
 
 .bg-noise {

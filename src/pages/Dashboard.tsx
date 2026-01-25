@@ -98,20 +98,19 @@ export default function Dashboard() {
             animate="fastItem"
             className="col-span-12 lg:col-span-8"
           >
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
               <div className="flex flex-wrap items-start justify-between gap-6">
                 <div>
                   <p className="text-sm text-apex-white/60">Welcome back</p>
-                  <h2 className="text-xl md:text-2xl font-bold tracking-tight text-apex-white">
-                    {riderName}
+                  <h2 className="text-xl md:text-2xl font-bold tracking-tight text-apex-green">
+                    {riderName}!
                   </h2>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-apex-white/60">Total distance</p>
-                  <p className="text-4xl md:text-5xl font-mono font-bold text-apex-white tabular-nums">
+                  <p className="text-sm text-apex-white/60">Total distance (km)</p>
+                  <p className="text-3xl md:text-4xl font-mono font-bold text-apex-white tabular-nums">
                     {totalKm.toLocaleString()}
                   </p>
-                  <p className="text-sm font-mono text-apex-white/60">km</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -161,7 +160,7 @@ export default function Dashboard() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm text-apex-white/60">Last ride</p>
-                  <h3 className="text-lg font-semibold tracking-tight text-apex-white">
+                  <h3 className="text-lg font-semibold tracking-tight text-apex-green">
                     {lastRide ? lastRide.ride_name || formatRideDate(lastRide.start_time) : 'No rides yet'}
                   </h3>
                   {lastRide && (

@@ -39,11 +39,76 @@ import { Card } from "../components/ui/Card";
 const PAGE_SIZE = 20;
 const MAX_PAGE_BUTTONS = 5;
 
-async function fetchRideRoute(rideId: string): Promise<Ride["route_path"] | null> {
+async function fetchRideRoute(options: {
+  rideId: string;
+  startTime: string;
+  bikeId?: string;
+}): Promise<Ride["route_path"] | null> {
+  const { rideId, startTime, bikeId } = options;
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
+
+  const countQuery = supabase
+    .from("rides")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gt("start_time", startTime);
+
+  if (bikeId) {
+    countQuery.eq("bike_id", bikeId);
+  }
+
+  const { count, error: countError } = await countQuery;
+
+  if (!countError && count !== null) {
+    const windowSize = 10;
+    const startOffset = Math.max(0, count - 5);
+
+    try {
+      const rpcResult = await Promise.race([
+        supabase.rpc("get_rides_with_geojson", {
+          p_user_id: user.id,
+          p_bike_id: bikeId || null,
+          p_limit: windowSize,
+          p_offset: startOffset,
+        }),
+        new Promise<{ error: { message: string } }>((resolve) => {
+          setTimeout(
+            () => resolve({ error: { message: "RPC timeout" } }),
+            2000
+          );
+        }),
+      ]) as Awaited<
+        ReturnType<typeof supabase.rpc<"get_rides_with_geojson">>
+      > | { error: { message: string } };
+
+      if ("data" in rpcResult && rpcResult.data && !rpcResult.error) {
+        const matchedRide = (rpcResult.data as Ride[]).find(
+          (ride) => ride.id === rideId
+        );
+        if (matchedRide?.route_path) {
+          if (typeof matchedRide.route_path === "string") {
+            try {
+              return JSON.parse(matchedRide.route_path) as Ride["route_path"];
+            } catch (parseError) {
+              logger.warn("Failed to parse route_path string", {
+                rideId,
+                parseError,
+              });
+              return null;
+            }
+          }
+          if (typeof matchedRide.route_path === "object") {
+            return matchedRide.route_path as Ride["route_path"];
+          }
+        }
+      }
+    } catch (error) {
+      logger.warn("RPC route fetch failed", { rideId, error });
+    }
+  }
 
   const { data, error } = await supabase
     .from("rides")
@@ -124,13 +189,18 @@ export default function AllRides() {
     }
   }, [page, maxPage, totalPages]);
 
+  const expandedRide = rides.find((ride) => ride.id === expandedRideId) || null;
   const { data: expandedRoute, isFetching: isRouteLoading } = useQuery({
-    queryKey: ["rideRoute", expandedRideId],
+    queryKey: ["rideRoute", expandedRideId, expandedRide?.start_time],
     queryFn: () => {
-      if (!expandedRideId) return null;
-      return fetchRideRoute(expandedRideId);
+      if (!expandedRideId || !expandedRide) return null;
+      return fetchRideRoute({
+        rideId: expandedRideId,
+        startTime: expandedRide.start_time,
+        bikeId: expandedRide.bike_id || undefined,
+      });
     },
-    enabled: !!expandedRideId,
+    enabled: !!expandedRideId && !!expandedRide,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,

@@ -63,6 +63,7 @@ export default function Profile() {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const { background, primary, setBackground, setPrimary } = useThemeStore();
+  const riderNameMaxLength = 12;
 
   const otpLength = 6;
   const passwordStrength = calculatePasswordStrength(password);
@@ -98,6 +99,11 @@ export default function Profile() {
   const handleSaveRiderName = async () => {
     setNameError(null);
     const trimmedName = riderName.trim();
+    if (trimmedName.length > riderNameMaxLength) {
+      setNameError(`Rider name must be ${riderNameMaxLength} characters or less`);
+      apexToast.error(`Rider name must be ${riderNameMaxLength} characters or less`);
+      return;
+    }
     if (trimmedName === (profile?.riderName || '')) {
       apexToast.error('No changes to save');
       return;
@@ -613,6 +619,7 @@ export default function Profile() {
                         value={riderName}
                         onChange={(e) => setRiderName(e.target.value)}
                         placeholder="Enter your rider name"
+                        maxLength={riderNameMaxLength}
                         className="w-full px-4 py-2 bg-apex-black/50 border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
                         autoFocus
                       />

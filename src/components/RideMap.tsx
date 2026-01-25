@@ -105,17 +105,24 @@ export default function RideMap({
     return color || "var(--color-apex-green)";
   }, []);
 
-  const lineCoordinates: [number, number][] = coordinates.map(([lat, lng]) => [
-    lng,
-    lat,
-  ]);
+  const validCoordinates = useMemo(
+    () =>
+      coordinates.filter(
+        ([lat, lng]) => Number.isFinite(lat) && Number.isFinite(lng)
+      ),
+    [coordinates]
+  );
+
+  const lineCoordinates: [number, number][] = validCoordinates.map(
+    ([lat, lng]) => [lng, lat]
+  );
   const startCoordinate = lineCoordinates[0];
   const endCoordinate = lineCoordinates[lineCoordinates.length - 1];
 
   const defaultCenter: [number, number] =
     lineCoordinates.length > 0 ? lineCoordinates[0] : [0, 0];
 
-  if (coordinates.length === 0) {
+  if (validCoordinates.length === 0) {
     return (
       <div
         className={`flex items-center justify-center bg-apex-black border border-apex-white/20 rounded-lg ${className}`}

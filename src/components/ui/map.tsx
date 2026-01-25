@@ -546,6 +546,8 @@ function MapMarker({
   ...markerOptions
 }: MapMarkerProps) {
   const { map } = useMap();
+  const hasValidPosition =
+    Number.isFinite(longitude) && Number.isFinite(latitude);
   const marker = useMemo(
     () =>
       new MapLibreGL.Marker({
@@ -572,17 +574,22 @@ function MapMarker({
   }, [onClick, onMouseEnter, onMouseLeave, onDragStart, onDrag, onDragEnd]);
 
   useEffect(() => {
-    if (!map || !marker) return;
+    if (!map || !marker || !hasValidPosition) return;
+    marker.setLngLat([longitude, latitude]);
     marker.addTo(map);
     return () => {
       marker.remove();
     };
-  }, [map, marker]);
+  }, [map, marker, hasValidPosition, longitude, latitude]);
 
   useEffect(() => {
     if (!marker) return;
+    if (!hasValidPosition) {
+      marker.remove();
+      return;
+    }
     marker.setLngLat([longitude, latitude]);
-  }, [marker, longitude, latitude]);
+  }, [marker, hasValidPosition, longitude, latitude]);
 
   useEffect(() => {
     if (!marker) return;

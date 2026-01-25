@@ -407,8 +407,30 @@ export default function AllRides() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleShareClick = (ride: Ride) => {
+  const handleShareClick = async (ride: Ride) => {
     setRideToShare(ride);
+
+    if (!ride.route_path) {
+      try {
+        const routePath = await fetchRideRoute({
+          rideId: ride.id,
+          startTime: ride.start_time,
+          bikeId: ride.bike_id,
+        });
+        if (routePath) {
+          setRideToShare((prev) =>
+            prev && prev.id === ride.id
+              ? { ...prev, route_path: routePath }
+              : prev
+          );
+        } else {
+          apexToast.error("Route unavailable for map share");
+        }
+      } catch (error) {
+        logger.error("Failed to load ride route for sharing", error);
+        apexToast.error("Failed to load map for sharing");
+      }
+    }
   };
 
   const handleExportGPX = async (ride: Ride) => {
@@ -631,7 +653,7 @@ export default function AllRides() {
                               <p className="text-xs text-white/60 mb-2">
                                 Image
                               </p>
-                              <div className="relative w-full aspect-video rounded-md overflow-hidden border border-apex-white/20 bg-gradient-to-br from-white/5 to-transparent">
+                              <div className="relative w-full aspect-video rounded-md overflow-hidden border border-apex-white/20 bg-linear-to-br from-white/5 to-transparent">
                                 <img
                                   src={ride.image_url}
                                   alt="Ride image"
@@ -832,7 +854,7 @@ export default function AllRides() {
         {editingRide && (
           <>
             <motion.div
-              className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-[1000]"
+              className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-1000"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -843,9 +865,9 @@ export default function AllRides() {
                 setEditRideImageUrl("");
               }}
             />
-            <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-1001 flex items-center justify-center p-4">
               <motion.div
-                className="bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md relative z-[1001]"
+                className="bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md relative z-1001"
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -879,7 +901,7 @@ export default function AllRides() {
                       value={editRideName}
                       onChange={(e) => setEditRideName(e.target.value)}
                       placeholder="Enter ride name (optional)"
-                      className="w-full px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-base text-apex-white placeholder:text-apex-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
+                      className="w-full px-4 py-2 bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-base text-apex-white placeholder:text-apex-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
                     />
                   </div>
 
@@ -905,7 +927,7 @@ export default function AllRides() {
                       value={editRideImageUrl}
                       onChange={(e) => setEditRideImageUrl(e.target.value)}
                       placeholder="https://..."
-                      className="w-full px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-apex-white placeholder:text-apex-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
+                      className="w-full px-4 py-2 bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-apex-white placeholder:text-apex-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
                     />
                   </div>
                 </div>

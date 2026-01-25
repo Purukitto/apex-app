@@ -1,8 +1,13 @@
-import { useEffect } from 'react';
-import { MapContainer, TileLayer, Polyline, useMap } from 'react-leaflet';
-import type { LatLngExpression } from 'leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { useEffect, useMemo } from "react";
+import type { Map as MapLibreMap } from "maplibre-gl";
+import {
+  Map,
+  MapControls,
+  MapMarker,
+  MapRoute,
+  MarkerContent,
+  useMap,
+} from "./ui/map";
 
 interface RideMapProps {
   coordinates: [number, number][]; // Array of [lat, lng]
@@ -10,28 +15,27 @@ interface RideMapProps {
   interactive?: boolean; // If false, map is static and won't capture scroll events
   height?: string; // Map height (default: '400px')
   hideControls?: boolean; // If true, hides all UI controls (zoom, attribution) for export
-  onMapReady?: (map: L.Map) => void; // Callback when map is ready
+  onMapReady?: (map: MapLibreMap) => void; // Callback when map is ready
 }
 
 /**
  * Internal component to handle map bounds fitting and expose map instance
  */
-function MapBoundsFitter({ 
-  coordinates, 
-  onMapReady 
-}: { 
-  coordinates: [number, number][];
-  onMapReady?: (map: L.Map) => void;
+function MapBoundsFitter({
+  coordinates,
+  onMapReady,
+}: {
+  coordinates: [number, number][]; // [lng, lat]
+  onMapReady?: (map: MapLibreMap) => void;
 }) {
-  const map = useMap();
+  const { map, isLoaded } = useMap();
 
   useEffect(() => {
-    if (coordinates.length === 0) return;
+    if (!map || !isLoaded || coordinates.length === 0) return;
 
-    // Calculate bounds from coordinates
     const bounds = coordinates.reduce(
       (acc, coord) => {
-        const [lat, lng] = coord;
+        const [lng, lat] = coord;
         return {
           minLat: Math.min(acc.minLat, lat),
           maxLat: Math.max(acc.maxLat, lat),
@@ -40,36 +44,34 @@ function MapBoundsFitter({
         };
       },
       {
-        minLat: coordinates[0][0],
-        maxLat: coordinates[0][0],
-        minLng: coordinates[0][1],
-        maxLng: coordinates[0][1],
+        minLat: coordinates[0][1],
+        maxLat: coordinates[0][1],
+        minLng: coordinates[0][0],
+        maxLng: coordinates[0][0],
       }
     );
 
-    // Add padding to bounds
     const latPadding = (bounds.maxLat - bounds.minLat) * 0.1 || 0.01;
     const lngPadding = (bounds.maxLng - bounds.minLng) * 0.1 || 0.01;
 
     map.fitBounds(
       [
-        [bounds.minLat - latPadding, bounds.minLng - lngPadding],
-        [bounds.maxLat + latPadding, bounds.maxLng + lngPadding],
+        [bounds.minLng - lngPadding, bounds.minLat - latPadding],
+        [bounds.maxLng + lngPadding, bounds.maxLat + latPadding],
       ],
       {
-        padding: [20, 20],
+        padding: 20,
         maxZoom: 18,
       }
     );
-    
-    // Notify when map is ready
+
     if (onMapReady) {
-      map.whenReady(() => {
-        map.invalidateSize();
+      map.once("idle", () => {
+        map.resize();
         onMapReady(map);
       });
     }
-  }, [map, coordinates, onMapReady]);
+  }, [map, isLoaded, coordinates, onMapReady]);
 
   return null;
 }
@@ -82,44 +84,42 @@ function MapBoundsFitter({
  * - Route polyline in apex-green theme color
  * - Auto-zoom to fit route bounds
  */
-export default function RideMap({ 
-  coordinates, 
-  className = '', 
+export default function RideMap({
+  coordinates,
+  className = "",
   interactive = false,
-  height = '300px',
+  height = "300px",
   hideControls = false,
-  onMapReady
+  onMapReady,
 }: RideMapProps) {
-  // Get theme color for polyline
-  const getPolylineColor = (): string => {
-    if (typeof window === 'undefined') {
-      return 'var(--color-apex-green)';
+  const mapStyleUrl =
+    "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+  const polylineColor = useMemo(() => {
+    if (typeof window === "undefined") {
+      return "var(--color-apex-green)";
     }
     const root = document.documentElement;
     const color = getComputedStyle(root)
-      .getPropertyValue('--color-apex-green')
+      .getPropertyValue("--color-apex-green")
       .trim();
-    return color || 'var(--color-apex-green)';
-  };
+    return color || "var(--color-apex-green)";
+  }, []);
 
-  const polylineColor = getPolylineColor();
+  const lineCoordinates: [number, number][] = coordinates.map(([lat, lng]) => [
+    lng,
+    lat,
+  ]);
+  const startCoordinate = lineCoordinates[0];
+  const endCoordinate = lineCoordinates[lineCoordinates.length - 1];
 
-  // Convert coordinates to LatLngExpression format
-  const polylinePositions: LatLngExpression[] = coordinates.map(
-    ([lat, lng]) => [lat, lng] as LatLngExpression
-  );
-
-  // Default center (will be overridden by MapBoundsFitter)
-  const defaultCenter: LatLngExpression =
-    coordinates.length > 0
-      ? [coordinates[0][0], coordinates[0][1]]
-      : [0, 0];
+  const defaultCenter: [number, number] =
+    lineCoordinates.length > 0 ? lineCoordinates[0] : [0, 0];
 
   if (coordinates.length === 0) {
     return (
       <div
         className={`flex items-center justify-center bg-apex-black border border-apex-white/20 rounded-lg ${className}`}
-        style={{ minHeight: '400px' }}
+        style={{ minHeight: "400px" }}
       >
         <p className="text-apex-white/60 font-mono">No route data available</p>
       </div>
@@ -127,69 +127,57 @@ export default function RideMap({
   }
 
   return (
-    <div 
-      className={`rounded-lg overflow-hidden border border-apex-white/20 ${className} ${!interactive ? 'map-non-interactive' : ''} ${hideControls ? 'map-export-mode' : ''}`}
-      style={{ 
-        isolation: 'isolate', 
-        position: 'relative', 
-        zIndex: 1
+    <div
+      className={`rounded-lg overflow-hidden border border-apex-white/20 ${className}`}
+      style={{
+        isolation: "isolate",
+        position: "relative",
+        zIndex: 1,
       }}
     >
-      <style>
-        {hideControls && `
-          .map-export-mode .leaflet-control-container {
-            display: none !important;
-          }
-          .map-export-mode .leaflet-control-zoom {
-            display: none !important;
-          }
-          .map-export-mode .leaflet-control-attribution {
-            display: none !important;
-          }
-          .map-export-mode .leaflet-top,
-          .map-export-mode .leaflet-bottom,
-          .map-export-mode .leaflet-left,
-          .map-export-mode .leaflet-right {
-            display: none !important;
-          }
-        `}
-      </style>
-      <MapContainer
+      <Map
         center={defaultCenter}
         zoom={13}
-        scrollWheelZoom={interactive}
-        dragging={interactive}
-        touchZoom={interactive}
-        doubleClickZoom={interactive}
-        boxZoom={interactive}
-        keyboard={interactive}
-        preferCanvas={true}
-        className="w-full h-full"
-        style={{ 
-          height, 
-          width: '100%', 
-          backgroundColor: 'var(--color-apex-black, #0A0A0A)',
-          position: 'relative',
-          zIndex: 1,
-          pointerEvents: interactive ? 'auto' : 'none'
-        }}
+        interactive={interactive}
+        attributionControl={hideControls ? false : undefined}
+        className={`bg-apex-black ${
+          interactive ? "pointer-events-auto" : "pointer-events-none"
+        }`}
+        style={{ height, width: "100%" }}
+        theme="dark"
+        styles={{ dark: mapStyleUrl, light: mapStyleUrl }}
       >
-        <TileLayer
-          attribution={hideControls ? '' : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          className="dark-map-tiles"
-          crossOrigin="anonymous"
+        <MapRoute
+          coordinates={lineCoordinates}
+          color={polylineColor}
+          width={6}
+          opacity={0.25}
+          interactive={false}
         />
-        <Polyline
-          positions={polylinePositions}
-          pathOptions={{
-            color: polylineColor,
-            weight: 4,
-            opacity: 0.9,
-          }}
+        <MapRoute
+          coordinates={lineCoordinates}
+          color={polylineColor}
+          width={3.5}
+          opacity={0.9}
+          interactive={interactive}
         />
-        <MapBoundsFitter coordinates={coordinates} onMapReady={onMapReady} />
-      </MapContainer>
+        {startCoordinate && endCoordinate && lineCoordinates.length > 1 && (
+          <>
+            <MapMarker longitude={startCoordinate[0]} latitude={startCoordinate[1]}>
+              <MarkerContent>
+                <div className="h-3 w-3 rounded-full border border-apex-black/70 bg-apex-red ring-4 ring-apex-red/25" />
+              </MarkerContent>
+            </MapMarker>
+            <MapMarker longitude={endCoordinate[0]} latitude={endCoordinate[1]}>
+              <MarkerContent>
+                <div className="h-3 w-3 rounded-full border border-apex-black/70 bg-apex-green ring-4 ring-apex-green/25" />
+              </MarkerContent>
+            </MapMarker>
+          </>
+        )}
+        <MapBoundsFitter coordinates={lineCoordinates} onMapReady={onMapReady} />
+        {interactive && !hideControls && <MapControls showZoom />}
+      </Map>
     </div>
   );
 }

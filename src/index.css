@@ -192,35 +192,16 @@ body {
   border-color: var(--color-apex-green-highlight, rgba(36, 112, 72, 0.4)) !important;
 }
 
-/* Apex Dark Map Style - Inverts OSM tiles to dark theme */
-.dark-map-tiles {
-  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
-}
-
-/* Leaflet Map Z-Index Isolation - Prevent map from appearing over modals */
-/* Create a stacking context for map containers to isolate Leaflet's z-index */
-.leaflet-container {
+/* MapLibre Z-Index Isolation - Prevent map from appearing over modals */
+.maplibregl-map {
   isolation: isolate;
   position: relative;
   z-index: 1;
 }
 
-/* Ensure Leaflet controls stay within the map's stacking context */
-.leaflet-control-container {
+.maplibregl-control-container {
   position: relative;
   z-index: 2;
-}
-
-/* Hide Leaflet attribution control - attribution moved to Profile page */
-.leaflet-control-attribution {
-  display: none !important;
-}
-
-/* Allow page scrolling through non-interactive maps */
-.map-non-interactive,
-.map-non-interactive * {
-  pointer-events: none !important;
-  touch-action: pan-y !important;
 }
 
 /* Allow dragging to scroll when touching inputs in modal bodies */

@@ -32,12 +32,47 @@ import PullToRefreshIndicator from "../components/PullToRefreshIndicator";
 import { useThemeColors } from "../hooks/useThemeColors";
 import { formatDateTime, formatDuration, formatShortDate } from "../utils/format";
 import type { Ride } from "../types/database";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { Card } from "../components/ui/Card";
 
 const PAGE_SIZE = 20;
 const MAX_PAGE_BUTTONS = 5;
+
+async function fetchRideRoute(rideId: string): Promise<Ride["route_path"] | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from("rides")
+    .select("route_path")
+    .eq("id", rideId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (error) throw error;
+  if (!data?.route_path) return null;
+
+  if (typeof data.route_path === "string") {
+    try {
+      return JSON.parse(data.route_path) as Ride["route_path"];
+    } catch (parseError) {
+      logger.warn("Failed to parse route_path string", {
+        rideId,
+        parseError,
+      });
+      return null;
+    }
+  }
+
+  if (typeof data.route_path === "object") {
+    return data.route_path as Ride["route_path"];
+  }
+
+  return null;
+}
 
 export default function AllRides() {
   const { primary } = useThemeColors();
@@ -58,6 +93,7 @@ export default function AllRides() {
   const { rides, total, isLoading, updateRide, deleteRide, refetch } = useRides({
     page,
     pageSize: PAGE_SIZE,
+    includeRoute: false,
   });
 
   const totalPages = total ? Math.ceil(total / PAGE_SIZE) : 0;
@@ -87,6 +123,20 @@ export default function AllRides() {
       setPage(maxPage);
     }
   }, [page, maxPage, totalPages]);
+
+  const { data: expandedRoute, isFetching: isRouteLoading } = useQuery({
+    queryKey: ["rideRoute", expandedRideId],
+    queryFn: () => {
+      if (!expandedRideId) return null;
+      return fetchRideRoute(expandedRideId);
+    },
+    enabled: !!expandedRideId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: true,
+  });
 
   // Handle rideId from URL - find and expand the ride
   useEffect(() => {
@@ -531,33 +581,41 @@ export default function AllRides() {
                           )}
 
                           {/* Route Map */}
-                          {ride.route_path && (
+                          {isExpanded && (expandedRoute || isRouteLoading) && (
                             <div>
                               <p className="text-xs text-white/60 mb-2">
                                 Route
                               </p>
-                              <DebugPanel
-                                title="route_path"
-                                data={ride.route_path}
-                              />
-                              {ride.route_path.coordinates &&
-                              Array.isArray(ride.route_path.coordinates) &&
-                              ride.route_path.coordinates.length > 0 ? (
-                                <RideMap
-                                  coordinates={ride.route_path.coordinates.map(
-                                    ([lng, lat]: [number, number]) =>
-                                      [lat, lng] as [number, number]
-                                  )}
-                                  className="w-full"
-                                  interactive={false}
-                                  height="250px"
-                                />
-                              ) : (
-                                <div className="p-4 bg-apex-black/30 border border-apex-white/10 rounded-md text-center">
-                                  <p className="text-xs text-apex-white/60 font-mono">
-                                    Route data format not recognized
-                                  </p>
+                              {isRouteLoading ? (
+                                <div className="h-[250px] rounded-md border border-apex-white/10 bg-apex-black/40 flex items-center justify-center">
+                                  <LoadingSpinner size="sm" text="Loading route..." />
                                 </div>
+                              ) : (
+                                <>
+                                  <DebugPanel
+                                    title="route_path"
+                                    data={expandedRoute}
+                                  />
+                                  {expandedRoute?.coordinates &&
+                                  Array.isArray(expandedRoute.coordinates) &&
+                                  expandedRoute.coordinates.length > 0 ? (
+                                    <RideMap
+                                      coordinates={expandedRoute.coordinates.map(
+                                        ([lng, lat]: [number, number]) =>
+                                          [lat, lng] as [number, number]
+                                      )}
+                                      className="w-full"
+                                      interactive={false}
+                                      height="250px"
+                                    />
+                                  ) : (
+                                    <div className="p-4 bg-apex-black/30 border border-apex-white/10 rounded-md text-center">
+                                      <p className="text-xs text-apex-white/60 font-mono">
+                                        Route data not available
+                                      </p>
+                                    </div>
+                                  )}
+                                </>
                               )}
                             </div>
                           )}
@@ -575,19 +633,17 @@ export default function AllRides() {
                               <Share2 size={16} />
                               Share
                             </motion.button>
-                            {ride.route_path && ride.route_path.coordinates && ride.route_path.coordinates.length > 0 && (
-                              <motion.button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleExportGPX(ride);
-                                }}
-                                className="flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-base text-apex-green hover:bg-apex-green/20 transition-colors whitespace-nowrap"
-                                {...buttonHoverProps}
-                              >
-                                <Download size={16} />
-                                GPX
-                              </motion.button>
-                            )}
+                            <motion.button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleExportGPX(ride);
+                              }}
+                              className="flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-base text-apex-green hover:bg-apex-green/20 transition-colors whitespace-nowrap"
+                              {...buttonHoverProps}
+                            >
+                              <Download size={16} />
+                              GPX
+                            </motion.button>
                             <motion.button
                               onClick={async (e) => {
                                 e.stopPropagation();

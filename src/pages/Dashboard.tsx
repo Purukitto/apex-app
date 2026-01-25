@@ -21,7 +21,10 @@ import RideMap from '../components/RideMap';
 export default function Dashboard() {
   const { bikes, isLoading } = useBikes();
   const { profile } = useUserProfile();
-  const { rides, isLoading: ridesLoading, refetch: refetchRides } = useRides({ limit: 5 });
+  const { rides, isLoading: ridesLoading, refetch: refetchRides } = useRides({
+    limit: 5,
+    includeRoute: true,
+  });
   const navigate = useNavigate();
   const { primary } = useThemeColors();
   const queryClient = useQueryClient();

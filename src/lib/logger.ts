@@ -28,15 +28,18 @@ interface LogEntry {
 
 class ApexLogger {
   private sessionId: string;
-  private logBuffer: LogEntry[] = [];
+  private rollingBuffer: LogEntry[] = [];
+  private maxRollingEntries = 150;
+  private rollingDirty = false;
+  private sessionStart: Date;
   private fileLoggingEnabled = false;
-  private maxBufferSize = 1000; // Max entries before flushing
   private flushInterval: ReturnType<typeof setInterval> | null = null;
   private isNative = Capacitor.isNativePlatform();
 
   constructor() {
     // Generate session ID for this app session
     this.sessionId = `apex-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.sessionStart = new Date();
     
     // Set default log level based on environment
     const defaultLevel = isDev() ? 'debug' : 'warn';
@@ -75,8 +78,7 @@ class ApexLogger {
       
       // Verify we can write to the cache directory
       const testPath = `apex-logs/${this.sessionId}.log`;
-      const testData = `# Apex Log Session: ${this.sessionId}\n# Started: ${new Date().toISOString()}\n\n`;
-      // Capacitor Filesystem requires base64-encoded data
+      const testData = this.formatRollingLogText();
       const base64TestData = btoa(unescape(encodeURIComponent(testData)));
       await Filesystem.writeFile({
         path: testPath,
@@ -94,82 +96,55 @@ class ApexLogger {
     }
   }
 
-  /**
-   * Write log entry to file (native platforms only)
-   */
-  private async writeToFile(entry: LogEntry): Promise<void> {
-    if (!this.fileLoggingEnabled || !this.isNative) {
+  private addToRollingBuffer(entry: LogEntry): void {
+    this.rollingBuffer.push(entry);
+    if (this.rollingBuffer.length > this.maxRollingEntries) {
+      this.rollingBuffer = this.rollingBuffer.slice(-this.maxRollingEntries);
+    }
+    this.rollingDirty = true;
+  }
+
+  private formatRollingLogText(): string {
+    const header = `# Apex Log Session: ${this.sessionId}\n# Started: ${this.sessionStart.toISOString()}\n# Exported: ${new Date().toISOString()}\n# Total Logs: ${this.rollingBuffer.length}\n\n`;
+    const logLines = this.rollingBuffer.map((entry) =>
+      `[${entry.timestamp}] ${entry.level.toUpperCase()}: ${entry.message}${
+        entry.data ? ` ${JSON.stringify(entry.data)}` : ''
+      }`
+    );
+    return header + logLines.join('\n') + (logLines.length > 0 ? '\n' : '');
+  }
+
+  private async writeRollingToFile(): Promise<void> {
+    if (!this.fileLoggingEnabled || !this.isNative || !this.rollingDirty) {
       return;
     }
 
-    try {
-      const { Filesystem, Directory } = await import('@capacitor/filesystem');
-      const logPath = `apex-logs/${this.sessionId}.log`;
-      
-      // Format log entry
-      const logLine = `[${entry.timestamp}] ${entry.level.toUpperCase()}: ${entry.message}${
-        entry.data ? ` ${JSON.stringify(entry.data)}` : ''
-      }\n`;
+    const { Filesystem, Directory } = await import('@capacitor/filesystem');
+    const logPath = `apex-logs/${this.sessionId}.log`;
+    const logText = this.formatRollingLogText();
+    const base64Data = btoa(unescape(encodeURIComponent(logText)));
 
-      // Capacitor Filesystem requires base64-encoded data
-      // Convert string to base64
-      const base64Data = btoa(unescape(encodeURIComponent(logLine)));
+    await Filesystem.writeFile({
+      path: logPath,
+      data: base64Data,
+      directory: Directory.Cache,
+      recursive: true,
+    });
 
-      // Append to file
-      await Filesystem.appendFile({
-        path: logPath,
-        data: base64Data,
-        directory: Directory.Cache,
-      });
-    } catch (error) {
-      // Silently fail - don't break app if file logging fails
-      // Disable file logging if it keeps failing
-      if (error && typeof error === 'object' && 'code' in error) {
-        const errorCode = (error as { code?: string }).code;
-        // If it's a base64 error, disable file logging to prevent spam
-        if (errorCode === 'OS-PLUG-FILE-0013') {
-          this.fileLoggingEnabled = false;
-          console.warn('File logging disabled due to encoding errors');
-        }
-      }
-      console.error('Failed to write log to file:', error);
-    }
+    this.rollingDirty = false;
   }
 
   /**
    * Flush buffered logs to file
    */
   private async flushLogs(): Promise<void> {
-    if (this.logBuffer.length === 0 || !this.fileLoggingEnabled) {
+    if (!this.fileLoggingEnabled) {
       return;
     }
 
-    const entries = [...this.logBuffer];
-    this.logBuffer = [];
-
     try {
-      const { Filesystem, Directory } = await import('@capacitor/filesystem');
-      const logPath = `apex-logs/${this.sessionId}.log`;
-      
-      const logLines = entries.map(
-        (entry) =>
-          `[${entry.timestamp}] ${entry.level.toUpperCase()}: ${entry.message}${
-            entry.data ? ` ${JSON.stringify(entry.data)}` : ''
-          }\n`
-      ).join('');
-
-      // Capacitor Filesystem requires base64-encoded data
-      // Convert string to base64
-      const base64Data = btoa(unescape(encodeURIComponent(logLines)));
-
-      await Filesystem.appendFile({
-        path: logPath,
-        data: base64Data,
-        directory: Directory.Cache,
-      });
+      await this.writeRollingToFile();
     } catch (error) {
-      // Re-add entries to buffer if flush failed
-      this.logBuffer.unshift(...entries);
       // Disable file logging if it keeps failing
       if (error && typeof error === 'object' && 'code' in error) {
         const errorCode = (error as { code?: string }).code;
@@ -229,11 +204,8 @@ class ApexLogger {
       console.trace(message, ...args);
     }
     
-    if (this.fileLoggingEnabled) {
-      this.logBuffer.push(entry);
-      if (this.logBuffer.length >= this.maxBufferSize) {
-        this.flushLogs().catch(() => {});
-      }
+    if (this.shouldLog('trace')) {
+      this.addToRollingBuffer(entry);
     }
   }
 
@@ -249,11 +221,8 @@ class ApexLogger {
       console.debug(message, ...args);
     }
     
-    if (this.fileLoggingEnabled) {
-      this.logBuffer.push(entry);
-      if (this.logBuffer.length >= this.maxBufferSize) {
-        this.flushLogs().catch(() => {});
-      }
+    if (this.shouldLog('debug')) {
+      this.addToRollingBuffer(entry);
     }
   }
 
@@ -269,11 +238,8 @@ class ApexLogger {
       console.info(message, ...args);
     }
     
-    if (this.fileLoggingEnabled) {
-      this.logBuffer.push(entry);
-      if (this.logBuffer.length >= this.maxBufferSize) {
-        this.flushLogs().catch(() => {});
-      }
+    if (this.shouldLog('info')) {
+      this.addToRollingBuffer(entry);
     }
   }
 
@@ -289,11 +255,8 @@ class ApexLogger {
       console.warn(message, ...args);
     }
     
-    if (this.fileLoggingEnabled) {
-      this.logBuffer.push(entry);
-      if (this.logBuffer.length >= this.maxBufferSize) {
-        this.flushLogs().catch(() => {});
-      }
+    if (this.shouldLog('warn')) {
+      this.addToRollingBuffer(entry);
     }
   }
 
@@ -309,9 +272,13 @@ class ApexLogger {
       console.error(message, ...args);
     }
     
+    if (this.shouldLog('error')) {
+      this.addToRollingBuffer(entry);
+    }
+
     // Always flush errors immediately
-    if (this.fileLoggingEnabled) {
-      this.writeToFile(entry).catch(() => {});
+    if (this.fileLoggingEnabled && this.shouldLog('error')) {
+      this.writeRollingToFile().catch(() => {});
     }
   }
 
@@ -379,6 +346,7 @@ class ApexLogger {
     try {
       // Flush any buffered logs first
       await this.flushLogs();
+      await this.writeRollingToFile();
 
       const { Filesystem, Directory } = await import('@capacitor/filesystem');
       const logPath = `apex-logs/${this.sessionId}.log`;
@@ -392,6 +360,10 @@ class ApexLogger {
       console.error('Failed to read log file:', error);
       return null;
     }
+  }
+
+  getRecentLogsText(): string {
+    return this.formatRollingLogText();
   }
 
   /**

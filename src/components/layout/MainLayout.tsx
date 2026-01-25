@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -17,6 +17,10 @@ import { containerVariants } from '../../lib/animations';
 import { useRideStore } from '../../stores/useRideStore';
 import { isDev } from '../../lib/devtools';
 import { registerPushNotifications } from '../../services/notifications';
+import { createBugReportPayload, openBugReportIssue, shareBugReportLogs } from '../../lib/bugReport';
+import { apexToast } from '../../lib/toast';
+import { logger } from '../../lib/logger';
+import { useShakeDetection } from '../../hooks/useShakeDetection';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -31,6 +35,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
   const isRecording = useRideStore((state) => state.isRecording);
+  const isNative = Capacitor.isNativePlatform();
   
   // Hide navigation when recording (full-screen ride mode)
   const isRideMode = isRecording && location.pathname === '/ride';
@@ -63,6 +68,31 @@ export default function MainLayout({ children }: MainLayoutProps) {
       // Errors already logged in the service
     });
   }, []);
+
+  const handleBugReport = useCallback(async function runBugReport() {
+    try {
+      const { issueUrl, logsText } = createBugReportPayload({ includeLogsInline: !isNative });
+      await openBugReportIssue(issueUrl);
+      if (isNative) {
+        await shareBugReportLogs(logsText, issueUrl);
+      }
+    } catch (error) {
+      logger.error('Shake bug report flow failed:', error);
+      apexToast.error('Failed to start bug report', {
+        action: {
+          label: 'Retry',
+          onClick: () => {
+            void runBugReport();
+          },
+        },
+      });
+    }
+  }, [isNative]);
+
+  useShakeDetection({
+    enabled: isNative && !isRideMode,
+    onShake: handleBugReport,
+  });
 
   // Get page title from route
   const pageTitle = useMemo(() => {

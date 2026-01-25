@@ -123,6 +123,19 @@ alwaysApply: true
 - **Typography**: Use `font-mono` for values and options.
 - **Interaction**: Apply `{...buttonHoverProps}` on the trigger and options.
 
+### Map Components (Mapcn + MapLibre)
+- **MANDATORY**: Use `src/components/ui/map.tsx` (`Map`, `MapRoute`, `MapControls`) for all maps.
+- **DO NOT** use Leaflet or inline map wrappers.
+- **Route Coordinates**: MapLibre expects `[lng, lat]` (GeoJSON). Convert when source data is `[lat, lng]`.
+- **Styling**: Use the dark MapLibre style (`Carto dark-matter`) to match Apex theme.
+- **Share Snapshots**: Use MapLibre canvas export with `preserveDrawingBuffer: true` and wait for `idle` before capture.
+
+### Shadcn UI Primitives
+- **MANDATORY**: Use shadcn primitives in `src/components/ui/` for modals, tabs, and buttons.
+- **Theme Alignment**: Classes must use `apex-*` colors; no default shadcn color tokens.
+- **Buttons**: All buttons must still use `{...buttonHoverProps}` (including shadcn `Button` with `asChild` + `motion.button`).
+- **Motion**: Keep Framer Motion for transitions and micro-interactions; do not replace with CSS-only animations.
+
 ## 3. Visual Hierarchy & Polish
 - **Borders over Shadows:** Avoid heavy shadows. Use subtle raised shadows only for cards and rely on `border-apex-white/10` or `border-apex-white/20` for structure.
 - **Typography:**

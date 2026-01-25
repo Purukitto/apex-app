@@ -7,7 +7,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { useAppUpdate } from '../hooks/useAppUpdate';
 import { useAppUpdateStore } from '../stores/useAppUpdateStore';
 import { useNavigate } from 'react-router-dom';
-import { Mail, LogOut, Save, MessageCircle, Download, RefreshCw, Palette, CheckCircle, Pencil, X, Lock, ArrowLeft } from 'lucide-react';
+import { Mail, LogOut, Save, MessageCircle, Download, RefreshCw, Palette, CheckCircle, Pencil, X, Lock, ArrowLeft, Bug } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 import DonationCard from '../components/profile/DonationCard';
@@ -21,6 +21,7 @@ import { logger } from '../lib/logger';
 import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
 import { calculatePasswordStrength } from '../lib/passwordStrength';
 import OtpInput from '../components/OtpInput';
+import { createBugReportPayload, openBugReportIssue, shareBugReportLogs } from '../lib/bugReport';
 
 export default function Profile() {
   const isNative = Capacitor.isNativePlatform();
@@ -62,6 +63,7 @@ export default function Profile() {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const { background, primary, setBackground, setPrimary } = useThemeStore();
+  const riderNameMaxLength = 12;
 
   const otpLength = 6;
   const passwordStrength = calculatePasswordStrength(password);
@@ -97,6 +99,11 @@ export default function Profile() {
   const handleSaveRiderName = async () => {
     setNameError(null);
     const trimmedName = riderName.trim();
+    if (trimmedName.length > riderNameMaxLength) {
+      setNameError(`Rider name must be ${riderNameMaxLength} characters or less`);
+      apexToast.error(`Rider name must be ${riderNameMaxLength} characters or less`);
+      return;
+    }
     if (trimmedName === (profile?.riderName || '')) {
       apexToast.error('No changes to save');
       return;
@@ -400,6 +407,26 @@ export default function Profile() {
     }
   };
 
+  const handleBugReport = async () => {
+    try {
+      const { issueUrl, logsText } = createBugReportPayload({ includeLogsInline: !isNative });
+      await openBugReportIssue(issueUrl);
+      if (isNative) {
+        await shareBugReportLogs(logsText, issueUrl);
+      }
+    } catch (error) {
+      logger.error('Bug report flow failed:', error);
+      apexToast.error('Failed to start bug report', {
+        action: {
+          label: 'Retry',
+          onClick: () => {
+            void handleBugReport();
+          },
+        },
+      });
+    }
+  };
+
   // Handle theme changes
   const handleBackgroundChange = (bg: BackgroundTheme) => {
     setBackground(bg);
@@ -592,6 +619,7 @@ export default function Profile() {
                         value={riderName}
                         onChange={(e) => setRiderName(e.target.value)}
                         placeholder="Enter your rider name"
+                        maxLength={riderNameMaxLength}
                         className="w-full px-4 py-2 bg-apex-black/50 border border-apex-white/20 rounded-lg text-base text-apex-white placeholder-apex-white/40 focus:outline-none focus:border-apex-green transition-colors"
                         autoFocus
                       />
@@ -895,6 +923,28 @@ export default function Profile() {
               </div>
             </Card>
           )}
+
+          <Card padding="md" animate="item">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-apex-green/10">
+                <Bug size={20} className="text-apex-green" />
+              </div>
+              <h2 className="text-base font-semibold text-apex-white">Bug Report</h2>
+            </div>
+            <div className="space-y-4">
+              <p className="text-sm text-apex-white/60">
+                Report an issue with attached logs to help us investigate faster.
+              </p>
+              <motion.button
+                onClick={handleBugReport}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-base font-semibold text-apex-black bg-apex-green transition-colors w-full justify-center"
+                {...buttonHoverProps}
+              >
+                <Bug size={18} />
+                Report a Bug
+              </motion.button>
+            </div>
+          </Card>
 
           {/* Support Development Section */}
           <DonationCard />

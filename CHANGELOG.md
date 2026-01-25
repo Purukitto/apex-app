@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.7.0](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.7.0) (2026-01-25)
+
+
+### Features
+
+* add route fetching capability to rides and enhance AllRides component ([c46f8a2](https://github.com/Purukitto/apex-app/commit/c46f8a22b4c6f8d65f69f544a7f516a9fbe17be5))
+* enforce maximum length for rider name in Profile component ([011b7f3](https://github.com/Purukitto/apex-app/commit/011b7f35047575a09d71bcd3f6c3c2283e3ac4ed))
+* enhance Discord integration with token validation and error handling ([7a708da](https://github.com/Purukitto/apex-app/commit/7a708da2ef91e274f3169fb96d19e37e9649df32))
+* enhance ride route fetching in AllRides component= ([697afca](https://github.com/Purukitto/apex-app/commit/697afca5958bf635ebb7e7a573ed6cbe61391bdf))
+* implement bug reporting feature with shake detection and UI integration ([00a7acb](https://github.com/Purukitto/apex-app/commit/00a7acbe33049802ad646280fe192ff3e12a8057))
+* migrate from Leaflet to MapLibre for map rendering ([981f2f3](https://github.com/Purukitto/apex-app/commit/981f2f3fb25565b699fca863ad93d9f649699224))
+
+
+### Bug Fixes
+
+* validate coordinates in RideMap and MapMarker components ([edb4e69](https://github.com/Purukitto/apex-app/commit/edb4e690e4c62da65c3499bf0df6b47ec587935b))
+
+
+### Code Refactoring
+
+* optimize ride fetching logic and enhance pagination controls ([d50c21e](https://github.com/Purukitto/apex-app/commit/d50c21eacd7ab4649086a28dabe71d2c083f214e))
+
+
+### Styles
+
+* update Dashboard component for improved UI consistency ([8a3f256](https://github.com/Purukitto/apex-app/commit/8a3f25666d61e7b6ed2c9588a91c589c7177bf40))
+
 ## [1.6.0](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.6.0) (2026-01-24)
 
 

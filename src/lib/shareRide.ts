@@ -1,140 +1,223 @@
 import html2canvas from 'html2canvas';
 import { Share } from '@capacitor/share';
 import { Capacitor } from '@capacitor/core';
-import type { Map as LeafletMap } from 'leaflet';
+import MapLibreGL from 'maplibre-gl';
 import type { Ride } from '../types/database';
 import type { Bike } from '../types/database';
 import { logger } from './logger';
-import { createRoot } from 'react-dom/client';
-import type { Root } from 'react-dom/client';
-import React from 'react';
-import RideMap from '../components/RideMap';
 import { formatDuration, formatShortDate } from '../utils/format';
 
-// waitForMapTiles removed: snapshot rendering uses direct tile fetches
+const MAP_STYLE_URL =
+  'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 
-const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const TILE_SUBDOMAINS = ['a', 'b', 'c'];
-
-function applyDarkMapFilter(ctx: CanvasRenderingContext2D, width: number, height: number): void {
-  const imageData = ctx.getImageData(0, 0, width, height);
-  const data = imageData.data;
-
-  for (let i = 0; i < data.length; i += 4) {
-    const r = 255 - data[i];
-    const g = 255 - data[i + 1];
-    const b = 255 - data[i + 2];
-
-    data[i] = Math.min(255, Math.max(0, r * 0.95 * 0.9));
-    data[i + 1] = Math.min(255, Math.max(0, g * 0.95 * 0.9));
-    data[i + 2] = Math.min(255, Math.max(0, b * 0.95 * 0.9));
-  }
-
-  ctx.putImageData(imageData, 0, 0);
-}
-
-async function renderLeafletMapSnapshot(
-  map: LeafletMap,
+async function renderMapLibreSnapshot(
+  container: HTMLElement,
   backgroundColor: string,
   routeCoordinates: [number, number][],
   routeColor: string,
-  applyDarkFilter: boolean
+  startColor: string,
+  endColor: string
 ): Promise<string | null> {
-  const size = map.getSize();
-  if (!size || size.x === 0 || size.y === 0) {
-    logger.warn('Map snapshot skipped - map size is zero');
-    return null;
-  }
+  if (routeCoordinates.length === 0) return null;
 
-  const scale = 2;
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(size.x * scale);
-  canvas.height = Math.round(size.y * scale);
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    logger.warn('Map snapshot skipped - canvas context unavailable');
-    return null;
-  }
-
-  ctx.scale(scale, scale);
-  ctx.fillStyle = backgroundColor;
-  ctx.fillRect(0, 0, size.x, size.y);
-
-  const bounds = map.getPixelBounds();
-  if (!bounds || !bounds.min || !bounds.max) {
-    logger.warn('Map snapshot skipped - invalid bounds');
-    return null;
-  }
-
-  const zoom = map.getZoom();
-  const tileSize = 256;
-  const maxIndex = 1 << zoom;
-
-  const minTileX = Math.floor(bounds.min.x / tileSize);
-  const minTileY = Math.floor(bounds.min.y / tileSize);
-  const maxTileX = Math.floor(bounds.max.x / tileSize);
-  const maxTileY = Math.floor(bounds.max.y / tileSize);
-
-  const tilePromises: Promise<void>[] = [];
-
-  for (let x = minTileX; x <= maxTileX; x += 1) {
-    for (let y = minTileY; y <= maxTileY; y += 1) {
-      if (y < 0 || y >= maxIndex) {
-        continue;
-      }
-
-      const wrappedX = ((x % maxIndex) + maxIndex) % maxIndex;
-      const subdomain = TILE_SUBDOMAINS[Math.abs(x + y) % TILE_SUBDOMAINS.length];
-      const url = TILE_URL
-        .replace('{s}', subdomain)
-        .replace('{z}', String(zoom))
-        .replace('{x}', String(wrappedX))
-        .replace('{y}', String(y));
-
-      const px = x * tileSize - bounds.min.x;
-      const py = y * tileSize - bounds.min.y;
-
-      tilePromises.push(
-        new Promise((resolve) => {
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            ctx.drawImage(img, px, py, tileSize, tileSize);
-            resolve();
-          };
-          img.onerror = () => resolve();
-          img.src = url;
-        })
-      );
+  const mapOptions: MapLibreGL.MapOptions & { preserveDrawingBuffer?: boolean } =
+    {
+      container,
+      style: MAP_STYLE_URL,
+      interactive: false,
+      attributionControl: false,
+      preserveDrawingBuffer: true,
+      renderWorldCopies: false,
+    };
+  const map = new MapLibreGL.Map(mapOptions);
+  map.on('error', (event) => {
+    if (event?.error) {
+      logger.warn('MapLibre snapshot error event:', event.error);
     }
-  }
+  });
 
-  await Promise.all(tilePromises);
+  const waitForLoad = () =>
+    new Promise<void>((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Map snapshot load timeout'));
+      }, 20000);
 
-  if (applyDarkFilter) {
-    applyDarkMapFilter(ctx, canvas.width, canvas.height);
-  }
-
-  // Draw route polyline on top of tiles (after filter so it stays bright)
-  if (routeCoordinates.length > 1) {
-    ctx.strokeStyle = routeColor;
-    ctx.lineWidth = 6;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-
-    ctx.beginPath();
-    routeCoordinates.forEach(([lat, lng], index) => {
-      const point = map.latLngToContainerPoint([lat, lng]);
-      if (index === 0) {
-        ctx.moveTo(point.x, point.y);
-      } else {
-        ctx.lineTo(point.x, point.y);
-      }
+      map.once('load', () => {
+        clearTimeout(timeoutId);
+        resolve();
+      });
     });
-    ctx.stroke();
-  }
 
-  return canvas.toDataURL('image/png');
+  const waitForIdle = () =>
+    new Promise<void>((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Map snapshot idle timeout'));
+      }, 20000);
+
+      map.once('idle', () => {
+        clearTimeout(timeoutId);
+        resolve();
+      });
+    });
+
+  const waitForRender = () =>
+    new Promise<void>((resolve) => {
+      let resolved = false;
+      const timeoutId = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          resolve();
+        }
+      }, 1500);
+
+      const handleRender = () => {
+        if (resolved) return;
+        resolved = true;
+        clearTimeout(timeoutId);
+        map.off('render', handleRender);
+        resolve();
+      };
+
+      map.on('render', handleRender);
+    });
+
+  const waitForTiles = () =>
+    new Promise<void>((resolve) => {
+      const timeoutId = setTimeout(() => {
+        resolve();
+      }, 8000);
+
+      const checkTiles = () => {
+        if (map.areTilesLoaded()) {
+          clearTimeout(timeoutId);
+          resolve();
+          return;
+        }
+        requestAnimationFrame(checkTiles);
+      };
+
+      checkTiles();
+    });
+
+  try {
+    container.style.backgroundColor = backgroundColor;
+    container.style.opacity = '0.01';
+    await waitForLoad();
+    map.resize();
+
+    map.addSource('route-source', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'LineString', coordinates: routeCoordinates },
+      },
+    });
+
+    map.addLayer({
+      id: 'route-layer',
+      type: 'line',
+      source: 'route-source',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': routeColor,
+        'line-width': 4,
+        'line-opacity': 0.9,
+      },
+    });
+
+    if (routeCoordinates.length > 1) {
+      const startPoint = routeCoordinates[0];
+      const endPoint = routeCoordinates[routeCoordinates.length - 1];
+
+      map.addSource('route-points', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              properties: { role: 'start', color: startColor },
+              geometry: { type: 'Point', coordinates: startPoint },
+            },
+            {
+              type: 'Feature',
+              properties: { role: 'end', color: endColor },
+              geometry: { type: 'Point', coordinates: endPoint },
+            },
+          ],
+        },
+      });
+
+      map.addLayer({
+        id: 'route-points-halo',
+        type: 'circle',
+        source: 'route-points',
+        paint: {
+          'circle-radius': 10,
+          'circle-color': ['get', 'color'],
+          'circle-opacity': 0.25,
+        },
+      });
+
+      map.addLayer({
+        id: 'route-points-core',
+        type: 'circle',
+        source: 'route-points',
+        paint: {
+          'circle-radius': 4.5,
+          'circle-color': ['get', 'color'],
+          'circle-stroke-width': 1.5,
+          'circle-stroke-color': '#0A0A0A',
+        },
+      });
+
+      const lngs = routeCoordinates.map(([lng]) => lng);
+      const lats = routeCoordinates.map(([, lat]) => lat);
+      const bounds: [[number, number], [number, number]] = [
+        [Math.min(...lngs), Math.min(...lats)],
+        [Math.max(...lngs), Math.max(...lats)],
+      ];
+      map.fitBounds(bounds, { padding: 12, maxZoom: 19 });
+    } else {
+      map.setCenter(routeCoordinates[0]);
+      map.setZoom(16);
+    }
+
+    map.resize();
+    map.triggerRepaint();
+    await new Promise(requestAnimationFrame);
+    await new Promise(requestAnimationFrame);
+    await waitForIdle().catch(async () => {
+      await waitForRender();
+    });
+    await waitForTiles();
+
+    const canvas = map.getCanvas();
+    if (canvas.width === 0 || canvas.height === 0) {
+      logger.warn('Map snapshot skipped - canvas size is zero');
+      return null;
+    }
+    try {
+      const dataUrl = canvas.toDataURL('image/png');
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((output) => resolve(output), 'image/png');
+      });
+      if (!blob || blob.size === 0) {
+        logger.warn('Map snapshot skipped - canvas blob empty');
+        return null;
+      }
+      return dataUrl;
+    } catch (error) {
+      logger.error('Map snapshot failed to export canvas', error);
+      return null;
+    }
+  } catch (error) {
+    logger.error('Map snapshot failed:', error);
+    return null;
+  } finally {
+    map.remove();
+  }
 }
 
 export type ShareMode = 
@@ -156,6 +239,7 @@ interface SharedResources {
   apexBlack: string;
   apexWhite: string;
   apexGreen: string;
+  apexRed: string;
 }
 
 /**
@@ -170,6 +254,7 @@ async function buildSharedResources(
   const apexBlack = getComputedStyle(root).getPropertyValue('--color-apex-black').trim() || 'var(--color-apex-black)';
   const apexWhite = getComputedStyle(root).getPropertyValue('--color-apex-white').trim() || 'var(--color-apex-white)';
   const apexGreen = getComputedStyle(root).getPropertyValue('--color-apex-green').trim() || 'var(--color-apex-green)';
+  const apexRed = getComputedStyle(root).getPropertyValue('--color-apex-red').trim() || 'var(--color-apex-red)';
 
   // Check if route data is available
   const hasRoute = ride.route_path && 
@@ -177,10 +262,13 @@ async function buildSharedResources(
                    Array.isArray(ride.route_path.coordinates) && 
                    ride.route_path.coordinates.length > 0;
 
-  // Convert route coordinates from [lng, lat] to [lat, lng] for RideMap
-  const routeCoordinates: [number, number][] = hasRoute && ride.route_path
-    ? ride.route_path.coordinates.map(([lng, lat]: [number, number]) => [lat, lng] as [number, number])
-    : [];
+  // Use [lng, lat] coordinates for MapLibre
+  const routeCoordinates: [number, number][] =
+    hasRoute && ride.route_path
+      ? ride.route_path.coordinates.map(
+          ([lng, lat]: [number, number]) => [lng, lat] as [number, number]
+        )
+      : [];
 
   // Check if ride has image URL
   const hasImageUrl = ride.image_url && ride.image_url.trim() !== '';
@@ -223,67 +311,35 @@ async function buildSharedResources(
   let mapSnapshot: string | null = null;
   if (hasRoute && routeCoordinates.length > 0) {
     try {
-      // Create temporary map container to generate snapshot
       const tempMapWrapper = document.createElement('div');
-      tempMapWrapper.style.width = '960px'; // Match map container width
+      tempMapWrapper.style.width = '960px';
       tempMapWrapper.style.height = '400px';
       tempMapWrapper.style.position = 'fixed';
       tempMapWrapper.style.left = '0';
       tempMapWrapper.style.top = '0';
-      // Keep visible but off-screen so Leaflet can render
       tempMapWrapper.style.transform = 'translateX(-2000px)';
-      tempMapWrapper.style.opacity = '0';
+      tempMapWrapper.style.opacity = '0.01';
       tempMapWrapper.style.pointerEvents = 'none';
       tempMapWrapper.style.backgroundColor = apexBlack;
       document.body.appendChild(tempMapWrapper);
 
-      let mapRoot: Root | null = null;
-
-      const mapReadyPromise = new Promise<LeafletMap | null>((resolve) => {
-        const timeoutId = setTimeout(() => {
-          logger.warn('Map ready timeout for snapshot generation');
-          resolve(null);
-        }, 10000);
-
-        mapRoot = createRoot(tempMapWrapper);
-        mapRoot.render(
-          React.createElement(RideMap, {
-            coordinates: routeCoordinates,
-            interactive: false,
-            height: '400px',
-            className: 'w-full',
-            hideControls: true,
-            onMapReady: (map) => {
-              map.whenReady(() => {
-                clearTimeout(timeoutId);
-                map.invalidateSize();
-                // Small delay to ensure bounds/zoom are stable
-                setTimeout(() => resolve(map), 300);
-              });
-            },
-          })
-        );
-      });
-
-      const map = await mapReadyPromise;
-      if (map) {
-        mapSnapshot = await renderLeafletMapSnapshot(
-          map,
-          apexBlack,
-          routeCoordinates,
-          apexGreen,
-          true // Apply dark filter
-        );
+      mapSnapshot = await renderMapLibreSnapshot(
+        tempMapWrapper,
+        apexBlack,
+        routeCoordinates,
+        apexGreen,
+        apexRed,
+        apexGreen
+      );
+      if (!mapSnapshot) {
+        logger.warn('Map snapshot generation returned empty result');
+      } else {
+        logger.info('Map snapshot generated', {
+          length: mapSnapshot.length,
+          hasRoute: routeCoordinates.length,
+        });
       }
 
-      // Cleanup
-      if (mapRoot) {
-        try {
-          (mapRoot as Root).unmount();
-        } catch {
-          // Ignore cleanup errors
-        }
-      }
       if (tempMapWrapper.parentNode) {
         document.body.removeChild(tempMapWrapper);
       }
@@ -301,6 +357,7 @@ async function buildSharedResources(
     apexBlack,
     apexWhite,
     apexGreen,
+    apexRed,
   };
 }
 
@@ -325,7 +382,6 @@ export async function generateRideShareImage(
     hasImageUrl,
     apexBlack,
     apexWhite,
-    apexGreen, // Used in map border color calculation
   } = resources;
 
   // Determine what to show based on mode
@@ -432,8 +488,6 @@ export async function generateRideShareImage(
       } else {
         mapWrapper.style.border = '1px solid rgba(226, 226, 226, 0.2)';
       }
-      // apexGreen is used in shared content container, not here
-      void apexGreen; // Suppress unused warning
       mapWrapper.style.position = 'relative';
       mapWrapper.style.zIndex = '1';
       mapWrapper.id = 'share-map-container';
@@ -538,18 +592,16 @@ export async function generateRideShareImage(
           : String(htmlEl.className || '');
         
         if (classNameStr) {
-          const hasColorClasses = classNameStr.includes('bg-') || 
+        const hasColorClasses = classNameStr.includes('bg-') || 
                                   classNameStr.includes('text-') || 
-                                  classNameStr.includes('border-') ||
-                                  classNameStr.includes('dark-map-tiles');
+                                  classNameStr.includes('border-');
           if (hasColorClasses && !isSvgElement) {
             // Remove Tailwind color classes - we've already set explicit RGB
             const classes = classNameStr.split(' ').filter((cls: string) => 
               cls && 
               !cls.startsWith('bg-') && 
               !cls.startsWith('text-') && 
-              !cls.startsWith('border-') &&
-              cls !== 'dark-map-tiles' // Remove this too - we don't use filters
+            !cls.startsWith('border-')
             );
             htmlEl.className = classes.join(' ');
           }
@@ -590,10 +642,9 @@ export async function generateRideShareImage(
       imageTimeout: 15000, // Increase timeout for map tiles
       proxy: undefined, // Don't use proxy
       ignoreElements: (element) => {
-        // Ignore Leaflet controls
-        return element.classList.contains('leaflet-control-container') ||
-               element.classList.contains('leaflet-control-zoom') ||
-               element.classList.contains('leaflet-control-attribution');
+        return element.classList.contains('maplibregl-control-container') ||
+               element.classList.contains('maplibregl-ctrl-attrib') ||
+               element.classList.contains('maplibregl-ctrl');
       },
       onclone: (clonedDoc, element) => {
         // CRITICAL: Remove all stylesheets from cloned document to prevent oklab parsing
@@ -689,14 +740,13 @@ export async function generateRideShareImage(
         }
         
         // Hide controls in cloned document
-        const clonedControls = clonedDoc.querySelectorAll('.leaflet-control-container, .leaflet-control-zoom, .leaflet-control-attribution');
+        const clonedControls = clonedDoc.querySelectorAll('.maplibregl-control-container, .maplibregl-ctrl, .maplibregl-ctrl-attrib');
         clonedControls.forEach((control) => {
           (control as HTMLElement).style.display = 'none';
         });
         
         // Ensure map tiles are visible in clone
         // NOTE: Do NOT apply CSS filters - html2canvas doesn't support them!
-        // We'll apply dark filter as post-processing on the canvas
         if (showMap) {
           const clonedMapContainer = clonedDoc.querySelector('#share-map-container');
           if (clonedMapContainer) {

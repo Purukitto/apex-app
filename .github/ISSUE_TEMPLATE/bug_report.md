@@ -34,11 +34,16 @@ If applicable, add screenshots to help explain your problem.
 - **OS**: [e.g. Windows 11, macOS 14, iOS 17, Android 13]
 - **Browser**: [e.g. Chrome 120, Safari 17] (if web)
 - **Device**: [e.g. iPhone 15, Samsung Galaxy S23] (if mobile)
+- **Screen**: [e.g. 390x844 @3x, 1920x1080 @1x]
 - **App Version**: [e.g. 0.3.2]
 
 ## 📝 Additional Context
 
 Add any other context about the problem here.
+
+## 🧾 Logs (Last 150 lines)
+
+Attach the log file from the app or paste the last 150 lines here.
 
 ## 🔍 Possible Solution
 

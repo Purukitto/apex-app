@@ -1,10 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { logger } from '../lib/logger';
 import { useDiscordRpcStore } from '../stores/useDiscordRpcStore';
 import { DISCORD_RPC_APP_ID, isDiscordRpcEnabledForPlatform } from '../config/discord';
+import { apexToast } from '../lib/toast';
+import { isDiscordLoginSupported, openDiscordLogin } from '../lib/discordLogin';
+import { validateDiscordToken } from '../lib/discordAuth';
 import {
   clearDiscordPresence,
   connectDiscordRpc,
@@ -17,6 +20,15 @@ import {
  */
 export function useDiscord() {
   const platform = Capacitor.getPlatform();
+  const rpcToken = useDiscordRpcStore((state) => state.rpcToken);
+  const setRpcToken = useDiscordRpcStore((state) => state.setRpcToken);
+  const invalidTokenNotifiedRef = useRef(false);
+
+  useEffect(() => {
+    if (rpcToken) {
+      invalidTokenNotifiedRef.current = false;
+    }
+  }, [rpcToken]);
 
   useEffect(() => {
     if (!isDiscordRpcEnabledForPlatform(platform)) {
@@ -69,6 +81,26 @@ export function useDiscord() {
       }
     };
   }, [platform]);
+
+  const notifyInvalidToken = () => {
+    if (invalidTokenNotifiedRef.current) return;
+    invalidTokenNotifiedRef.current = true;
+    setRpcToken('');
+    apexToast.error('Discord login expired', {
+      action: {
+        label: 'Reconnect',
+        onClick: () => {
+          if (!isDiscordLoginSupported()) return;
+          openDiscordLogin({
+            onTokenExtracted: (token) => {
+              setRpcToken(token);
+              apexToast.success('Connected');
+            },
+          });
+        },
+      },
+    });
+  };
 
   const buildPresenceDetails = ({
     type,
@@ -125,6 +157,14 @@ export function useDiscord() {
 
       if (!preferences.rpcToken) {
         logger.debug('Discord RPC token unavailable, skipping RPC update');
+        return;
+      }
+
+      const tokenStatus = await validateDiscordToken(preferences.rpcToken);
+      if (tokenStatus === 'invalid') {
+        await clearDiscordPresence();
+        await disconnectDiscordRpc();
+        notifyInvalidToken();
         return;
       }
 

@@ -32,11 +32,112 @@ import PullToRefreshIndicator from "../components/PullToRefreshIndicator";
 import { useThemeColors } from "../hooks/useThemeColors";
 import { formatDateTime, formatDuration, formatShortDate } from "../utils/format";
 import type { Ride } from "../types/database";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { Card } from "../components/ui/Card";
 
 const PAGE_SIZE = 20;
+const MAX_PAGE_BUTTONS = 5;
+
+async function fetchRideRoute(options: {
+  rideId: string;
+  startTime: string;
+  bikeId?: string;
+}): Promise<Ride["route_path"] | null> {
+  const { rideId, startTime, bikeId } = options;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const countQuery = supabase
+    .from("rides")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gt("start_time", startTime);
+
+  if (bikeId) {
+    countQuery.eq("bike_id", bikeId);
+  }
+
+  const { count, error: countError } = await countQuery;
+
+  if (!countError && count !== null) {
+    const windowSize = 10;
+    const startOffset = Math.max(0, count - 5);
+
+    try {
+      const rpcResult = await Promise.race([
+        supabase.rpc("get_rides_with_geojson", {
+          p_user_id: user.id,
+          p_bike_id: bikeId || null,
+          p_limit: windowSize,
+          p_offset: startOffset,
+        }),
+        new Promise<{ error: { message: string } }>((resolve) => {
+          setTimeout(
+            () => resolve({ error: { message: "RPC timeout" } }),
+            2000
+          );
+        }),
+      ]) as Awaited<
+        ReturnType<typeof supabase.rpc<"get_rides_with_geojson">>
+      > | { error: { message: string } };
+
+      if ("data" in rpcResult && rpcResult.data && !rpcResult.error) {
+        const matchedRide = (rpcResult.data as Ride[]).find(
+          (ride) => ride.id === rideId
+        );
+        if (matchedRide?.route_path) {
+          if (typeof matchedRide.route_path === "string") {
+            try {
+              return JSON.parse(matchedRide.route_path) as Ride["route_path"];
+            } catch (parseError) {
+              logger.warn("Failed to parse route_path string", {
+                rideId,
+                parseError,
+              });
+              return null;
+            }
+          }
+          if (typeof matchedRide.route_path === "object") {
+            return matchedRide.route_path as Ride["route_path"];
+          }
+        }
+      }
+    } catch (error) {
+      logger.warn("RPC route fetch failed", { rideId, error });
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("rides")
+    .select("route_path")
+    .eq("id", rideId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (error) throw error;
+  if (!data?.route_path) return null;
+
+  if (typeof data.route_path === "string") {
+    try {
+      return JSON.parse(data.route_path) as Ride["route_path"];
+    } catch (parseError) {
+      logger.warn("Failed to parse route_path string", {
+        rideId,
+        parseError,
+      });
+      return null;
+    }
+  }
+
+  if (typeof data.route_path === "object") {
+    return data.route_path as Ride["route_path"];
+  }
+
+  return null;
+}
 
 export default function AllRides() {
   const { primary } = useThemeColors();
@@ -57,9 +158,55 @@ export default function AllRides() {
   const { rides, total, isLoading, updateRide, deleteRide, refetch } = useRides({
     page,
     pageSize: PAGE_SIZE,
+    includeRoute: false,
   });
 
   const totalPages = total ? Math.ceil(total / PAGE_SIZE) : 0;
+  const maxPage = Math.max(0, totalPages - 1);
+  const visiblePages =
+    totalPages <= 1
+      ? []
+      : (() => {
+          if (totalPages <= MAX_PAGE_BUTTONS) {
+            return Array.from({ length: totalPages }, (_, index) => index);
+          }
+          const half = Math.floor(MAX_PAGE_BUTTONS / 2);
+          const start = Math.max(
+            0,
+            Math.min(page - half, totalPages - MAX_PAGE_BUTTONS)
+          );
+          return Array.from({ length: MAX_PAGE_BUTTONS }, (_, index) => start + index);
+        })();
+  const showLeadingEllipsis =
+    totalPages > MAX_PAGE_BUTTONS && visiblePages[0] > 0;
+  const showTrailingEllipsis =
+    totalPages > MAX_PAGE_BUTTONS &&
+    visiblePages[visiblePages.length - 1] < totalPages - 1;
+
+  useEffect(() => {
+    if (totalPages > 0 && page > maxPage) {
+      setPage(maxPage);
+    }
+  }, [page, maxPage, totalPages]);
+
+  const expandedRide = rides.find((ride) => ride.id === expandedRideId) || null;
+  const { data: expandedRoute, isFetching: isRouteLoading } = useQuery({
+    queryKey: ["rideRoute", expandedRideId, expandedRide?.start_time],
+    queryFn: () => {
+      if (!expandedRideId || !expandedRide) return null;
+      return fetchRideRoute({
+        rideId: expandedRideId,
+        startTime: expandedRide.start_time,
+        bikeId: expandedRide.bike_id || undefined,
+      });
+    },
+    enabled: !!expandedRideId && !!expandedRide,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: true,
+  });
 
   // Handle rideId from URL - find and expand the ride
   useEffect(() => {
@@ -252,14 +399,38 @@ export default function AllRides() {
   };
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+    const nextPage = Math.min(maxPage, Math.max(0, newPage));
+    if (nextPage === page) return;
+    setPage(nextPage);
     setExpandedRideId(null);
     // Scroll to top on page change
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleShareClick = (ride: Ride) => {
+  const handleShareClick = async (ride: Ride) => {
     setRideToShare(ride);
+
+    if (!ride.route_path) {
+      try {
+        const routePath = await fetchRideRoute({
+          rideId: ride.id,
+          startTime: ride.start_time,
+          bikeId: ride.bike_id,
+        });
+        if (routePath) {
+          setRideToShare((prev) =>
+            prev && prev.id === ride.id
+              ? { ...prev, route_path: routePath }
+              : prev
+          );
+        } else {
+          apexToast.error("Route unavailable for map share");
+        }
+      } catch (error) {
+        logger.error("Failed to load ride route for sharing", error);
+        apexToast.error("Failed to load map for sharing");
+      }
+    }
   };
 
   const handleExportGPX = async (ride: Ride) => {
@@ -314,7 +485,7 @@ export default function AllRides() {
         {/* Page Subheader */}
         <motion.div variants={itemVariants}>
           {total !== undefined && (
-            <p className="text-sm text-white/60">
+            <p className="text-sm text-apex-white/60">
               {total} {total === 1 ? "ride" : "rides"} total
             </p>
           )}
@@ -482,7 +653,7 @@ export default function AllRides() {
                               <p className="text-xs text-white/60 mb-2">
                                 Image
                               </p>
-                              <div className="relative w-full aspect-video rounded-md overflow-hidden border border-apex-white/20 bg-gradient-to-br from-white/5 to-transparent">
+                              <div className="relative w-full aspect-video rounded-md overflow-hidden border border-apex-white/20 bg-linear-to-br from-white/5 to-transparent">
                                 <img
                                   src={ride.image_url}
                                   alt="Ride image"
@@ -502,33 +673,41 @@ export default function AllRides() {
                           )}
 
                           {/* Route Map */}
-                          {ride.route_path && (
+                          {isExpanded && (expandedRoute || isRouteLoading) && (
                             <div>
                               <p className="text-xs text-white/60 mb-2">
                                 Route
                               </p>
-                              <DebugPanel
-                                title="route_path"
-                                data={ride.route_path}
-                              />
-                              {ride.route_path.coordinates &&
-                              Array.isArray(ride.route_path.coordinates) &&
-                              ride.route_path.coordinates.length > 0 ? (
-                                <RideMap
-                                  coordinates={ride.route_path.coordinates.map(
-                                    ([lng, lat]: [number, number]) =>
-                                      [lat, lng] as [number, number]
-                                  )}
-                                  className="w-full"
-                                  interactive={false}
-                                  height="250px"
-                                />
-                              ) : (
-                                <div className="p-4 bg-apex-black/30 border border-apex-white/10 rounded-md text-center">
-                                  <p className="text-xs text-apex-white/60 font-mono">
-                                    Route data format not recognized
-                                  </p>
+                              {isRouteLoading ? (
+                                <div className="h-[250px] rounded-md border border-apex-white/10 bg-apex-black/40 flex items-center justify-center">
+                                  <LoadingSpinner size="sm" text="Loading route..." />
                                 </div>
+                              ) : (
+                                <>
+                                  <DebugPanel
+                                    title="route_path"
+                                    data={expandedRoute}
+                                  />
+                                  {expandedRoute?.coordinates &&
+                                  Array.isArray(expandedRoute.coordinates) &&
+                                  expandedRoute.coordinates.length > 0 ? (
+                                    <RideMap
+                                      coordinates={expandedRoute.coordinates.map(
+                                        ([lng, lat]: [number, number]) =>
+                                          [lat, lng] as [number, number]
+                                      )}
+                                      className="w-full"
+                                      interactive={false}
+                                      height="250px"
+                                    />
+                                  ) : (
+                                    <div className="p-4 bg-apex-black/30 border border-apex-white/10 rounded-md text-center">
+                                      <p className="text-xs text-apex-white/60 font-mono">
+                                        Route data not available
+                                      </p>
+                                    </div>
+                                  )}
+                                </>
                               )}
                             </div>
                           )}
@@ -546,19 +725,17 @@ export default function AllRides() {
                               <Share2 size={16} />
                               Share
                             </motion.button>
-                            {ride.route_path && ride.route_path.coordinates && ride.route_path.coordinates.length > 0 && (
-                              <motion.button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleExportGPX(ride);
-                                }}
-                                className="flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-base text-apex-green hover:bg-apex-green/20 transition-colors whitespace-nowrap"
-                                {...buttonHoverProps}
-                              >
-                                <Download size={16} />
-                                GPX
-                              </motion.button>
-                            )}
+                            <motion.button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleExportGPX(ride);
+                              }}
+                              className="flex items-center justify-center gap-2 px-4 py-2 bg-apex-green/10 border border-apex-green/30 rounded-lg text-base text-apex-green hover:bg-apex-green/20 transition-colors whitespace-nowrap"
+                              {...buttonHoverProps}
+                            >
+                              <Download size={16} />
+                              GPX
+                            </motion.button>
                             <motion.button
                               onClick={async (e) => {
                                 e.stopPropagation();
@@ -599,28 +776,75 @@ export default function AllRides() {
         {/* Pagination Controls */}
         {totalPages > 1 && (
           <motion.div
-            className="flex items-center justify-center gap-4 pt-4"
+            className="flex flex-wrap items-center justify-center gap-3 pt-4"
             variants={itemVariants}
           >
             <motion.button
+              onClick={() => handlePageChange(0)}
+              disabled={page === 0}
+              className="px-3 py-2 bg-apex-black/40 border border-apex-white/10 rounded-lg text-base text-apex-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-black/60 transition-colors"
+              {...(page === 0 ? {} : buttonHoverProps)}
+            >
+              First
+            </motion.button>
+            <motion.button
               onClick={() => handlePageChange(page - 1)}
               disabled={page === 0}
-              className="px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-base text-apex-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-white/10 transition-colors"
+              className="px-3 py-2 bg-apex-black/40 border border-apex-white/10 rounded-lg text-base text-apex-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-black/60 transition-colors"
               {...(page === 0 ? {} : buttonHoverProps)}
             >
               Previous
             </motion.button>
-            <span className="text-sm text-white/60 font-mono">
-              Page {page + 1} of {totalPages}
-            </span>
+
+            {showLeadingEllipsis && (
+              <span className="px-1 text-xs text-apex-white/50 font-mono">
+                ...
+              </span>
+            )}
+
+            {visiblePages.map((pageNumber) => {
+              const isCurrent = pageNumber === page;
+              return (
+                <motion.button
+                  key={pageNumber}
+                  onClick={() => handlePageChange(pageNumber)}
+                  className={
+                    isCurrent
+                      ? "px-3 py-2 bg-apex-green/20 border border-apex-green/40 rounded-lg text-base text-apex-green font-mono"
+                      : "px-3 py-2 bg-apex-black/40 border border-apex-white/10 rounded-lg text-base text-apex-white font-mono hover:bg-apex-black/60 transition-colors"
+                  }
+                  {...(isCurrent ? {} : buttonHoverProps)}
+                >
+                  {pageNumber + 1}
+                </motion.button>
+              );
+            })}
+
+            {showTrailingEllipsis && (
+              <span className="px-1 text-xs text-apex-white/50 font-mono">
+                ...
+              </span>
+            )}
+
             <motion.button
               onClick={() => handlePageChange(page + 1)}
               disabled={page >= totalPages - 1}
-              className="px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-base text-apex-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-white/10 transition-colors"
+              className="px-3 py-2 bg-apex-black/40 border border-apex-white/10 rounded-lg text-base text-apex-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-black/60 transition-colors"
               {...(page >= totalPages - 1 ? {} : buttonHoverProps)}
             >
               Next
             </motion.button>
+            <motion.button
+              onClick={() => handlePageChange(totalPages - 1)}
+              disabled={page >= totalPages - 1}
+              className="px-3 py-2 bg-apex-black/40 border border-apex-white/10 rounded-lg text-base text-apex-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-black/60 transition-colors"
+              {...(page >= totalPages - 1 ? {} : buttonHoverProps)}
+            >
+              Last
+            </motion.button>
+            <span className="text-xs text-apex-white/60 font-mono">
+              Page {page + 1} of {totalPages}
+            </span>
           </motion.div>
         )}
       </motion.div>
@@ -630,7 +854,7 @@ export default function AllRides() {
         {editingRide && (
           <>
             <motion.div
-              className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-[1000]"
+              className="fixed inset-0 bg-apex-black/80 backdrop-blur-sm z-1000"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -641,9 +865,9 @@ export default function AllRides() {
                 setEditRideImageUrl("");
               }}
             />
-            <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-1001 flex items-center justify-center p-4">
               <motion.div
-                className="bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md relative z-[1001]"
+                className="bg-apex-black border border-apex-white/20 rounded-lg p-6 w-full max-w-md relative z-1001"
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -677,7 +901,7 @@ export default function AllRides() {
                       value={editRideName}
                       onChange={(e) => setEditRideName(e.target.value)}
                       placeholder="Enter ride name (optional)"
-                      className="w-full px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-base text-apex-white placeholder:text-apex-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
+                      className="w-full px-4 py-2 bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-base text-apex-white placeholder:text-apex-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
                     />
                   </div>
 
@@ -703,7 +927,7 @@ export default function AllRides() {
                       value={editRideImageUrl}
                       onChange={(e) => setEditRideImageUrl(e.target.value)}
                       placeholder="https://..."
-                      className="w-full px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-apex-white placeholder:text-apex-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
+                      className="w-full px-4 py-2 bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-apex-white placeholder:text-apex-white/40 focus:outline-none focus:border-apex-green/40 transition-colors"
                     />
                   </div>
                 </div>

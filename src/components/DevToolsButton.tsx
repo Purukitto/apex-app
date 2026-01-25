@@ -79,6 +79,7 @@ export default function DevToolsButton({ onToggle }: DevToolsButtonProps) {
   return (
     <motion.button
       onClick={onToggle}
+      data-devtools-button
       className="fixed bottom-24 right-4 z-[9997] p-3 bg-gradient-to-br from-apex-green/20 to-apex-green/10 border border-apex-green/40 rounded-full shadow-lg backdrop-blur-sm"
       whileHover={{ scale: 1.1, borderColor: 'rgba(0, 255, 65, 0.6)' }}
       whileTap={{ scale: 0.95 }}

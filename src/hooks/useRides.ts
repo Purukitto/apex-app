@@ -37,16 +37,6 @@ export async function fetchRides(options: {
     const from = page * pageSize;
     const to = from + pageSize - 1;
 
-    // Get count first
-    let countQuery = supabase
-      .from('rides')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id);
-
-    if (bikeId) {
-      countQuery = countQuery.eq('bike_id', bikeId);
-    }
-
     // Try to use RPC function first (if it exists) with timeout
     // Skip RPC if it doesn't exist to avoid slow loading
     try {
@@ -63,8 +53,6 @@ export async function fetchRides(options: {
       ]) as Awaited<ReturnType<typeof supabase.rpc<'get_rides_with_geojson'>>> | { error: { message: string } };
       
       if ('data' in rpcResult && rpcResult.data && !rpcResult.error) {
-        const [{ count }] = await Promise.all([countQuery]);
-        
         // Process route_path from JSONB to GeoJSONLineString format
         const processedRides = (rpcResult.data || []).map((ride: Ride & { route_path?: unknown }) => {
           if (ride.route_path) {
@@ -81,7 +69,7 @@ export async function fetchRides(options: {
           return { ...ride, route_path: undefined };
         });
         
-        return { rides: processedRides as Ride[], total: count || 0 };
+        return { rides: processedRides as Ride[] };
       }
     } catch {
       // RPC function doesn't exist or timed out, fall back to regular query
@@ -100,10 +88,7 @@ export async function fetchRides(options: {
       dataQuery = dataQuery.eq('bike_id', bikeId);
     }
 
-    const [{ count }, { data, error: queryError }] = await Promise.all([
-      countQuery,
-      dataQuery,
-    ]);
+    const { data, error: queryError } = await dataQuery;
 
     if (queryError) throw queryError;
     
@@ -113,7 +98,7 @@ export async function fetchRides(options: {
       route_path: undefined, // Can't convert PostGIS geography without RPC function
     }));
     
-    return { rides: processedRides as Ride[], total: count || 0 };
+    return { rides: processedRides as Ride[] };
   }
 
   // Legacy limit-based query
@@ -176,6 +161,30 @@ export async function fetchRides(options: {
   return { rides: processedRides as Ride[] };
 }
 
+async function fetchRideCount(options: { bikeId?: string }): Promise<number> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { bikeId } = options;
+
+  let countQuery = supabase
+    .from('rides')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id);
+
+  if (bikeId) {
+    countQuery = countQuery.eq('bike_id', bikeId);
+  }
+
+  const { count, error } = await countQuery;
+
+  if (error) throw error;
+
+  return count || 0;
+}
+
 /**
  * Hook to fetch recent rides from Supabase
  * @param options - Configuration options
@@ -187,6 +196,7 @@ export async function fetchRides(options: {
 export function useRides(options: UseRidesOptions = {}) {
   const queryClient = useQueryClient();
   const { bikeId, limit, page, pageSize } = options;
+  const isPaginated = page !== undefined && pageSize !== undefined;
 
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['rides', bikeId, limit, page, pageSize],
@@ -198,8 +208,19 @@ export function useRides(options: UseRidesOptions = {}) {
     refetchOnReconnect: false,
   });
 
+  const { data: totalCount } = useQuery({
+    queryKey: ['rides', 'count', bikeId],
+    queryFn: () => fetchRideCount({ bikeId }),
+    enabled: isPaginated,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchOnReconnect: false,
+  });
+
   const rides = data?.rides || [];
-  const total = data?.total;
+  const total = totalCount ?? data?.total;
 
   // Update ride mutation
   const updateRide = useMutation({
@@ -314,6 +335,8 @@ export function useRides(options: UseRidesOptions = {}) {
       await queryClient.cancelQueries({ queryKey: ['rides'] });
       
       const previousRides = queryClient.getQueriesData({ queryKey: ['rides'] });
+      const countKey = ['rides', 'count', bikeId];
+      const previousCount = queryClient.getQueryData<number>(countKey);
       
       // Optimistically remove
       queryClient.setQueriesData<{ rides: Ride[]; total?: number }>(
@@ -327,8 +350,12 @@ export function useRides(options: UseRidesOptions = {}) {
           };
         }
       );
+
+      if (previousCount !== undefined) {
+        queryClient.setQueryData<number>(countKey, Math.max(0, previousCount - 1));
+      }
       
-      return { previousRides };
+      return { previousRides, previousCount };
     },
     mutationFn: async (id: string) => {
       const {
@@ -354,6 +381,9 @@ export function useRides(options: UseRidesOptions = {}) {
         context.previousRides.forEach(([queryKey, data]) => {
           queryClient.setQueryData(queryKey, data);
         });
+      }
+      if (context?.previousCount !== undefined) {
+        queryClient.setQueryData(['rides', 'count', bikeId], context.previousCount);
       }
       apexToast.error(
         error instanceof Error ? error.message : 'Failed to delete ride'

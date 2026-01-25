@@ -37,6 +37,7 @@ import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { Card } from "../components/ui/Card";
 
 const PAGE_SIZE = 20;
+const MAX_PAGE_BUTTONS = 5;
 
 export default function AllRides() {
   const { primary } = useThemeColors();
@@ -60,6 +61,32 @@ export default function AllRides() {
   });
 
   const totalPages = total ? Math.ceil(total / PAGE_SIZE) : 0;
+  const maxPage = Math.max(0, totalPages - 1);
+  const visiblePages =
+    totalPages <= 1
+      ? []
+      : (() => {
+          if (totalPages <= MAX_PAGE_BUTTONS) {
+            return Array.from({ length: totalPages }, (_, index) => index);
+          }
+          const half = Math.floor(MAX_PAGE_BUTTONS / 2);
+          const start = Math.max(
+            0,
+            Math.min(page - half, totalPages - MAX_PAGE_BUTTONS)
+          );
+          return Array.from({ length: MAX_PAGE_BUTTONS }, (_, index) => start + index);
+        })();
+  const showLeadingEllipsis =
+    totalPages > MAX_PAGE_BUTTONS && visiblePages[0] > 0;
+  const showTrailingEllipsis =
+    totalPages > MAX_PAGE_BUTTONS &&
+    visiblePages[visiblePages.length - 1] < totalPages - 1;
+
+  useEffect(() => {
+    if (totalPages > 0 && page > maxPage) {
+      setPage(maxPage);
+    }
+  }, [page, maxPage, totalPages]);
 
   // Handle rideId from URL - find and expand the ride
   useEffect(() => {
@@ -252,7 +279,9 @@ export default function AllRides() {
   };
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage);
+    const nextPage = Math.min(maxPage, Math.max(0, newPage));
+    if (nextPage === page) return;
+    setPage(nextPage);
     setExpandedRideId(null);
     // Scroll to top on page change
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -314,7 +343,7 @@ export default function AllRides() {
         {/* Page Subheader */}
         <motion.div variants={itemVariants}>
           {total !== undefined && (
-            <p className="text-sm text-white/60">
+            <p className="text-sm text-apex-white/60">
               {total} {total === 1 ? "ride" : "rides"} total
             </p>
           )}
@@ -599,28 +628,75 @@ export default function AllRides() {
         {/* Pagination Controls */}
         {totalPages > 1 && (
           <motion.div
-            className="flex items-center justify-center gap-4 pt-4"
+            className="flex flex-wrap items-center justify-center gap-3 pt-4"
             variants={itemVariants}
           >
             <motion.button
+              onClick={() => handlePageChange(0)}
+              disabled={page === 0}
+              className="px-3 py-2 bg-apex-black/40 border border-apex-white/10 rounded-lg text-base text-apex-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-black/60 transition-colors"
+              {...(page === 0 ? {} : buttonHoverProps)}
+            >
+              First
+            </motion.button>
+            <motion.button
               onClick={() => handlePageChange(page - 1)}
               disabled={page === 0}
-              className="px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-base text-apex-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-white/10 transition-colors"
+              className="px-3 py-2 bg-apex-black/40 border border-apex-white/10 rounded-lg text-base text-apex-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-black/60 transition-colors"
               {...(page === 0 ? {} : buttonHoverProps)}
             >
               Previous
             </motion.button>
-            <span className="text-sm text-white/60 font-mono">
-              Page {page + 1} of {totalPages}
-            </span>
+
+            {showLeadingEllipsis && (
+              <span className="px-1 text-xs text-apex-white/50 font-mono">
+                ...
+              </span>
+            )}
+
+            {visiblePages.map((pageNumber) => {
+              const isCurrent = pageNumber === page;
+              return (
+                <motion.button
+                  key={pageNumber}
+                  onClick={() => handlePageChange(pageNumber)}
+                  className={
+                    isCurrent
+                      ? "px-3 py-2 bg-apex-green/20 border border-apex-green/40 rounded-lg text-base text-apex-green font-mono"
+                      : "px-3 py-2 bg-apex-black/40 border border-apex-white/10 rounded-lg text-base text-apex-white font-mono hover:bg-apex-black/60 transition-colors"
+                  }
+                  {...(isCurrent ? {} : buttonHoverProps)}
+                >
+                  {pageNumber + 1}
+                </motion.button>
+              );
+            })}
+
+            {showTrailingEllipsis && (
+              <span className="px-1 text-xs text-apex-white/50 font-mono">
+                ...
+              </span>
+            )}
+
             <motion.button
               onClick={() => handlePageChange(page + 1)}
               disabled={page >= totalPages - 1}
-              className="px-4 py-2 bg-gradient-to-br from-white/5 to-transparent border border-apex-white/20 rounded-lg text-base text-apex-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-white/10 transition-colors"
+              className="px-3 py-2 bg-apex-black/40 border border-apex-white/10 rounded-lg text-base text-apex-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-black/60 transition-colors"
               {...(page >= totalPages - 1 ? {} : buttonHoverProps)}
             >
               Next
             </motion.button>
+            <motion.button
+              onClick={() => handlePageChange(totalPages - 1)}
+              disabled={page >= totalPages - 1}
+              className="px-3 py-2 bg-apex-black/40 border border-apex-white/10 rounded-lg text-base text-apex-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-black/60 transition-colors"
+              {...(page >= totalPages - 1 ? {} : buttonHoverProps)}
+            >
+              Last
+            </motion.button>
+            <span className="text-xs text-apex-white/60 font-mono">
+              Page {page + 1} of {totalPages}
+            </span>
           </motion.div>
         )}
       </motion.div>

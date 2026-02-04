@@ -1,5 +1,5 @@
 import { type ReactElement, useEffect } from 'react';
-import { X, Download, ExternalLink, Sparkles } from 'lucide-react';
+import { X, Download, ExternalLink, Rocket } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { buttonHoverProps, fastItemVariants, listContainerVariants } from '../lib/animations';
 import type { UpdateInfo } from '../hooks/useAppUpdate';
@@ -348,7 +348,7 @@ export default function UpdateModal({
               {/* Header */}
               <div className="flex items-start gap-4 mb-6 pr-8">
                 <div className="p-2 rounded-lg bg-apex-green/10 shrink-0">
-                  <Sparkles size={24} className="text-apex-green" />
+                  <Rocket size={24} className="text-apex-green" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-bold text-apex-white mb-2">
@@ -404,7 +404,7 @@ export default function UpdateModal({
                 ) : (
                   <motion.button
                     onClick={onDownload}
-                    className="flex-1 px-4 py-2.5 font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 bg-apex-green text-apex-black hover:bg-apex-green/90"
+                    className="flex-2 px-4 py-2.5 font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 bg-apex-green text-apex-black hover:bg-apex-green/90"
                     {...buttonHoverProps}
                   >
                     {canDirectDownload ? (

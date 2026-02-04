@@ -486,19 +486,25 @@ export default function Profile() {
               )}
             </div>
           </div>
-          <div className="flex items-center justify-between">
+          <div
+            className={`flex items-center justify-between ${!rpcToken ? 'opacity-50 pointer-events-none' : ''}`}
+          >
             <div>
               <p className="text-sm text-apex-white">Enable Rich Presence</p>
-              <p className="text-xs text-apex-white/40">Toggle Discord updates during rides.</p>
+              <p className="text-xs text-apex-white/40">
+                {rpcToken ? 'Toggle Discord updates during rides.' : 'Login with Discord to enable.'}
+              </p>
             </div>
             <motion.button
-              onClick={() => setRpcEnabled(!rpcEnabled)}
-              className={`relative h-6 w-11 rounded-full border transition-colors ${rpcEnabled ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
+              type="button"
+              aria-disabled={!rpcToken}
+              onClick={() => rpcToken && setRpcEnabled(!rpcEnabled)}
+              className={`relative h-6 w-11 rounded-full border transition-colors ${rpcToken && rpcEnabled ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
                 }`}
-              {...buttonHoverProps}
+              {...(rpcToken ? buttonHoverProps : {})}
             >
               <span
-                className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${rpcEnabled ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
+                className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${rpcToken && rpcEnabled ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
                   }`}
               />
             </motion.button>

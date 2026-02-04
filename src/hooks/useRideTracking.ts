@@ -643,6 +643,7 @@ export const useRideTracking = () => {
       const hasPermissions = await checkPermissions();
       if (!hasPermissions) {
         logger.debug('Permissions not granted, cannot start ride');
+        apexToast.error('Unable to start ride. Please check your location and motion permissions.');
         return;
       }
 

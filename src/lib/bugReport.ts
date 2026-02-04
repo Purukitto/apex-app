@@ -1,6 +1,5 @@
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
-import { Share } from '@capacitor/share';
 import { logger } from './logger';
 import { getAppVersion } from './version';
 
@@ -35,11 +34,9 @@ const getEnvironmentInfo = () => {
   };
 };
 
-const buildBugReportBody = (options: { logsText: string; includeLogsInline: boolean }) => {
+const buildBugReportBody = (options: { logsText: string}) => {
   const env = getEnvironmentInfo();
-  const logsSection = options.includeLogsInline
-    ? `## 🧾 Logs (Last 150 lines)\n\n\`\`\`\n${options.logsText}\n\`\`\`\n`
-    : '## 🧾 Logs (Last 150 lines)\n\nAttach the shared log file from the app.\n';
+  const logsSection = `## 🧾 Logs (Last 150 lines)\n\n\`\`\`\n${options.logsText}\n\`\`\`\n`;
 
   return `## 🐛 Bug Description
 
@@ -84,18 +81,16 @@ If you have ideas on how to fix this, please share them here.
 `;
 };
 
-export const createBugReportPayload = (options: { includeLogsInline: boolean }) => {
+export const createBugReportPayload = () => {
   const logsText = logger.getRecentLogsText().trim() || 'No logs available.';
-  const body = buildBugReportBody({ logsText, includeLogsInline: options.includeLogsInline });
+  const body = buildBugReportBody({ logsText});
   const params = new URLSearchParams({
     template: BUG_REPORT_TEMPLATE,
     title: '[BUG] ',
     body,
   });
-  return {
-    issueUrl: `${BUG_REPORT_URL}?${params.toString()}`,
-    logsText,
-  };
+  return `${BUG_REPORT_URL}?${params.toString()}`
+    
 };
 
 export const openBugReportIssue = async (issueUrl: string): Promise<void> => {
@@ -106,45 +101,5 @@ export const openBugReportIssue = async (issueUrl: string): Promise<void> => {
 
   if (typeof window !== 'undefined') {
     window.open(issueUrl, '_blank', 'noopener,noreferrer');
-  }
-};
-
-export const shareBugReportLogs = async (logsText: string, issueUrl: string): Promise<void> => {
-  if (!Capacitor.isNativePlatform()) {
-    return;
-  }
-
-  try {
-    const { Filesystem, Directory } = await import('@capacitor/filesystem');
-    const shareFileName = `apex-logs-bug-report-${Date.now()}.txt`;
-    const base64Data = btoa(unescape(encodeURIComponent(logsText)));
-
-    await Filesystem.writeFile({
-      path: shareFileName,
-      data: base64Data,
-      directory: Directory.Cache,
-    });
-
-    const fileUri = await Filesystem.getUri({
-      path: shareFileName,
-      directory: Directory.Cache,
-    });
-
-    await Share.share({
-      title: 'Apex Bug Report Logs',
-      text: `Attach this log file to your bug report.\n${issueUrl}`,
-      url: fileUri.uri,
-      dialogTitle: 'Share Logs',
-    });
-
-    Filesystem.deleteFile({
-      path: shareFileName,
-      directory: Directory.Cache,
-    }).catch((error) => {
-      logger.warn('Failed to delete bug report log file:', error);
-    });
-  } catch (error) {
-    logger.error('Failed to share bug report logs:', error);
-    throw error;
   }
 };

@@ -84,7 +84,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         },
       });
     }
-  }, [isNative]);
+  }, []);
 
   useShakeDetection({
     enabled: isNative && !isRideMode,

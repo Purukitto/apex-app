@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.7.1](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.7.1) (2026-02-04)
+
+
+### Features
+
+* aesthetic adjustments ([86e96ac](https://github.com/Purukitto/apex-app/commit/86e96acd85ed33db0b0bd6c7faa3aa11f77cf189))
+* enhance Discord integration in Profile component ([ffeae58](https://github.com/Purukitto/apex-app/commit/ffeae588bbd4e3519f07cbb8d14bc8d8b293de15))
+* enhance release notes handling and update modal functionality ([bf550dc](https://github.com/Purukitto/apex-app/commit/bf550dcd2317a1c20a436b3518c7be1571400fd8))
+* optimize map marker handling and improve bounds fitting logic ([2bb6209](https://github.com/Purukitto/apex-app/commit/2bb62097f13d787c0ac70069cdb7c85f80c8b232))
+
+
+### Bug Fixes
+
+* update icon in UpdateModal and adjust button flex properties ([94201cb](https://github.com/Purukitto/apex-app/commit/94201cb1561aa23b821511e009cb83439e74d49c))
+
+
+### Code Refactoring
+
+* simplify bug report functionality ([792c074](https://github.com/Purukitto/apex-app/commit/792c07404d689aae79835d8473d2388040511df1))
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump the development-dependencies group across 1 directory with 4 updates ([#87](https://github.com/Purukitto/apex-app/issues/87)) ([897e7e7](https://github.com/Purukitto/apex-app/commit/897e7e7a2c068d890d41bf9ebe14427a8ec87c22))
+* **deps-dev:** bump the development-dependencies group with 6 updates ([#89](https://github.com/Purukitto/apex-app/issues/89)) ([2942c7a](https://github.com/Purukitto/apex-app/commit/2942c7a0af20ec7c5390daa25cc2a0cbf61d24eb))
+* **deps:** bump the production-dependencies group with 9 updates ([#85](https://github.com/Purukitto/apex-app/issues/85)) ([856dc37](https://github.com/Purukitto/apex-app/commit/856dc3772794a46bba08ab288b74778d2e21af6c))
+* **deps:** bump the production-dependencies group with 9 updates ([#88](https://github.com/Purukitto/apex-app/issues/88)) ([3f9351e](https://github.com/Purukitto/apex-app/commit/3f9351e6d86e84451567e3167915ef296ffc5c7d))
+
 ## [1.7.0](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.7.0) (2026-01-25)
 
 

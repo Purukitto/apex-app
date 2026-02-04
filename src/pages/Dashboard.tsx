@@ -84,7 +84,7 @@ export default function Dashboard() {
 
       {/* Scrollable Content */}
       <motion.div
-        className="p-6 pb-32 space-y-6"
+        className="space-y-6"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -170,9 +170,8 @@ export default function Dashboard() {
                   )}
                 </div>
                 {lastRide && (
-                  <span className="text-sm font-mono text-apex-white/60 tabular-nums">
-                    {lastRide.distance_km.toFixed(1)} km
-                  </span>
+                  <span className="text-sm text-apex-white/60">{formatRideDate(lastRide.start_time)}</span>
+
                 )}
               </div>
               {lastRide && (
@@ -181,7 +180,9 @@ export default function Dashboard() {
                   {lastRideMaxLean > 0 && (
                     <span className="font-mono tabular-nums">{lastRideMaxLean.toFixed(1)}°</span>
                   )}
-                  <span className="text-apex-white/60">{formatRideDate(lastRide.start_time)}</span>
+                  <span className="font-mono tabular-nums">
+                    {lastRide.distance_km.toFixed(1)} km
+                  </span>
                 </div>
               )}
               <div className="mt-4 flex-1">

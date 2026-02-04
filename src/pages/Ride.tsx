@@ -19,6 +19,7 @@ import { RideStartupAnimation } from '../components/RideStartupAnimation';
 import DebugPanel from '../components/DebugPanel';
 import { logger } from '../lib/logger';
 import { getCityFromCoords } from '../utils/geocode';
+import ConfirmModal from '../components/ConfirmModal';
 
 /**
  * Web Fallback Component
@@ -34,18 +35,17 @@ const WebFallback = () => {
   useEffect(() => {
     const calculateDimensions = () => {
       if (typeof window === 'undefined') return;
-      
+
       const isMobile = window.innerWidth < 768;
-      // Account for header (3.5rem = 56px) and bottom nav (4rem = 64px) on mobile
       // Desktop has sidebar but no bottom nav
-      const headerHeight = isMobile ? 56 : 0;
-      const footerHeight = isMobile ? 64 : 0;
+      const headerHeight = isMobile ? 72 : 88;
+      const footerHeight = isMobile ? 104 : 70;
       const padding = isMobile ? 48 : 24; // Top and bottom padding
-      
+
       const viewportHeight = window.innerHeight;
       const available = viewportHeight - headerHeight - footerHeight - padding;
       setAvailableHeight(available);
-      
+
       // QR code should be proportional but not too large
       const viewportWidth = window.innerWidth;
       const maxQRSize = Math.min(
@@ -73,9 +73,9 @@ const WebFallback = () => {
   };
 
   return (
-    <div 
+    <div
       className="w-full bg-apex-black flex flex-col items-center justify-center"
-      style={{ 
+      style={{
         height: availableHeight > 0 ? `${availableHeight}px` : 'calc(100vh - 7rem)',
         maxHeight: '100vh',
         overflow: 'hidden'
@@ -98,7 +98,7 @@ const WebFallback = () => {
           >
             Recorder is Mobile Only
           </motion.h1>
-          
+
           <motion.p
             className="text-xs text-apex-white/40 text-center max-w-xs leading-relaxed"
             variants={itemVariants}
@@ -121,7 +121,7 @@ const WebFallback = () => {
               fgColor="var(--color-apex-black)"
             />
           </div>
-          
+
           <p className="text-[10px] md:text-xs text-apex-white/50 text-center font-normal tracking-wider uppercase">
             Scan to download the latest build (APK)
           </p>
@@ -307,7 +307,7 @@ const LongPressStopButton = ({ onLongPress, disabled }: LongPressButtonProps) =>
 
   return (
     <motion.button
-      className="relative w-full max-w-xs mx-auto py-6 px-8 bg-apex-red/20 border-2 border-apex-red rounded-lg font-bold text-apex-red text-xl disabled:opacity-50 disabled:cursor-not-allowed"
+      className="relative w-full max-w-xs mx-auto py-4 px-6 bg-apex-red/20 border-2 border-apex-red rounded-lg font-bold text-apex-red text-xl disabled:opacity-50 disabled:cursor-not-allowed"
       onMouseDown={handlePressStart}
       onMouseUp={handlePressEnd}
       onMouseLeave={handlePressEnd}
@@ -369,6 +369,7 @@ export default function Ride() {
   const [currentDuration, setCurrentDuration] = useState(0);
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [showStartupAnimation, setShowStartupAnimation] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const hasTriedCityRef = useRef(false);
 
   const getBikeDisplayName = (bike: BikeType | null) => {
@@ -379,17 +380,26 @@ export default function Ride() {
   // Restore state from Zustand store on mount
   useEffect(() => {
     const store = useRideStore.getState();
-    
+
     // Restore selected bike if it exists in store
     if (store.selectedBike && !selectedBike) {
       logger.trace('Restoring selected bike from store');
       setSelectedBike(store.selectedBike);
     }
-    
     // Note: The hook now restores its state from the store on initialization
     // So if recording was active, it should be restored automatically
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBike]);
+
+  // Auto-select bike if only one bike is available
+  useEffect(() => {
+    const store = useRideStore.getState();
+
+    if (bikes.length === 1 && !store.selectedBike) {
+      store.setSelectedBike(bikes[0]);
+      apexToast.success(`Auto-selected: ${bikes[0].nick_name || `${bikes[0].make} ${bikes[0].model}`}`);
+    }
+  }, [bikes]);
 
   // Calculate current speed from last coordinate (convert m/s to km/h)
   const lastCoord = coords.length > 0 ? coords[coords.length - 1] : null;
@@ -476,19 +486,13 @@ export default function Ride() {
       apexToast.error('No bikes available. Add a bike to your garage first.');
       return;
     }
-    
+
     // Always show bike selection if no bike is selected
     if (!selectedBike) {
-      if (bikes.length === 1) {
-        // Auto-select if only one bike
-        setSelectedBike(bikes[0]);
-        apexToast.success(`Selected: ${bikes[0].nick_name || `${bikes[0].make} ${bikes[0].model}`}`);
-        // Don't start automatically - let user click again
-        return;
-      } else {
-        setShowBikeSelection(true);
-        return;
-      }
+
+      setShowBikeSelection(true);
+      return;
+
     }
 
     // Bike is selected, start the ride
@@ -501,7 +505,7 @@ export default function Ride() {
       // Log technical details for debugging
       logger.error('Error starting ride:', error);
       logger.error('Start ride error details:', JSON.stringify(error, null, 2));
-      
+
       // Show user-friendly error (permission errors are already handled by checkPermissions)
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (!errorMessage.toLowerCase().includes('permission')) {
@@ -539,7 +543,7 @@ export default function Ride() {
       logger.trace('Stopping ride...');
       await stopRide(selectedBike.id, true);
       // Don't show toast here - saveRide mutation handles it via onSuccess/onError
-      
+
       // Reset UI state only if save succeeded (stopRide will throw if save fails)
       setSelectedBike(null);
       resetRide();
@@ -550,15 +554,15 @@ export default function Ride() {
       // Log technical details for debugging
       logger.error('Error stopping ride:', error);
       logger.error('Stop ride error details:', JSON.stringify(error, null, 2));
-      
+
       // Check if this is a save error - if so, the mutation's onError already showed a toast
-      const isSaveError = error instanceof Error && 
+      const isSaveError = error instanceof Error &&
         (error.message.toLowerCase().includes('save') ||
-         error.message.toLowerCase().includes('failed to save') ||
-         error.message.toLowerCase().includes('permission') ||
-         error.message.toLowerCase().includes('network') ||
-         error.message.toLowerCase().includes('authenticated'));
-      
+          error.message.toLowerCase().includes('failed to save') ||
+          error.message.toLowerCase().includes('permission') ||
+          error.message.toLowerCase().includes('network') ||
+          error.message.toLowerCase().includes('authenticated'));
+
       // Only show toast for non-save errors (save errors are handled by mutation's onError)
       if (!isSaveError) {
         let errorMessage = 'Failed to stop ride. Please try again.';
@@ -579,11 +583,30 @@ export default function Ride() {
     }
   };
 
+  const handleDiscardRide = async () => {
+    {
+      try {
+        await stopRide(undefined, false);
+        setSelectedBike(null);
+        resetRide();
+        setShowSafetyWarning(true);
+        setPreviousSpeed(0);
+        setShowStartupAnimation(false);
+        apexToast.success('Ride discarded');
+      } catch (error) {
+        logger.error('Error discarding ride:', error);
+        apexToast.error('Failed to discard ride');
+      } finally {
+        await clearRpcPresence(selectedBike);
+      }
+    }
+  }
+
   const handleCalibrate = async () => {
     if (isCalibrating) return;
-    
+
     setIsCalibrating(true);
-    
+
     // Trigger haptic feedback
     if (isNative) {
       try {
@@ -592,13 +615,13 @@ export default function Ride() {
         logger.warn('Haptic feedback not available:', error);
       }
     }
-    
+
     // Perform calibration
     calibrate();
-    
+
     // Show toast
     apexToast.success('Sensors Zeroed. Ready to lean.');
-    
+
     // Reset calibration animation after a short delay
     setTimeout(() => {
       setIsCalibrating(false);
@@ -619,7 +642,7 @@ export default function Ride() {
   if (bikes.length === 0) {
     return (
       <motion.div
-        className="flex flex-col items-center justify-center min-h-screen p-6 bg-apex-black"
+        className="flex flex-col items-center justify-center min-h-screen p-4 md:p-6 bg-apex-black"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -665,7 +688,7 @@ export default function Ride() {
               // Log technical details for debugging
               logger.error('Error starting ride:', error);
               logger.error('Start ride error details:', JSON.stringify(error, null, 2));
-              
+
               // Show user-friendly error (permission errors are already handled by checkPermissions)
               const errorMessage = error instanceof Error ? error.message : String(error);
               if (!errorMessage.toLowerCase().includes('permission')) {
@@ -683,12 +706,12 @@ export default function Ride() {
       />
 
       <motion.div
-        className={`bg-apex-black ${isRecording ? 'fixed inset-0 p-0 overflow-hidden z-0' : 'h-full p-4 md:p-6 overflow-y-auto'}`}
+        className={`bg-apex-black ${isRecording ? 'fixed inset-0 p-0 overflow-hidden z-0' : 'h-full overflow-y-auto'}`}
         style={isRecording ? {
-          paddingTop: 'env(safe-area-inset-top, 0px)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          paddingLeft: 'env(safe-area-inset-left, 0px)',
-          paddingRight: 'env(safe-area-inset-right, 0px)',
+          paddingTop: 'calc(env(safe-area-inset-top, 1rem) + 1rem)',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 1rem) + 1rem)',
+          paddingLeft: 'calc(env(safe-area-inset-left, 1rem) + 1rem)',
+          paddingRight: 'calc(env(safe-area-inset-right, 1rem) + 1rem)',
         } : undefined}
         variants={containerVariants}
         initial="hidden"
@@ -713,208 +736,208 @@ export default function Ride() {
           )}
         </AnimatePresence>
 
-      {/* Bike Selection Modal */}
-      <BikeSelectionModal
-        isOpen={showBikeSelection}
-        bikes={bikes}
-        onSelect={handleBikeSelect}
-        onClose={() => setShowBikeSelection(false)}
-      />
+        {/* Bike Selection Modal */}
+        <BikeSelectionModal
+          isOpen={showBikeSelection}
+          bikes={bikes}
+          onSelect={handleBikeSelect}
+          onClose={() => setShowBikeSelection(false)}
+        />
 
-      {!isRecording ? (
-        /* Start Ride View */
-        <motion.div
-          className="flex flex-col items-center justify-center py-8 space-y-6"
-          variants={itemVariants}
-        >
+        {!isRecording ? (
+          /* Start Ride View */
           <motion.div
-            className="text-center space-y-4"
+            className="flex flex-col items-center justify-center py-8 space-y-6"
             variants={itemVariants}
           >
-            <h1 className="text-xl md:text-2xl font-bold text-apex-white">Ready to Ride</h1>
-            <p className="text-sm text-apex-white/60">
-              Select a bike and start tracking your ride
-            </p>
-          </motion.div>
-
-          {/* Always show selected bike or prompt to select */}
-          <motion.div
-            className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md p-6 max-w-sm w-full"
-            variants={itemVariants}
-          >
-            {selectedBike ? (
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-apex-green/10 rounded-lg">
-                  <Motorbike size={20} className="text-apex-green" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-apex-white">
-                    {selectedBike.nick_name || `${selectedBike.make} ${selectedBike.model}`}
-                  </p>
-                  <p className="text-sm text-apex-white/60">
-                    {selectedBike.make} {selectedBike.model}
-                  </p>
-                </div>
-                <motion.button
-                  onClick={() => setShowBikeSelection(true)}
-                  className="text-apex-white/60 hover:text-apex-green text-sm"
-                  {...buttonHoverProps}
-                >
-                  Change
-                </motion.button>
-              </div>
-            ) : (
-              <div className="text-center">
-                <p className="text-apex-white/60 mb-3">No bike selected</p>
-                <motion.button
-                  onClick={() => setShowBikeSelection(true)}
-                  className="bg-apex-white/10 hover:bg-apex-white/20 text-apex-white px-4 py-2 rounded-lg text-sm"
-                  {...buttonHoverProps}
-                >
-                  Select Bike
-                </motion.button>
-              </div>
-            )}
-          </motion.div>
-
-          <motion.button
-            onClick={handleStartRide}
-            className="bg-apex-green text-apex-black font-bold py-4 px-8 rounded-lg text-lg disabled:bg-apex-white/10 disabled:text-apex-white/50 disabled:cursor-not-allowed"
-            variants={itemVariants}
-            {...((selectedBike && !isRecording) ? buttonHoverProps : {})}
-            disabled={!selectedBike || isRecording}
-          >
-            {isRecording ? 'Recording...' : selectedBike ? 'Start Ride' : 'Select Bike First'}
-          </motion.button>
-        </motion.div>
-      ) : (
-        /* Recording View - Dark Cockpit - Full Screen */
-        <div className="flex flex-col h-screen w-full p-6 overflow-y-auto">
-          {/* Header */}
-          <motion.div
-            className="text-center mb-6 mt-4"
-            variants={itemVariants}
-          >
-            <h2 className="text-xl font-bold text-apex-white mb-2">
-              {selectedBike
-                ? selectedBike.nick_name || `${selectedBike.make} ${selectedBike.model}`
-                : 'Recording Ride'}
-            </h2>
-            {isPaused && (
-              <p className="text-apex-green/60 text-sm">PAUSED</p>
-            )}
-          </motion.div>
-
-          {/* Telemetry Display */}
-          <div className="flex-1 flex flex-col items-center justify-center space-y-6 py-4">
-            {/* Lean Angle Gauges */}
-            <div className="w-full max-w-2xl flex items-center justify-between gap-8">
-              {/* Left Lean */}
-              <motion.div
-                className="flex-1 text-center"
-                variants={itemVariants}
-              >
-                <p className="text-sm text-apex-white/60 mb-2 uppercase tracking-wide">
-                  Max Left
-                </p>
-                <motion.div
-                  className="text-4xl font-mono font-bold text-apex-green"
-                  animate={{
-                    scale: maxLeanLeft > 0 ? [1, 1.05, 1] : 1,
-                  }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {maxLeanLeft.toFixed(1)}°
-                </motion.div>
-              </motion.div>
-
-              {/* Speedometer */}
-              <motion.div
-                className="flex-1 text-center"
-                variants={itemVariants}
-              >
-                <p className="text-sm text-apex-white/60 mb-4 uppercase tracking-wide">
-                  Speed
-                </p>
-                <motion.div
-                  className="text-7xl font-mono font-bold text-apex-green drop-shadow-[0_0_20px_rgba(0,255,65,0.5)]"
-                  animate={{
-                    scale: currentSpeed > previousSpeed ? [1, 1.1, 1] : 1,
-                  }}
-                  transition={{ duration: 0.4, ease: 'easeOut' }}
-                  key={currentSpeed} // Force re-animation on speed change
-                >
-                  {currentSpeed}
-                </motion.div>
-                <p className="text-sm text-apex-white/40 mt-2">km/h</p>
-              </motion.div>
-
-              {/* Right Lean */}
-              <motion.div
-                className="flex-1 text-center"
-                variants={itemVariants}
-              >
-                <p className="text-sm text-apex-white/60 mb-2 uppercase tracking-wide">
-                  Max Right
-                </p>
-                <motion.div
-                  className="text-4xl font-mono font-bold text-apex-green"
-                  animate={{
-                    scale: maxLeanRight > 0 ? [1, 1.05, 1] : 1,
-                  }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {maxLeanRight.toFixed(1)}°
-                </motion.div>
-              </motion.div>
-            </div>
-
-            {/* Current Lean Angle */}
             <motion.div
-              className="text-center"
+              className="text-center space-y-4"
               variants={itemVariants}
             >
-              <p className="text-sm text-apex-white/60 mb-2 uppercase tracking-wide">
-                Current Lean
+              <h1 className="text-xl md:text-2xl font-bold text-apex-white">Ready to Ride</h1>
+              <p className="text-sm text-apex-white/60">
+                Select a bike and start tracking your ride
               </p>
-              <motion.div
-                className="text-5xl font-mono font-bold text-apex-green"
-                animate={{
-                  scale: currentLean > 0 ? [1, 1.05, 1] : 1,
-                }}
-                transition={{ duration: 0.2 }}
-              >
-                {currentLean.toFixed(1)}°
-              </motion.div>
             </motion.div>
 
-            {/* Stats */}
+            {/* Always show selected bike or prompt to select */}
             <motion.div
-              className="grid grid-cols-2 gap-6 w-full max-w-md"
-              variants={containerVariants}
+              className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md p-6 max-w-sm w-full"
+              variants={itemVariants}
             >
+              {selectedBike ? (
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-apex-green/10 rounded-lg">
+                    <Motorbike size={20} className="text-apex-green" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-apex-white">
+                      {selectedBike.nick_name || `${selectedBike.make} ${selectedBike.model}`}
+                    </p>
+                    <p className="text-sm text-apex-white/60">
+                      {selectedBike.make} {selectedBike.model}
+                    </p>
+                  </div>
+                  <motion.button
+                    onClick={() => setShowBikeSelection(true)}
+                    className="text-apex-white/60 hover:text-apex-green text-sm"
+                    {...buttonHoverProps}
+                  >
+                    Change
+                  </motion.button>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <p className="text-apex-white/60 mb-3">No bike selected</p>
+                  <motion.button
+                    onClick={() => setShowBikeSelection(true)}
+                    className="bg-apex-white/10 hover:bg-apex-white/20 text-apex-white px-4 py-2 rounded-lg text-sm"
+                    {...buttonHoverProps}
+                  >
+                    Select Bike
+                  </motion.button>
+                </div>
+              )}
+            </motion.div>
+
+            <motion.button
+              onClick={handleStartRide}
+              className="bg-apex-green text-apex-black font-bold py-4 px-8 rounded-lg text-lg disabled:bg-apex-white/10 disabled:text-apex-white/50 disabled:cursor-not-allowed"
+              variants={itemVariants}
+              {...((selectedBike && !isRecording) ? buttonHoverProps : {})}
+              disabled={!selectedBike || isRecording}
+            >
+              {isRecording ? 'Recording...' : selectedBike ? 'Start Ride' : 'Select Bike First'}
+            </motion.button>
+          </motion.div>
+        ) : (
+          /* Recording View - Dark Cockpit - Full Screen */
+          <div className="flex flex-col h-screen w-full overflow-y-auto">
+            {/* Header */}
+            <motion.div
+              className="text-center mb-6 mt-4"
+              variants={itemVariants}
+            >
+              <h2 className="text-xl font-bold text-apex-white mb-2">
+                {selectedBike
+                  ? selectedBike.nick_name || `${selectedBike.make} ${selectedBike.model}`
+                  : 'Recording Ride'}
+              </h2>
+              {isPaused && (
+                <p className="text-apex-green/60 text-sm">PAUSED</p>
+              )}
+            </motion.div>
+
+            {/* Telemetry Display */}
+            <div className="flex-1 flex flex-col items-center justify-center space-y-6 py-4">
+              {/* Lean Angle Gauges */}
+              <div className="w-full max-w-2xl flex items-center justify-between gap-8">
+                {/* Left Lean */}
+                <motion.div
+                  className="flex-1 text-center"
+                  variants={itemVariants}
+                >
+                  <p className="text-sm text-apex-white/60 mb-2 uppercase tracking-wide">
+                    Max Left
+                  </p>
+                  <motion.div
+                    className="text-4xl font-mono font-bold text-apex-green"
+                    animate={{
+                      scale: maxLeanLeft > 0 ? [1, 1.05, 1] : 1,
+                    }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {maxLeanLeft.toFixed(1)}°
+                  </motion.div>
+                </motion.div>
+
+                {/* Speedometer */}
+                <motion.div
+                  className="flex-1 text-center"
+                  variants={itemVariants}
+                >
+                  <p className="text-sm text-apex-white/60 mb-4 uppercase tracking-wide">
+                    Speed
+                  </p>
+                  <motion.div
+                    className="text-7xl font-mono font-bold text-apex-green drop-shadow-[0_0_20px_rgba(0,255,65,0.5)]"
+                    animate={{
+                      scale: currentSpeed > previousSpeed ? [1, 1.1, 1] : 1,
+                    }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    key={currentSpeed} // Force re-animation on speed change
+                  >
+                    {currentSpeed}
+                  </motion.div>
+                  <p className="text-sm text-apex-white/40 mt-2">km/h</p>
+                </motion.div>
+
+                {/* Right Lean */}
+                <motion.div
+                  className="flex-1 text-center"
+                  variants={itemVariants}
+                >
+                  <p className="text-sm text-apex-white/60 mb-2 uppercase tracking-wide">
+                    Max Right
+                  </p>
+                  <motion.div
+                    className="text-4xl font-mono font-bold text-apex-green"
+                    animate={{
+                      scale: maxLeanRight > 0 ? [1, 1.05, 1] : 1,
+                    }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {maxLeanRight.toFixed(1)}°
+                  </motion.div>
+                </motion.div>
+              </div>
+
+              {/* Current Lean Angle */}
               <motion.div
-                className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md p-4 text-center"
+                className="text-center"
                 variants={itemVariants}
               >
-                <p className="text-xs text-apex-white/60 mb-1 uppercase tracking-wide">
-                  Distance
+                <p className="text-sm text-apex-white/60 mb-2 uppercase tracking-wide">
+                  Current Lean
                 </p>
-                <p className="text-2xl font-mono font-bold text-apex-green">
-                  {distanceKm.toFixed(2)}
-                </p>
-                <p className="text-xs text-apex-white/40 mt-1">km</p>
+                <motion.div
+                  className="text-5xl font-mono font-bold text-apex-green"
+                  animate={{
+                    scale: currentLean > 0 ? [1, 1.05, 1] : 1,
+                  }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {currentLean.toFixed(1)}°
+                </motion.div>
               </motion.div>
+
+              {/* Stats */}
               <motion.div
-                className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md p-4 text-center"
-                variants={itemVariants}
+                className="grid grid-cols-2 gap-6 w-full max-w-md"
+                variants={containerVariants}
               >
-                <p className="text-xs text-apex-white/60 mb-1 uppercase tracking-wide">
-                  Duration
-                </p>
-                <p className="text-2xl font-mono font-bold text-apex-white">
-                  {currentDuration > 0
-                    ? (() => {
+                <motion.div
+                  className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md p-4 text-center"
+                  variants={itemVariants}
+                >
+                  <p className="text-xs text-apex-white/60 mb-1 uppercase tracking-wide">
+                    Distance
+                  </p>
+                  <p className="text-2xl font-mono font-bold text-apex-green">
+                    {distanceKm.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-apex-white/40 mt-1">km</p>
+                </motion.div>
+                <motion.div
+                  className="bg-linear-to-br from-white/5 to-transparent border border-apex-white/20 rounded-md p-4 text-center"
+                  variants={itemVariants}
+                >
+                  <p className="text-xs text-apex-white/60 mb-1 uppercase tracking-wide">
+                    Duration
+                  </p>
+                  <p className="text-2xl font-mono font-bold text-apex-white">
+                    {currentDuration > 0
+                      ? (() => {
                         const hours = Math.floor(currentDuration / 3600);
                         const minutes = Math.floor((currentDuration % 3600) / 60);
                         const seconds = currentDuration % 60;
@@ -923,109 +946,109 @@ export default function Ride() {
                         }
                         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
                       })()
-                    : '0:00'}
-                </p>
-                <p className="text-xs text-apex-white/40 mt-1">
-                  {currentDuration >= 3600 ? 'hrs' : 'min'}
-                </p>
+                      : '0:00'}
+                  </p>
+                  <p className="text-xs text-apex-white/40 mt-1">
+                    {currentDuration >= 3600 ? 'hrs' : 'min'}
+                  </p>
+                </motion.div>
               </motion.div>
-            </motion.div>
 
-            {/* Debug Panels */}
-            <div className="w-full max-w-md space-y-2">
-              <DebugPanel 
-                title="coordinates" 
-                data={{ count: coords.length, lastCoord: coords[coords.length - 1] || null }}
-                maxHeight="max-h-24"
-              />
-              <DebugPanel 
-                title="telemetry" 
-                data={{ 
-                  currentLean, 
-                  maxLeanLeft, 
-                  maxLeanRight, 
-                  currentSpeed, 
-                  distanceKm,
-                  duration: currentDuration 
-                }}
-                maxHeight="max-h-24"
-              />
-            </div>
+              {/* Debug Panels */}
+              <div className="w-full max-w-md space-y-2">
+                <DebugPanel
+                  title="coordinates"
+                  data={{ count: coords.length, lastCoord: coords[coords.length - 1] || null }}
+                  maxHeight="max-h-24"
+                />
+                <DebugPanel
+                  title="telemetry"
+                  data={{
+                    currentLean,
+                    maxLeanLeft,
+                    maxLeanRight,
+                    currentSpeed,
+                    distanceKm,
+                    duration: currentDuration
+                  }}
+                  maxHeight="max-h-24"
+                />
+              </div>
 
-            {/* Calibrate Button */}
-            <motion.div
-              className="mt-4"
-              variants={itemVariants}
-            >
-              <motion.button
-                onClick={handleCalibrate}
-                disabled={isCalibrating}
-                className="relative w-full max-w-xs mx-auto py-3 px-6 bg-apex-white/10 border border-apex-white/20 rounded-lg font-semibold text-apex-white text-sm disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
-                {...buttonHoverProps}
+              {/* Calibrate Button */}
+              <motion.div
+                className="mt-4"
+                variants={itemVariants}
               >
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  <Gauge size={18} />
-                  {isCalibrating ? 'Recalibrating...' : 'Calibrate'}
-                </span>
-                {isCalibrating && (
-                  <>
-                    {/* Ripple effect */}
-                    <motion.div
-                      className="absolute inset-0 bg-apex-green/20"
-                      initial={{ scale: 0, opacity: 1 }}
-                      animate={{
-                        scale: [0, 2, 2.5],
-                        opacity: [1, 0.5, 0],
-                      }}
-                      transition={{
-                        duration: 1,
-                        ease: 'easeOut',
-                        repeat: Infinity,
-                      }}
-                      style={{
-                        borderRadius: '50%',
-                        left: '50%',
-                        top: '50%',
-                        x: '-50%',
-                        y: '-50%',
-                        width: '100%',
-                        height: '100%',
-                      }}
-                    />
-                    <motion.div
-                      className="absolute inset-0 bg-apex-green/20"
-                      initial={{ scale: 0, opacity: 1 }}
-                      animate={{
-                        scale: [0, 2, 2.5],
-                        opacity: [1, 0.5, 0],
-                      }}
-                      transition={{
-                        duration: 1,
-                        ease: 'easeOut',
-                        delay: 0.3,
-                        repeat: Infinity,
-                      }}
-                      style={{
-                        borderRadius: '50%',
-                        left: '50%',
-                        top: '50%',
-                        x: '-50%',
-                        y: '-50%',
-                        width: '100%',
-                        height: '100%',
-                      }}
-                    />
-                  </>
-                )}
-              </motion.button>
-            </motion.div>
+                <motion.button
+                  onClick={handleCalibrate}
+                  disabled={isCalibrating}
+                  className="relative w-full max-w-xs mx-auto py-2 px-4 bg-apex-white/10 border border-apex-white/20 rounded-lg font-semibold text-apex-white text-sm disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+                  {...buttonHoverProps}
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    <Gauge size={18} />
+                    {isCalibrating ? 'Recalibrating...' : 'Recalibrate'}
+                  </span>
+                  {isCalibrating && (
+                    <>
+                      {/* Ripple effect */}
+                      <motion.div
+                        className="absolute inset-0 bg-apex-green/20"
+                        initial={{ scale: 0, opacity: 1 }}
+                        animate={{
+                          scale: [0, 2, 2.5],
+                          opacity: [1, 0.5, 0],
+                        }}
+                        transition={{
+                          duration: 1,
+                          ease: 'easeOut',
+                          repeat: Infinity,
+                        }}
+                        style={{
+                          borderRadius: '50%',
+                          left: '50%',
+                          top: '50%',
+                          x: '-50%',
+                          y: '-50%',
+                          width: '100%',
+                          height: '100%',
+                        }}
+                      />
+                      <motion.div
+                        className="absolute inset-0 bg-apex-green/20"
+                        initial={{ scale: 0, opacity: 1 }}
+                        animate={{
+                          scale: [0, 2, 2.5],
+                          opacity: [1, 0.5, 0],
+                        }}
+                        transition={{
+                          duration: 1,
+                          ease: 'easeOut',
+                          delay: 0.3,
+                          repeat: Infinity,
+                        }}
+                        style={{
+                          borderRadius: '50%',
+                          left: '50%',
+                          top: '50%',
+                          x: '-50%',
+                          y: '-50%',
+                          width: '100%',
+                          height: '100%',
+                        }}
+                      />
+                    </>
+                  )}
+                </motion.button>
+              </motion.div>
 
-            {/* Stop Buttons */}
-            <motion.div
-              className="mt-6 space-y-3"
-              variants={itemVariants}
-            >
-              {/* Save and Stop Button */}
+              {/* Stop Buttons */}
+              <motion.div
+                className="mt-6 space-y-3"
+                variants={itemVariants}
+              >
+                {/* Save and Stop Button */}
               <LongPressStopButton
                 onLongPress={handleStopRide}
                 disabled={saveRide.isPending}
@@ -1036,22 +1059,7 @@ export default function Ride() {
               
               {/* Discard Button */}
               <motion.button
-                onClick={async () => {
-                  try {
-                    await stopRide(undefined, false);
-                    setSelectedBike(null);
-                    resetRide();
-                    setShowSafetyWarning(true);
-                    setPreviousSpeed(0);
-                    setShowStartupAnimation(false);
-                    apexToast.success('Ride discarded');
-                  } catch (error) {
-                    logger.error('Error discarding ride:', error);
-                    apexToast.error('Failed to discard ride');
-                  } finally {
-                    await clearRpcPresence(selectedBike);
-                  }
-                }}
+                onClick={() => setShowConfirmModal(true)}
                 disabled={saveRide.isPending}
                 className="w-full max-w-xs mx-auto py-3 px-6 bg-apex-white/5 border border-apex-white/20 rounded-lg font-semibold text-apex-white/60 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-apex-white/10 hover:border-apex-white/30 hover:text-apex-white transition-colors"
                 {...buttonHoverProps}
@@ -1061,11 +1069,27 @@ export default function Ride() {
               <p className="text-xs text-apex-white/30 text-center">
                 Discard without saving
               </p>
-            </motion.div>
+            </motion.div> 
+            </div>
           </div>
-        </div>
-      )}
-    </motion.div>
+        )}
+        <ConfirmModal
+          isOpen={showConfirmModal}
+          onClose={() => {
+            setShowConfirmModal(false);
+          }}
+          onConfirm={() => {
+            handleDiscardRide();
+            setShowConfirmModal(false);
+          }}
+          title="Discard Ride?"
+          message="Are you sure you want to discard the ride? This action cannot be undone."
+          confirmLabel="Discard"
+          cancelLabel="Cancel"
+          variant="warning"
+          isLoading={saveRide.isPending}
+        />
+      </motion.div>
     </>
   );
 }

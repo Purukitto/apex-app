@@ -36,7 +36,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const mainRef = useRef<HTMLElement>(null);
   const isRecording = useRideStore((state) => state.isRecording);
   const isNative = Capacitor.isNativePlatform();
-  
+
   // Hide navigation when recording (full-screen ride mode)
   const isRideMode = isRecording && location.pathname === '/ride';
   const pillRoutes = ['/dashboard', '/garage', '/rides', '/ride'];
@@ -117,7 +117,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         unreadCount,
       }}
     >
-      <div className={`h-screen bg-apex-black flex flex-col overflow-hidden ${isRideMode ? 'fixed inset-0' : ''}`}>
+      <div className={`h-screen bg-apex-black flex flex-col overflow-scroll ${isRideMode ? 'fixed inset-0' : ''}`}>
         <div
           className="pointer-events-none fixed inset-0 -z-10 bg-noise"
           style={{
@@ -129,14 +129,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
         />
         {/* Sticky Page Header - Hidden in ride mode */}
         {!isRideMode && (
-          <div 
+          <div
             className="sticky top-0 z-40 bg-apex-black border-b border-apex-white/5"
             style={{
               paddingTop: 'env(safe-area-inset-top, 0px)',
             }}
           >
             <motion.div
-              className="p-6"
+              className="p-4 md:p-6"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
@@ -147,15 +147,20 @@ export default function MainLayout({ children }: MainLayoutProps) {
         )}
 
         {/* Main Content */}
-        <main 
-          ref={mainRef} 
-          className={`flex-1 min-h-0 transition-all overflow-y-auto bg-apex-black ${
-            isRideMode ? 'pb-0' : showBottomNav ? 'pb-32' : 'pb-10'
-          }`}
-          style={{ overscrollBehaviorY: 'contain' }}
+        <main
+          ref={mainRef}
         >
-          <AnimatePresence mode="wait" key={location.pathname}>
-            {children}
+          <AnimatePresence mode="wait" key={location.pathname}
+          >
+            <div
+              style={{ paddingBottom: `calc(1rem + env(safe-area-inset-bottom, 0px))` }}>
+              <div
+                className={`flex-1 min-h-0 transition-all p-4 overflow-y-auto bg-apex-black ${isRideMode ? 'pb-0' : showBottomNav ? 'pb-26 md:pb-13' : 'pb-4 md:pb-2'}`}
+                style={{ overscrollBehaviorY: 'contain' }}
+              >
+                {children}
+              </div>
+            </div>
           </AnimatePresence>
         </main>
 

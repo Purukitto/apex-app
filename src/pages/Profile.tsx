@@ -445,7 +445,7 @@ export default function Profile() {
       </p>
       {!isDiscordRpcSupported ? (
         <div className="text-xs text-apex-white/40">
-          Discord RPC is available on Android only.
+          Discord RPC is available only on Android devices.
         </div>
       ) : (
         <div className="space-y-3">
@@ -571,7 +571,7 @@ export default function Profile() {
   return (
     <div className="h-full">
       <motion.div
-        className="p-6 pb-32 space-y-6"
+        className="space-y-6"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -579,7 +579,7 @@ export default function Profile() {
         <motion.div className="space-y-4" variants={containerVariants}>
           {/* Page Header */}
           <motion.div
-            className="flex items-center gap-4"
+            className="flex items-center gap-2 md:gap-4"
             variants={itemVariants}
           >
             <motion.button
@@ -590,7 +590,7 @@ export default function Profile() {
               <ArrowLeft size={24} />
             </motion.button>
             <div className="flex-1">
-              <h1 className="text-xl md:text-2xl font-bold text-apex-white tracking-tight">
+              <h1 className="text-lg md:text-xl font-bold text-apex-white tracking-tight text-wrap">
                 Profile
               </h1>
               <p className="text-sm text-apex-white/60 mt-1">

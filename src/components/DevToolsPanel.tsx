@@ -65,7 +65,8 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
     latestVersion: 'v9.9.9',
     currentVersion: getAppVersion(),
     releaseNotes: [
-      '## [9.9.9]',
+      '## v9.9.9',
+      '',
       '### Features',
       '* Instant launch with cached route data',
       '* New ride highlights carousel',
@@ -79,6 +80,13 @@ export default function DevToolsPanel({ isOpen, onClose }: DevToolsPanelProps) {
       '* Smaller bundle for analytics',
       '### Security',
       '* Hardened session refresh handling',
+      '',
+      '## v9.9.8',
+      '',
+      '### Features',
+      '* Route caching for offline maps',
+      '### Bug Fixes',
+      '* Fix update modal not showing previous versions',
     ].join('\n'),
     releaseUrl: 'https://github.com/Purukitto/apex-app/releases/latest',
     downloadUrl: Capacitor.getPlatform() === 'android'

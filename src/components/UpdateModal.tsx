@@ -51,186 +51,115 @@ export default function UpdateModal({
     onClose();
   };
 
-  // Parse release notes (markdown-like formatting)
-  // Combines sections from multiple versions into a single organized changelog
+  // Clean a single line of markdown (links, hashes, etc.) for display
+  const cleanLine = (line: string): string =>
+    line
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/([^*])\*([^*\n]+?)\*([^*])/g, '$1$2$3')
+      .replace(/\(\[[a-f0-9]{7,}\]\([^)]+\)\)/gi, '')
+      .replace(/\(\[[a-f0-9]{7,}\]\)/gi, '')
+      .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
+      .replace(/https?:\/\/github\.com\/[^\s)]+/gi, '')
+      .replace(/\s+\([a-f0-9]{7,}\)\s*$/, '')
+      .replace(/[ \t]{2,}/g, ' ')
+      .trim();
+
+  // Parse release notes: preserve version segments (## vX.Y.Z) and allowed sections per version.
+  // Supports combined notes from multiple releases (newest first), like release.yml changelog style.
   const formatReleaseNotes = (notes: string): string => {
     if (!notes) return 'No release notes available.';
-    
-    // Only keep Features, Bug Fixes, Styles, Performance, and Security sections
+
     const allowedSections = ['Features', 'Bug Fixes', 'Styles', 'Performance', 'Security'];
     const lines = notes.split('\n');
-    
-    // Track versions and their sections
-    interface SectionItem {
-      content: string;
-      version?: string;
-    }
-    
-    const sections: Record<string, SectionItem[]> = {};
+
+    // Match version headers: ## v1.7.0 or ## [1.7.0] or ### [1.7.0]
+    const versionHeaderRe = /^(##|###)\s+(?:v?([0-9]+\.[0-9]+\.[0-9]+)|\[([0-9]+\.[0-9]+\.[0-9]+)\])/;
+    const sectionHeaderRe = /^###\s+(.+?)\s*$/;
+
+    type VersionBlock = { version: string; sections: Array<{ name: string; items: string[] }> };
+    const versionBlocks: VersionBlock[] = [];
+    let currentBlock: VersionBlock | null = null;
     let currentSection: string | null = null;
-    let currentVersion: string | null = null;
-    let currentSectionItems: string[] = [];
-    let insideVersion = false;
-    
-    // First pass: collect all items by section type
+    let currentItems: string[] = [];
+
+    const flushSection = () => {
+      if (currentBlock && currentSection && currentItems.length > 0) {
+        const existing = currentBlock.sections.find((s) => s.name === currentSection!);
+        if (existing) {
+          existing.items.push(...currentItems);
+        } else {
+          currentBlock.sections.push({ name: currentSection!, items: [...currentItems] });
+        }
+        currentItems = [];
+      }
+      currentSection = null;
+    };
+
+    const flushVersion = () => {
+      flushSection();
+      if (currentBlock && currentBlock.sections.length > 0) {
+        versionBlocks.push(currentBlock);
+      }
+      currentBlock = null;
+    };
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      
-      // Check if this is a version header (## [0.14.0] for major or ### [0.14.5] for minor/patch)
-      const versionMatch = line.match(/^(##|###)\s+\[([0-9]+\.[0-9]+\.[0-9]+)\]/);
+      const versionMatch = line.match(versionHeaderRe);
       if (versionMatch) {
-        // Save previous section if we were collecting
-        if (currentSection && currentSectionItems.length > 0) {
-          if (!sections[currentSection]) {
-            sections[currentSection] = [];
-          }
-          sections[currentSection].push({
-            content: currentSectionItems.join('\n'),
-            version: currentVersion || undefined,
-          });
-          currentSectionItems = [];
-        }
-        
-        currentVersion = versionMatch[2];
-        currentSection = null;
-        insideVersion = true;
+        flushVersion();
+        const version = versionMatch[2] || versionMatch[3] || '';
+        currentBlock = { version, sections: [] };
         continue;
       }
-      
-      // Check if this is a section header (### Section Name)
-      // Only match if it's not a version header (which also starts with ###)
-      const sectionMatch = line.match(/^###\s+(.+?)\s*$/);
-      if (sectionMatch && insideVersion) {
-        // Save previous section if we were collecting
-        if (currentSection && currentSectionItems.length > 0) {
-          if (!sections[currentSection]) {
-            sections[currentSection] = [];
-          }
-          sections[currentSection].push({
-            content: currentSectionItems.join('\n'),
-            version: currentVersion || undefined,
-          });
-          currentSectionItems = [];
-        }
-        
-        const sectionName = sectionMatch[1].trim();
-        // Check if this section should be included
-        const isAllowed = allowedSections.some(
-          allowed => sectionName.toLowerCase() === allowed.toLowerCase()
-        );
-        
+
+      const sectionMatch = line.match(sectionHeaderRe);
+      if (sectionMatch && currentBlock) {
+        flushSection();
+        const name = sectionMatch[1].trim();
+        const isAllowed = allowedSections.some((a) => a.toLowerCase() === name.toLowerCase());
         if (isAllowed) {
-          currentSection = sectionName;
-        } else {
-          currentSection = null;
+          currentSection = name;
         }
         continue;
       }
-      
-      // Collect content for current section
-      if (currentSection && line.trim() && insideVersion) {
-        currentSectionItems.push(line);
+
+      if (currentBlock && currentSection && line.trim() && (line.startsWith('*') || line.startsWith('-'))) {
+        const cleaned = cleanLine(line).replace(/^[*\-+]\s+/, '').trim();
+        if (cleaned) currentItems.push(cleaned);
       }
     }
-    
-    // Save last section if we were collecting
-    if (currentSection && currentSectionItems.length > 0) {
-      if (!sections[currentSection]) {
-        sections[currentSection] = [];
-      }
-      sections[currentSection].push({
-        content: currentSectionItems.join('\n'),
-        version: currentVersion || undefined,
-      });
-    }
-    
-    // Second pass: combine sections and format
+    flushVersion();
+
+    // Build output: ## vX.Y.Z then ### Section then items, per version
     const output: string[] = [];
-    
-    // Output sections in preferred order
-    for (const sectionName of allowedSections) {
-      if (sections[sectionName] && sections[sectionName].length > 0) {
-        output.push(`### ${sectionName}`);
-        output.push('');
-        
-        // Combine all items from this section across all versions
-        const allItems: string[] = [];
-        for (const item of sections[sectionName]) {
-          const items = item.content
-            .split('\n')
-            .map(line => line.trim())
-            .filter(line => {
-              // Keep list items (starting with *) and non-empty lines that look like content
-              return line.length > 0 && (line.startsWith('*') || line.startsWith('-'));
-            });
-          
-          allItems.push(...items);
-        }
-        
-        // Remove duplicates (same commit message) while preserving order
-        const seen = new Set<string>();
-        const uniqueItems: string[] = [];
-        for (const item of allItems) {
-          // Normalize item for comparison (remove commit hashes, links, etc.)
-          const normalized = item
-            .replace(/\(\[[a-f0-9]{7,}\]\)/gi, '')
-            .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
-            .replace(/https?:\/\/github\.com\/[^\s)]+/gi, '')
-            .replace(/\s+\([a-f0-9]{7,}\)\s*$/, '')
-            .trim();
-          
-          if (normalized && !seen.has(normalized)) {
-            seen.add(normalized);
-            uniqueItems.push(item);
+    for (const block of versionBlocks) {
+      output.push(`## v${block.version}`);
+      output.push('');
+      for (const sectionName of allowedSections) {
+        const section = block.sections.find((s) => s.name.toLowerCase() === sectionName.toLowerCase());
+        if (section && section.items.length > 0) {
+          const seen = new Set<string>();
+          const unique = section.items.filter((item) => {
+            const n = item.trim();
+            if (!n || seen.has(n)) return false;
+            seen.add(n);
+            return true;
+          });
+          output.push(`### ${sectionName}`);
+          output.push('');
+          for (const item of unique) {
+            output.push(`* ${item.trim()}`);
           }
+          output.push('');
         }
-        
-        output.push(...uniqueItems);
-        output.push('');
       }
     }
-    
-    const combined = output.join('\n');
-    
-        // Clean up formatting - preserve section headers (### Section Name) and list markers (*)
-        return combined
-          .split('\n')
-          .map(line => {
-            // Clean up markdown formatting
-            const cleaned = line
-              // Remove bold markdown (handles **text** and **scope:** patterns)
-              .replace(/\*\*(.*?)\*\*/g, '$1')
-              // Remove italic markdown (careful not to break list markers)
-              // Match *text* but not * at start of line (list marker)
-              .replace(/([^*])\*([^*\n]+?)\*([^*])/g, '$1$2$3')
-              // Remove GitHub commit links in format ([hash](url))
-              .replace(/\(\[[a-f0-9]{7,}\]\([^)]+\)\)/gi, '')
-              // Remove GitHub commit links in format ([hash])
-              .replace(/\(\[[a-f0-9]{7,}\]\)/gi, '')
-              // Remove GitHub URLs in markdown links [text](url)
-              .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
-              // Remove standalone GitHub URLs
-              .replace(/https?:\/\/github\.com\/[^\s)]+/gi, '')
-              // Remove commit hash references at end in format (hash)
-              .replace(/\s+\([a-f0-9]{7,}\)\s*$/, '')
-              // Clean up multiple spaces
-              .replace(/[ \t]{2,}/g, ' ')
-              // Clean up trailing whitespace
-              .trim();
-            
-            // Preserve section headers exactly as they are (### Section Name)
-            if (cleaned.match(/^###\s+/)) {
-              return cleaned;
-            }
-            
-            // For other lines, ensure they're trimmed
-            return cleaned;
-          })
-          .filter(line => line.length > 0)
-          .join('\n')
-          // Clean up multiple newlines (keep max 2)
-          .replace(/\n{3,}/g, '\n\n')
-          .trim();
+
+    return output
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim() || 'No release notes available.';
   };
 
   const formattedNotes = formatReleaseNotes(updateInfo.releaseNotes);
@@ -266,12 +195,10 @@ export default function UpdateModal({
           <motion.ul
             key={`list-${listKey++}`}
             variants={fastItemVariants}
-            className="space-y-2 mb-4 last:mb-0"
+            className="space-y-2 mb-4 last:mb-0 list-none pl-0"
           >
             {currentListItems.map((item, idx) => {
-              // Remove list marker (*, -, or +) and clean up the text
               let cleanText = item.replace(/^[*\-+]\s+/, '').trim();
-              // Capitalize first character
               if (cleanText.length > 0) {
                 cleanText = cleanText.charAt(0).toUpperCase() + cleanText.slice(1);
               }
@@ -279,10 +206,12 @@ export default function UpdateModal({
                 <motion.li
                   key={idx}
                   variants={fastItemVariants}
-                  className="text-sm text-apex-white/80 leading-relaxed flex items-start gap-2"
+                  className="flex items-start gap-2 text-sm text-apex-white/80 leading-relaxed"
                 >
-                  <span className="text-apex-green shrink-0 mt-1.5">•</span>
-                  <span className="flex-1 wrap-break-word">{cleanText}</span>
+                  <span className="text-apex-green shrink-0 w-4 flex justify-center pt-0.5" aria-hidden>
+                    •
+                  </span>
+                  <span className="flex-1 min-w-0 wrap-break-word">{cleanText}</span>
                 </motion.li>
               );
             })}
@@ -294,31 +223,45 @@ export default function UpdateModal({
 
     lines.forEach((line, idx) => {
       const trimmed = line.trim();
-      
-      // Section header (### Section Name) - must be exactly 3 hashes followed by space
-      if (trimmed.match(/^###\s+[^#]/)) {
+
+      // Version header (## vX.Y.Z) - segment divider
+      if (trimmed.match(/^##\s+/)) {
+        flushList();
+        const versionLabel = trimmed.replace(/^##\s+/, '').trim();
+        const isFirst = elements.length === 0;
+        elements.push(
+          <motion.h4
+            key={`version-${idx}`}
+            variants={fastItemVariants}
+            className={`text-base font-semibold text-apex-green border-b border-apex-white/10 pb-2 mb-3 ${isFirst ? 'mt-0' : 'mt-6'}`}
+          >
+            {versionLabel}
+          </motion.h4>
+        );
+      }
+      // Section header (### Section Name)
+      else if (trimmed.match(/^###\s+[^#]/)) {
         flushList();
         const sectionName = trimmed.replace(/^###\s+/, '').trim();
-        const isFirstSection = elements.length === 0;
         elements.push(
           <motion.h5
             key={`section-${idx}`}
             variants={fastItemVariants}
-            className={`text-base font-semibold text-apex-white mb-3 ${isFirstSection ? 'mt-0' : 'mt-5'}`}
+            className="text-sm font-semibold text-apex-white/90 mb-2 mt-2"
           >
             {sectionName}
           </motion.h5>
         );
       }
-      // List item (* or - or +) - must start with marker followed by space
+      // List item (* or - or +)
       else if (trimmed.match(/^[*\-+]\s+/)) {
         currentListItems.push(trimmed);
       }
-      // Empty line - flush list if we have items
+      // Empty line
       else if (!trimmed) {
         flushList();
       }
-      // Regular text (shouldn't happen with current formatting, but handle it gracefully)
+      // Regular text
       else if (trimmed) {
         flushList();
         elements.push(

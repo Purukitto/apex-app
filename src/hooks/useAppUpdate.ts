@@ -13,6 +13,7 @@ import { apexToast } from '../lib/toast';
 
 const GITHUB_REPO = 'Purukitto/apex-app';
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
+const GITHUB_RELEASES_LIST_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases?per_page=50`;
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const LAST_CHECK_KEY = 'app_update_last_check';
 const LAST_VERSION_KEY = 'app_update_last_version';
@@ -128,6 +129,54 @@ async function fetchLatestRelease(): Promise<GitHubRelease | null> {
   } catch (error) {
     logger.error('Error fetching GitHub release:', error);
     return null;
+  }
+}
+
+/**
+ * Fetches all releases and returns combined release notes for every version
+ * newer than currentVersion (newest first), segmented by version.
+ */
+async function fetchReleaseNotesSinceVersion(currentVersion: string): Promise<string> {
+  try {
+    const response = await fetch(GITHUB_RELEASES_LIST_URL, {
+      headers: {
+        'Accept': 'application/vnd.github.v3+json',
+      },
+    });
+
+    if (!response.ok) {
+      logger.warn('Failed to fetch releases list:', response.statusText);
+      return '';
+    }
+
+    const releases = (await response.json()) as GitHubRelease[];
+    const current = currentVersion.replace(/^v/, '');
+
+    const newerReleases = releases
+      .filter((r) => {
+        const tag = r.tag_name.replace(/^v/, '');
+        return compareVersions(tag, current) > 0;
+      })
+      .sort((a, b) => compareVersions(b.tag_name, a.tag_name)); // newest first
+
+    if (newerReleases.length === 0) {
+      return '';
+    }
+
+    const segments = newerReleases.map((r) => {
+      const body = (r.body || '').trim();
+      const versionHeader = `## ${r.tag_name}`;
+      // If body already starts with this version header, avoid duplicating
+      if (body.startsWith(`## ${r.tag_name}`) || body.startsWith(`## [${r.tag_name.replace(/^v/, '')}]`)) {
+        return body;
+      }
+      return body ? `${versionHeader}\n\n${body}` : versionHeader;
+    });
+
+    return segments.join('\n\n');
+  } catch (error) {
+    logger.warn('Error fetching releases for changelog:', error);
+    return '';
   }
 }
 
@@ -272,8 +321,11 @@ export function useAppUpdate() {
       await setLastCheckTime(Date.now());
 
       if (hasUpdate) {
+        const combinedNotes = await fetchReleaseNotesSinceVersion(currentVersion);
         const info = createUpdateInfo(release);
-
+        if (combinedNotes) {
+          info.releaseNotes = combinedNotes;
+        }
         setUpdateInfo(info);
         setIsChecking(false);
         setHasCheckedNoUpdate(false);

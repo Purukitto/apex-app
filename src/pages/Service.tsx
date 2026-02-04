@@ -72,14 +72,14 @@ export default function Service() {
   return (
     <div className="h-full">
       <motion.div
-        className="p-6 pb-32 space-y-6"
+        className="space-y-6"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         {/* Header */}
         <motion.div
-          className="flex items-center gap-4"
+          className="flex items-center gap-2 md:gap-4"
           variants={itemVariants}
         >
           <motion.button
@@ -90,7 +90,7 @@ export default function Service() {
             <ArrowLeft size={24} />
           </motion.button>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-apex-white">
+            <h1 className="text-lg md:text-xl font-bold text-apex-white tracking-tight text-wrap">
               Maintenance Health Monitor
             </h1>
             <p className="text-sm text-apex-white/60 mt-1">

@@ -21,7 +21,7 @@ import { logger } from '../lib/logger';
 import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
 import { calculatePasswordStrength } from '../lib/passwordStrength';
 import OtpInput from '../components/OtpInput';
-import { createBugReportPayload, openBugReportIssue, shareBugReportLogs } from '../lib/bugReport';
+import { createBugReportPayload, openBugReportIssue } from '../lib/bugReport';
 
 export default function Profile() {
   const isNative = Capacitor.isNativePlatform();
@@ -409,11 +409,8 @@ export default function Profile() {
 
   const handleBugReport = async () => {
     try {
-      const { issueUrl, logsText } = createBugReportPayload({ includeLogsInline: !isNative });
+      const issueUrl = createBugReportPayload();
       await openBugReportIssue(issueUrl);
-      if (isNative) {
-        await shareBugReportLogs(logsText, issueUrl);
-      }
     } catch (error) {
       logger.error('Bug report flow failed:', error);
       apexToast.error('Failed to start bug report', {
@@ -445,7 +442,7 @@ export default function Profile() {
       </p>
       {!isDiscordRpcSupported ? (
         <div className="text-xs text-apex-white/40">
-          Discord RPC is available on Android only.
+          Discord RPC is available only on Android devices.
         </div>
       ) : (
         <div className="space-y-3">
@@ -489,19 +486,25 @@ export default function Profile() {
               )}
             </div>
           </div>
-          <div className="flex items-center justify-between">
+          <div
+            className={`flex items-center justify-between ${!rpcToken ? 'opacity-50 pointer-events-none' : ''}`}
+          >
             <div>
               <p className="text-sm text-apex-white">Enable Rich Presence</p>
-              <p className="text-xs text-apex-white/40">Toggle Discord updates during rides.</p>
+              <p className="text-xs text-apex-white/40">
+                {rpcToken ? 'Toggle Discord updates during rides.' : 'Login with Discord to enable.'}
+              </p>
             </div>
             <motion.button
-              onClick={() => setRpcEnabled(!rpcEnabled)}
-              className={`relative h-6 w-11 rounded-full border transition-colors ${rpcEnabled ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
+              type="button"
+              aria-disabled={!rpcToken}
+              onClick={() => rpcToken && setRpcEnabled(!rpcEnabled)}
+              className={`relative h-6 w-11 rounded-full border transition-colors ${rpcToken && rpcEnabled ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
                 }`}
-              {...buttonHoverProps}
+              {...(rpcToken ? buttonHoverProps : {})}
             >
               <span
-                className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${rpcEnabled ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
+                className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${rpcToken && rpcEnabled ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
                   }`}
               />
             </motion.button>
@@ -571,7 +574,7 @@ export default function Profile() {
   return (
     <div className="h-full">
       <motion.div
-        className="p-6 pb-32 space-y-6"
+        className="space-y-6"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -579,7 +582,7 @@ export default function Profile() {
         <motion.div className="space-y-4" variants={containerVariants}>
           {/* Page Header */}
           <motion.div
-            className="flex items-center gap-4"
+            className="flex items-center gap-2 md:gap-4"
             variants={itemVariants}
           >
             <motion.button
@@ -590,7 +593,7 @@ export default function Profile() {
               <ArrowLeft size={24} />
             </motion.button>
             <div className="flex-1">
-              <h1 className="text-xl md:text-2xl font-bold text-apex-white tracking-tight">
+              <h1 className="text-lg md:text-xl font-bold text-apex-white tracking-tight text-wrap">
                 Profile
               </h1>
               <p className="text-sm text-apex-white/60 mt-1">

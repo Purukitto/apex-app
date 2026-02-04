@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import {
   Map,
@@ -29,6 +29,7 @@ function MapBoundsFitter({
   onMapReady?: (map: MapLibreMap) => void;
 }) {
   const { map, isLoaded } = useMap();
+  const lastBoundsKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!map || !isLoaded || coordinates.length === 0) return;
@@ -50,6 +51,11 @@ function MapBoundsFitter({
         maxLng: coordinates[0][0],
       }
     );
+
+    // Only fit when bounds actually change (avoids flicker from parent re-renders with new array refs)
+    const boundsKey = `${bounds.minLat.toFixed(6)},${bounds.maxLat.toFixed(6)},${bounds.minLng.toFixed(6)},${bounds.maxLng.toFixed(6)}`;
+    if (lastBoundsKeyRef.current === boundsKey) return;
+    lastBoundsKeyRef.current = boundsKey;
 
     const latPadding = (bounds.maxLat - bounds.minLat) * 0.1 || 0.01;
     const lngPadding = (bounds.maxLng - bounds.minLng) * 0.1 || 0.01;

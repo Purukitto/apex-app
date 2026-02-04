@@ -543,19 +543,22 @@ function MapMarker({
   onDrag,
   onDragEnd,
   draggable = false,
-  ...markerOptions
+  offset,
+  rotation,
+  rotationAlignment,
+  pitchAlignment,
 }: MapMarkerProps) {
   const { map } = useMap();
   const hasValidPosition =
     Number.isFinite(longitude) && Number.isFinite(latitude);
+  // Create marker once per component instance; markerOptions object is new every render and would cause remove/re-add flicker
   const marker = useMemo(
     () =>
       new MapLibreGL.Marker({
-        ...markerOptions,
         element: document.createElement("div"),
         draggable,
       }),
-    [markerOptions, draggable]
+    [draggable]
   );
   const clickRef = useRef(onClick);
   const mouseEnterRef = useRef(onMouseEnter);
@@ -598,21 +601,16 @@ function MapMarker({
 
   useEffect(() => {
     if (!marker) return;
-    const newOffset = markerOptions.offset ?? [0, 0];
+    const newOffset = offset ?? [0, 0];
     marker.setOffset(newOffset);
-  }, [marker, markerOptions.offset]);
+  }, [marker, offset]);
 
   useEffect(() => {
     if (!marker) return;
-    marker.setRotation(markerOptions.rotation ?? 0);
-    marker.setRotationAlignment(markerOptions.rotationAlignment ?? "auto");
-    marker.setPitchAlignment(markerOptions.pitchAlignment ?? "auto");
-  }, [
-    marker,
-    markerOptions.rotation,
-    markerOptions.rotationAlignment,
-    markerOptions.pitchAlignment,
-  ]);
+    marker.setRotation(rotation ?? 0);
+    marker.setRotationAlignment(rotationAlignment ?? "auto");
+    marker.setPitchAlignment(pitchAlignment ?? "auto");
+  }, [marker, rotation, rotationAlignment, pitchAlignment]);
 
   useEffect(() => {
     if (!marker) return;

@@ -215,7 +215,7 @@ export default function Garage() {
         accentColor={primary}
       />
       <motion.div
-        className="p-6 pb-32 space-y-6"
+        className="space-y-6"
         variants={containerVariants}
         initial="hidden"
         animate="visible"

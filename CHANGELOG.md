@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.7.2](https://github.com/Purukitto/apex-app/compare/v1.7.1...v1.7.2) (2026-02-04)
+
+
+### Bug Fixes
+
+* update dependency array in MainLayout component for useEffect hook ([63a491e](https://github.com/Purukitto/apex-app/commit/63a491e138b455c7d542b9da7b93d21c9eddc0e5))
+
 ### [1.7.1](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.7.1) (2026-02-04)
 
 

@@ -17,7 +17,7 @@ import { containerVariants } from '../../lib/animations';
 import { useRideStore } from '../../stores/useRideStore';
 import { isDev } from '../../lib/devtools';
 import { registerPushNotifications } from '../../services/notifications';
-import { createBugReportPayload, openBugReportIssue, shareBugReportLogs } from '../../lib/bugReport';
+import { createBugReportPayload, openBugReportIssue } from '../../lib/bugReport';
 import { apexToast } from '../../lib/toast';
 import { logger } from '../../lib/logger';
 import { useShakeDetection } from '../../hooks/useShakeDetection';
@@ -71,11 +71,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   const handleBugReport = useCallback(async function runBugReport() {
     try {
-      const { issueUrl, logsText } = createBugReportPayload({ includeLogsInline: !isNative });
+      const issueUrl = createBugReportPayload();
       await openBugReportIssue(issueUrl);
-      if (isNative) {
-        await shareBugReportLogs(logsText, issueUrl);
-      }
     } catch (error) {
       logger.error('Shake bug report flow failed:', error);
       apexToast.error('Failed to start bug report', {

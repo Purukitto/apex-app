@@ -21,7 +21,7 @@ import { logger } from '../lib/logger';
 import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
 import { calculatePasswordStrength } from '../lib/passwordStrength';
 import OtpInput from '../components/OtpInput';
-import { createBugReportPayload, openBugReportIssue, shareBugReportLogs } from '../lib/bugReport';
+import { createBugReportPayload, openBugReportIssue } from '../lib/bugReport';
 
 export default function Profile() {
   const isNative = Capacitor.isNativePlatform();
@@ -409,11 +409,8 @@ export default function Profile() {
 
   const handleBugReport = async () => {
     try {
-      const { issueUrl, logsText } = createBugReportPayload({ includeLogsInline: !isNative });
+      const issueUrl = createBugReportPayload();
       await openBugReportIssue(issueUrl);
-      if (isNative) {
-        await shareBugReportLogs(logsText, issueUrl);
-      }
     } catch (error) {
       logger.error('Bug report flow failed:', error);
       apexToast.error('Failed to start bug report', {

@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.7.3](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.7.3) (2026-02-06)
+
+
+### Bug Fixes
+
+* resolve page scrolling issue in MainLayout ([706d179](https://github.com/Purukitto/apex-app/commit/706d17985db0c6e5c37216b2fadf902bb5eebd85))
+
+
+### Miscellaneous Chores
+
+* add @emotion/is-prop-valid dependency ([48b2d67](https://github.com/Purukitto/apex-app/commit/48b2d67e78108cfe13bb1cc47b1971443417e9df))
+* **deps-dev:** bump the development-dependencies group across 1 directory with 4 updates ([#87](https://github.com/Purukitto/apex-app/issues/87)) ([897e7e7](https://github.com/Purukitto/apex-app/commit/897e7e7a2c068d890d41bf9ebe14427a8ec87c22))
+* **deps-dev:** bump the development-dependencies group with 6 updates ([#89](https://github.com/Purukitto/apex-app/issues/89)) ([2942c7a](https://github.com/Purukitto/apex-app/commit/2942c7a0af20ec7c5390daa25cc2a0cbf61d24eb))
+* **deps:** bump the production-dependencies group with 9 updates ([#85](https://github.com/Purukitto/apex-app/issues/85)) ([856dc37](https://github.com/Purukitto/apex-app/commit/856dc3772794a46bba08ab288b74778d2e21af6c))
+* **deps:** bump the production-dependencies group with 9 updates ([#88](https://github.com/Purukitto/apex-app/issues/88)) ([3f9351e](https://github.com/Purukitto/apex-app/commit/3f9351e6d86e84451567e3167915ef296ffc5c7d))
+
 ### [1.7.2](https://github.com/Purukitto/apex-app/compare/v1.7.1...v1.7.2) (2026-02-04)
 
 

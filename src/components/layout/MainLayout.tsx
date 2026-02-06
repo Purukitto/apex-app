@@ -114,7 +114,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         unreadCount,
       }}
     >
-      <div className={`h-screen bg-apex-black flex flex-col overflow-hidden ${isRideMode ? 'fixed inset-0' : ''}`}>
+      <div className={`h-screen bg-apex-black flex flex-col overflow-scroll ${isRideMode ? 'fixed inset-0' : ''}`}>
         <div
           className="pointer-events-none fixed inset-0 -z-10 bg-noise"
           style={{

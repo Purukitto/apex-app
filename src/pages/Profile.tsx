@@ -992,20 +992,21 @@ export default function Profile() {
       <AnimatePresence>
         {isPasswordModalOpen && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-apex-black/80 p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-apex-black/80 backdrop-blur-sm p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onClick={() => !isSavingPassword && !isVerifyingPasswordOtp && handleCancelPassword()}
           >
             <motion.div
-              className="w-full max-w-md"
+              className="w-full max-w-md bg-apex-black border border-apex-white/20 rounded-2xl shadow-(--shadow-apex-card) p-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <Card padding="md" animate="none" hover={false}>
-                <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-apex-green/10">
                       <Lock size={18} className="text-apex-green" />
@@ -1096,7 +1097,6 @@ export default function Profile() {
                     </div>
                   )}
                 </div>
-              </Card>
             </motion.div>
           </motion.div>
         )}

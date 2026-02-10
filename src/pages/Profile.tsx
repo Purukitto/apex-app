@@ -21,7 +21,7 @@ import { logger } from '../lib/logger';
 import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
 import { calculatePasswordStrength } from '../lib/passwordStrength';
 import OtpInput from '../components/OtpInput';
-import { createBugReportPayload, openBugReportIssue } from '../lib/bugReport';
+import { useBugReportStore } from '../stores/useBugReportStore';
 
 export default function Profile() {
   const isNative = Capacitor.isNativePlatform();
@@ -407,22 +407,7 @@ export default function Profile() {
     }
   };
 
-  const handleBugReport = async () => {
-    try {
-      const issueUrl = createBugReportPayload();
-      await openBugReportIssue(issueUrl);
-    } catch (error) {
-      logger.error('Bug report flow failed:', error);
-      apexToast.error('Failed to start bug report', {
-        action: {
-          label: 'Retry',
-          onClick: () => {
-            void handleBugReport();
-          },
-        },
-      });
-    }
-  };
+  const openBugReport = useBugReportStore((s) => s.open);
 
   // Handle theme changes
   const handleBackgroundChange = (bg: BackgroundTheme) => {
@@ -939,7 +924,7 @@ export default function Profile() {
                 Report an issue with attached logs to help us investigate faster.
               </p>
               <motion.button
-                onClick={handleBugReport}
+                onClick={openBugReport}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-base font-semibold text-apex-black bg-apex-green transition-colors w-full justify-center"
                 {...buttonHoverProps}
               >

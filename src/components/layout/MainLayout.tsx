@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -17,9 +17,8 @@ import { containerVariants } from '../../lib/animations';
 import { useRideStore } from '../../stores/useRideStore';
 import { isDev } from '../../lib/devtools';
 import { registerPushNotifications } from '../../services/notifications';
-import { createBugReportPayload, openBugReportIssue } from '../../lib/bugReport';
-import { apexToast } from '../../lib/toast';
-import { logger } from '../../lib/logger';
+import { useBugReportStore } from '../../stores/useBugReportStore';
+import BugReportModal from '../BugReportModal';
 import { useShakeDetection } from '../../hooks/useShakeDetection';
 
 interface MainLayoutProps {
@@ -69,26 +68,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
     });
   }, []);
 
-  const handleBugReport = useCallback(async function runBugReport() {
-    try {
-      const issueUrl = createBugReportPayload();
-      await openBugReportIssue(issueUrl);
-    } catch (error) {
-      logger.error('Shake bug report flow failed:', error);
-      apexToast.error('Failed to start bug report', {
-        action: {
-          label: 'Retry',
-          onClick: () => {
-            void runBugReport();
-          },
-        },
-      });
-    }
-  }, []);
+  const openBugReport = useBugReportStore((s) => s.open);
 
   useShakeDetection({
     enabled: isNative && !isRideMode,
-    onShake: handleBugReport,
+    onShake: openBugReport,
   });
 
   // Get page title from route
@@ -188,6 +172,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
             hasDownloadedApk={Boolean(lastDownloadedPath)}
           />
         )}
+
+        {/* Bug Report Modal - Global */}
+        <BugReportModal />
 
         {/* DevTools - Development Only */}
         {isDev() && (

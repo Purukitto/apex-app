@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 import { Motion } from '@capacitor/motion';
 import { Sensors } from '@danyalwe/capacitor-sensors';
 import { logger } from '../lib/logger';
@@ -11,10 +12,11 @@ interface ShakeDetectionOptions {
   cooldownMs?: number;
 }
 
-const DEFAULT_THRESHOLD = 20;
-const DEFAULT_COOLDOWN_MS = 8000;
-const SHAKE_WINDOW_MS = 700;
-const MIN_SHAKES = 2;
+// Gravity magnitude ~9.8; 40+ requires a deliberate shake (ref: shake.js, Instabug defaults).
+const DEFAULT_THRESHOLD = 40;
+const DEFAULT_COOLDOWN_MS = 10_000;
+const SHAKE_WINDOW_MS = 800;
+const MIN_SHAKES = 3;
 
 export const useShakeDetection = ({
   enabled,
@@ -26,11 +28,16 @@ export const useShakeDetection = ({
   const lastTriggerRef = useRef(0);
   const shakeCountRef = useRef(0);
   const listenerRef = useRef<{ remove: () => void } | null>(null);
+  const isAppActiveRef = useRef(true);
 
   useEffect(() => {
     if (!enabled || !Capacitor.isNativePlatform()) {
       return () => {};
     }
+
+    const appStateListener = App.addListener('appStateChange', ({ isActive }) => {
+      isAppActiveRef.current = isActive;
+    });
 
     const handleShake = () => {
       const now = Date.now();
@@ -44,6 +51,8 @@ export const useShakeDetection = ({
     };
 
     const handleAcceleration = (x: number, y: number, z: number) => {
+      if (!isAppActiveRef.current) return;
+
       const magnitude = Math.sqrt((x * x) + (y * y) + (z * z));
       const now = Date.now();
 
@@ -121,6 +130,7 @@ export const useShakeDetection = ({
     setupListener();
 
     return () => {
+      void appStateListener.then((h) => h.remove());
       if (listenerRef.current) {
         listenerRef.current.remove();
         listenerRef.current = null;

@@ -108,6 +108,10 @@ Before submitting a PR, ensure:
 
 ## 🐛 Reporting Bugs
 
+**End users** should use the in-app Bug Report form (Profile page or shake your device). The form automatically attaches device info and recent logs, then submits the report to GitHub via a server-side Edge Function.
+
+**Contributors** can also open issues directly on GitHub for discussions, feature work, or issues that need broader context.
+
 When reporting bugs, please include:
 - Clear description of the issue
 - Steps to reproduce

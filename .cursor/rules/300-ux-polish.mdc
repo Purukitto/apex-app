@@ -187,3 +187,8 @@ alwaysApply: true
 ## 4. QoL (Quality of Life)
 - **Haptic Feedback:** On mobile (Capacitor), trigger light haptics for "Start Ride" or "Save" actions.
 - **Pull-to-Refresh:** Implement standard mobile refresh gestures for the Garage and Dashboard feeds.
+- **Bug Reporting:**
+  - **MANDATORY**: Bug reports must be submitted via the in-app `BugReportModal` (opened from Profile or shake gesture). **DO NOT** redirect users to GitHub to file bugs.
+  - **Implementation:** `src/lib/bugReport.ts` builds the report body (env + logs + user input) and POSTs to the `create-bug-report` Supabase Edge Function. The Edge Function creates the GitHub issue server-side.
+  - **Store:** `src/stores/useBugReportStore.ts` (Zustand) controls modal open/close state globally.
+  - **Entry Points:** Profile page button and shake detection in `MainLayout` both call `useBugReportStore.open()`.

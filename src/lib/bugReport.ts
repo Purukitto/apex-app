@@ -1,10 +1,7 @@
 import { Capacitor } from '@capacitor/core';
-import { Browser } from '@capacitor/browser';
 import { logger } from './logger';
 import { getAppVersion } from './version';
-
-const BUG_REPORT_URL = 'https://github.com/Purukitto/apex-app/issues/new';
-const BUG_REPORT_TEMPLATE = 'bug_report.md';
+import { supabase } from './supabaseClient';
 
 const getOsLabel = (userAgent: string): string => {
   if (/android/i.test(userAgent)) return 'Android';
@@ -34,34 +31,29 @@ const getEnvironmentInfo = () => {
   };
 };
 
-const buildBugReportBody = (options: { logsText: string}) => {
+interface BugReportBodyOptions {
+  description: string;
+  stepsToReproduce?: string;
+  logsText: string;
+}
+
+const buildBugReportBody = (options: BugReportBodyOptions) => {
   const env = getEnvironmentInfo();
-  const logsSection = `## 🧾 Logs (Last 150 lines)\n\n\`\`\`\n${options.logsText}\n\`\`\`\n`;
+  const logsSection = `## Logs (Last 150 lines)\n\n\`\`\`\n${options.logsText}\n\`\`\`\n`;
 
-  return `## 🐛 Bug Description
+  const stepsSection = options.stepsToReproduce?.trim()
+    ? options.stepsToReproduce.trim()
+    : '_(No steps provided)_';
 
-A clear and concise description of what the bug is.
+  return `## Bug Description
 
-## 🔄 Steps to Reproduce
+${options.description}
 
-1. Go to '...'
-2. Click on '...'
-3. Scroll down to '...'
-4. See error
+## Steps to Reproduce
 
-## ✅ Expected Behavior
+${stepsSection}
 
-A clear and concise description of what you expected to happen.
-
-## ❌ Actual Behavior
-
-A clear and concise description of what actually happened.
-
-## 📸 Screenshots
-
-If applicable, add screenshots to help explain your problem.
-
-## 🌍 Environment
+## Environment
 
 - **Platform**: ${env.platform}
 - **OS**: ${env.os}
@@ -71,35 +63,67 @@ If applicable, add screenshots to help explain your problem.
 - **User Agent**: ${env.userAgent}
 
 ${logsSection}
-## 📝 Additional Context
-
-Add any other context about the problem here.
-
-## 🔍 Possible Solution
-
-If you have ideas on how to fix this, please share them here.
 `;
 };
 
-export const createBugReportPayload = () => {
+export interface BugReportPayload {
+  title: string;
+  description: string;
+  stepsToReproduce?: string;
+}
+
+export interface BugReportResult {
+  issueUrl: string;
+  issueNumber: number;
+}
+
+/**
+ * Submits a bug report via the Supabase Edge Function,
+ * which creates a GitHub issue server-side.
+ */
+export const submitBugReport = async (payload: BugReportPayload): Promise<BugReportResult> => {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Supabase is not configured');
+  }
+
   const logsText = logger.getRecentLogsText().trim() || 'No logs available.';
-  const body = buildBugReportBody({ logsText});
-  const params = new URLSearchParams({
-    template: BUG_REPORT_TEMPLATE,
-    title: '[BUG] ',
-    body,
+  const body = buildBugReportBody({
+    description: payload.description,
+    stepsToReproduce: payload.stepsToReproduce,
+    logsText,
   });
-  return `${BUG_REPORT_URL}?${params.toString()}`
-    
-};
 
-export const openBugReportIssue = async (issueUrl: string): Promise<void> => {
-  if (Capacitor.isNativePlatform()) {
-    await Browser.open({ url: issueUrl, windowName: '_blank' });
-    return;
+  const title = payload.title.trim().startsWith('[BUG]')
+    ? payload.title.trim()
+    : `[BUG] ${payload.title.trim()}`;
+
+  // Match fetch-bike-image: this project's Edge Functions accept user JWT only, not anon key
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('Please sign in to submit a bug report');
   }
 
-  if (typeof window !== 'undefined') {
-    window.open(issueUrl, '_blank', 'noopener,noreferrer');
+  const functionUrl = `${supabaseUrl}/functions/v1/create-bug-report`;
+
+  const response = await fetch(functionUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': supabaseAnonKey,
+    },
+    body: JSON.stringify({ title, body }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+    logger.error('Bug report submission failed:', { status: response.status, error: errorData });
+    throw new Error(errorData.error || 'Failed to submit bug report');
   }
+
+  const result = await response.json();
+  return result as BugReportResult;
 };

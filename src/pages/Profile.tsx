@@ -21,7 +21,7 @@ import { logger } from '../lib/logger';
 import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
 import { calculatePasswordStrength } from '../lib/passwordStrength';
 import OtpInput from '../components/OtpInput';
-import { createBugReportPayload, openBugReportIssue } from '../lib/bugReport';
+import { useBugReportStore } from '../stores/useBugReportStore';
 
 export default function Profile() {
   const isNative = Capacitor.isNativePlatform();
@@ -407,22 +407,7 @@ export default function Profile() {
     }
   };
 
-  const handleBugReport = async () => {
-    try {
-      const issueUrl = createBugReportPayload();
-      await openBugReportIssue(issueUrl);
-    } catch (error) {
-      logger.error('Bug report flow failed:', error);
-      apexToast.error('Failed to start bug report', {
-        action: {
-          label: 'Retry',
-          onClick: () => {
-            void handleBugReport();
-          },
-        },
-      });
-    }
-  };
+  const openBugReport = useBugReportStore((s) => s.open);
 
   // Handle theme changes
   const handleBackgroundChange = (bg: BackgroundTheme) => {
@@ -939,7 +924,7 @@ export default function Profile() {
                 Report an issue with attached logs to help us investigate faster.
               </p>
               <motion.button
-                onClick={handleBugReport}
+                onClick={openBugReport}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-base font-semibold text-apex-black bg-apex-green transition-colors w-full justify-center"
                 {...buttonHoverProps}
               >
@@ -1007,20 +992,21 @@ export default function Profile() {
       <AnimatePresence>
         {isPasswordModalOpen && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-apex-black/80 p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-apex-black/80 backdrop-blur-sm p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onClick={() => !isSavingPassword && !isVerifyingPasswordOtp && handleCancelPassword()}
           >
             <motion.div
-              className="w-full max-w-md"
+              className="w-full max-w-md bg-apex-black border border-apex-white/20 rounded-2xl shadow-(--shadow-apex-card) p-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <Card padding="md" animate="none" hover={false}>
-                <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-apex-green/10">
                       <Lock size={18} className="text-apex-green" />
@@ -1111,7 +1097,6 @@ export default function Profile() {
                     </div>
                   )}
                 </div>
-              </Card>
             </motion.div>
           </motion.div>
         )}

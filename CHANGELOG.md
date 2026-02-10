@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.0](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.8.0) (2026-02-10)
+
+
+### Features
+
+* enhance password modal styling and interaction ([ead2ace](https://github.com/Purukitto/apex-app/commit/ead2acec6af3e7ca8967e21b0925ec07a80f4aa0))
+* enhance shake detection functionality ([311fd94](https://github.com/Purukitto/apex-app/commit/311fd94ee261fe3549443ed430e6421038eae522))
+* implement in-app bug reporting system ([15efacd](https://github.com/Purukitto/apex-app/commit/15efacd0c4d69d8ba3863739f45402a905c3f0bc))
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump the development-dependencies group across 1 directory with 4 updates ([#87](https://github.com/Purukitto/apex-app/issues/87)) ([897e7e7](https://github.com/Purukitto/apex-app/commit/897e7e7a2c068d890d41bf9ebe14427a8ec87c22))
+* **deps-dev:** bump the development-dependencies group with 6 updates ([#89](https://github.com/Purukitto/apex-app/issues/89)) ([2942c7a](https://github.com/Purukitto/apex-app/commit/2942c7a0af20ec7c5390daa25cc2a0cbf61d24eb))
+* **deps:** bump the production-dependencies group with 9 updates ([#85](https://github.com/Purukitto/apex-app/issues/85)) ([856dc37](https://github.com/Purukitto/apex-app/commit/856dc3772794a46bba08ab288b74778d2e21af6c))
+* **deps:** bump the production-dependencies group with 9 updates ([#88](https://github.com/Purukitto/apex-app/issues/88)) ([3f9351e](https://github.com/Purukitto/apex-app/commit/3f9351e6d86e84451567e3167915ef296ffc5c7d))
+* update package-lock.json to remove redundant entries for @isaacs/brace-expansion ([78f589b](https://github.com/Purukitto/apex-app/commit/78f589bf2ed26e87c9e0b599c7544d82513245f9))
+
+
+### Code Refactoring
+
+* update FuelLogList layout for improved responsiveness and styling ([05b45dd](https://github.com/Purukitto/apex-app/commit/05b45ddeb2eb9f4c19d94b04e592c2ea9f742f3f))
+
 ### [1.7.3](https://github.com/Purukitto/apex-app/compare/v1.1.1...v1.7.3) (2026-02-06)
 
 

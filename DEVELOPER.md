@@ -230,6 +230,12 @@ GitHub automatically uses templates when creating issues or pull requests:
 
 No additional configuration needed - GitHub detects and uses these templates automatically.
 
+### In-App Bug Reports
+
+Users submit bug reports via an in-app form (Profile page or shake gesture). The form collects a title, description, and optional steps to reproduce; environment info and recent logs are attached automatically.
+
+On submit, the client POSTs to the `create-bug-report` Supabase Edge Function (`supabase/functions/create-bug-report/index.ts`), which creates a GitHub issue via the GitHub API using a server-side `GITHUB_TOKEN` secret. The generated issue body follows the same structure as the GitHub issue template.
+
 ### Dependabot
 
 Automated dependency updates are configured via `.github/dependabot.yml`:

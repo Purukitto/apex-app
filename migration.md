@@ -768,27 +768,60 @@ Use `flutter_foreground_task` to keep the app alive during ride recording:
 
 ## 12. Maps
 
-### `flutter_map` + Vector Tiles
+### Recommendation: `mapbox_maps_flutter` (Primary) with `flutter_map` fallback
+
+After evaluating all options:
+
+| Option | Pros | Cons |
+|---|---|---|
+| **mapbox_maps_flutter** | Native rendering (fastest), built-in dark styles, offline maps, 25K MAU free tier, beautiful out-of-box | Requires Mapbox account, proprietary |
+| **flutter_map + vector_map_tiles** | Fully open source, Protomaps = $0 hosting, GPU-accelerated since v8 | Slightly more setup for dark theme, no offline built-in |
+| **google_maps_flutter** | Familiar API, accurate | Causes app lag on widget resize, no true dark style, per-load pricing |
+
+**Decision: `mapbox_maps_flutter`** — best visual quality + performance for a ride tracking app. Native SDKs render at 60fps with no Flutter widget overhead. Built-in dark map style (`MapboxStyles.DARK`) matches Obsidian Glass perfectly. Free tier of 25K monthly active users is more than enough.
+
+**Fallback plan:** If Mapbox pricing becomes a concern at scale, swap to `flutter_map` + `vector_map_tiles_pmtiles` with self-hosted Protomaps on Cloudflare (~$0/month). The route rendering logic (polylines, markers) is abstracted behind a `MapWidget` wrapper so swapping providers requires changing only one file.
 
 ```yaml
 dependencies:
-  flutter_map: ^7.x
-  vector_map_tiles: ^8.x
-  latlong2: ^0.9.x
+  mapbox_maps_flutter: ^2.x
 ```
 
-**Dark map style:** Use a dark vector tile style (e.g., MapTiler Dark, Protomaps dark) to match the Obsidian Glass theme.
+**Configuration:**
+```dart
+// Dark style that matches Obsidian Glass
+MapWidget(
+  styleUri: MapboxStyles.DARK,
+  cameraOptions: CameraOptions(
+    center: routeCenter,
+    zoom: 12,
+  ),
+)
+```
+
+**Dark map style:** `MapboxStyles.DARK` — charcoal roads, dark water, muted labels. Perfect match for `#0A0A0C` background.
 
 **Route rendering:**
-- `PolylineLayer` with accent green stroke, 3px width, slight opacity
-- Start marker: green circle
+- `PolylineAnnotation` with accent green (`#3DBF6F`) stroke, 3px width
+- Start marker: green circle annotation
 - End marker: checkered flag icon
-- Auto-fit bounds to route with padding
+- Auto-fit camera to route bounds with padding
+- Smooth camera animation on route load (800ms ease)
+
+**Share functionality preserved:**
+- `MapboxMap.snapshot()` — capture map as image for share
+- Route data exported as GPX file (same as current)
+- Both share options available via `share_plus`
 
 **Usage locations:**
-- Dashboard → last ride mini-map
-- Ride history → ride detail full map
-- (Optional) Live map during ride recording
+- Dashboard → last ride mini-map (static snapshot for performance)
+- Ride history → ride detail full interactive map
+- (Future) Live map during ride recording
+
+**Offline support (bonus):**
+- Mapbox SDK supports offline tile packs
+- Pre-download area around user's frequent rides
+- Route maps viewable without internet
 
 ---
 
@@ -945,19 +978,44 @@ class ApexToast {
 
 In `pubspec.yaml`, only Android and iOS platform folders are maintained.
 
-### Android Build
+### Android Build Flavours
 
-```yaml
-# android/app/build.gradle.kts
+Two flavours so debug and release APKs can coexist on the same device:
+
+| | **Dev (Debug)** | **Production (Release)** |
+|---|---|---|
+| App name | **Apex Dev** | **Apex** |
+| Package ID | `com.purukitto.apex.dev` | `com.purukitto.apex` |
+| Icon | Same icon with a "DEV" ribbon overlay | Normal icon |
+| Supabase | Can point to staging project (optional) | Production project |
+| Logging | `Level.trace` (verbose) | `Level.warning` |
+| Debug banner | Shown | Hidden |
+
+```kotlin
+// android/app/build.gradle.kts
 android {
   compileSdk = 35
   defaultConfig {
-    applicationId = "com.purukitto.apex"
     minSdk = 24        // Android 7.0 — covers 97%+ devices
     targetSdk = 35
     versionCode = flutterVersionCode.toInteger()
     versionName = flutterVersionName
   }
+
+  flavorDimensions += "environment"
+  productFlavors {
+    create("dev") {
+      dimension = "environment"
+      applicationIdSuffix = ".dev"
+      resValue("string", "app_name", "Apex Dev")
+    }
+    create("prod") {
+      dimension = "environment"
+      applicationId = "com.purukitto.apex"
+      resValue("string", "app_name", "Apex")
+    }
+  }
+
   buildTypes {
     release {
       signingConfig = signingConfigs.getByName("release")
@@ -966,6 +1024,39 @@ android {
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
     }
   }
+}
+```
+
+**Flutter build commands:**
+```bash
+# Development (installs as "Apex Dev" with .dev package suffix)
+flutter run --flavor dev -t lib/main_dev.dart
+
+# Production release
+flutter build apk --flavor prod -t lib/main.dart --release
+```
+
+**Entry points:**
+```
+lib/
+├── main.dart           # Production entry — prod Supabase URL, Level.warning
+├── main_dev.dart       # Dev entry — staging URL (optional), Level.trace
+└── app.dart            # Shared app widget (both entry points call this)
+```
+
+```dart
+// lib/main_dev.dart
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppConfig.initialize(environment: Environment.dev);
+  runApp(const ProviderScope(child: ApexApp()));
+}
+
+// lib/main.dart
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppConfig.initialize(environment: Environment.prod);
+  runApp(const ProviderScope(child: ApexApp()));
 }
 ```
 
@@ -984,7 +1075,7 @@ jobs:
     - flutter test
 
   build-android:
-    - flutter build apk --release
+    - flutter build apk --flavor prod --release
     # No web build — mobile only
 ```
 
@@ -992,7 +1083,8 @@ jobs:
 
 - Semantic versioning: `pubspec.yaml` version field
 - Conventional commits for changelog generation
-- GitHub Releases for APK distribution
+- GitHub Releases for APK distribution (prod flavour)
+- Dev APKs built locally or via CI artifacts for testing
 - (Future) Play Store via Fastlane
 
 ---
@@ -1001,10 +1093,13 @@ jobs:
 
 ### Phase 0 — Project Setup (1 session)
 - [ ] Initialize Flutter project with package name `com.purukitto.apex`
+- [ ] Configure Android build flavours: `dev` (Apex Dev, `.dev` suffix) + `prod` (Apex)
+- [ ] Create `main.dart` and `main_dev.dart` entry points
 - [ ] Set up project structure (core/ + features/)
 - [ ] Configure `app_colors.dart`, `app_theme.dart`, `app_typography.dart`
 - [ ] Build core widgets: GlassCard, PressableGlassCard, MeshBackground, ApexButton
 - [ ] Setup Riverpod, GoRouter, Drift, Supabase client
+- [ ] Configure Mapbox SDK with dark style + access token
 - [ ] Configure logger, toast, constants
 - [ ] Android manifest: permissions (location, internet, sensors, foreground service)
 
@@ -1046,9 +1141,9 @@ jobs:
 ### Phase 5 — Ride History & Maps (1 session)
 - [ ] All rides screen: paginated list from Drift stream
 - [ ] Ride detail bottom sheet with full map
-- [ ] flutter_map setup with dark vector tiles
+- [ ] Mapbox SDK setup with `MapboxStyles.DARK`
 - [ ] Route polyline rendering (accent green)
-- [ ] Share ride: image export + GPX file
+- [ ] Share ride: Mapbox snapshot for image export + GPX file via share_plus
 - [ ] Delete ride with confirmation
 - [ ] Dashboard mini-map for last ride
 
@@ -1092,9 +1187,7 @@ jobs:
 | **Backend** | `supabase_flutter` | ^2.12.x | Auth + DB + Realtime |
 | **GPS** | `geolocator` | ^13.x | Location streaming |
 | **Sensors** | `sensors_plus` | ^6.x | Accelerometer, gyroscope |
-| **Maps** | `flutter_map` | ^7.x | Map rendering |
-| **Maps** | `vector_map_tiles` | ^8.x | Dark vector tile style |
-| **Maps** | `latlong2` | ^0.9.x | Coordinate types |
+| **Maps** | `mapbox_maps_flutter` | ^2.x | Native map rendering (dark style, offline, snapshots) |
 | **Animations** | `flutter_animate` | ^4.5.x | Composable animations |
 | **Typography** | `google_fonts` | ^8.x | Playfair Display + Inter |
 | **Icons** | `lucide_icons` | ^0.257.x | Icon set (matches current) |

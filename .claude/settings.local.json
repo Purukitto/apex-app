@@ -5,7 +5,8 @@
       "Bash(git rm:*)",
       "Bash(git commit:*)",
       "Bash(git add:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "WebSearch"
     ]
   }
 }

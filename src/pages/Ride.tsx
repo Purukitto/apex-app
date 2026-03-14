@@ -3,9 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { useRideTracking } from '../hooks/useRideTracking';
 import { useBikes } from '../hooks/useBikes';
-import { useDiscord } from '../hooks/useDiscord';
 import { useRideStore } from '../stores/useRideStore';
-import { useDiscordRpcStore } from '../stores/useDiscordRpcStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
@@ -18,7 +16,6 @@ import { usePocketModeDetection } from '../hooks/usePocketModeDetection';
 import { RideStartupAnimation } from '../components/RideStartupAnimation';
 import DebugPanel from '../components/DebugPanel';
 import { logger } from '../lib/logger';
-import { getCityFromCoords } from '../utils/geocode';
 import ConfirmModal from '../components/ConfirmModal';
 
 /**
@@ -336,8 +333,6 @@ const LongPressStopButton = ({ onLongPress, disabled }: LongPressButtonProps) =>
 export default function Ride() {
   const isNative = Capacitor.isNativePlatform();
   const { bikes, isLoading: bikesLoading } = useBikes();
-  const { updatePresence } = useDiscord();
-  const rpcEnabled = useDiscordRpcStore((state) => state.enabled);
   const {
     isRecording,
     isPaused,
@@ -370,12 +365,6 @@ export default function Ride() {
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [showStartupAnimation, setShowStartupAnimation] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const hasTriedCityRef = useRef(false);
-
-  const getBikeDisplayName = (bike: BikeType | null) => {
-    if (!bike) return undefined;
-    return bike.nick_name || `${bike.make} ${bike.model}`;
-  };
 
   // Restore state from Zustand store on mount
   useEffect(() => {
@@ -431,26 +420,6 @@ export default function Ride() {
       setPreviousSpeed(currentSpeed);
     }
   }, [currentSpeed, isRecording]);
-
-  // Resolve city from first coord and update Discord presence (when shareCity enabled, buildPresenceDetails uses it)
-  useEffect(() => {
-    if (!isRecording) {
-      hasTriedCityRef.current = false;
-      return;
-    }
-    if (!rpcEnabled || coords.length < 1 || !selectedBike || hasTriedCityRef.current) return;
-    hasTriedCityRef.current = true;
-    const c = coords[0];
-    getCityFromCoords(c.latitude, c.longitude).then((city) => {
-      if (city) {
-        updatePresence.mutateAsync({
-          type: 'start',
-          bikeName: getBikeDisplayName(selectedBike) ?? undefined,
-          city,
-        }).catch((e) => logger.trace('Discord RPC city update failed:', e));
-      }
-    });
-  }, [isRecording, rpcEnabled, coords, selectedBike, updatePresence]);
 
   // Fade out safety warning after 5 seconds of recording
   useEffect(() => {
@@ -521,18 +490,6 @@ export default function Ride() {
     // Don't auto-start - let user click Start Ride button
   };
 
-  const clearRpcPresence = async (bike: BikeType | null) => {
-    if (!rpcEnabled) return;
-    try {
-      await updatePresence.mutateAsync({
-        type: 'end',
-        bikeName: getBikeDisplayName(bike),
-      });
-    } catch (rpcError) {
-      logger.error('Discord RPC end update failed:', rpcError);
-    }
-  };
-
   const handleStopRide = async () => {
     if (!selectedBike) {
       apexToast.error('No bike selected. Cannot save ride.');
@@ -578,27 +535,21 @@ export default function Ride() {
         apexToast.error(errorMessage);
       }
       // Don't reset UI state if save failed - keep ride data visible so user can retry
-    } finally {
-      await clearRpcPresence(selectedBike);
     }
   };
 
   const handleDiscardRide = async () => {
-    {
-      try {
-        await stopRide(undefined, false);
-        setSelectedBike(null);
-        resetRide();
-        setShowSafetyWarning(true);
-        setPreviousSpeed(0);
-        setShowStartupAnimation(false);
-        apexToast.success('Ride discarded');
-      } catch (error) {
-        logger.error('Error discarding ride:', error);
-        apexToast.error('Failed to discard ride');
-      } finally {
-        await clearRpcPresence(selectedBike);
-      }
+    try {
+      await stopRide(undefined, false);
+      setSelectedBike(null);
+      resetRide();
+      setShowSafetyWarning(true);
+      setPreviousSpeed(0);
+      setShowStartupAnimation(false);
+      apexToast.success('Ride discarded');
+    } catch (error) {
+      logger.error('Error discarding ride:', error);
+      apexToast.error('Failed to discard ride');
     }
   }
 
@@ -673,17 +624,6 @@ export default function Ride() {
             // Start ride after animation completes
             try {
               await startRide();
-              if (rpcEnabled) {
-                try {
-                  await updatePresence.mutateAsync({
-                    type: 'start',
-                    bikeName: getBikeDisplayName(selectedBike),
-                    city: undefined,
-                  });
-                } catch (error) {
-                  logger.error('Discord RPC start update failed:', error);
-                }
-              }
             } catch (error) {
               // Log technical details for debugging
               logger.error('Error starting ride:', error);

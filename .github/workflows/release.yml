@@ -94,8 +94,6 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
           VITE_RESET_PASSWORD_URL: ${{ secrets.VITE_RESET_PASSWORD_URL }}
-          VITE_DISCORD_RPC_APP_ID: ${{ secrets.VITE_DISCORD_RPC_APP_ID }}
-          VITE_DISCORD_RPC_ENABLED: ${{ secrets.VITE_DISCORD_RPC_ENABLED }}
         run: |
           npm run build
           npx cap sync android

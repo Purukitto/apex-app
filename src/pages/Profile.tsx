@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { useDiscordRpcStore } from '../stores/useDiscordRpcStore';
-import { isDiscordRpcEnabledForPlatform } from '../config/discord';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useAppUpdate } from '../hooks/useAppUpdate';
 import { useAppUpdateStore } from '../stores/useAppUpdateStore';
 import { useNavigate } from 'react-router-dom';
-import { Mail, LogOut, Save, MessageCircle, Download, RefreshCw, Palette, CheckCircle, Pencil, X, Lock, ArrowLeft, Bug } from 'lucide-react';
+import { Mail, LogOut, Save, Download, RefreshCw, Palette, Pencil, X, Lock, ArrowLeft, Bug } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { containerVariants, itemVariants, buttonHoverProps } from '../lib/animations';
 import DonationCard from '../components/profile/DonationCard';
@@ -15,7 +13,6 @@ import { Card } from '../components/ui/Card';
 import { useThemeStore, PRIMARY_COLORS, BACKGROUND_COLORS, type BackgroundTheme, type PrimaryTheme } from '../stores/useThemeStore';
 import { applyTheme } from '../lib/theme';
 import { getAppVersion } from '../lib/version';
-import { isDiscordLoginSupported, openDiscordLogin } from '../lib/discordLogin';
 import { apexToast } from '../lib/toast';
 import { logger } from '../lib/logger';
 import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
@@ -25,8 +22,6 @@ import { useBugReportStore } from '../stores/useBugReportStore';
 
 export default function Profile() {
   const isNative = Capacitor.isNativePlatform();
-  const platform = Capacitor.getPlatform();
-  const isDiscordRpcSupported = isDiscordRpcEnabledForPlatform(platform);
   const {
     profile,
     isLoading,
@@ -69,18 +64,6 @@ export default function Profile() {
   const passwordStrength = calculatePasswordStrength(password);
   const isPasswordValid = passwordStrength.isValid;
   const passwordsMatch = password === passwordConfirm;
-  const {
-    enabled: rpcEnabled,
-    shareRideStatus,
-    shareBikeName,
-    shareCity,
-    rpcToken,
-    setEnabled: setRpcEnabled,
-    setShareRideStatus,
-    setShareBikeName,
-    setShareCity,
-    setRpcToken,
-  } = useDiscordRpcStore();
 
 
   // Update local state when profile changes
@@ -420,138 +403,6 @@ export default function Profile() {
     applyTheme();
   };
 
-  const discordRpcSettings = (
-    <div className="space-y-3 pt-2 border-t border-apex-white/20">
-      <p className="text-xs text-apex-white/60">
-        Rich Presence updates only on ride start and end to preserve battery.
-      </p>
-      {!isDiscordRpcSupported ? (
-        <div className="text-xs text-apex-white/40">
-          Discord RPC is available only on Android devices.
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-apex-white">Discord</p>
-              {rpcToken ? (
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1.5 text-apex-green text-sm">
-                    <CheckCircle size={16} />
-                    Connected
-                  </span>
-                  <motion.button
-                    type="button"
-                    onClick={() => setRpcToken('')}
-                    className="text-xs text-apex-white/50 hover:text-apex-white/80 underline transition-colors"
-                    {...buttonHoverProps}
-                  >
-                    Disconnect
-                  </motion.button>
-                </div>
-              ) : (
-                isDiscordLoginSupported() && (
-                  <motion.button
-                    type="button"
-                    onClick={() =>
-                      openDiscordLogin({
-                        onTokenExtracted: (token) => {
-                          setRpcToken(token);
-                          apexToast.success('Connected');
-                        },
-                      })
-                    }
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#5865F2]/60 bg-[#5865F2]/10 text-sm text-apex-white"
-                    {...buttonHoverProps}
-                  >
-                    <MessageCircle size={16} />
-                    Login with Discord
-                  </motion.button>
-                )
-              )}
-            </div>
-          </div>
-          <div
-            className={`flex items-center justify-between ${!rpcToken ? 'opacity-50 pointer-events-none' : ''}`}
-          >
-            <div>
-              <p className="text-sm text-apex-white">Enable Rich Presence</p>
-              <p className="text-xs text-apex-white/40">
-                {rpcToken ? 'Toggle Discord updates during rides.' : 'Login with Discord to enable.'}
-              </p>
-            </div>
-            <motion.button
-              type="button"
-              aria-disabled={!rpcToken}
-              onClick={() => rpcToken && setRpcEnabled(!rpcEnabled)}
-              className={`relative h-6 w-11 rounded-full border transition-colors ${rpcToken && rpcEnabled ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
-                }`}
-              {...(rpcToken ? buttonHoverProps : {})}
-            >
-              <span
-                className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${rpcToken && rpcEnabled ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
-                  }`}
-              />
-            </motion.button>
-          </div>
-          <div className={`space-y-3 ${rpcEnabled ? '' : 'opacity-50'}`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-apex-white">Ride Status</p>
-                <p className="text-xs text-apex-white/40">Share start/end status.</p>
-              </div>
-              <motion.button
-                onClick={() => rpcEnabled && setShareRideStatus(!shareRideStatus)}
-                className={`relative h-6 w-11 rounded-full border transition-colors ${shareRideStatus ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
-                  }`}
-                {...buttonHoverProps}
-              >
-                <span
-                  className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${shareRideStatus ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
-                    }`}
-                />
-              </motion.button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-apex-white">Bike Name</p>
-                <p className="text-xs text-apex-white/40">Share your selected bike.</p>
-              </div>
-              <motion.button
-                onClick={() => rpcEnabled && setShareBikeName(!shareBikeName)}
-                className={`relative h-6 w-11 rounded-full border transition-colors ${shareBikeName ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
-                  }`}
-                {...buttonHoverProps}
-              >
-                <span
-                  className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${shareBikeName ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
-                    }`}
-                />
-              </motion.button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-base text-apex-white">City</p>
-                <p className="text-xs text-apex-white/40">Share your current city if available.</p>
-              </div>
-              <motion.button
-                onClick={() => rpcEnabled && setShareCity(!shareCity)}
-                className={`relative h-6 w-11 rounded-full border transition-colors ${shareCity ? 'bg-apex-green/30 border-apex-green/60' : 'bg-apex-white/10 border-apex-white/20'
-                  }`}
-                {...buttonHoverProps}
-              >
-                <span
-                  className={`absolute left-0.5 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-transform ${shareCity ? 'translate-x-5 bg-apex-green' : 'translate-x-0 bg-apex-white/60'
-                    }`}
-                />
-              </motion.button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
   if (isLoading) {
     return <LoadingSpinner fullScreen text="Loading profile..." />;
   }
@@ -853,21 +704,6 @@ export default function Profile() {
                 </div>
               </div>
             </div>
-          </Card>
-
-          {/* Discord Integration Section */}
-          <Card
-            padding="md"
-            animate="item"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-apex-green/10">
-                <MessageCircle size={20} className="text-apex-green" />
-              </div>
-              <h2 className="text-base font-semibold text-apex-white">Discord Integration</h2>
-            </div>
-
-            {discordRpcSettings}
           </Card>
 
           {/* App Updates Section - Only show on native platforms */}

@@ -18,8 +18,8 @@
     "release:patch": "standard-version --release-as patch"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.0.0",
-    "@commitlint/config-conventional": "^19.0.0",
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "standard-version": "^9.5.0"
   }
 }

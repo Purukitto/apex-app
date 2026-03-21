@@ -16,7 +16,15 @@
       "Bash(flutter pub:*)",
       "Bash(flutter analyze:*)",
       "Bash(wc -l /d/Code/apex_flutter/lib/core/database/*.dart /d/Code/apex_flutter/lib/core/providers/*.dart /d/Code/apex_flutter/lib/core/services/*.dart)",
-      "Bash(dart format:*)"
+      "Bash(dart format:*)",
+      "Bash(gh release:*)",
+      "Bash(where gh:*)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" release view v2.0.0 --repo Purukitto/apex-app)",
+      "Read(//c/Program Files/**)",
+      "Read(//d/Code/apex_flutter/$LOCALAPPDATA/**)",
+      "Read(//d/Code/apex_flutter/$HOME/scoop/shims/**)",
+      "Bash(cmd.exe /c \"where gh\")",
+      "Bash(curl:*)"
     ]
   }
 }

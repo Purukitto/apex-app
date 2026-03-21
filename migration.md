@@ -29,6 +29,7 @@
 18. [Migration Phases](#18-migration-phases)
 19. [Dependency Matrix](#19-dependency-matrix)
 20. [Risks & Mitigations](#20-risks--mitigations)
+- [Appendix C: Known Production Database Issues](#appendix-c-known-production-database-issues)
 
 ---
 
@@ -768,60 +769,50 @@ Use `flutter_foreground_task` to keep the app alive during ride recording:
 
 ## 12. Maps
 
-### Recommendation: `mapbox_maps_flutter` (Primary) with `flutter_map` fallback
+### Decision: `flutter_map` + CartoCDN dark-matter tiles
 
-After evaluating all options:
+After evaluating all options, went with `flutter_map` + CartoCDN raster tiles — same tile source the React app already uses (`basemaps.cartocdn.com`).
 
 | Option | Pros | Cons |
 |---|---|---|
-| **mapbox_maps_flutter** | Native rendering (fastest), built-in dark styles, offline maps, 25K MAU free tier, beautiful out-of-box | Requires Mapbox account, proprietary |
-| **flutter_map + vector_map_tiles** | Fully open source, Protomaps = $0 hosting, GPU-accelerated since v8 | Slightly more setup for dark theme, no offline built-in |
-| **google_maps_flutter** | Familiar API, accurate | Causes app lag on widget resize, no true dark style, per-load pricing |
+| **mapbox_maps_flutter** | Native rendering (fastest), built-in dark styles, offline maps | Requires Mapbox account + API key, proprietary, binary bloat |
+| **flutter_map + CartoCDN** | Zero cost, no API key, same tiles as React app, lightweight | Raster tiles (not vector), no built-in offline |
+| **google_maps_flutter** | Familiar API, accurate | Widget resize lag, no true dark style, per-load pricing |
 
-**Decision: `mapbox_maps_flutter`** — best visual quality + performance for a ride tracking app. Native SDKs render at 60fps with no Flutter widget overhead. Built-in dark map style (`MapboxStyles.DARK`) matches Obsidian Glass perfectly. Free tier of 25K monthly active users is more than enough.
-
-**Fallback plan:** If Mapbox pricing becomes a concern at scale, swap to `flutter_map` + `vector_map_tiles_pmtiles` with self-hosted Protomaps on Cloudflare (~$0/month). The route rendering logic (polylines, markers) is abstracted behind a `MapWidget` wrapper so swapping providers requires changing only one file.
+**Decision: `flutter_map`** — zero cost, no API key management, no account signup. CartoCDN dark-matter raster tiles provide the same dark aesthetic as the React app. `latlong2` provides `LatLng` type. If vector tiles or offline are needed later, can swap to `vector_map_tiles_pmtiles` with self-hosted Protomaps.
 
 ```yaml
 dependencies:
-  mapbox_maps_flutter: ^2.x
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
 ```
 
 **Configuration:**
 ```dart
-// Dark style that matches Obsidian Glass
-MapWidget(
-  styleUri: MapboxStyles.DARK,
-  cameraOptions: CameraOptions(
-    center: routeCenter,
-    zoom: 12,
-  ),
+RideMap(
+  routeData: routeData,  // parsed from GeoJSON
+  height: 300,
+  interactive: true,      // false for dashboard mini-map
 )
 ```
 
-**Dark map style:** `MapboxStyles.DARK` — charcoal roads, dark water, muted labels. Perfect match for `#0A0A0C` background.
+**Dark map style:** CartoCDN dark-matter (`dark_all`) — charcoal roads, dark water, muted labels. URL: `https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png`. Matches `#0A0A0C` background.
 
 **Route rendering:**
-- `PolylineAnnotation` with accent green (`#3DBF6F`) stroke, 3px width
-- Start marker: green circle annotation
-- End marker: checkered flag icon
-- Auto-fit camera to route bounds with padding
-- Smooth camera animation on route load (800ms ease)
+- Dual `PolylineLayer`: shadow (6px, 25% opacity, accent green) + main (3.5px, 90% opacity, accent green), rounded joins/caps
+- Start marker: red circle with white border (`AppColors.error`)
+- End marker: green circle with white border (`AppColors.accent`)
+- Auto-fit camera to `LatLngBounds` with 50px padding, maxZoom 18
 
 **Share functionality preserved:**
-- `MapboxMap.snapshot()` — capture map as image for share
-- Route data exported as GPX file (same as current)
-- Both share options available via `share_plus`
+- `RenderRepaintBoundary.toImage()` — capture map widget as PNG for image share
+- Route data exported as GPX 1.1 file (linear timestamp interpolation)
+- Both share options via `share_plus` (`Share.shareXFiles`)
 
 **Usage locations:**
-- Dashboard → last ride mini-map (static snapshot for performance)
-- Ride history → ride detail full interactive map
+- Dashboard → last ride mini-map (220px, non-interactive)
+- Ride history → ride detail full interactive map (300px)
 - (Future) Live map during ride recording
-
-**Offline support (bonus):**
-- Mapbox SDK supports offline tile packs
-- Pre-download area around user's frequent rides
-- Route maps viewable without internet
 
 ---
 
@@ -962,6 +953,23 @@ class ApexToast {
 - Offline: create bike offline → verify Drift → go online → verify Supabase sync
 - Ride recording: mock GPS stream → verify coords buffered → save → verify in Drift
 
+### E2E RLS Tests (Supabase)
+
+These tests exercise actual Supabase RLS policies using a dedicated test user account. They must run against the real database (not mocked) to catch policy gaps like the bikes UPDATE bug.
+
+**Setup:** dedicated `test@apex.internal` Supabase user, cleaned up after each run.
+
+| Test | Steps | Pass condition |
+|---|---|---|
+| **Bike CRUD** | sign in → INSERT bike → SELECT → UPDATE nick_name → DELETE | All 4 operations return data, no `0 rows` silent failure |
+| **Bike isolation** | sign in as user A → insert bike → sign in as user B → attempt SELECT / UPDATE / DELETE on A's bike ID | All 3 operations return empty / error — no cross-user access |
+| **Fuel log access** | sign in → insert bike → insert fuel_log (no user_id col) → SELECT fuel_logs for bike | Returns row — RLS via bikes join works |
+| **Maintenance log access** | sign in → insert bike → insert maintenance_log → SELECT | Returns row — RLS via bikes join works |
+| **Ride CRUD** | sign in → insert ride (with bike_id) → UPDATE → DELETE | All operations succeed for owner |
+| **Ride isolation** | user B cannot SELECT or DELETE user A's rides | Returns empty |
+
+Run these via a test script (`scripts/rls_e2e_test.ts`) using the Supabase JS client with service-role key for setup/teardown and anon key (with user JWT) for the actual assertions. Add to CI as a separate `test-rls` job that runs only on `main` pushes.
+
 ### Golden Tests (optional)
 - Screenshot comparison for GlassCard, MeshBackground, BottomNavBar
 - Ensure dark theme consistency across screens
@@ -1091,85 +1099,485 @@ jobs:
 
 ## 18. Migration Phases
 
-### Phase 0 — Project Setup (1 session)
-- [ ] Initialize Flutter project with package name `com.purukitto.apex`
-- [ ] Configure Android build flavours: `dev` (Apex Dev, `.dev` suffix) + `prod` (Apex)
-- [ ] Create `main.dart` and `main_dev.dart` entry points
-- [ ] Set up project structure (core/ + features/)
-- [ ] Configure `app_colors.dart`, `app_theme.dart`, `app_typography.dart`
-- [ ] Build core widgets: GlassCard, PressableGlassCard, MeshBackground, ApexButton
-- [ ] Setup Riverpod, GoRouter, Drift, Supabase client
-- [ ] Configure Mapbox SDK with dark style + access token
-- [ ] Configure logger, toast, constants
-- [ ] Android manifest: permissions (location, internet, sensors, foreground service)
+### Standing rule: Old-code audit before every phase
 
-### Phase 1 — Auth & Core Shell (1 session)
-- [ ] Login screen with Supabase auth
-- [ ] Confirm account + reset password screens
-- [ ] Auth provider + GoRouter redirect guard
-- [ ] App shell with MeshBackground + BottomNavBar
-- [ ] Navigation between all tab destinations (empty screens)
-- [ ] Profile screen (rider name, theme selector, logout)
+**Before starting any phase**, read every React source file listed in that phase's "Old code to audit" section. For each file:
 
-### Phase 2 — Database & Sync (1 session)
-- [ ] Drift schema: all tables with `isSynced` + `lastModified`
-- [ ] DAOs for all entities
-- [ ] Sync engine: push dirty rows, pull remote changes
-- [ ] Initial sync on login (bulk pull)
-- [ ] Connectivity provider to trigger/pause sync
-- [ ] Verify offline create → online sync → verify in Supabase
+1. Extract every piece of logic that is in-scope for the phase (business rules, edge-case guards, error paths, debug/logging calls, UI copy, validation, timing values, magic constants).
+2. Map each piece to a Flutter equivalent or explicitly mark it **dropped** with a reason.
+3. Do not close a phase until the checklist below is satisfied:
 
-### Phase 3 — Garage & Fuel (1 session)
-- [ ] Garage screen: bike list with GlassCards
-- [ ] Add/edit bike bottom sheet
-- [ ] Delete bike with ride-guard logic
-- [ ] Fuel log list per bike
-- [ ] Add refuel bottom sheet
-- [ ] Auto-calculate avg mileage + last fuel price
-- [ ] All mutations: Drift first → sync → toast feedback
+> - [ ] All non-dropped logic is represented in the Flutter implementation
+> - [ ] All `logger` / `console.*` call-sites have a `logger.dart` equivalent
+> - [ ] All toast / error paths have an `ApexToast` equivalent
+> - [ ] All magic numbers / thresholds / timeouts are preserved (or documented if changed)
+> - [ ] Any TODO / FIXME comments in the old code are triaged (fix, carry forward, or drop)
 
-### Phase 4 — Ride Recorder (1–2 sessions)
-- [ ] Ride screen: bike selector + start button
-- [ ] GPS service with foreground notification
-- [ ] Motion service: accelerometer lean angle calculation
-- [ ] Ride session provider: coord buffer, distance, lean, auto-pause
-- [ ] HUD overlay: speed, lean gauge, distance, time
-- [ ] Pocket mode detection + curtain
-- [ ] Save flow: name, notes, photo → Drift → Supabase (PostGIS)
-- [ ] Startup countdown animation
+### Standing rule: Update migration.md after every phase
 
-### Phase 5 — Ride History & Maps (1 session)
-- [ ] All rides screen: paginated list from Drift stream
-- [ ] Ride detail bottom sheet with full map
-- [ ] Mapbox SDK setup with `MapboxStyles.DARK`
-- [ ] Route polyline rendering (accent green)
-- [ ] Share ride: Mapbox snapshot for image export + GPX file via share_plus
-- [ ] Delete ride with confirmation
-- [ ] Dashboard mini-map for last ride
+**After completing any phase**, update the corresponding phase section in this document:
 
-### Phase 6 — Service & Maintenance (1 session)
-- [ ] Service screen per bike
-- [ ] Schedule cards with health bars
-- [ ] Complete service bottom sheet
-- [ ] Maintenance log view
-- [ ] Auto-create default schedules on new bike
-- [ ] Maintenance alert card on dashboard
+1. Mark completed checklist items with `[x]`.
+2. Add an **Implementation notes** block below the checklist with:
+   - Key decisions made (API choices, pattern deviations, workarounds)
+   - Riverpod/Flutter API gotchas encountered and how they were fixed
+   - Any items that were deferred to a later phase (with reason)
+   - Files created (relative to `D:/Code/apex_flutter/lib/`)
+3. Add a **Next phase prerequisites** block listing anything the next phase depends on being in place before it can start (e.g. "apply RLS migration", "verify Supabase connection works").
+
+---
+
+### Phase 0 — Project Setup ✅ COMPLETE
+
+**Old code to audit:** `package.json`, `vite.config.ts`, `capacitor.config.ts`, `src/main.tsx`, `src/App.tsx`, `src/lib/logger.ts`, `src/lib/toast.ts`, `src/lib/animations.ts`, `src/lib/constants.ts` (if present), `src/types/database.ts`
+
+- [x] Audit: confirm all env vars / constants are captured in Flutter `AppConfig` / `constants.dart`
+- [x] Audit: confirm logger severity levels and output format are replicated
+- [x] Audit: confirm toast variants (success / error / promise) match existing usage
+- [x] Audit: confirm animation durations / curves from `animations.ts` are carried into the animation system
+- [x] Initialize Flutter project with package name `com.purukitto.apex`
+- [x] Configure Android build flavours: `dev` (Apex Dev, `.dev` suffix) + `prod` (Apex) — **deferred to Phase 8**
+- [x] Create `main.dart` and `main_dev.dart` entry points
+- [x] Set up project structure (core/ + features/)
+- [x] Configure `app_colors.dart`, `app_theme.dart`, `app_typography.dart`
+- [x] Build core widgets: GlassCard, PressableGlassCard, MeshBackground, ApexButton
+- [x] Setup Riverpod, GoRouter, Drift, Supabase client — Drift added in Phase 2
+- [x] ~~Configure Mapbox SDK with dark style + access token~~ → Switched to flutter_map + CartoCDN (no API key needed) — **done in Phase 5**
+- [x] Configure logger, toast, constants
+- [x] Android manifest: permissions (location, internet, sensors, foreground service) — **completed in Phase 4**
+
+**Implementation notes:**
+
+- Flutter project created at `D:/Code/apex_flutter` with package name `com.purukitto.apex`, targeting Android + iOS only (no web).
+- **Three items intentionally deferred** to phases where they're actually needed: build flavours → Phase 8 (Build & Release), Mapbox → Phase 5 (Ride History & Maps), Android manifest permissions → Phase 4 (Ride Recorder). This avoids configuring things that can't be tested yet.
+- `AppConfig` handles environment switching (dev/prod) with separate Supabase credentials. `main.dart` and `main_dev.dart` select the environment at startup.
+- Logger wraps the `logger` package with `AppLogger.t/d/i/w/e` methods and PrettyPrinter with timestamps.
+- Toast system (`ApexToast`) provides `success`, `error` (with optional retry action), and `promise` (loading → success/error) variants using floating SnackBars with coloured left border.
+- Theme system: `AppColors` (background, accent, status, card, text, glow), `AppTypography` (Playfair Display for titles, Inter for body, JetBrains Mono for numbers), `AppTheme.buildDarkTheme()`.
+- Core widgets: `GlassCard` (BackdropFilter frosted glass, optional accent glow), `PressableGlassCard` (scale-on-press), `MeshBackground` (gradient + green aura + optional grid), `ApexButton` (filled/outlined/ghost with loading state), `ApexTextField`, `ConfirmDialog`, `ApexBottomNavBar`.
+- Dependencies: `flutter_riverpod ^3.0.0`, `go_router ^14.0.0`, `supabase_flutter ^2.12.0`, `flutter_animate ^4.5.0`, `google_fonts ^8.0.0`, `logger ^2.0.0`, `shared_preferences ^2.0.0`, `uuid ^4.0.0`.
+- Completed across Phases 0–1 in a single session; documented separately in Phase 1 notes.
+
+### Phase 1 — Auth & Core Shell ✅ COMPLETE
+
+**Old code to audit:** `src/pages/Login.tsx`, `src/pages/ConfirmAccount.tsx`, `src/pages/ResetPassword.tsx`, `src/pages/Profile.tsx`, `src/App.tsx` (route guards), `src/stores/useAuthStore.ts` (if present), any Supabase auth hooks in `src/hooks/`
+
+- [x] Audit: all Supabase auth call variants (signIn, signUp, OTP, password reset) are preserved
+- [x] Audit: session-persistence behaviour (token storage, refresh on resume) is replicated via `supabase_flutter`
+- [x] Audit: GoRouter redirect logic matches existing route guard conditions exactly
+- [x] Audit: Profile screen — every editable field, every action, all validation rules (Discord section confirmed dropped in §2)
+- [x] Audit: all error toasts and success toasts on auth flows are reproduced
+- [x] Login screen with Supabase auth
+- [x] Confirm account + reset password screens
+- [x] Auth provider + GoRouter redirect guard
+- [x] App shell with MeshBackground + BottomNavBar
+- [x] Navigation between all tab destinations (empty screens)
+- [x] Profile screen (rider name, theme selector, logout)
+
+**Implementation notes:**
+
+- Flutter project created at `D:/Code/apex_flutter` (`com.purukitto.apex`, Android + iOS only, no web)
+- **Riverpod 3.x `listenManual` removed** — `_RouterRefreshNotifier` rewired to use `ref.listen` inside `build` (valid in ConsumerStatefulWidget) notifying a plain `ChangeNotifier`. GoRouter `refreshListenable` uses this notifier.
+- **`AsyncValue.valueOrNull` not available on Riverpod 3.3.1** — use `.asData?.value` instead for `isAuthenticatedProvider`.
+- **`User.confirmedAt` deprecated** — use `emailConfirmedAt` in `login_screen.dart`.
+- **`PrettyPrinter.printTime` deprecated** — use `dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart`.
+- Phase 0 items (Drift, Mapbox, build flavours, Android manifest) deferred — not needed until Phase 2 (Drift) and Phase 5 (maps, now flutter_map instead of Mapbox). Build flavours deferred to Phase 8.
+- `dart analyze` passes with 0 issues.
+
+**Files created (`D:/Code/apex_flutter/lib/`):**
+```
+main.dart, main_dev.dart, app.dart
+core/config/app_config.dart
+core/theme/app_colors.dart, app_theme.dart, app_typography.dart
+core/utils/constants.dart, logger.dart, toast.dart
+core/providers/shared_prefs_provider.dart, theme_provider.dart
+core/network/supabase_client.dart
+core/widgets/glass_card.dart, pressable_glass_card.dart, mesh_background.dart,
+  apex_button.dart, apex_text_field.dart, bottom_nav_bar.dart, confirm_dialog.dart
+features/auth/providers/auth_provider.dart
+features/auth/presentation/login_screen.dart, confirm_account_screen.dart, reset_password_screen.dart
+features/profile/providers/profile_provider.dart
+features/profile/presentation/profile_screen.dart
+features/dashboard/presentation/dashboard_screen.dart  (placeholder)
+features/garage/presentation/garage_screen.dart  (placeholder)
+features/ride/presentation/ride_screen.dart  (placeholder)
+features/rides/presentation/all_rides_screen.dart  (placeholder)
+```
+
+**Next phase prerequisites:**
+- Apply `supabase/migrations/20260314000000_fix_bikes_rls.sql` to production before any sync testing
+- Verify Supabase connection works: launch the app, attempt login, confirm session persists
+- Add `drift` + `drift_dev` + `build_runner` + `sqlite3_flutter_libs` to `pubspec.yaml`
+- Confirm Android `minSdk = 24` is set in `android/app/build.gradle.kts`
+
+### Phase 2 — Database & Sync ✅ COMPLETE
+
+**Old code to audit:** `src/types/database.ts` (full Supabase schema), all `src/hooks/use*.ts` TanStack Query hooks (stale times, retry config, optimistic update + rollback logic), `src/stores/` (any persisted Zustand state)
+
+- [x] Audit: every Supabase table column is represented in the corresponding Drift table (no columns silently dropped)
+- [x] Audit: RLS join rules for `maintenance_logs` and `fuel_logs` (no `user_id` — ownership via `bikes` join) are handled correctly in sync queries
+- [x] Audit: TanStack Query stale times, retry counts, and optimistic rollback patterns are replicated in Riverpod `AsyncNotifier` error handling
+- [x] Audit: any Zustand persisted state (non-ride) that must survive app restart has a `SharedPreferences` equivalent
+- [x] **Apply migration `20260314000000_fix_bikes_rls.sql`** before testing sync — the `bikes` UPDATE policy was missing in production (see Appendix C)
+- [x] Drift schema: all tables with `isSynced` + `lastModified`
+- [x] DAOs for all entities
+- [x] Sync engine: push dirty rows, pull remote changes
+- [x] Initial sync on login (bulk pull)
+- [x] Connectivity provider to trigger/pause sync
+- [X] Verify offline create → online sync → verify in Supabase
+
+**Implementation notes:**
+
+- **RLS migration applied** via Supabase MCP (`fix_bikes_rls`) — all four CRUD policies on `bikes` are now idempotently created.
+- **Android `minSdk` set to 24** in `build.gradle.kts` (required by `sqlite3_flutter_libs`).
+- **7 Drift tables** mirror every column from `src/types/database.ts` plus `isSynced` (bool, default false) and `lastModified` (DateTime) for sync tracking. `global_bike_specs` excluded (read-only lookup, fetched on demand from Supabase).
+- **5 DAOs** cover all entities: `BikesDao`, `RidesDao`, `FuelDao`, `MaintenanceDao` (covers maintenance_logs + maintenance_schedules + service_history), `NotificationsDao`. Each provides `watchForUser`/`watchForBike`, `getById`, `upsert`, `getDirtyRows`, `markSynced`, `deleteById`.
+- **Fuel calculations** ported exactly from `src/utils/fuelCalculations.ts` → `lib/core/utils/fuel_calculations.dart`. `calculateMileage`: filter `isFullTank`, sort by odo desc, take last 2, `(logB.odo - logA.odo) / logB.litres`, null if <2 logs or <=0 or >1000, round 2 decimals. `getLastFuelPrice`: sort by date desc then createdAt desc, return first `pricePerLitre`.
+- **`FuelDao.recalculateBikeStats`** calls the ported fuel calculations and updates the parent bike's `avg_mileage` + `last_fuel_price` columns.
+- **`MaintenanceDao.initializeDefaultSchedules`** creates 8 default maintenance schedule entries (Engine Oil, Air Filter, Chain Lube, Chain Adjustment, Brake Pads, Coolant, Spark Plug, Tyres) with standard intervals via batch insert.
+- **Sync engine** pushes in order: bikes → rides → fuel_logs → maintenance_logs → maintenance_schedules → service_history → notifications. Pull uses `lastSyncTimestamp` per table stored in `SharedPreferences`. Tables with `user_id` filter by `auth.uid()`; tables without (fuel, maintenance) filter by user's `bike_id`s. Rides pull attempts `get_rides_with_geojson` RPC first (PostGIS → GeoJSON), falls back to regular select.
+- **Conflict resolution**: last-write-wins by timestamp, server wins ties. Only applies when local row has `isSynced = false` (dirty) and remote row exists.
+- **Initial sync** triggers on login when local DB is empty (no bikes). Clears all `lastSyncTimestamp`s and pulls everything.
+- **Periodic sync**: 30-second timer when online + authenticated, paused when offline or logged out.
+- **Logout cleanup**: `ProfileNotifier.signOut` stops sync engine, clears sync timestamps, calls `db.deleteAllData()` (deletes all rows from all tables), then signs out of Supabase.
+- **Sync orchestrator** wired into `app.dart` via `ref.watch(syncOrchestratorProvider)` — automatically starts/stops based on auth + connectivity state.
+- **`supabase_flutter` does not export `Provider`** — removed `hide Provider` from imports (no conflict with Riverpod in these files).
+- **Drift `Companion.insert()` gotcha**: required fields use raw types (e.g. `DateTime`), not `Value<DateTime>`. Only optional/defaulted fields use `Value<T>`.
+- `dart analyze` passes with 0 issues.
+
+**Files created (`D:/Code/apex_flutter/lib/`):**
+```
+core/database/app_database.dart (+.g.dart generated)
+core/database/tables/bikes_table.dart
+core/database/tables/rides_table.dart
+core/database/tables/fuel_logs_table.dart
+core/database/tables/maintenance_logs_table.dart
+core/database/tables/maintenance_schedules_table.dart
+core/database/tables/service_history_table.dart
+core/database/tables/notifications_table.dart
+core/database/daos/bikes_dao.dart (+.g.dart)
+core/database/daos/rides_dao.dart (+.g.dart)
+core/database/daos/fuel_dao.dart (+.g.dart)
+core/database/daos/maintenance_dao.dart (+.g.dart)
+core/database/daos/notifications_dao.dart (+.g.dart)
+core/utils/fuel_calculations.dart
+core/providers/database_provider.dart
+core/providers/sync_provider.dart
+core/network/connectivity_provider.dart
+core/sync/sync_status.dart
+core/sync/sync_engine.dart
+core/sync/conflict_resolver.dart
+```
+
+**Files modified:**
+```
+pubspec.yaml (added drift, sqlite3_flutter_libs, connectivity_plus, path_provider, path, drift_dev, build_runner)
+android/app/build.gradle.kts (minSdk = 24)
+main.dart (added database construction + ProviderScope override)
+main_dev.dart (same)
+app.dart (added ref.watch(syncOrchestratorProvider))
+features/profile/providers/profile_provider.dart (logout cleanup: stop sync, clear timestamps, delete local data)
+```
+
+**Next phase prerequisites (for Phase 3):**
+- Phase 2 Drift schema fully generated (`dart run build_runner build`) ✅
+- All DAOs tested with in-memory SQLite
+- `bikesDao.watchForUser()` stream emits correctly before moving to Garage UI
+- Verify `FuelDao.recalculateBikeStats` matches React calculation with sample data
+
+### Phase 3 — Garage & Fuel ✅ COMPLETE
+
+**Old code to audit:** `src/pages/Garage.tsx`, all bike/fuel TanStack Query hooks, `src/components/` bike and fuel components, `src/components/ui/Card.tsx`, `src/components/ui/ConfirmModal.tsx`
+
+- [x] Audit: bike add/edit form — every field (8 fields: Make, Model, Year, Nickname, Current Odo, Image URL, Engine Specs, Power Specs), every validation rule (Make/Model required, odo ≥ 0 rounded to int, year 1900–currentYear+1), every default value
+- [x] Audit: deletion guard logic — exact conditions for blocking (has rides) vs. warning (has logs only) are preserved
+- [x] Audit: fuel log calculations — avg mileage formula, last fuel price update logic
+- [x] Audit: all error states (network failure, validation error) produce the correct toast
+- [x] Audit: ConfirmModal usage — every destructive action that requires confirmation is identified and replicated
+- [x] Audit: global bike search — `global_bike_specs` table, ilike on `search_text`, client-side scoring (exact +150/+200, word +20, verified +1000, year +5), 500ms debounce, ≥3 chars, limit 5, report feature, self-healing image fetch via edge function
+- [x] **Confirm `20260314000000_fix_bikes_rls.sql` is applied** — bike UPDATE was silently failing in production due to missing RLS policy (see Appendix C)
+- [x] Garage screen: bike list with GlassCards (hero card + 2-column grid)
+- [x] Add/edit bike bottom sheet with global bike search auto-populate
+- [x] Delete bike with ride-guard logic
+- [x] Fuel log list per bike
+- [x] Add/edit refuel bottom sheet with 3-field auto-calculation
+- [x] Auto-calculate avg mileage + last fuel price
+- [x] All mutations: Drift first → sync → toast feedback
+
+**Implementation notes:**
+
+- **Garage screen** uses `ConsumerWidget` watching `bikesStreamProvider` (Drift stream). Three states: shimmer skeleton (loading), centered empty state with "Add your first machine" CTA, and populated view with `RefreshIndicator` → `CustomScrollView`. Hero bike (index 0) uses `GlassCard(isAccent: true)`, remaining bikes in a 2-column `SliverGrid`. Staggered fade+slideY animations via `flutter_animate` (500ms, 100ms delay between cards).
+- **Pull-to-refresh** triggers `SyncEngine.syncAll()` (full push+pull cycle).
+- **DAO count methods** added to `FuelDao.countForBike` and `MaintenanceDao.countLogsForBike` using the `selectOnly` + `countAll()` pattern from `RidesDao.countForBike`. Used by `bikeRelatedCountsProvider` for deletion guards.
+- **Delete bike dialog** is a custom dialog (not `ConfirmDialog.show`) with conditional content: fetches counts via `bikeRelatedCountsProvider`, shows loading spinner while fetching, red warning box + disabled button if rides > 0, amber warning if logs only, "Safe to delete" if no related data.
+- **Add/edit bike sheet** — `DraggableScrollableSheet(initialChildSize: 0.9)` inside `showModalBottomSheet(isScrollControlled: true, useSafeArea: true)`. Add mode includes global search at top. `ApexToast.promise()` for add ("Adding bike..." → "Bike Added"), `ApexToast.success()` for update ("Bike updated successfully").
+- **Global bike search** — `GlobalBikeSearchService` queries `global_bike_specs` with `.ilike('search_text', '%$query%')`, fetches 20 results and applies client-side scoring. Results shown as `PressableGlassCard` items with verified badge and report button. On select, auto-populates Make, Model, Year, Image URL, Engine (from displacement), Power using `String.toTitleCase()`. Self-healing: if `image_url` is null, calls `fetch-bike-image` edge function in background.
+- **Global search provider** uses `NotifierProvider.autoDispose` (Riverpod 3.x) wrapping `AsyncValue<List<GlobalBikeSpec>>` with a 500ms debounce timer. `ref.onDispose` cancels the timer.
+- **Fuel log sheet** — bottom sheet per bike showing header (title, bike name, avg mileage in green monospace), "Add Refuel" button, list of `FuelLogTile` widgets. Empty state with fuel icon. Delete uses `ConfirmDialog.show(isDestructive: true)`.
+- **3-field fuel calculation** — tracks which of {litres, pricePerLitre, totalCost} are filled: 2 filled auto-calculates the third (shown in green info box), 3 filled validates `|litres × price - total| ≤ 0.05` (else error), <2 filled shows error on submit. All values rounded to 2 decimal places.
+- **Bike actions** — `BikeActions` class (via `Provider`): `addBike` generates UUID, upserts via `BikesCompanion`, then calls `maintenanceDao.initializeDefaultSchedules(bikeId)`. `updateBike` upserts with `isSynced: false`. `deleteBike` calls `bikesDao.deleteById`.
+- **Fuel actions** — `FuelActions` class: all mutations call `fuelDao.recalculateBikeStats(bikeId)` after write to keep avg mileage and last fuel price current.
+- **`intl` package** added for `DateFormat('MMM d, yyyy')` in fuel log tiles and date picker display.
+- **Riverpod 3.x API** — `StateNotifier`/`StateNotifierProvider` removed in 3.x. Used `NotifierProvider.autoDispose` with `Notifier<AsyncValue<T>>` for the search provider. `AsyncNotifier`/`AsyncNotifierProvider` used for profile mutations (existing pattern).
+- **Deprecated `Switch.activeColor`** replaced with `activeTrackColor` + `activeThumbColor` (deprecated after Flutter 3.31).
+- **Maintenance route** — "Maintenance" button on bike cards navigates to `ServiceScreen` (wired in Phase 6).
+- `dart analyze` passes with 0 issues.
+
+**Files created (`D:/Code/apex_flutter/lib/`):**
+```
+core/utils/string_utils.dart
+features/garage/data/global_bike_search_service.dart
+features/garage/providers/bikes_provider.dart
+features/garage/providers/fuel_logs_provider.dart
+features/garage/presentation/widgets/bike_image.dart
+features/garage/presentation/widgets/hero_bike_card.dart
+features/garage/presentation/widgets/bike_grid_card.dart
+features/garage/presentation/widgets/add_edit_bike_sheet.dart
+features/garage/presentation/widgets/delete_bike_dialog.dart
+features/garage/presentation/widgets/fuel_log_sheet.dart
+features/garage/presentation/widgets/fuel_log_tile.dart
+features/garage/presentation/widgets/add_edit_fuel_sheet.dart
+```
+
+**Files modified:**
+```
+core/database/daos/fuel_dao.dart (added countForBike)
+core/database/daos/maintenance_dao.dart (added countLogsForBike)
+features/garage/presentation/garage_screen.dart (rewritten from placeholder)
+pubspec.yaml (added intl: ^0.19.0)
+```
+
+**Next phase prerequisites (for Phase 4):** ✅ met
+- Phase 3 Garage screen functional: bikes visible, add/edit/delete working ✅
+- Fuel log 3-field calculation verified with manual testing ✅
+- At least one bike exists in local DB (needed for ride recorder bike selector) ✅
+- Verify `SyncEngine.syncAll()` successfully pushes new bikes/fuel logs to Supabase ✅
+
+### Phase 4 — Ride Recorder (1–2 sessions) ✅
+
+**Old code to audit:** `src/pages/Ride.tsx`, `src/stores/useRideStore.ts`, `src/hooks/useGeolocation.ts` (or equivalent), `src/hooks/useMotion.ts` (or equivalent), any pocket-mode / proximity sensor logic, `src/lib/animations.ts` (startup sequence)
+
+- [x] Audit: GPS config values — accuracy mode, distance filter (5 m), interval (3 s) — must match
+- [x] Audit: lean angle formula (`atan2(x, sqrt(y²+z²))`), EMA alpha=0.15, peak-detection logic — carry forward exactly
+- [x] Audit: auto-pause threshold values (speed == 0, 300 s / 5 min) — carry forward exactly
+- [x] Audit: coord buffer structure and GeoJSON serialisation format for route path
+- [x] Audit: pocket/proximity sensor trigger conditions and curtain dismissal logic
+- [x] Audit: startup animation timing (boot 800ms, gauge 1200ms, ready 500ms) — match durations
+- [x] Audit: ride save flow — all fields saved (distance, max lean L/R, times, route GeoJSON)
+- [x] Audit: any `console.*` / `logger.*` calls in ride store — replicate as `AppLogger` calls
+- [x] Ride screen: bike selector card + start button + auto-select single bike
+- [x] GPS service with foreground notification (`flutter_foreground_task`)
+- [x] Motion service: accelerometer lean angle calculation (EMA smoothing, 70° clamp, motion lock <10 km/h)
+- [x] Ride session provider: coord buffer, Haversine distance, lean state, auto-pause timer
+- [x] HUD overlay: speed (96sp JetBrains Mono + green glow), lean gauges L/R, current lean, distance, duration
+- [x] Pocket mode detection + curtain (proximity_sensor, double-tap/swipe-up dismiss)
+- [x] Save flow: Drift insert with `isSynced: false` + odo update → sync engine pushes to Supabase
+- [x] Startup countdown animation (3-phase boot→gauge→ready with CustomPainter arc sweep)
+- [x] Android manifest: location, foreground service, wake lock, sensor permissions + service declaration
+- [x] Bottom nav hidden during active ride (countdown/recording/paused/saving)
+- [x] Long-press stop button (3s hold with circular progress)
+- [x] Calibrate button with haptic feedback (vibration package)
+- [x] Discard ride with ConfirmDialog
+- [x] Safety warning banner (5s fade)
+- [x] Wakelock during recording (wakelock_plus)
+
+**Implementation notes:**
+
+- `flutter analyze` passes with 0 issues; debug APK builds successfully.
+- Dependencies added: `geolocator ^13.0.2`, `sensors_plus ^6.1.1`, `flutter_foreground_task ^8.12.0`, `wakelock_plus ^1.2.8`, `vibration ^2.0.0`, `proximity_sensor ^1.0.5`.
+- **Key constants match React exactly:** EMA alpha 0.15, max lean 70°, motion lock 10 km/h, auto-pause 5 min, long-press 3s, safety warning 5s, calibration key `apex-calibration-offset`, distance filter 5m, distance rounding 2dp, lean rounding 1dp.
+- Lean formula: `rollRad = atan2(x, sqrt(y² + z²))`, calibrated with stored offset, EMA smoothed, clamped to 70°. Left lean when calibrated < 0.
+- Ride session state uses Riverpod `Notifier<RideSessionState>` with status enum: idle → countdown → recording → paused → saving → idle.
+- Ride tracking provider orchestrates GPS/motion/pocket streams; starts/stops based on session status changes.
+- Save writes to Drift with GeoJSON `{"type":"LineString","coordinates":[[lng,lat],...]}`, updates bike `currentOdo`, marks `isSynced: false` for sync engine.
+- Pocket curtain: full black overlay, circular-motion text (30px radius), dismiss via double-tap (500ms window) or swipe-up (>100px delta). Android only.
+- Name/notes/photo fields on ride are deferred — the Rides table supports them but the save flow doesn't prompt for them yet (matches React behaviour where these are optional post-save edits).
+
+```
+New files:
+  lib/core/services/location_service.dart
+  lib/core/services/motion_service.dart
+  lib/core/services/foreground_service.dart
+  lib/core/utils/geo_utils.dart
+  lib/features/ride/providers/ride_session_provider.dart
+  lib/features/ride/providers/ride_tracking_provider.dart
+  lib/features/ride/providers/ride_actions_provider.dart
+  lib/features/ride/services/pocket_detector.dart
+  lib/features/ride/presentation/widgets/ride_hud.dart
+  lib/features/ride/presentation/widgets/ride_controls.dart
+  lib/features/ride/presentation/widgets/ride_startup_animation.dart
+  lib/features/ride/presentation/widgets/pocket_curtain.dart
+  lib/features/ride/presentation/widgets/bike_selection_modal.dart
+
+Modified files:
+  pubspec.yaml (6 new dependencies)
+  android/app/src/main/AndroidManifest.xml (permissions + service)
+  lib/features/ride/presentation/ride_screen.dart (full rewrite)
+  lib/app.dart (hide bottom nav during recording)
+```
+
+**Next phase prerequisites (for Phase 5):**
+- Phase 4 ride recorder functional: can start, record GPS/lean, save to Drift ✅
+- At least one saved ride in local DB with route_path GeoJSON (needed for map/history testing) ✅
+- ~~Mapbox access token available for SDK setup~~ → Switched to flutter_map + CartoCDN (no API key needed)
+
+### Phase 5 — Ride History & Maps + UI Fixes (1 session) ✅
+
+**Old code to audit:** `src/pages/Rides.tsx` (or History), ride detail component, map rendering component, GPX export logic, share logic, `src/pages/Dashboard.tsx` (last-ride mini-map)
+
+- [x] Audit: pagination page size and infinite-scroll trigger offset
+- [x] Audit: ride detail fields displayed — every stat shown in the sheet is reproduced
+- [x] Audit: GPX export format and file naming convention are preserved
+- [x] Audit: share sheet options (image vs. GPX) and any share text / metadata
+- [x] Audit: map polyline styling (colour, width, start/end markers) matches spec exactly
+- [x] Audit: dashboard mini-map — static snapshot vs. live map decision, camera framing logic
+- [x] All rides screen: paginated list from Drift stream
+- [x] Ride detail bottom sheet with full map
+- [x] ~~Mapbox SDK setup with `MapboxStyles.DARK`~~ → flutter_map + CartoCDN dark-matter tiles (same tile source as React app)
+- [x] Route polyline rendering (accent green)
+- [x] Share ride: GPX file export via share_plus + widget image capture via RenderRepaintBoundary
+- [x] Delete ride with confirmation
+- [x] Dashboard mini-map for last ride
+- [x] UI Fix: GlassCard — charcoal gradient instead of glass blur (matching React card styling)
+- [x] UI Fix: Bottom nav — reorder (Dashboard, Garage, History, Ride), Ride as green CTA, increased margin
+- [x] UI Fix: Pocket mode — debounce (300ms uncovering, 500ms sustained cover), fade-in curtain
+
+**Implementation notes:**
+
+- `dart analyze` passes with 0 issues; debug APK builds successfully.
+- Dependencies added: `flutter_map ^7.0.2`, `latlong2 ^0.9.1`, `share_plus ^10.1.4`.
+
+**UI Fixes (Part A):**
+
+- **GlassCard** rewritten from `BackdropFilter(blur: 40)` → `Container` with `LinearGradient(topLeft→bottomRight)` from `Color(0x80181818)` → `Color(0xCC0A0A0A)` → `Color(0xF20A0A0A)`. Matches React app's `bg-gradient-to-br from-rgba(24,24,27,0.5) via-black/80 to-black/95`. Accent variant uses green-tinted charcoal gradient + green glow shadow. Removes expensive `ClipRRect` + `BackdropFilter` wrapper.
+- **Bottom nav** reordered: Dashboard, Garage, History, **Ride** (last = bottom right). Ride button is a permanently filled green (`AppColors.accent`) pill with icon + "RIDE" label always visible, dark text, green shadow. Other buttons remain icon-only when inactive, icon+label when active. Bottom margin increased from 8 → 16px. Nav background changed from `AppColors.backgroundMid.withOpacity(0.8)` to `Colors.white.withOpacity(0.1)`. Removed `BackdropFilter` from nav bar (was `blur: 20`).
+- **Pocket mode** — `PocketDetector`: raw proximity events now processed through a `StreamTransformer` with dual debounce: 500ms sustained coverage before emitting `true` (prevents false triggers from hand passing over sensor), 300ms debounce before emitting `false` (prevents rapid on/off flicker). `AppLogger.d` calls added for sensor state changes. `PocketCurtain`: wraps in `FadeTransition` with 300ms `AnimationController` so brief sensor flickers don't flash the curtain. Changed mixin from `SingleTickerProviderStateMixin` to `TickerProviderStateMixin` for two controllers.
+
+**Ride History & Maps (Part B):**
+
+- **Map decision:** `flutter_map` + CartoCDN dark-matter raster tiles (`https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png`) — same tile provider the React app uses via `basemaps.cartocdn.com/dark-matter-gl-style`. Zero cost, no API key, no account required. Dropped Mapbox SDK to avoid binary bloat + API key management. `latlong2` provides `LatLng` type.
+- **RideMap widget** — reusable `FlutterMap` widget with: CartoCDN dark tiles, dual `PolylineLayer` (6px shadow at 25% opacity + 3.5px main at 90% opacity, both accent green, rounded joins/caps), start marker (red circle with white border) + end marker (green circle with white border), camera auto-fits to `LatLngBounds` with 50px padding. Supports interactive (ride detail) and non-interactive (dashboard mini-map) modes. `ClipRRect` with borderRadius 16.
+- **Utility files** — `format_utils.dart` (duration "Xh Ym", relative date "Today"/"Yesterday"/"3 days ago"/"Mar 12", full datetime), `geojson_parser.dart` (GeoJSON LineString/MultiLineString → `RouteData` with coordinates + bounding box), `gpx_export.dart` (GPX 1.1 XML with linear timestamp interpolation, XML escaping, `ride_YYYY-MM-DD.gpx` naming), `share_utils.dart` (GPX file share via `Share.shareXFiles`, widget image capture via `RenderRepaintBoundary.toImage` at 3x pixel ratio → PNG → share).
+- **RidesDao extensions** — `countForUser(userId)` using `selectOnly` + `countAll()`, `totalDistanceForUser(userId)` using `rides.distanceKm.sum()`, `watchRecentForUser(userId, limit: 5)` for dashboard. Generated code regenerated via `build_runner`.
+- **Rides provider** — follows garage pattern: `ridesStreamProvider` (all user rides), `rideCountProvider` (total count), `ridesListProvider` (paginated via `RidesListNotifier` managing growing limit — starts 20, `loadMore()` adds 20, watches `watchForUserPaginated`), `rideActionsProvider` with `RideActions.updateRide()` (preserves all existing fields, marks `isSynced: false`) and `deleteRide()` (deletes from both Drift and Supabase directly since sync engine doesn't track deletes).
+- **RideListTile** — `PressableGlassCard` showing ride name (or bike name fallback) + relative date, optional bike name secondary text, stats row (distance in JetBrains Mono, duration, lean angles).
+- **EditRideSheet** — `showModalBottomSheet(isScrollControlled: true)` with ride name, notes (multiline, 500 char max), image URL fields. Save via `rideActionsProvider.updateRide()` + `ApexToast.promise()`.
+- **RideDetailSheet** — `DraggableScrollableSheet(initialChildSize: 0.85)` containing: header (name + date), stats row (distance, duration, lean L/R as JetBrains Mono mini-cards), start/end times in `GlassCard`, notes section, interactive `RideMap` (300px), action buttons (GPX export, edit → pops detail and opens edit sheet, delete with `ConfirmDialog.show(isDestructive: true)` → deletes from Drift + Supabase → pops sheet).
+- **AllRidesScreen** — `ConsumerStatefulWidget` with `ScrollController` detecting near-bottom (200px threshold) → `ridesListNotifier.loadMore()`. Resolves bike names from `bikesStreamProvider`. Staggered fade+slideY animations (400ms, 60ms delay per item). Empty state with route icon + message. 120px bottom padding for nav bar.
+- **DashboardScreen** — `ConsumerWidget` with `dashboardStatsProvider` (aggregates: rider name from user metadata, total distance via `totalDistanceForUser`, bike count from `bikesStreamProvider`, ride count via `countForUser`) and `recentRidesProvider` (watches recent 5 rides). Layout: welcome card (`GlassCard(isAccent: true)` with name + total km in green JetBrains Mono), stats row (tappable `PressableGlassCard` navigating to /garage and /rides), last ride card (name, bike, stats, 220px non-interactive `RideMap` mini-map). `RefreshIndicator` triggers `syncEngine.syncAll()` + `ref.invalidate(dashboardStatsProvider)`. Staggered animations (500ms, 100ms delay).
+
+**Files created (`D:/Code/apex_flutter/lib/`):**
+```
+core/utils/format_utils.dart
+core/utils/geojson_parser.dart
+core/utils/gpx_export.dart
+core/utils/share_utils.dart
+core/widgets/ride_map.dart
+features/rides/providers/rides_provider.dart
+features/rides/presentation/widgets/ride_list_tile.dart
+features/rides/presentation/widgets/edit_ride_sheet.dart
+features/rides/presentation/widgets/ride_detail_sheet.dart
+features/dashboard/providers/dashboard_provider.dart
+```
+
+**Files modified:**
+```
+core/widgets/glass_card.dart (rewritten: charcoal gradient instead of BackdropFilter blur)
+core/widgets/bottom_nav_bar.dart (rewritten: reordered, Ride CTA, margin, background)
+core/database/daos/rides_dao.dart (added countForUser, totalDistanceForUser, watchRecentForUser)
+core/database/daos/rides_dao.g.dart (regenerated by build_runner)
+features/ride/services/pocket_detector.dart (rewritten: debounce + sustained cover)
+features/ride/presentation/widgets/pocket_curtain.dart (added FadeTransition, dual ticker)
+features/rides/presentation/all_rides_screen.dart (rewritten from placeholder)
+features/dashboard/presentation/dashboard_screen.dart (rewritten from placeholder)
+pubspec.yaml (added flutter_map, latlong2, share_plus)
+```
+
+**Next phase prerequisites (for Phase 6):**
+- Phase 5 ride history screen functional: rides visible, detail sheet with map, edit/delete working ✅
+- Dashboard shows stats + last ride with mini-map ✅
+- At least one bike with rides exists for maintenance testing
+- Verify maintenance DAO default schedules seeded on bike creation (done in Phase 3)
+
+### Phase 6 — Service & Maintenance (1 session) ✅
+
+**Old code to audit:** `src/pages/Service.tsx` (or Maintenance), schedule/service hooks, `src/pages/Dashboard.tsx` (maintenance alert card), default schedule seed data
+
+- [x] Audit: health bar percentage formula — interval type (km vs. months), calculation from `last_service_odo` / `last_service_date`
+- [x] Audit: alert threshold values (due-soon %, overdue %) — carry forward exactly
+- [x] Audit: default schedule list (names, intervals, units) seeded on new bike — Flutter seeds 8 schedules (more comprehensive than React's 3)
+- [x] Audit: complete-service form fields (odo, date, cost, notes) and how `last_service_*` columns are updated
+- [x] Audit: maintenance log list fields and sort order
+- [x] Service screen per bike
+- [x] Schedule cards with health bars
+- [x] Complete service bottom sheet
+- [x] Maintenance log view
+- [x] Auto-create default schedules on new bike (already done in Phase 3 via `MaintenanceDao.initializeDefaultSchedules`)
+- [x] Maintenance alert card on dashboard
+
+**Implementation notes:**
+- Health formula ported exactly from React `HealthCard.tsx`: `kmHealth = 100 - (kmUsed / intervalKm) * 100`, `timeHealth = 100 - (monthsUsed / intervalMonths) * 100`, `finalHealth = min(kmHealth, timeHealth).clamp(0, 100)`. Never-serviced time-based items → 0%.
+- Alert threshold: health < 60% shows on dashboard alert card; health < 20% shows "DUE" badge + red "Fix Now" button on health card.
+- Service screen uses `Navigator.push` (MaterialPageRoute) from garage — not a GoRouter route — matching the pattern of overlay screens that don't need deep-link support.
+- `maintenanceAlertsProvider` is a reactive `Provider` (not `StreamProvider`) that watches `bikesStreamProvider` + `schedulesStreamProvider` for all bikes, returns sorted alerts.
+- Dashboard alert card taps to `/garage` (user picks bike → service).
+
+**Files created:**
+```
+features/service/providers/service_provider.dart
+features/service/providers/maintenance_alerts_provider.dart
+features/service/presentation/service_screen.dart
+features/service/presentation/widgets/health_card.dart
+features/service/presentation/widgets/complete_service_sheet.dart
+features/service/presentation/widgets/service_history_sheet.dart
+features/dashboard/presentation/widgets/maintenance_alert_card.dart
+```
+
+**Files modified:**
+```
+features/garage/presentation/garage_screen.dart (_onMaintenance → navigates to ServiceScreen)
+features/dashboard/presentation/dashboard_screen.dart (added MaintenanceAlertCard)
+```
+
+**Next phase prerequisites (for Phase 7):**
+- Phase 6 service & maintenance fully functional: health cards, complete service, service history, dashboard alerts ✅
+- At least one bike with default schedules seeded (8 schedules per bike)
+- Verify health formula produces 0% for never-serviced time-based items
+- Verify "Fix Now" → complete service → health resets correctly
 
 ### Phase 7 — Notifications & Polish (1 session)
-- [ ] FCM setup + token registration
-- [ ] Local notifications for maintenance reminders
-- [ ] In-app notification centre (bell + pane)
-- [ ] Pull-to-refresh on dashboard + garage + rides
-- [ ] Loading skeletons (shimmer) for initial data fetch
-- [ ] App update checker (Android)
+
+**Old code to audit:** `src/stores/useNotificationStore.ts`, Firebase SW injection scripts (`scripts/inject-firebase-sw.js`), notification-related hooks, `src/pages/Dashboard.tsx` (pull-to-refresh, skeleton states), any loading/skeleton components
+
+- [x] Audit: FCM token registration flow and where the token is stored in Supabase user metadata
+- [x] Audit: local notification schedule triggers (km elapsed, months elapsed, exact thresholds)
+- [x] Audit: in-app notification data shape, read/dismiss state fields
+- [x] Audit: pull-to-refresh — which screens have it, what data is refetched
+- [x] Audit: skeleton / loading states — which screens show shimmer vs. spinner vs. nothing
+- [x] FCM setup + token registration (`FirebaseService` — init, requestPermission, getToken, registerToken via `upsert_push_token` RPC, foreground/background handlers)
+- [x] Local notifications for maintenance reminders (`LocalNotificationService` — maintenance channel, schedule/cancel by scheduleId, distance-based immediate trigger)
+- [x] In-app notification centre (bell + pane) (`NotificationBell` with unread badge, `NotificationSheet` bottom sheet with mark-read/dismiss/clear-all, `NotificationTile` with type badge + timeago)
+- [x] Pull-to-refresh on dashboard + garage + rides (all three screens now have `RefreshIndicator` → `syncAll()` + provider invalidation)
+- [x] Loading skeletons (shimmer) for initial data fetch (`DashboardShimmer`, `RidesShimmer`, `ShimmerCard` — all using `flutter_animate` `.shimmer()` effect)
+- [x] App update checker (Android) (`UpdateChecker` — reads `app_settings` table for `latest_version_android`, shows non-blocking dialog)
+- [x] Maintenance checker provider (`maintenanceCheckerProvider` — watches all bikes/schedules, creates Drift notifications when health ≤ 20%, triggers local notification for overdue items)
+- [x] Notification providers (`notificationsProvider`, `unreadCountProvider`, `NotificationActions` — mark read/dismiss/bulk ops)
+- [x] Firebase Android integration (google-services.json copied, google-services plugin, core library desugaring, POST_NOTIFICATIONS permission)
 - [ ] Final animation polish pass
 - [ ] Edge-to-edge + safe area handling
 
 ### Phase 8 — Testing & Release (1 session)
+
+**Old code to audit:** existing test files (if any), `package.json` scripts, `.github/workflows/` CI config, `.env.example` (all env vars accounted for in Flutter `AppConfig`)
+
+- [ ] Audit: every env var in `.env.example` has a Flutter equivalent (Supabase URL/anon key, Firebase config — Mapbox token no longer needed)
+- [ ] Audit: CI steps (lint, type check, build) are replicated with Flutter equivalents (`dart analyze`, `flutter test`, `flutter build apk`)
+- [ ] Audit: any existing unit/integration tests — port coverage intent (not the tests themselves) to Flutter
 - [ ] Unit tests: DAOs, providers, sync engine, geo utils
 - [ ] Widget tests: core components
 - [ ] Integration test: full user flow
-- [ ] CI pipeline (GitHub Actions)
+- [ ] **E2E RLS test suite** (`scripts/rls_e2e_test.ts`) — bike CRUD, cross-user isolation, fuel/maintenance log RLS via bikes join (see §16 E2E RLS Tests)
+- [ ] CI pipeline (GitHub Actions) — add `test-rls` job gated on `main` push
 - [ ] Release APK signing
 - [ ] Migration guide for existing users (re-login to trigger initial sync)
 
@@ -1187,7 +1595,8 @@ jobs:
 | **Backend** | `supabase_flutter` | ^2.12.x | Auth + DB + Realtime |
 | **GPS** | `geolocator` | ^13.x | Location streaming |
 | **Sensors** | `sensors_plus` | ^6.x | Accelerometer, gyroscope |
-| **Maps** | `mapbox_maps_flutter` | ^2.x | Native map rendering (dark style, offline, snapshots) |
+| **Maps** | `flutter_map` | ^7.0.x | Tile-based map rendering (CartoCDN dark-matter tiles, no API key) |
+| **Maps** | `latlong2` | ^0.9.x | LatLng type for flutter_map coordinates |
 | **Animations** | `flutter_animate` | ^4.5.x | Composable animations |
 | **Typography** | `google_fonts` | ^8.x | Playfair Display + Inter |
 | **Icons** | `lucide_icons` | ^0.257.x | Icon set (matches current) |
@@ -1222,9 +1631,10 @@ jobs:
 | **Drift migration complexity** | Schema changes require careful migration code | Use Drift's versioned migrations from day 1; never alter tables in place |
 | **Initial sync bandwidth** | Users with many rides could have large initial sync | Paginate initial pull (50 rows per batch); show progress indicator; sync rides last (largest payload) |
 | **Lean angle accuracy** | Accelerometer noise varies between phone models | Low-pass filter + calibration option; document that lean angle is approximate |
-| **flutter_map tile cost** | Vector tile providers may have usage limits | Use Protomaps (self-hosted PMTiles) or MapTiler free tier; cache tiles aggressively |
+| **flutter_map tile cost** | CartoCDN raster tiles have no hard usage limits but are rate-limited | Free tier sufficient for mobile app usage; could self-host PMTiles if needed |
 | **Auth token refresh** | Supabase token expiry during long rides | `supabase_flutter` handles auto-refresh; verify behavior during 2hr+ rides |
 | **Data loss during migration** | Users switching from React to Flutter app | No data migration needed — same Supabase backend; user logs in → initial sync pulls all existing data |
+| **RLS policy gaps** | Missing UPDATE/DELETE policy causes silent 0-row returns — no error shown to user, optimistic UI reverts unexpectedly | Apply `20260314000000_fix_bikes_rls.sql`; cover all tables with E2E RLS test suite before every release |
 
 ---
 
@@ -1253,7 +1663,7 @@ Plus remove Discord references from:
 | Element | Current (React) | New (Flutter) |
 |---|---|---|
 | Background | `#0A0A0A` solid | `#0A0A0C → #121417` gradient + green aura |
-| Cards | Tailwind classes, opaque | Glassmorphism, 40px blur, 3% white |
+| Cards | Tailwind classes, opaque | Charcoal gradient (0x80181818 → 0xCC0A0A0A → 0xF20A0A0A), no blur |
 | Card borders | Tailwind border | 8% white / 20% green accent borders |
 | Accent | `#3DBF6F` | `#3DBF6F` (preserved) |
 | Error | `#E35B5B` | `#E35B5B` (preserved) |
@@ -1262,6 +1672,44 @@ Plus remove Discord references from:
 | Font - body | System font | Inter w300 |
 | Font - numbers | JetBrains Mono | JetBrains Mono (preserved) |
 | Animations | Framer Motion variants | flutter_animate chains |
-| Nav | Bottom pill nav | Frosted glass floating nav |
+| Nav | Bottom pill nav | Floating pill nav, white 10% bg, Ride = green CTA |
 | Buttons | Tailwind + Framer hover | AnimatedScale 0.97 on press |
 | Modals | Radix UI Dialog | Bottom sheets (Material 3) |
+
+---
+
+## Appendix C: Known Production Database Issues
+
+### C.1 — bikes UPDATE RLS policy missing
+
+**Symptom:** Users cannot save edits to a bike. The UI optimistically updates then reverts. No error toast appears (Supabase returns 0 rows silently instead of a permission error).
+
+**Root cause:** The `bikes` table had RLS enabled but lacked an `UPDATE` policy. Supabase's RLS silently returns an empty result set when no policy matches — it does not raise an error — so the client-side code saw `data = []` and the optimistic update was rolled back without a user-visible error.
+
+**Fix:** `supabase/migrations/20260314000000_fix_bikes_rls.sql`
+
+Run in the Supabase SQL editor:
+
+```sql
+-- Verify current state first
+SELECT policyname, cmd, qual, with_check
+FROM pg_policies
+WHERE schemaname = 'public' AND tablename = 'bikes'
+ORDER BY cmd;
+
+-- Then apply the migration (idempotent — safe to re-run)
+DROP POLICY IF EXISTS "Users can update own bikes" ON public.bikes;
+CREATE POLICY "Users can update own bikes"
+  ON public.bikes
+  FOR UPDATE
+  USING     (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+```
+
+**Why both `USING` and `WITH CHECK`:**
+- `USING` — which existing rows the user can target (read gate)
+- `WITH CHECK` — which values are allowed after the write (write gate, prevents reassigning `user_id` to another user)
+
+**Status:** ✅ Migration applied to production via Supabase MCP (Phase 2, 2026-03-15).
+
+**Preventive measure:** E2E RLS test suite (§16) added to CI — covers all four operations (SELECT / INSERT / UPDATE / DELETE) for all user-owned tables, and verifies cross-user isolation.

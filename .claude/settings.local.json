@@ -6,7 +6,26 @@
       "Bash(git commit:*)",
       "Bash(git add:*)",
       "Bash(npm run:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(supabase:*)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(list\\(d.get\\(''''mcpServers'''', {}\\).keys\\(\\)\\), indent=2\\)\\)\")",
+      "Read(//c/Users/puruk/AppData/Roaming/Claude/**)",
+      "Bash(cat:*)",
+      "Bash(flutter:*)",
+      "Bash(cd:*)",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__apply_migration",
+      "Bash(dart run:*)",
+      "Bash(dart analyze:*)",
+      "Bash(grep:*)",
+      "Read(//c/Users/puruk/AppData/Local/Pub/Cache/hosted/pub.dev/**)",
+      "Bash(2)",
+      "Read(//d/pub_cache/hosted/pub.dev/**)",
+      "Read(//d/pub_cache/hosted/pub.dev/riverpod-3.0.0/lib/src/common/**)",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__execute_sql",
+      "Bash(/tmp/analyze_circular.txt:*)",
+      "Read(//tmp/**)"
     ]
   }
 }

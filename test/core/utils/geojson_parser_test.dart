@@ -18,7 +18,12 @@ void main() {
 
     test('returns null for unsupported geometry type', () {
       expect(
-        parseRoutePath(jsonEncode({'type': 'Point', 'coordinates': [77.0, 28.0]})),
+        parseRoutePath(
+          jsonEncode({
+            'type': 'Point',
+            'coordinates': [77.0, 28.0],
+          }),
+        ),
         isNull,
       );
     });

@@ -45,8 +45,9 @@ class BikesDao extends DatabaseAccessor<AppDatabase> with _$BikesDaoMixin {
 
   /// Mark a row as synced.
   Future<void> markSynced(String id) {
-    return (update(bikes)..where((b) => b.id.equals(id)))
-        .write(const BikesCompanion(isSynced: Value(true)));
+    return (update(bikes)..where((b) => b.id.equals(id))).write(
+      const BikesCompanion(isSynced: Value(true)),
+    );
   }
 
   /// Update fuel stats on a bike (avg mileage + last fuel price).
@@ -72,9 +73,9 @@ class BikesDao extends DatabaseAccessor<AppDatabase> with _$BikesDaoMixin {
 
   /// Get all bike IDs for a user.
   Future<List<String>> getBikeIdsForUser(String userId) async {
-    final rows = await (select(bikes)
-          ..where((b) => b.userId.equals(userId)))
-        .get();
+    final rows = await (select(
+      bikes,
+    )..where((b) => b.userId.equals(userId))).get();
     return rows.map((b) => b.id).toList();
   }
 }

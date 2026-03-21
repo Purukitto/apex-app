@@ -89,9 +89,7 @@ class ApexTextField extends StatelessWidget {
           fontSize: 14,
           color: AppColors.textMuted,
         ),
-        errorStyle: AppTypography.interSmall.copyWith(
-          color: AppColors.error,
-        ),
+        errorStyle: AppTypography.interSmall.copyWith(color: AppColors.error),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.cardBorder),
@@ -102,13 +100,13 @@ class ApexTextField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              BorderSide(color: context.accent, width: 1.5),
+          borderSide: BorderSide(color: context.accent, width: 1.5),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-              color: AppColors.cardBorder.withValues(alpha: 0.5)),
+            color: AppColors.cardBorder.withValues(alpha: 0.5),
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -116,11 +114,12 @@ class ApexTextField extends StatelessWidget {
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: AppColors.error, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
     );
   }

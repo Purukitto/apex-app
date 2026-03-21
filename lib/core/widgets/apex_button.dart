@@ -112,8 +112,9 @@ class _FilledButton extends StatelessWidget {
               width: 20,
               child: CircularProgressIndicator.adaptive(
                 strokeWidth: 2,
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(AppColors.backgroundDark),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.backgroundDark,
+                ),
               ),
             )
           : Text(
@@ -204,15 +205,14 @@ class _GhostButton extends StatelessWidget {
               child: CircularProgressIndicator.adaptive(
                 strokeWidth: 2,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                    AppColors.textSecondary),
+                  AppColors.textSecondary,
+                ),
               ),
             )
           : Text(
               label,
               style: AppTypography.inter.copyWith(
-                color: enabled
-                    ? AppColors.textSecondary
-                    : AppColors.textMuted,
+                color: enabled ? AppColors.textSecondary : AppColors.textMuted,
                 fontSize: 15,
               ),
             ),

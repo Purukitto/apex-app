@@ -21,13 +21,12 @@ class ProfileNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
     try {
       final currentUser = _client.auth.currentUser;
-      final existing =
-          Map<String, dynamic>.from(currentUser?.userMetadata ?? {});
+      final existing = Map<String, dynamic>.from(
+        currentUser?.userMetadata ?? {},
+      );
       existing['rider_name'] = name;
 
-      await _client.auth.updateUser(
-        UserAttributes(data: existing),
-      );
+      await _client.auth.updateUser(UserAttributes(data: existing));
 
       // Invalidate the user profile cache
       ref.invalidate(userProfileProvider);
@@ -113,10 +112,7 @@ class ProfileNotifier extends AsyncNotifier<void> {
   Future<void> resendEmailChangeOtp(String email) async {
     state = const AsyncLoading();
     try {
-      await _client.auth.resend(
-        type: OtpType.emailChange,
-        email: email,
-      );
+      await _client.auth.resend(type: OtpType.emailChange, email: email);
       state = const AsyncData(null);
       AppLogger.i('Email change OTP resent to: $email');
     } catch (e, st) {
@@ -150,5 +146,6 @@ class ProfileNotifier extends AsyncNotifier<void> {
   }
 }
 
-final profileProvider =
-    AsyncNotifierProvider<ProfileNotifier, void>(ProfileNotifier.new);
+final profileProvider = AsyncNotifierProvider<ProfileNotifier, void>(
+  ProfileNotifier.new,
+);

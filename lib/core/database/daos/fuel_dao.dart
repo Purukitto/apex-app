@@ -44,8 +44,9 @@ class FuelDao extends DatabaseAccessor<AppDatabase> with _$FuelDaoMixin {
 
   /// Mark a row as synced.
   Future<void> markSynced(String id) {
-    return (update(fuelLogs)..where((f) => f.id.equals(id)))
-        .write(const FuelLogsCompanion(isSynced: Value(true)));
+    return (update(fuelLogs)..where((f) => f.id.equals(id))).write(
+      const FuelLogsCompanion(isSynced: Value(true)),
+    );
   }
 
   /// Delete a fuel log by ID.
@@ -69,14 +70,16 @@ class FuelDao extends DatabaseAccessor<AppDatabase> with _$FuelDaoMixin {
     final logs = await getForBike(bikeId);
 
     final entries = logs
-        .map((log) => FuelLogEntry(
-              odometer: log.odometer,
-              litres: log.litres,
-              pricePerLitre: log.pricePerLitre,
-              isFullTank: log.isFullTank,
-              date: log.date,
-              createdAt: log.createdAt,
-            ))
+        .map(
+          (log) => FuelLogEntry(
+            odometer: log.odometer,
+            litres: log.litres,
+            pricePerLitre: log.pricePerLitre,
+            isFullTank: log.isFullTank,
+            date: log.date,
+            createdAt: log.createdAt,
+          ),
+        )
         .toList();
 
     final avgMileage = calculateMileage(entries);

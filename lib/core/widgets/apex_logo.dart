@@ -8,11 +8,7 @@ import '../theme/app_colors.dart' show AppColorsX;
 /// By default, the stroke color matches the current theme accent.
 /// Pass [color] to override.
 class ApexLogo extends StatelessWidget {
-  const ApexLogo({
-    super.key,
-    this.size = 48,
-    this.color,
-  });
+  const ApexLogo({super.key, this.size = 48, this.color});
 
   final double size;
   final Color? color;

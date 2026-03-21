@@ -28,8 +28,7 @@ class HealthCard extends StatelessWidget {
   bool get _isDue => _health < 20;
 
   double _calculateHealth() {
-    final kmUsed =
-        math.max(0.0, currentOdo - (schedule.lastServiceOdo ?? 0));
+    final kmUsed = math.max(0.0, currentOdo - (schedule.lastServiceOdo ?? 0));
     final kmHealth = 100.0 - (kmUsed / schedule.intervalKm) * 100.0;
 
     double timeHealth = 100.0;
@@ -39,8 +38,7 @@ class HealthCard extends StatelessWidget {
         if (lastDate != null) {
           final daysSince = DateTime.now().difference(lastDate).inDays;
           final monthsUsed = daysSince / 30.44;
-          timeHealth =
-              100.0 - (monthsUsed / schedule.intervalMonths) * 100.0;
+          timeHealth = 100.0 - (monthsUsed / schedule.intervalMonths) * 100.0;
         }
       } else {
         return 0.0;
@@ -60,8 +58,7 @@ class HealthCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final health = _health;
     final color = _healthColor(context);
-    final kmUsed =
-        math.max(0.0, currentOdo - (schedule.lastServiceOdo ?? 0));
+    final kmUsed = math.max(0.0, currentOdo - (schedule.lastServiceOdo ?? 0));
 
     return GlassCard(
       padding: const EdgeInsets.all(16),
@@ -95,8 +92,10 @@ class HealthCard extends StatelessWidget {
               if (_isDue) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.error.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
@@ -162,8 +161,11 @@ class HealthCard extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.check_circle_outline,
-                    size: 14, color: AppColors.textMuted),
+                Icon(
+                  Icons.check_circle_outline,
+                  size: 14,
+                  color: AppColors.textMuted,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'Last: ${_formatDate(schedule.lastServiceDate!)}',
@@ -185,12 +187,14 @@ class HealthCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: (_isDue ? AppColors.error : context.accent)
-                    .withValues(alpha: 0.15),
+                color: (_isDue ? AppColors.error : context.accent).withValues(
+                  alpha: 0.15,
+                ),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: (_isDue ? AppColors.error : context.accent)
-                      .withValues(alpha: 0.4),
+                  color: (_isDue ? AppColors.error : context.accent).withValues(
+                    alpha: 0.4,
+                  ),
                 ),
               ),
               alignment: Alignment.center,
@@ -228,10 +232,7 @@ class HealthCard extends StatelessWidget {
 }
 
 class _HealthProgressBar extends StatelessWidget {
-  const _HealthProgressBar({
-    required this.health,
-    required this.color,
-  });
+  const _HealthProgressBar({required this.health, required this.color});
 
   final double health;
   final Color color;

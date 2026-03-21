@@ -63,10 +63,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await _supabase.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
+      await _supabase.auth.signInWithPassword(email: email, password: password);
       if (mounted) context.go('/dashboard');
     } on AuthException catch (e) {
       AppLogger.w('Sign in failed', e);
@@ -112,7 +109,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // Email confirmation required
       if (response.user?.emailConfirmedAt == null && response.session == null) {
         ApexToast.success(
-            context, 'Please check your email to confirm your account');
+          context,
+          'Please check your email to confirm your account',
+        );
         _emailController.clear();
         _passwordController.clear();
         setState(() => _isSignUp = false);
@@ -134,8 +133,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _pollAndNavigate() async {
     for (int i = 0; i < kSessionPollMaxAttempts; i++) {
-      await Future.delayed(
-          const Duration(milliseconds: kSessionPollDelayMs));
+      await Future.delayed(const Duration(milliseconds: kSessionPollDelayMs));
       final session = _supabase.auth.currentSession;
       if (session != null) {
         if (mounted) context.go('/dashboard');
@@ -145,7 +143,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Fallback: prompt user to confirm email
     if (mounted) {
       ApexToast.success(
-          context, 'Please check your email to confirm your account');
+        context,
+        'Please check your email to confirm your account',
+      );
     }
   }
 
@@ -179,7 +179,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
       if (mounted) {
         ApexToast.success(
-            context, 'Password reset email sent. Check your inbox.');
+          context,
+          'Password reset email sent. Check your inbox.',
+        );
       }
     } catch (e) {
       AppLogger.e('Reset password error', e);
@@ -232,27 +234,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       children: [
         // Apex monogram
         Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: context.accentCardBg,
-            border: Border.all(color: context.accentCardBorder, width: 1.5),
-          ),
-          alignment: Alignment.center,
-          child: ApexLogo(size: 36),
-        )
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: context.accentCardBg,
+                border: Border.all(color: context.accentCardBorder, width: 1.5),
+              ),
+              alignment: Alignment.center,
+              child: ApexLogo(size: 36),
+            )
             .animate()
             .fadeIn(duration: 500.ms)
             .slideY(begin: -0.2, end: 0, duration: 500.ms),
         const SizedBox(height: 16),
         Text(
-          'Apex',
-          style: AppTypography.playfairDisplayLarge.copyWith(
-            color: AppColors.textPrimary,
-            letterSpacing: 2,
-          ),
-        )
+              'Apex',
+              style: AppTypography.playfairDisplayLarge.copyWith(
+                color: AppColors.textPrimary,
+                letterSpacing: 2,
+              ),
+            )
             .animate()
             .fadeIn(duration: 500.ms, delay: 100.ms)
             .slideY(begin: -0.15, end: 0, duration: 500.ms, delay: 100.ms),
@@ -260,101 +262,97 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         Text(
           _isSignUp ? 'Create your account' : 'Welcome back, rider',
           style: AppTypography.interSecondary,
-        )
-            .animate()
-            .fadeIn(duration: 500.ms, delay: 200.ms),
+        ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
       ],
     );
   }
 
   Widget _buildFormCard() {
     return GlassCard(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Email
-          ApexTextField(
-            controller: _emailController,
-            label: 'Email',
-            hint: 'rider@example.com',
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-            autofocus: true,
-          )
-              .animate()
-              .fadeIn(duration: 500.ms, delay: 200.ms)
-              .slideY(begin: 0.1, end: 0, duration: 500.ms, delay: 200.ms),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Email
+              ApexTextField(
+                    controller: _emailController,
+                    label: 'Email',
+                    hint: 'rider@example.com',
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    autofocus: true,
+                  )
+                  .animate()
+                  .fadeIn(duration: 500.ms, delay: 200.ms)
+                  .slideY(begin: 0.1, end: 0, duration: 500.ms, delay: 200.ms),
 
-          const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-          // Password
-          ApexTextField(
-            controller: _passwordController,
-            label: 'Password',
-            hint: '••••••••',
-            obscureText: _obscurePassword,
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) =>
-                _isSignUp ? _handleSignUp() : _handleSignIn(),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscurePassword
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
-                color: AppColors.textMuted,
-                size: 18,
-              ),
-              onPressed: () =>
-                  setState(() => _obscurePassword = !_obscurePassword),
-            ),
-          )
-              .animate()
-              .fadeIn(duration: 500.ms, delay: 300.ms)
-              .slideY(begin: 0.1, end: 0, duration: 500.ms, delay: 300.ms),
+              // Password
+              ApexTextField(
+                    controller: _passwordController,
+                    label: 'Password',
+                    hint: '••••••••',
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) =>
+                        _isSignUp ? _handleSignUp() : _handleSignIn(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: AppColors.textMuted,
+                        size: 18,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                  )
+                  .animate()
+                  .fadeIn(duration: 500.ms, delay: 300.ms)
+                  .slideY(begin: 0.1, end: 0, duration: 500.ms, delay: 300.ms),
 
-          // Password strength (sign-up only)
-          if (_isSignUp) ...[
-            const SizedBox(height: 12),
-            _PasswordStrengthIndicator(password: _passwordController.text)
-                .animate()
-                .fadeIn(duration: 300.ms),
-          ],
+              // Password strength (sign-up only)
+              if (_isSignUp) ...[
+                const SizedBox(height: 12),
+                _PasswordStrengthIndicator(
+                  password: _passwordController.text,
+                ).animate().fadeIn(duration: 300.ms),
+              ],
 
-          const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-          // Primary action button
-          ApexButton(
-            label: _isSignUp ? 'Create Account' : 'Sign In',
-            onPressed: _isLoading
-                ? null
-                : (_isSignUp ? _handleSignUp : _handleSignIn),
-            isLoading: _isLoading,
-          )
-              .animate()
-              .fadeIn(duration: 500.ms, delay: 400.ms)
-              .slideY(begin: 0.1, end: 0, duration: 500.ms, delay: 400.ms),
+              // Primary action button
+              ApexButton(
+                    label: _isSignUp ? 'Create Account' : 'Sign In',
+                    onPressed: _isLoading
+                        ? null
+                        : (_isSignUp ? _handleSignUp : _handleSignIn),
+                    isLoading: _isLoading,
+                  )
+                  .animate()
+                  .fadeIn(duration: 500.ms, delay: 400.ms)
+                  .slideY(begin: 0.1, end: 0, duration: 500.ms, delay: 400.ms),
 
-          // Forgot password (sign-in only)
-          if (!_isSignUp) ...[
-            const SizedBox(height: 12),
-            Center(
-              child: TextButton(
-                onPressed: _handleForgotPassword,
-                child: Text(
-                  'Forgot password?',
-                  style: AppTypography.interSmall.copyWith(
-                    color: AppColors.textSecondary,
+              // Forgot password (sign-in only)
+              if (!_isSignUp) ...[
+                const SizedBox(height: 12),
+                Center(
+                  child: TextButton(
+                    onPressed: _handleForgotPassword,
+                    child: Text(
+                      'Forgot password?',
+                      style: AppTypography.interSmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            )
-                .animate()
-                .fadeIn(duration: 500.ms, delay: 450.ms),
-          ],
-        ],
-      ),
-    )
+                ).animate().fadeIn(duration: 500.ms, delay: 450.ms),
+              ],
+            ],
+          ),
+        )
         .animate()
         .fadeIn(duration: 500.ms, delay: 150.ms)
         .slideY(begin: 0.05, end: 0, duration: 500.ms, delay: 150.ms);
@@ -398,10 +396,7 @@ class _PasswordStrengthIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final checks = [
-      _StrengthCheck(
-        label: '8+ characters',
-        passed: password.length >= 8,
-      ),
+      _StrengthCheck(label: '8+ characters', passed: password.length >= 8),
       _StrengthCheck(
         label: 'Uppercase letter',
         passed: password.contains(RegExp(r'[A-Z]')),
@@ -439,9 +434,7 @@ class _PasswordStrengthIndicator extends StatelessWidget {
         Wrap(
           spacing: 12,
           runSpacing: 4,
-          children: checks
-              .map((c) => _StrengthCheckRow(check: c))
-              .toList(),
+          children: checks.map((c) => _StrengthCheckRow(check: c)).toList(),
         ),
       ],
     );

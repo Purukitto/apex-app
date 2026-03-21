@@ -31,10 +31,10 @@ class AppColors {
   static const Color cardBorder = Color(0x14FFFFFF);
 
   // Accent card
-  static const Color accentCardBg =
-      Color(0x0D3DBF6F); // rgba(61,191,111,0.05)
-  static const Color accentCardBorder =
-      Color(0x333DBF6F); // rgba(61,191,111,0.20)
+  static const Color accentCardBg = Color(0x0D3DBF6F); // rgba(61,191,111,0.05)
+  static const Color accentCardBorder = Color(
+    0x333DBF6F,
+  ); // rgba(61,191,111,0.20)
 
   // Text
   static const Color textPrimary = Color(0xFFF5F5F5);

@@ -140,10 +140,7 @@ class FuelLogSheet extends ConsumerWidget {
           const SizedBox(height: 16),
           Text('No fuel logs yet', style: AppTypography.interSecondary),
           const SizedBox(height: 8),
-          Text(
-            'Add your first refuel record',
-            style: AppTypography.interMuted,
-          ),
+          Text('Add your first refuel record', style: AppTypography.interMuted),
         ],
       ),
     );
@@ -164,11 +161,8 @@ class FuelLogSheet extends ConsumerWidget {
         final log = logs[index];
         return FuelLogTile(
           fuelLog: log,
-          onEdit: () => AddEditFuelSheet.show(
-            context,
-            bike: bike,
-            fuelLog: log,
-          ),
+          onEdit: () =>
+              AddEditFuelSheet.show(context, bike: bike, fuelLog: log),
           onDelete: () async {
             final confirmed = await ConfirmDialog.show(
               context,
@@ -179,10 +173,9 @@ class FuelLogSheet extends ConsumerWidget {
               isDestructive: true,
             );
             if (confirmed && context.mounted) {
-              await ref.read(fuelActionsProvider).deleteFuelLog(
-                    log.id,
-                    bike.id,
-                  );
+              await ref
+                  .read(fuelActionsProvider)
+                  .deleteFuelLog(log.id, bike.id);
               if (context.mounted) {
                 ApexToast.success(context, 'Fuel log deleted');
               }

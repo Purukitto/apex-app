@@ -28,10 +28,7 @@ Future<void> shareGpx({
   final file = File('${dir.path}/${gpxFileName(startTime)}');
   await file.writeAsString(gpxContent);
 
-  await Share.shareXFiles(
-    [XFile(file.path)],
-    subject: rideName,
-  );
+  await Share.shareXFiles([XFile(file.path)], subject: rideName);
   AppLogger.i('Shared GPX: ${file.path}');
 }
 
@@ -49,12 +46,11 @@ Future<void> shareWidgetImage(GlobalKey repaintKey, {String? subject}) async {
   if (byteData == null) return;
 
   final dir = await getTemporaryDirectory();
-  final file = File('${dir.path}/apex_share_${DateTime.now().millisecondsSinceEpoch}.png');
+  final file = File(
+    '${dir.path}/apex_share_${DateTime.now().millisecondsSinceEpoch}.png',
+  );
   await file.writeAsBytes(byteData.buffer.asUint8List());
 
-  await Share.shareXFiles(
-    [XFile(file.path)],
-    subject: subject,
-  );
+  await Share.shareXFiles([XFile(file.path)], subject: subject);
   AppLogger.i('Shared image: ${file.path}');
 }

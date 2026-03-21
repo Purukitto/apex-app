@@ -63,16 +63,11 @@ class NotificationTile extends StatelessWidget {
         decoration: _isUnread
             ? BoxDecoration(
                 border: Border(
-                  left: BorderSide(
-                    color: _typeBadgeColor,
-                    width: 2,
-                  ),
+                  left: BorderSide(color: _typeBadgeColor, width: 2),
                 ),
               )
             : null,
-        padding: _isUnread
-            ? const EdgeInsets.only(left: 12)
-            : EdgeInsets.zero,
+        padding: _isUnread ? const EdgeInsets.only(left: 12) : EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

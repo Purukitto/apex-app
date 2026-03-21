@@ -24,7 +24,8 @@ const _defaultSchedules = [
 ];
 
 @DriftAccessor(
-    tables: [MaintenanceLogs, MaintenanceSchedules, ServiceHistory, Bikes])
+  tables: [MaintenanceLogs, MaintenanceSchedules, ServiceHistory, Bikes],
+)
 class MaintenanceDao extends DatabaseAccessor<AppDatabase>
     with _$MaintenanceDaoMixin {
   MaintenanceDao(super.db);
@@ -39,8 +40,9 @@ class MaintenanceDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<MaintenanceLog?> getLogById(String id) {
-    return (select(maintenanceLogs)..where((m) => m.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      maintenanceLogs,
+    )..where((m) => m.id.equals(id))).getSingleOrNull();
   }
 
   Future<void> upsertLog(MaintenanceLogsCompanion entry) {
@@ -48,14 +50,15 @@ class MaintenanceDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<List<MaintenanceLog>> getDirtyLogs() {
-    return (select(maintenanceLogs)
-          ..where((m) => m.isSynced.equals(false)))
-        .get();
+    return (select(
+      maintenanceLogs,
+    )..where((m) => m.isSynced.equals(false))).get();
   }
 
   Future<void> markLogSynced(String id) {
-    return (update(maintenanceLogs)..where((m) => m.id.equals(id)))
-        .write(const MaintenanceLogsCompanion(isSynced: Value(true)));
+    return (update(maintenanceLogs)..where((m) => m.id.equals(id))).write(
+      const MaintenanceLogsCompanion(isSynced: Value(true)),
+    );
   }
 
   Future<int> deleteLogById(String id) {
@@ -82,8 +85,9 @@ class MaintenanceDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<MaintenanceSchedule?> getScheduleById(String id) {
-    return (select(maintenanceSchedules)..where((s) => s.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      maintenanceSchedules,
+    )..where((s) => s.id.equals(id))).getSingleOrNull();
   }
 
   Future<void> upsertSchedule(MaintenanceSchedulesCompanion entry) {
@@ -91,15 +95,15 @@ class MaintenanceDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<List<MaintenanceSchedule>> getDirtySchedules() {
-    return (select(maintenanceSchedules)
-          ..where((s) => s.isSynced.equals(false)))
-        .get();
+    return (select(
+      maintenanceSchedules,
+    )..where((s) => s.isSynced.equals(false))).get();
   }
 
   Future<void> markScheduleSynced(String id) {
-    return (update(maintenanceSchedules)..where((s) => s.id.equals(id)))
-        .write(
-            const MaintenanceSchedulesCompanion(isSynced: Value(true)));
+    return (update(maintenanceSchedules)..where((s) => s.id.equals(id))).write(
+      const MaintenanceSchedulesCompanion(isSynced: Value(true)),
+    );
   }
 
   Future<int> deleteScheduleById(String id) {
@@ -138,8 +142,7 @@ class MaintenanceDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
-  Stream<List<ServiceHistoryData>> watchHistoryForSchedule(
-      String scheduleId) {
+  Stream<List<ServiceHistoryData>> watchHistoryForSchedule(String scheduleId) {
     return (select(serviceHistory)
           ..where((h) => h.scheduleId.equals(scheduleId))
           ..orderBy([(h) => OrderingTerm.desc(h.serviceDate)]))
@@ -151,14 +154,15 @@ class MaintenanceDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<List<ServiceHistoryData>> getDirtyHistory() {
-    return (select(serviceHistory)
-          ..where((h) => h.isSynced.equals(false)))
-        .get();
+    return (select(
+      serviceHistory,
+    )..where((h) => h.isSynced.equals(false))).get();
   }
 
   Future<void> markHistorySynced(String id) {
-    return (update(serviceHistory)..where((h) => h.id.equals(id)))
-        .write(const ServiceHistoryCompanion(isSynced: Value(true)));
+    return (update(serviceHistory)..where((h) => h.id.equals(id))).write(
+      const ServiceHistoryCompanion(isSynced: Value(true)),
+    );
   }
 
   Future<int> deleteHistoryById(String id) {

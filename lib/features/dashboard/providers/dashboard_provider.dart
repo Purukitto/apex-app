@@ -40,7 +40,8 @@ final dashboardStatsProvider = FutureProvider<DashboardStats>((ref) async {
     db.ridesDao.countForUser(uid),
   ]);
 
-  final name = user?.userMetadata?['display_name'] as String? ??
+  final name =
+      user?.userMetadata?['display_name'] as String? ??
       user?.email?.split('@').first ??
       'Rider';
 

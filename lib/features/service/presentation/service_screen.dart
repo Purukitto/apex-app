@@ -16,10 +16,9 @@ class ServiceScreen extends ConsumerWidget {
 
   final Bike bike;
 
-  String get _displayName =>
-      bike.nickName?.isNotEmpty == true
-          ? bike.nickName!
-          : '${bike.make} ${bike.model}';
+  String get _displayName => bike.nickName?.isNotEmpty == true
+      ? bike.nickName!
+      : '${bike.make} ${bike.model}';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -51,13 +50,15 @@ class ServiceScreen extends ConsumerWidget {
                         children: [
                           Text(
                             'Maintenance Health',
-                            style: AppTypography.playfairDisplaySmall
-                                .copyWith(fontSize: 22),
+                            style: AppTypography.playfairDisplaySmall.copyWith(
+                              fontSize: 22,
+                            ),
                           ),
                           Text(
                             _displayName,
-                            style: AppTypography.interSecondary
-                                .copyWith(fontSize: 12),
+                            style: AppTypography.interSecondary.copyWith(
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -72,8 +73,7 @@ class ServiceScreen extends ConsumerWidget {
               Expanded(
                 child: schedulesAsync.when(
                   loading: () => Center(
-                    child: CircularProgressIndicator(
-                        color: context.accent),
+                    child: CircularProgressIndicator(color: context.accent),
                   ),
                   error: (_, _) => Center(
                     child: Text(
@@ -104,48 +104,36 @@ class ServiceScreen extends ConsumerWidget {
             size: 48,
           ),
           const SizedBox(height: 16),
-          Text(
-            'No maintenance schedules',
-            style: AppTypography.interSecondary,
-          ),
+          Text('No maintenance schedules', style: AppTypography.interSecondary),
           const SizedBox(height: 8),
-          Text(
-            'Schedules will appear here',
-            style: AppTypography.interMuted,
-          ),
+          Text('Schedules will appear here', style: AppTypography.interMuted),
         ],
       ),
     );
   }
 
-  Widget _buildGrid(
-      BuildContext context, List<MaintenanceSchedule> schedules) {
+  Widget _buildGrid(BuildContext context, List<MaintenanceSchedule> schedules) {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
       itemCount: schedules.length,
       itemBuilder: (context, index) {
         final schedule = schedules[index];
         return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: HealthCard(
-            schedule: schedule,
-            currentOdo: bike.currentOdo,
-            onComplete: () => CompleteServiceSheet.show(
-              context,
-              schedule: schedule,
-              bike: bike,
-            ),
-            onHistory: () => ServiceHistorySheet.show(
-              context,
-              schedule: schedule,
-            ),
-          ),
-        )
-            .animate()
-            .fadeIn(
-              duration: 400.ms,
-              delay: (80 * index).ms,
+              padding: const EdgeInsets.only(bottom: 12),
+              child: HealthCard(
+                schedule: schedule,
+                currentOdo: bike.currentOdo,
+                onComplete: () => CompleteServiceSheet.show(
+                  context,
+                  schedule: schedule,
+                  bike: bike,
+                ),
+                onHistory: () =>
+                    ServiceHistorySheet.show(context, schedule: schedule),
+              ),
             )
+            .animate()
+            .fadeIn(duration: 400.ms, delay: (80 * index).ms)
             .slideY(
               begin: 0.08,
               end: 0,

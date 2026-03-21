@@ -12,11 +12,7 @@ import 'sync_status.dart';
 
 /// Orchestrates push/pull synchronization between Drift (local) and Supabase.
 class SyncEngine {
-  SyncEngine({
-    required this.db,
-    required this.supabase,
-    required this.prefs,
-  });
+  SyncEngine({required this.db, required this.supabase, required this.prefs});
 
   final AppDatabase db;
   final SupabaseClient supabase;
@@ -71,16 +67,12 @@ class SyncEngine {
     try {
       await _pushDirtyRows(uid);
       await _pullRemoteChanges(uid);
-      _emit(SyncState(
-        status: SyncStatus.idle,
-        lastSyncedAt: DateTime.now(),
-      ));
+      _emit(SyncState(status: SyncStatus.idle, lastSyncedAt: DateTime.now()));
     } catch (e, st) {
       AppLogger.e('Sync failed', e, st);
-      _emit(_state.copyWith(
-        status: SyncStatus.error,
-        errorMessage: e.toString(),
-      ));
+      _emit(
+        _state.copyWith(status: SyncStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
@@ -126,21 +118,24 @@ class SyncEngine {
     final rows = await db.ridesDao.getDirtyRows();
     for (final row in rows) {
       try {
-        await supabase.rpc('upsert_ride', params: {
-          'p_id': row.id,
-          'p_bike_id': row.bikeId,
-          'p_user_id': row.userId,
-          'p_start_time': row.startTime.toIso8601String(),
-          'p_end_time': row.endTime?.toIso8601String(),
-          'p_distance_km': row.distanceKm,
-          'p_max_lean_left': row.maxLeanLeft,
-          'p_max_lean_right': row.maxLeanRight,
-          'p_ride_name': row.rideName,
-          'p_notes': row.notes,
-          'p_image_url': row.imageUrl,
-          'p_created_at': row.createdAt.toIso8601String(),
-          'p_route_path': row.routePath,
-        });
+        await supabase.rpc(
+          'upsert_ride',
+          params: {
+            'p_id': row.id,
+            'p_bike_id': row.bikeId,
+            'p_user_id': row.userId,
+            'p_start_time': row.startTime.toIso8601String(),
+            'p_end_time': row.endTime?.toIso8601String(),
+            'p_distance_km': row.distanceKm,
+            'p_max_lean_left': row.maxLeanLeft,
+            'p_max_lean_right': row.maxLeanRight,
+            'p_ride_name': row.rideName,
+            'p_notes': row.notes,
+            'p_image_url': row.imageUrl,
+            'p_created_at': row.createdAt.toIso8601String(),
+            'p_route_path': row.routePath,
+          },
+        );
         await db.ridesDao.markSynced(row.id);
       } catch (e) {
         AppLogger.e('Push ride ${row.id} failed', e);
@@ -290,31 +285,32 @@ class SyncEngine {
     final rows = await query;
 
     for (final row in rows) {
-      final remoteModified = DateTime.parse(
-          row['created_at'] as String);
+      final remoteModified = DateTime.parse(row['created_at'] as String);
       final local = await db.bikesDao.getById(row['id'] as String);
 
       if (local != null && !local.isSynced) {
         if (!shouldAcceptRemote(local.lastModified, remoteModified)) continue;
       }
 
-      await db.bikesDao.upsert(BikesCompanion(
-        id: Value(row['id'] as String),
-        userId: Value(row['user_id'] as String),
-        make: Value(row['make'] as String),
-        model: Value(row['model'] as String),
-        year: Value(row['year'] as int?),
-        currentOdo: Value((row['current_odo'] as num).toDouble()),
-        nickName: Value(row['nick_name'] as String?),
-        imageUrl: Value(row['image_url'] as String?),
-        specsEngine: Value(row['specs_engine'] as String?),
-        specsPower: Value(row['specs_power'] as String?),
-        avgMileage: Value((row['avg_mileage'] as num?)?.toDouble()),
-        lastFuelPrice: Value((row['last_fuel_price'] as num?)?.toDouble()),
-        createdAt: Value(remoteModified),
-        isSynced: const Value(true),
-        lastModified: Value(remoteModified),
-      ));
+      await db.bikesDao.upsert(
+        BikesCompanion(
+          id: Value(row['id'] as String),
+          userId: Value(row['user_id'] as String),
+          make: Value(row['make'] as String),
+          model: Value(row['model'] as String),
+          year: Value(row['year'] as int?),
+          currentOdo: Value((row['current_odo'] as num).toDouble()),
+          nickName: Value(row['nick_name'] as String?),
+          imageUrl: Value(row['image_url'] as String?),
+          specsEngine: Value(row['specs_engine'] as String?),
+          specsPower: Value(row['specs_power'] as String?),
+          avgMileage: Value((row['avg_mileage'] as num?)?.toDouble()),
+          lastFuelPrice: Value((row['last_fuel_price'] as num?)?.toDouble()),
+          createdAt: Value(remoteModified),
+          isSynced: const Value(true),
+          lastModified: Value(remoteModified),
+        ),
+      );
     }
 
     if (rows.isNotEmpty) {
@@ -356,25 +352,29 @@ class SyncEngine {
         routePath = rp is String ? rp : jsonEncode(rp);
       }
 
-      await db.ridesDao.upsert(RidesCompanion(
-        id: Value(row['id'] as String),
-        bikeId: Value(row['bike_id'] as String),
-        userId: Value(row['user_id'] as String),
-        startTime: Value(DateTime.parse(row['start_time'] as String)),
-        endTime: Value(row['end_time'] != null
-            ? DateTime.parse(row['end_time'] as String)
-            : null),
-        distanceKm: Value((row['distance_km'] as num).toDouble()),
-        maxLeanLeft: Value((row['max_lean_left'] as num?)?.toDouble()),
-        maxLeanRight: Value((row['max_lean_right'] as num?)?.toDouble()),
-        routePath: Value(routePath),
-        rideName: Value(row['ride_name'] as String?),
-        notes: Value(row['notes'] as String?),
-        imageUrl: Value(row['image_url'] as String?),
-        createdAt: Value(remoteModified),
-        isSynced: const Value(true),
-        lastModified: Value(remoteModified),
-      ));
+      await db.ridesDao.upsert(
+        RidesCompanion(
+          id: Value(row['id'] as String),
+          bikeId: Value(row['bike_id'] as String),
+          userId: Value(row['user_id'] as String),
+          startTime: Value(DateTime.parse(row['start_time'] as String)),
+          endTime: Value(
+            row['end_time'] != null
+                ? DateTime.parse(row['end_time'] as String)
+                : null,
+          ),
+          distanceKm: Value((row['distance_km'] as num).toDouble()),
+          maxLeanLeft: Value((row['max_lean_left'] as num?)?.toDouble()),
+          maxLeanRight: Value((row['max_lean_right'] as num?)?.toDouble()),
+          routePath: Value(routePath),
+          rideName: Value(row['ride_name'] as String?),
+          notes: Value(row['notes'] as String?),
+          imageUrl: Value(row['image_url'] as String?),
+          createdAt: Value(remoteModified),
+          isSynced: const Value(true),
+          lastModified: Value(remoteModified),
+        ),
+      );
     }
 
     if (rows.isNotEmpty) {
@@ -385,7 +385,10 @@ class SyncEngine {
   Future<void> _pullFuelLogs(List<String> bikeIds) async {
     if (bikeIds.isEmpty) return;
     final lastSync = _getLastSync('fuel_logs');
-    var query = supabase.from('fuel_logs').select().inFilter('bike_id', bikeIds);
+    var query = supabase
+        .from('fuel_logs')
+        .select()
+        .inFilter('bike_id', bikeIds);
     if (lastSync != null) {
       query = query.gt('created_at', lastSync);
     }
@@ -399,19 +402,21 @@ class SyncEngine {
         if (!shouldAcceptRemote(local.lastModified, remoteModified)) continue;
       }
 
-      await db.fuelDao.upsert(FuelLogsCompanion(
-        id: Value(row['id'] as String),
-        bikeId: Value(row['bike_id'] as String),
-        odometer: Value((row['odometer'] as num).toDouble()),
-        litres: Value((row['litres'] as num).toDouble()),
-        pricePerLitre: Value((row['price_per_litre'] as num).toDouble()),
-        totalCost: Value((row['total_cost'] as num).toDouble()),
-        isFullTank: Value(row['is_full_tank'] as bool),
-        date: Value(row['date'] as String),
-        createdAt: Value(remoteModified),
-        isSynced: const Value(true),
-        lastModified: Value(remoteModified),
-      ));
+      await db.fuelDao.upsert(
+        FuelLogsCompanion(
+          id: Value(row['id'] as String),
+          bikeId: Value(row['bike_id'] as String),
+          odometer: Value((row['odometer'] as num).toDouble()),
+          litres: Value((row['litres'] as num).toDouble()),
+          pricePerLitre: Value((row['price_per_litre'] as num).toDouble()),
+          totalCost: Value((row['total_cost'] as num).toDouble()),
+          isFullTank: Value(row['is_full_tank'] as bool),
+          date: Value(row['date'] as String),
+          createdAt: Value(remoteModified),
+          isSynced: const Value(true),
+          lastModified: Value(remoteModified),
+        ),
+      );
     }
 
     if (rows.isNotEmpty) {
@@ -439,18 +444,20 @@ class SyncEngine {
         if (!shouldAcceptRemote(local.lastModified, remoteModified)) continue;
       }
 
-      await db.maintenanceDao.upsertLog(MaintenanceLogsCompanion(
-        id: Value(row['id'] as String),
-        bikeId: Value(row['bike_id'] as String),
-        serviceType: Value(row['service_type'] as String),
-        odoAtService: Value((row['odo_at_service'] as num).toDouble()),
-        datePerformed: Value(row['date_performed'] as String),
-        notes: Value(row['notes'] as String?),
-        receiptUrl: Value(row['receipt_url'] as String?),
-        createdAt: Value(remoteModified),
-        isSynced: const Value(true),
-        lastModified: Value(remoteModified),
-      ));
+      await db.maintenanceDao.upsertLog(
+        MaintenanceLogsCompanion(
+          id: Value(row['id'] as String),
+          bikeId: Value(row['bike_id'] as String),
+          serviceType: Value(row['service_type'] as String),
+          odoAtService: Value((row['odo_at_service'] as num).toDouble()),
+          datePerformed: Value(row['date_performed'] as String),
+          notes: Value(row['notes'] as String?),
+          receiptUrl: Value(row['receipt_url'] as String?),
+          createdAt: Value(remoteModified),
+          isSynced: const Value(true),
+          lastModified: Value(remoteModified),
+        ),
+      );
     }
 
     if (rows.isNotEmpty) {
@@ -472,31 +479,36 @@ class SyncEngine {
 
     for (final row in rows) {
       final remoteModified = DateTime.parse(row['created_at'] as String);
-      final local =
-          await db.maintenanceDao.getScheduleById(row['id'] as String);
+      final local = await db.maintenanceDao.getScheduleById(
+        row['id'] as String,
+      );
 
       if (local != null && !local.isSynced) {
         if (!shouldAcceptRemote(local.lastModified, remoteModified)) continue;
       }
 
-      await db.maintenanceDao.upsertSchedule(MaintenanceSchedulesCompanion(
-        id: Value(row['id'] as String),
-        bikeId: Value(row['bike_id'] as String),
-        partName: Value(row['part_name'] as String),
-        intervalKm: Value(row['interval_km'] as int),
-        intervalMonths: Value(row['interval_months'] as int),
-        lastServiceDate: Value(row['last_service_date'] as String?),
-        lastServiceOdo: Value((row['last_service_odo'] as num?)?.toDouble()),
-        isActive: Value(row['is_active'] as bool),
-        createdAt: Value(remoteModified),
-        isSynced: const Value(true),
-        lastModified: Value(remoteModified),
-      ));
+      await db.maintenanceDao.upsertSchedule(
+        MaintenanceSchedulesCompanion(
+          id: Value(row['id'] as String),
+          bikeId: Value(row['bike_id'] as String),
+          partName: Value(row['part_name'] as String),
+          intervalKm: Value(row['interval_km'] as int),
+          intervalMonths: Value(row['interval_months'] as int),
+          lastServiceDate: Value(row['last_service_date'] as String?),
+          lastServiceOdo: Value((row['last_service_odo'] as num?)?.toDouble()),
+          isActive: Value(row['is_active'] as bool),
+          createdAt: Value(remoteModified),
+          isSynced: const Value(true),
+          lastModified: Value(remoteModified),
+        ),
+      );
     }
 
     if (rows.isNotEmpty) {
       await _setLastSync(
-          'maintenance_schedules', DateTime.now().toIso8601String());
+        'maintenance_schedules',
+        DateTime.now().toIso8601String(),
+      );
     }
   }
 
@@ -515,18 +527,20 @@ class SyncEngine {
     for (final row in rows) {
       final remoteModified = DateTime.parse(row['created_at'] as String);
 
-      await db.maintenanceDao.upsertHistory(ServiceHistoryCompanion(
-        id: Value(row['id'] as String),
-        bikeId: Value(row['bike_id'] as String),
-        scheduleId: Value(row['schedule_id'] as String),
-        serviceDate: Value(row['service_date'] as String),
-        serviceOdo: Value((row['service_odo'] as num).toDouble()),
-        cost: Value((row['cost'] as num?)?.toDouble()),
-        notes: Value(row['notes'] as String?),
-        createdAt: Value(remoteModified),
-        isSynced: const Value(true),
-        lastModified: Value(remoteModified),
-      ));
+      await db.maintenanceDao.upsertHistory(
+        ServiceHistoryCompanion(
+          id: Value(row['id'] as String),
+          bikeId: Value(row['bike_id'] as String),
+          scheduleId: Value(row['schedule_id'] as String),
+          serviceDate: Value(row['service_date'] as String),
+          serviceOdo: Value((row['service_odo'] as num).toDouble()),
+          cost: Value((row['cost'] as num?)?.toDouble()),
+          notes: Value(row['notes'] as String?),
+          createdAt: Value(remoteModified),
+          isSynced: const Value(true),
+          lastModified: Value(remoteModified),
+        ),
+      );
     }
 
     if (rows.isNotEmpty) {
@@ -536,8 +550,7 @@ class SyncEngine {
 
   Future<void> _pullNotifications(String uid) async {
     final lastSync = _getLastSync('notifications');
-    var query =
-        supabase.from('notifications').select().eq('user_id', uid);
+    var query = supabase.from('notifications').select().eq('user_id', uid);
     if (lastSync != null) {
       query = query.gt('created_at', lastSync);
     }
@@ -551,26 +564,32 @@ class SyncEngine {
         if (!shouldAcceptRemote(local.lastModified, remoteModified)) continue;
       }
 
-      await db.notificationsDao.upsert(NotificationsCompanion(
-        id: Value(row['id'] as String),
-        userId: Value(row['user_id'] as String),
-        type: Value(row['type'] as String),
-        title: Value(row['title'] as String?),
-        message: Value(row['message'] as String),
-        readAt: Value(row['read_at'] != null
-            ? DateTime.parse(row['read_at'] as String)
-            : null),
-        dismissedAt: Value(row['dismissed_at'] != null
-            ? DateTime.parse(row['dismissed_at'] as String)
-            : null),
-        createdAt: Value(remoteModified),
-        bikeId: Value(row['bike_id'] as String?),
-        scheduleId: Value(row['schedule_id'] as String?),
-        source: Value(row['source'] as String?),
-        dedupeKey: Value(row['dedupe_key'] as String?),
-        isSynced: const Value(true),
-        lastModified: Value(remoteModified),
-      ));
+      await db.notificationsDao.upsert(
+        NotificationsCompanion(
+          id: Value(row['id'] as String),
+          userId: Value(row['user_id'] as String),
+          type: Value(row['type'] as String),
+          title: Value(row['title'] as String?),
+          message: Value(row['message'] as String),
+          readAt: Value(
+            row['read_at'] != null
+                ? DateTime.parse(row['read_at'] as String)
+                : null,
+          ),
+          dismissedAt: Value(
+            row['dismissed_at'] != null
+                ? DateTime.parse(row['dismissed_at'] as String)
+                : null,
+          ),
+          createdAt: Value(remoteModified),
+          bikeId: Value(row['bike_id'] as String?),
+          scheduleId: Value(row['schedule_id'] as String?),
+          source: Value(row['source'] as String?),
+          dedupeKey: Value(row['dedupe_key'] as String?),
+          isSynced: const Value(true),
+          lastModified: Value(remoteModified),
+        ),
+      );
     }
 
     if (rows.isNotEmpty) {
@@ -600,16 +619,12 @@ class SyncEngine {
 
       await _pullRemoteChanges(userId);
 
-      _emit(SyncState(
-        status: SyncStatus.idle,
-        lastSyncedAt: DateTime.now(),
-      ));
+      _emit(SyncState(status: SyncStatus.idle, lastSyncedAt: DateTime.now()));
     } catch (e, st) {
       AppLogger.e('Initial sync failed', e, st);
-      _emit(_state.copyWith(
-        status: SyncStatus.error,
-        errorMessage: e.toString(),
-      ));
+      _emit(
+        _state.copyWith(status: SyncStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 

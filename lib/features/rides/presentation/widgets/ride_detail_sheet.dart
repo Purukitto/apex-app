@@ -16,16 +16,16 @@ import '../../providers/rides_provider.dart';
 import 'edit_ride_sheet.dart';
 
 class RideDetailSheet extends ConsumerWidget {
-  const RideDetailSheet({
-    super.key,
-    required this.ride,
-    this.bikeName,
-  });
+  const RideDetailSheet({super.key, required this.ride, this.bikeName});
 
   final Ride ride;
   final String? bikeName;
 
-  static Future<void> show(BuildContext context, Ride ride, {String? bikeName}) {
+  static Future<void> show(
+    BuildContext context,
+    Ride ride, {
+    String? bikeName,
+  }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -74,7 +74,9 @@ class RideDetailSheet extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       displayName,
-                      style: AppTypography.playfairDisplay.copyWith(fontSize: 24),
+                      style: AppTypography.playfairDisplay.copyWith(
+                        fontSize: 24,
+                      ),
                     ),
                   ),
                   Text(
@@ -88,30 +90,40 @@ class RideDetailSheet extends ConsumerWidget {
               // Stats row
               Row(
                 children: [
-                  Expanded(child: _StatMiniCard(
-                    label: 'Distance',
-                    value: '${ride.distanceKm.toStringAsFixed(1)} km',
-                  )),
+                  Expanded(
+                    child: _StatMiniCard(
+                      label: 'Distance',
+                      value: '${ride.distanceKm.toStringAsFixed(1)} km',
+                    ),
+                  ),
                   const SizedBox(width: 10),
-                  Expanded(child: _StatMiniCard(
-                    label: 'Duration',
-                    value: formatDuration(ride.startTime, ride.endTime),
-                  )),
+                  Expanded(
+                    child: _StatMiniCard(
+                      label: 'Duration',
+                      value: formatDuration(ride.startTime, ride.endTime),
+                    ),
+                  ),
                 ],
               ),
               if (ride.maxLeanLeft != null || ride.maxLeanRight != null) ...[
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Expanded(child: _StatMiniCard(
-                      label: 'Lean L',
-                      value: '${ride.maxLeanLeft?.toStringAsFixed(1) ?? "-"}°',
-                    )),
+                    Expanded(
+                      child: _StatMiniCard(
+                        label: 'Lean L',
+                        value:
+                            '${ride.maxLeanLeft?.toStringAsFixed(1) ?? "-"}°',
+                      ),
+                    ),
                     const SizedBox(width: 10),
-                    Expanded(child: _StatMiniCard(
-                      label: 'Lean R',
-                      value: '${ride.maxLeanRight?.toStringAsFixed(1) ?? "-"}°',
-                    )),
+                    Expanded(
+                      child: _StatMiniCard(
+                        label: 'Lean R',
+                        value:
+                            '${ride.maxLeanRight?.toStringAsFixed(1) ?? "-"}°',
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -158,7 +170,10 @@ class RideDetailSheet extends ConsumerWidget {
                     children: [
                       Text('Notes', style: AppTypography.interLabel),
                       const SizedBox(height: 8),
-                      Text(ride.notes!, style: AppTypography.inter.copyWith(fontSize: 14)),
+                      Text(
+                        ride.notes!,
+                        style: AppTypography.inter.copyWith(fontSize: 14),
+                      ),
                     ],
                   ),
                 ),
@@ -167,11 +182,7 @@ class RideDetailSheet extends ConsumerWidget {
               // Route map
               if (routeData != null && routeData.hasRoute) ...[
                 const SizedBox(height: 16),
-                RideMap(
-                  routeData: routeData,
-                  height: 300,
-                  interactive: true,
-                ),
+                RideMap(routeData: routeData, height: 300, interactive: true),
               ],
 
               const SizedBox(height: 24),
@@ -349,10 +360,7 @@ class _ActionButton extends StatelessWidget {
           children: [
             Icon(icon, size: 18, color: color),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: AppTypography.interSmall.copyWith(color: color),
-            ),
+            Text(label, style: AppTypography.interSmall.copyWith(color: color)),
           ],
         ),
       ),

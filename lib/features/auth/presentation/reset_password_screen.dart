@@ -24,8 +24,7 @@ class ResetPasswordScreen extends ConsumerStatefulWidget {
       _ResetPasswordScreenState();
 }
 
-class _ResetPasswordScreenState
-    extends ConsumerState<ResetPasswordScreen> {
+class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   _ResetState _state = _ResetState.checkingSession;
   bool _isLoading = false;
   bool _obscureNew = true;
@@ -57,8 +56,7 @@ class _ResetPasswordScreenState
         return;
       }
 
-      await Future.delayed(
-          const Duration(milliseconds: kResetVerifyDelayMs));
+      await Future.delayed(const Duration(milliseconds: kResetVerifyDelayMs));
 
       if (!mounted) return;
       final retrySession = client.auth.currentSession;
@@ -97,18 +95,25 @@ class _ResetPasswordScreenState
         ApexToast.success(context, 'Password Changed! You can now log in.');
 
         await Future.delayed(
-            const Duration(milliseconds: kSuccessRedirectDelayMs));
+          const Duration(milliseconds: kSuccessRedirectDelayMs),
+        );
         if (mounted) context.go('/login');
       }
     } on AuthException catch (e) {
       AppLogger.w('Reset password failed', e);
       if (mounted) {
-        ApexToast.error(context, 'Failed to update password. Please try again.');
+        ApexToast.error(
+          context,
+          'Failed to update password. Please try again.',
+        );
       }
     } catch (e) {
       AppLogger.e('Unexpected reset password error', e);
       if (mounted) {
-        ApexToast.error(context, 'Failed to update password. Please try again.');
+        ApexToast.error(
+          context,
+          'Failed to update password. Please try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -154,8 +159,7 @@ class _ResetPasswordScreenState
           const SizedBox(height: 20),
           Text(
             'Verifying reset link…',
-            style:
-                AppTypography.inter.copyWith(color: AppColors.textSecondary),
+            style: AppTypography.inter.copyWith(color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -199,8 +203,7 @@ class _ResetPasswordScreenState
                     color: AppColors.textMuted,
                     size: 18,
                   ),
-                  onPressed: () =>
-                      setState(() => _obscureNew = !_obscureNew),
+                  onPressed: () => setState(() => _obscureNew = !_obscureNew),
                 ),
               ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
 
@@ -275,8 +278,7 @@ class _ResetPasswordScreenState
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.check_circle_outline,
-              color: context.accent, size: 48),
+          Icon(Icons.check_circle_outline, color: context.accent, size: 48),
           const SizedBox(height: 16),
           Text(
             'Password Updated',
@@ -286,8 +288,7 @@ class _ResetPasswordScreenState
           const SizedBox(height: 8),
           Text(
             'Redirecting to sign in…',
-            style:
-                AppTypography.interSecondary,
+            style: AppTypography.interSecondary,
             textAlign: TextAlign.center,
           ),
         ],

@@ -9,11 +9,7 @@ import 'bike_image.dart';
 /// Compact card for bikes after the first (used in 2-column grid).
 /// Tapping opens a bike action sheet.
 class BikeGridCard extends StatelessWidget {
-  const BikeGridCard({
-    super.key,
-    required this.bike,
-    required this.onTap,
-  });
+  const BikeGridCard({super.key, required this.bike, required this.onTap});
 
   final Bike bike;
   final VoidCallback onTap;
@@ -36,7 +32,11 @@ class BikeGridCard extends StatelessWidget {
         children: [
           // Bike image centered at top
           Center(
-            child: BikeImage(imageUrl: bike.imageUrl, size: 56, borderRadius: 14),
+            child: BikeImage(
+              imageUrl: bike.imageUrl,
+              size: 56,
+              borderRadius: 14,
+            ),
           ),
           const SizedBox(height: 12),
           // Name

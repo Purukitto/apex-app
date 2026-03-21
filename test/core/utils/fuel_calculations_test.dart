@@ -46,26 +46,17 @@ void main() {
     });
 
     test('returns null if litres is 0', () {
-      final logs = [
-        _log(odometer: 100),
-        _log(odometer: 300, litres: 0),
-      ];
+      final logs = [_log(odometer: 100), _log(odometer: 300, litres: 0)];
       expect(calculateMileage(logs), isNull);
     });
 
     test('returns null for unrealistic mileage (>1000)', () {
-      final logs = [
-        _log(odometer: 0),
-        _log(odometer: 10000, litres: 1.0),
-      ];
+      final logs = [_log(odometer: 0), _log(odometer: 10000, litres: 1.0)];
       expect(calculateMileage(logs), isNull);
     });
 
     test('rounds to 2 decimal places', () {
-      final logs = [
-        _log(odometer: 100),
-        _log(odometer: 233, litres: 3.0),
-      ];
+      final logs = [_log(odometer: 100), _log(odometer: 233, litres: 3.0)];
       // (233 - 100) / 3.0 = 44.333...
       expect(calculateMileage(logs), 44.33);
     });

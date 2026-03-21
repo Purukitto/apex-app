@@ -9,8 +9,10 @@ import '../../../core/utils/logger.dart';
 const _uuid = Uuid();
 
 /// Watches all fuel logs for a specific bike.
-final fuelLogsStreamProvider =
-    StreamProvider.family<List<FuelLog>, String>((ref, bikeId) {
+final fuelLogsStreamProvider = StreamProvider.family<List<FuelLog>, String>((
+  ref,
+  bikeId,
+) {
   final db = ref.watch(databaseProvider);
   return db.fuelDao.watchForBike(bikeId);
 });
@@ -39,19 +41,21 @@ class FuelActions {
     final id = _uuid.v4();
     final now = DateTime.now();
 
-    await _db.fuelDao.upsert(FuelLogsCompanion(
-      id: Value(id),
-      bikeId: Value(bikeId),
-      odometer: Value(odometer),
-      litres: Value(litres),
-      pricePerLitre: Value(pricePerLitre),
-      totalCost: Value(totalCost),
-      isFullTank: Value(isFullTank),
-      date: Value(date),
-      createdAt: Value(now),
-      isSynced: const Value(false),
-      lastModified: Value(now),
-    ));
+    await _db.fuelDao.upsert(
+      FuelLogsCompanion(
+        id: Value(id),
+        bikeId: Value(bikeId),
+        odometer: Value(odometer),
+        litres: Value(litres),
+        pricePerLitre: Value(pricePerLitre),
+        totalCost: Value(totalCost),
+        isFullTank: Value(isFullTank),
+        date: Value(date),
+        createdAt: Value(now),
+        isSynced: const Value(false),
+        lastModified: Value(now),
+      ),
+    );
 
     await _db.fuelDao.recalculateBikeStats(bikeId);
     AppLogger.i('Fuel log added for bike $bikeId');
@@ -69,18 +73,20 @@ class FuelActions {
   }) async {
     final now = DateTime.now();
 
-    await _db.fuelDao.upsert(FuelLogsCompanion(
-      id: Value(id),
-      bikeId: Value(bikeId),
-      odometer: Value(odometer),
-      litres: Value(litres),
-      pricePerLitre: Value(pricePerLitre),
-      totalCost: Value(totalCost),
-      isFullTank: Value(isFullTank),
-      date: Value(date),
-      isSynced: const Value(false),
-      lastModified: Value(now),
-    ));
+    await _db.fuelDao.upsert(
+      FuelLogsCompanion(
+        id: Value(id),
+        bikeId: Value(bikeId),
+        odometer: Value(odometer),
+        litres: Value(litres),
+        pricePerLitre: Value(pricePerLitre),
+        totalCost: Value(totalCost),
+        isFullTank: Value(isFullTank),
+        date: Value(date),
+        isSynced: const Value(false),
+        lastModified: Value(now),
+      ),
+    );
 
     await _db.fuelDao.recalculateBikeStats(bikeId);
     AppLogger.i('Fuel log updated: $id');

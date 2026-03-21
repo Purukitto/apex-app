@@ -25,18 +25,18 @@ final bikesStreamProvider = StreamProvider<List<Bike>>((ref) {
 /// Used by the delete dialog to determine deletion guards.
 final bikeRelatedCountsProvider =
     FutureProvider.family<BikeRelatedCounts, String>((ref, bikeId) async {
-  final db = ref.read(databaseProvider);
-  final results = await Future.wait([
-    db.ridesDao.countForBike(bikeId),
-    db.fuelDao.countForBike(bikeId),
-    db.maintenanceDao.countLogsForBike(bikeId),
-  ]);
-  return BikeRelatedCounts(
-    rides: results[0],
-    fuelLogs: results[1],
-    maintenanceLogs: results[2],
-  );
-});
+      final db = ref.read(databaseProvider);
+      final results = await Future.wait([
+        db.ridesDao.countForBike(bikeId),
+        db.fuelDao.countForBike(bikeId),
+        db.maintenanceDao.countLogsForBike(bikeId),
+      ]);
+      return BikeRelatedCounts(
+        rides: results[0],
+        fuelLogs: results[1],
+        maintenanceLogs: results[2],
+      );
+    });
 
 class BikeRelatedCounts {
   const BikeRelatedCounts({
@@ -54,10 +54,11 @@ class BikeRelatedCounts {
 }
 
 /// Debounced global bike search provider.
-final globalBikeSearchProvider = NotifierProvider.autoDispose<
-    GlobalBikeSearchNotifier, AsyncValue<List<GlobalBikeSpec>>>(
-  GlobalBikeSearchNotifier.new,
-);
+final globalBikeSearchProvider =
+    NotifierProvider.autoDispose<
+      GlobalBikeSearchNotifier,
+      AsyncValue<List<GlobalBikeSpec>>
+    >(GlobalBikeSearchNotifier.new);
 
 class GlobalBikeSearchNotifier
     extends Notifier<AsyncValue<List<GlobalBikeSpec>>> {
@@ -127,21 +128,23 @@ class BikeActions {
     final bikeId = _uuid.v4();
     final now = DateTime.now();
 
-    await _db.bikesDao.upsert(BikesCompanion(
-      id: Value(bikeId),
-      userId: Value(uid),
-      make: Value(make),
-      model: Value(model),
-      year: Value(year),
-      currentOdo: Value(currentOdo),
-      nickName: Value(nickName),
-      imageUrl: Value(imageUrl),
-      specsEngine: Value(specsEngine),
-      specsPower: Value(specsPower),
-      createdAt: Value(now),
-      isSynced: const Value(false),
-      lastModified: Value(now),
-    ));
+    await _db.bikesDao.upsert(
+      BikesCompanion(
+        id: Value(bikeId),
+        userId: Value(uid),
+        make: Value(make),
+        model: Value(model),
+        year: Value(year),
+        currentOdo: Value(currentOdo),
+        nickName: Value(nickName),
+        imageUrl: Value(imageUrl),
+        specsEngine: Value(specsEngine),
+        specsPower: Value(specsPower),
+        createdAt: Value(now),
+        isSynced: const Value(false),
+        lastModified: Value(now),
+      ),
+    );
 
     await _db.maintenanceDao.initializeDefaultSchedules(bikeId);
     AppLogger.i('Bike added: $make $model ($bikeId)');
@@ -160,19 +163,21 @@ class BikeActions {
   }) async {
     final now = DateTime.now();
 
-    await _db.bikesDao.upsert(BikesCompanion(
-      id: Value(bikeId),
-      make: Value(make),
-      model: Value(model),
-      year: Value(year),
-      currentOdo: Value(currentOdo),
-      nickName: Value(nickName),
-      imageUrl: Value(imageUrl),
-      specsEngine: Value(specsEngine),
-      specsPower: Value(specsPower),
-      isSynced: const Value(false),
-      lastModified: Value(now),
-    ));
+    await _db.bikesDao.upsert(
+      BikesCompanion(
+        id: Value(bikeId),
+        make: Value(make),
+        model: Value(model),
+        year: Value(year),
+        currentOdo: Value(currentOdo),
+        nickName: Value(nickName),
+        imageUrl: Value(imageUrl),
+        specsEngine: Value(specsEngine),
+        specsPower: Value(specsPower),
+        isSynced: const Value(false),
+        lastModified: Value(now),
+      ),
+    );
 
     AppLogger.i('Bike updated: $bikeId');
   }

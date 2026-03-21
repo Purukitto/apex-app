@@ -29,7 +29,10 @@ class GarageScreen extends ConsumerWidget {
       child: bikesAsync.when(
         loading: () => _buildShimmer(),
         error: (e, _) => Center(
-          child: Text('Error loading bikes', style: AppTypography.interSecondary),
+          child: Text(
+            'Error loading bikes',
+            style: AppTypography.interSecondary,
+          ),
         ),
         data: (bikes) => bikes.isEmpty
             ? _buildEmptyState(context)
@@ -63,16 +66,9 @@ class GarageScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.two_wheeler,
-              color: context.accent,
-              size: 64,
-            ),
+            Icon(Icons.two_wheeler, color: context.accent, size: 64),
             const SizedBox(height: 24),
-            Text(
-              'No bikes yet',
-              style: AppTypography.playfairDisplay,
-            ),
+            Text('No bikes yet', style: AppTypography.playfairDisplay),
             const SizedBox(height: 12),
             Text(
               'Add your first machine to start tracking rides and maintenance.',
@@ -130,11 +126,7 @@ class GarageScreen extends ConsumerWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.add,
-                            color: context.accent,
-                            size: 16,
-                          ),
+                          Icon(Icons.add, color: context.accent, size: 16),
                           const SizedBox(width: 6),
                           Text(
                             'Add',
@@ -153,20 +145,23 @@ class GarageScreen extends ConsumerWidget {
 
           // Hero bike
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: HeroBikeCard(
-                bike: bikes[0],
-                onTap: () => _showBikeActions(context, bikes[0]),
-                onMaintenance: () => _onMaintenance(context, bikes[0]),
-                onFuel: () => FuelLogSheet.show(context, bikes[0]),
-                onEdit: () => AddEditBikeSheet.show(context, bike: bikes[0]),
-                onDelete: () => DeleteBikeDialog.show(context, bikes[0]),
-              ),
-            )
-                .animate()
-                .fadeIn(duration: 500.ms)
-                .slideY(begin: 0.1, end: 0, duration: 500.ms),
+            child:
+                Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: HeroBikeCard(
+                        bike: bikes[0],
+                        onTap: () => _showBikeActions(context, bikes[0]),
+                        onMaintenance: () => _onMaintenance(context, bikes[0]),
+                        onFuel: () => FuelLogSheet.show(context, bikes[0]),
+                        onEdit: () =>
+                            AddEditBikeSheet.show(context, bike: bikes[0]),
+                        onDelete: () =>
+                            DeleteBikeDialog.show(context, bikes[0]),
+                      ),
+                    )
+                    .animate()
+                    .fadeIn(duration: 500.ms)
+                    .slideY(begin: 0.1, end: 0, duration: 500.ms),
           ),
 
           // Grid for remaining bikes
@@ -180,34 +175,26 @@ class GarageScreen extends ConsumerWidget {
                   crossAxisSpacing: 12,
                   childAspectRatio: 0.85,
                 ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final bike = bikes[index + 1];
-                    return BikeGridCard(
-                      bike: bike,
-                      onTap: () => _showBikeActions(context, bike),
-                    )
-                        .animate()
-                        .fadeIn(
-                          duration: 500.ms,
-                          delay: (100 * (index + 1)).ms,
-                        )
-                        .slideY(
-                          begin: 0.1,
-                          end: 0,
-                          duration: 500.ms,
-                          delay: (100 * (index + 1)).ms,
-                        );
-                  },
-                  childCount: bikes.length - 1,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final bike = bikes[index + 1];
+                  return BikeGridCard(
+                        bike: bike,
+                        onTap: () => _showBikeActions(context, bike),
+                      )
+                      .animate()
+                      .fadeIn(duration: 500.ms, delay: (100 * (index + 1)).ms)
+                      .slideY(
+                        begin: 0.1,
+                        end: 0,
+                        duration: 500.ms,
+                        delay: (100 * (index + 1)).ms,
+                      );
+                }, childCount: bikes.length - 1),
               ),
             ),
 
           // Bottom padding for nav bar
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 120),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
     );
@@ -225,10 +212,8 @@ class GarageScreen extends ConsumerWidget {
   }
 
   void _onMaintenance(BuildContext context, Bike bike) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ServiceScreen(bike: bike),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => ServiceScreen(bike: bike)));
   }
 }

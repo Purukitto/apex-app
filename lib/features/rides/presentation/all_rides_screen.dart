@@ -66,8 +66,8 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
           child: ridesState.rides.isEmpty && ridesState.isLoading
               ? _buildShimmer()
               : ridesState.rides.isEmpty && !ridesState.isLoading
-                  ? _buildEmptyState()
-                  : _buildList(ref, ridesState, bikes),
+              ? _buildEmptyState()
+              : _buildList(ref, ridesState, bikes),
         ),
       ),
     );
@@ -109,7 +109,11 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
     );
   }
 
-  Widget _buildList(WidgetRef ref, RidesListState ridesState, List<Bike> bikes) {
+  Widget _buildList(
+    WidgetRef ref,
+    RidesListState ridesState,
+    List<Bike> bikes,
+  ) {
     return RefreshIndicator(
       color: context.accent,
       backgroundColor: AppColors.backgroundDark,
@@ -119,45 +123,44 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
         ref.invalidate(ridesListProvider);
       },
       child: CustomScrollView(
-      controller: _scrollController,
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: [
-        // Header
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-            child: Row(
-              children: [
-                Text('Ride History', style: AppTypography.playfairDisplay),
-                const Spacer(),
-                Text(
-                  '${ridesState.rides.length} rides',
-                  style: AppTypography.interSecondary,
-                ),
-              ],
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          // Header
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              child: Row(
+                children: [
+                  Text('Ride History', style: AppTypography.playfairDisplay),
+                  const Spacer(),
+                  Text(
+                    '${ridesState.rides.length} rides',
+                    style: AppTypography.interSecondary,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
 
-        // Ride list
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
+          // Ride list
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
                 final ride = ridesState.rides[index];
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: RideListTile(
-                    ride: ride,
-                    bikeName: _bikeName(bikes, ride.bikeId),
-                    onTap: () => RideDetailSheet.show(
-                      context,
-                      ride,
-                      bikeName: _bikeName(bikes, ride.bikeId),
-                    ),
-                  ),
-                )
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: RideListTile(
+                        ride: ride,
+                        bikeName: _bikeName(bikes, ride.bikeId),
+                        onTap: () => RideDetailSheet.show(
+                          context,
+                          ride,
+                          bikeName: _bikeName(bikes, ride.bikeId),
+                        ),
+                      ),
+                    )
                     .animate()
                     .fadeIn(duration: 400.ms, delay: (60 * index).ms)
                     .slideY(
@@ -166,35 +169,31 @@ class _AllRidesScreenState extends ConsumerState<AllRidesScreen> {
                       duration: 400.ms,
                       delay: (60 * index).ms,
                     );
-              },
-              childCount: ridesState.rides.length,
+              }, childCount: ridesState.rides.length),
             ),
           ),
-        ),
 
-        // Loading indicator
-        if (ridesState.isLoading)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Center(
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: context.accent,
+          // Loading indicator
+          if (ridesState.isLoading)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: context.accent,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
 
-        // Bottom padding for nav bar
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 120),
-        ),
-      ],
+          // Bottom padding for nav bar
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
+        ],
       ),
     );
   }

@@ -40,9 +40,7 @@ class RideActions {
     // Build GeoJSON LineString from coords
     String? routePath;
     if (session.coords.length >= 2) {
-      final coordinates = session.coords
-          .map((c) => [c.lon, c.lat])
-          .toList();
+      final coordinates = session.coords.map((c) => [c.lon, c.lat]).toList();
       routePath = jsonEncode({
         'type': 'LineString',
         'coordinates': coordinates,
@@ -50,33 +48,36 @@ class RideActions {
     }
 
     // Insert ride
-    await _db.ridesDao.upsert(RidesCompanion(
-      id: Value(rideId),
-      bikeId: Value(bike.id),
-      userId: Value(uid),
-      startTime: Value(session.startTime ?? now),
-      endTime: Value(now),
-      distanceKm: Value(session.distanceKm),
-      maxLeanLeft: Value(session.maxLeanLeft),
-      maxLeanRight: Value(session.maxLeanRight),
-      routePath: Value(routePath),
-      createdAt: Value(now),
-      isSynced: const Value(false),
-      lastModified: Value(now),
-    ));
+    await _db.ridesDao.upsert(
+      RidesCompanion(
+        id: Value(rideId),
+        bikeId: Value(bike.id),
+        userId: Value(uid),
+        startTime: Value(session.startTime ?? now),
+        endTime: Value(now),
+        distanceKm: Value(session.distanceKm),
+        maxLeanLeft: Value(session.maxLeanLeft),
+        maxLeanRight: Value(session.maxLeanRight),
+        routePath: Value(routePath),
+        createdAt: Value(now),
+        isSynced: const Value(false),
+        lastModified: Value(now),
+      ),
+    );
 
     // Update bike odometer
     final currentBike = await _db.bikesDao.getById(bike.id);
     if (currentBike != null) {
-      final newOdo =
-          (currentBike.currentOdo + session.distanceKm).roundToDouble();
+      final newOdo = (currentBike.currentOdo + session.distanceKm)
+          .roundToDouble();
       await _db.bikesDao.updateOdometer(bike.id, newOdo);
       AppLogger.i('Odo updated: ${currentBike.currentOdo} → $newOdo km');
     }
 
     AppLogger.i(
-        'Ride saved: $rideId (${session.distanceKm} km, '
-        'lean L${session.maxLeanLeft}° R${session.maxLeanRight}°)');
+      'Ride saved: $rideId (${session.distanceKm} km, '
+      'lean L${session.maxLeanLeft}° R${session.maxLeanRight}°)',
+    );
 
     // Reset session
     notifier.reset();

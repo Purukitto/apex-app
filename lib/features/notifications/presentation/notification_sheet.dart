@@ -60,8 +60,10 @@ class NotificationSheet extends ConsumerWidget {
 
               // Header
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     Text(
@@ -77,7 +79,9 @@ class NotificationSheet extends ConsumerWidget {
                         await actions.markAllAsRead();
                         if (context.mounted) {
                           ApexToast.success(
-                              context, 'All notifications marked as read');
+                            context,
+                            'All notifications marked as read',
+                          );
                         }
                       },
                     ),
@@ -88,7 +92,9 @@ class NotificationSheet extends ConsumerWidget {
                         await actions.dismissAll();
                         if (context.mounted) {
                           ApexToast.success(
-                              context, 'All notifications cleared');
+                            context,
+                            'All notifications cleared',
+                          );
                           Navigator.of(context).pop();
                         }
                       },
@@ -97,10 +103,7 @@ class NotificationSheet extends ConsumerWidget {
                 ),
               ),
 
-              const Divider(
-                color: AppColors.cardBorder,
-                height: 1,
-              ),
+              const Divider(color: AppColors.cardBorder, height: 1),
 
               // Notification list
               Expanded(
@@ -127,27 +130,28 @@ class NotificationSheet extends ConsumerWidget {
                       itemBuilder: (context, index) {
                         final notification = notifications[index];
                         return NotificationTile(
-                          notification: notification,
-                          onMarkRead: () async {
-                            await actions.markAsRead(notification.id);
-                            if (context.mounted) {
-                              ApexToast.success(
-                                  context, 'Notification marked as read');
-                            }
-                          },
-                          onDismiss: () async {
-                            await actions.dismiss(notification.id);
-                            if (context.mounted) {
-                              ApexToast.success(
-                                  context, 'Notification dismissed');
-                            }
-                          },
-                        )
-                            .animate()
-                            .fadeIn(
-                              duration: 300.ms,
-                              delay: (40 * index).ms,
+                              notification: notification,
+                              onMarkRead: () async {
+                                await actions.markAsRead(notification.id);
+                                if (context.mounted) {
+                                  ApexToast.success(
+                                    context,
+                                    'Notification marked as read',
+                                  );
+                                }
+                              },
+                              onDismiss: () async {
+                                await actions.dismiss(notification.id);
+                                if (context.mounted) {
+                                  ApexToast.success(
+                                    context,
+                                    'Notification dismissed',
+                                  );
+                                }
+                              },
                             )
+                            .animate()
+                            .fadeIn(duration: 300.ms, delay: (40 * index).ms)
                             .slideY(
                               begin: 0.05,
                               end: 0,
@@ -177,10 +181,7 @@ class NotificationSheet extends ConsumerWidget {
             size: 56,
           ),
           const SizedBox(height: 16),
-          Text(
-            'No notifications',
-            style: AppTypography.interSecondary,
-          ),
+          Text('No notifications', style: AppTypography.interSecondary),
         ],
       ),
     );
@@ -188,10 +189,7 @@ class NotificationSheet extends ConsumerWidget {
 }
 
 class _HeaderAction extends StatelessWidget {
-  const _HeaderAction({
-    required this.label,
-    required this.onTap,
-  });
+  const _HeaderAction({required this.label, required this.onTap});
 
   final String label;
   final VoidCallback onTap;

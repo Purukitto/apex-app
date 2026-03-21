@@ -6,10 +6,7 @@ import '../../../../core/theme/app_typography.dart';
 
 /// Long-press stop button — wide bar style with 3 second hold progress fill.
 class LongPressStopButton extends StatefulWidget {
-  const LongPressStopButton({
-    super.key,
-    required this.onStop,
-  });
+  const LongPressStopButton({super.key, required this.onStop});
 
   final VoidCallback onStop;
 
@@ -27,10 +24,7 @@ class _LongPressStopButtonState extends State<LongPressStopButton>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: _holdDuration,
-    );
+    _controller = AnimationController(vsync: this, duration: _holdDuration);
 
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
@@ -164,9 +158,7 @@ class CalibrateButton extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               'Calibrate',
-              style: AppTypography.interSmall.copyWith(
-                color: context.accent,
-              ),
+              style: AppTypography.interSmall.copyWith(color: context.accent),
             ),
           ],
         ),

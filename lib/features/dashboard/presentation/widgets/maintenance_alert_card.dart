@@ -18,8 +18,9 @@ class MaintenanceAlertCard extends ConsumerWidget {
     if (alerts.isEmpty) return const SizedBox.shrink();
 
     final worst = alerts.first;
-    final accentColor =
-        worst.healthPercent < 20 ? AppColors.error : AppColors.warning;
+    final accentColor = worst.healthPercent < 20
+        ? AppColors.error
+        : AppColors.warning;
 
     return PressableGlassCard(
       onTap: () => context.go('/garage'),
@@ -34,11 +35,7 @@ class MaintenanceAlertCard extends ConsumerWidget {
               color: accentColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              Icons.build_outlined,
-              color: accentColor,
-              size: 20,
-            ),
+            child: Icon(Icons.build_outlined, color: accentColor, size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -65,11 +62,7 @@ class MaintenanceAlertCard extends ConsumerWidget {
               ],
             ),
           ),
-          Icon(
-            Icons.chevron_right,
-            color: AppColors.textMuted,
-            size: 20,
-          ),
+          Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
         ],
       ),
     );

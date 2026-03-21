@@ -2,10 +2,7 @@ import 'dart:convert';
 
 /// Parsed route data from GeoJSON.
 class RouteData {
-  const RouteData({
-    required this.coordinates,
-    required this.bounds,
-  });
+  const RouteData({required this.coordinates, required this.bounds});
 
   final List<({double lat, double lng})> coordinates;
   final ({double minLat, double maxLat, double minLng, double maxLng}) bounds;

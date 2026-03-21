@@ -21,8 +21,14 @@ class GlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accentColor = context.accent;
-    final border = isAccent ? accentColor.withValues(alpha: 0.20) : AppColors.cardBorder;
-    final accentTint = Color.lerp(accentColor, Colors.black, 0.7)!.withValues(alpha: 0.5);
+    final border = isAccent
+        ? accentColor.withValues(alpha: 0.20)
+        : AppColors.cardBorder;
+    final accentTint = Color.lerp(
+      accentColor,
+      Colors.black,
+      0.7,
+    )!.withValues(alpha: 0.5);
 
     return Container(
       decoration: BoxDecoration(

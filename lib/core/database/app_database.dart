@@ -31,13 +31,7 @@ part 'app_database.g.dart';
     ServiceHistory,
     Notifications,
   ],
-  daos: [
-    BikesDao,
-    RidesDao,
-    FuelDao,
-    MaintenanceDao,
-    NotificationsDao,
-  ],
+  daos: [BikesDao, RidesDao, FuelDao, MaintenanceDao, NotificationsDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
@@ -46,9 +40,8 @@ class AppDatabase extends _$AppDatabase {
   int get schemaVersion => 1;
 
   @override
-  MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) => m.createAll(),
-      );
+  MigrationStrategy get migration =>
+      MigrationStrategy(onCreate: (m) => m.createAll());
 
   /// Delete all rows from all tables (used on logout).
   Future<void> deleteAllData() async {

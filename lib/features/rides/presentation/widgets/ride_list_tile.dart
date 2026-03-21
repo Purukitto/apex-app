@@ -78,10 +78,7 @@ class RideListTile extends StatelessWidget {
               ),
               if (ride.maxLeanLeft != null || ride.maxLeanRight != null) ...[
                 const SizedBox(width: 16),
-                _StatChip(
-                  icon: Icons.rotate_left,
-                  value: _leanText(),
-                ),
+                _StatChip(icon: Icons.rotate_left, value: _leanText()),
               ],
             ],
           ),

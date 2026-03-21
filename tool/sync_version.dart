@@ -6,7 +6,8 @@ import 'dart:io';
 
 void main() {
   final packageJson =
-      jsonDecode(File('package.json').readAsStringSync()) as Map<String, dynamic>;
+      jsonDecode(File('package.json').readAsStringSync())
+          as Map<String, dynamic>;
   final version = packageJson['version'] as String;
 
   final pubspecFile = File('pubspec.yaml');

@@ -24,8 +24,7 @@ double calculateHealth({
   required MaintenanceSchedule schedule,
   required double currentOdo,
 }) {
-  final kmUsed =
-      math.max(0.0, currentOdo - (schedule.lastServiceOdo ?? 0));
+  final kmUsed = math.max(0.0, currentOdo - (schedule.lastServiceOdo ?? 0));
   final kmHealth = 100.0 - (kmUsed / schedule.intervalKm) * 100.0;
 
   double timeHealth = 100.0;
@@ -66,11 +65,13 @@ final maintenanceAlertsProvider = Provider<List<MaintenanceAlert>>((ref) {
         currentOdo: bike.currentOdo,
       );
       if (health < 60.0) {
-        alerts.add(MaintenanceAlert(
-          schedule: schedule,
-          bike: bike,
-          healthPercent: health,
-        ));
+        alerts.add(
+          MaintenanceAlert(
+            schedule: schedule,
+            bike: bike,
+            healthPercent: health,
+          ),
+        );
       }
     }
   }

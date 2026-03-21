@@ -149,10 +149,7 @@ class _EditRideSheetState extends ConsumerState<EditRideSheet> {
                   ),
                   const SizedBox(height: 24),
 
-                  ApexButton(
-                    label: 'Save',
-                    onPressed: _save,
-                  ),
+                  ApexButton(label: 'Save', onPressed: _save),
                 ],
               ),
             ),

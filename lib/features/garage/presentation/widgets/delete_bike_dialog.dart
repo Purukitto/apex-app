@@ -60,8 +60,9 @@ class DeleteBikeDialog extends ConsumerWidget {
               ),
               error: (_, _) => Text(
                 'Failed to check related data.',
-                style: AppTypography.interSmall
-                    .copyWith(color: AppColors.error),
+                style: AppTypography.interSmall.copyWith(
+                  color: AppColors.error,
+                ),
               ),
               data: (counts) => _buildContent(context, ref, counts),
             ),
@@ -91,14 +92,14 @@ class DeleteBikeDialog extends ConsumerWidget {
         else if (counts.hasLogs)
           _WarningBox(
             color: AppColors.warning,
-            text:
-                'Maintenance and fuel logs will be removed with this bike.',
+            text: 'Maintenance and fuel logs will be removed with this bike.',
           )
         else
           Text(
             'No related data. Safe to delete.',
-            style: AppTypography.interSmall
-                .copyWith(color: AppColors.textSecondary),
+            style: AppTypography.interSmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
         const SizedBox(height: 24),
         Row(
@@ -118,9 +119,7 @@ class DeleteBikeDialog extends ConsumerWidget {
                 onTap: canDelete
                     ? () async {
                         Navigator.of(context).pop();
-                        await ref
-                            .read(bikeActionsProvider)
-                            .deleteBike(bike.id);
+                        await ref.read(bikeActionsProvider).deleteBike(bike.id);
                         if (context.mounted) {
                           ApexToast.success(context, 'Bike deleted');
                         }

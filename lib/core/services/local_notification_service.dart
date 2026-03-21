@@ -38,8 +38,9 @@ class LocalNotificationService {
   static Future<void> init() async {
     if (_initialized) return;
 
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const settings = InitializationSettings(android: androidSettings);
 
     await _plugin.initialize(
@@ -48,9 +49,10 @@ class LocalNotificationService {
     );
 
     // Create notification channels
-    final androidPlugin =
-        _plugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     await androidPlugin?.createNotificationChannel(
       AndroidNotificationChannel(
         _maintenanceChannel.id,
@@ -77,9 +79,10 @@ class LocalNotificationService {
 
   /// Request notification permissions (Android 13+).
   static Future<bool> requestPermissions() async {
-    final androidPlugin =
-        _plugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     final granted = await androidPlugin?.requestNotificationsPermission();
     return granted ?? false;
   }
@@ -149,7 +152,8 @@ class LocalNotificationService {
     );
 
     AppLogger.i(
-        'Scheduled maintenance notification for $partName ($bikeName) at $notificationDate');
+      'Scheduled maintenance notification for $partName ($bikeName) at $notificationDate',
+    );
   }
 
   /// Trigger an immediate distance-based maintenance notification.

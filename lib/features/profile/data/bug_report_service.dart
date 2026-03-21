@@ -64,7 +64,8 @@ class BugReportService {
     required String logsText,
   }) async {
     final env = await _getEnvironmentInfo();
-    final steps = (stepsToReproduce != null && stepsToReproduce.trim().isNotEmpty)
+    final steps =
+        (stepsToReproduce != null && stepsToReproduce.trim().isNotEmpty)
         ? stepsToReproduce.trim()
         : '_(No steps provided)_';
 

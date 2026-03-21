@@ -72,11 +72,14 @@ class FirebaseService {
     if (token == null) return;
 
     try {
-      await Supabase.instance.client.rpc('upsert_push_token', params: {
-        'p_token': token,
-        'p_platform': 'android',
-        'p_device_id': null,
-      });
+      await Supabase.instance.client.rpc(
+        'upsert_push_token',
+        params: {
+          'p_token': token,
+          'p_platform': 'android',
+          'p_device_id': null,
+        },
+      );
       AppLogger.i('FCM token registered for user $userId');
     } catch (e) {
       AppLogger.e('Failed to register FCM token', e);

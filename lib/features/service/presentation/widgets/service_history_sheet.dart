@@ -12,10 +12,7 @@ import '../../providers/service_provider.dart';
 
 /// Bottom sheet showing service history for a maintenance schedule.
 class ServiceHistorySheet extends ConsumerWidget {
-  const ServiceHistorySheet({
-    super.key,
-    required this.schedule,
-  });
+  const ServiceHistorySheet({super.key, required this.schedule});
 
   final MaintenanceSchedule schedule;
 
@@ -35,8 +32,7 @@ class ServiceHistorySheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final historyAsync =
-        ref.watch(scheduleHistoryStreamProvider(schedule.id));
+    final historyAsync = ref.watch(scheduleHistoryStreamProvider(schedule.id));
 
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -77,10 +73,7 @@ class ServiceHistorySheet extends ConsumerWidget {
                     style: AppTypography.playfairDisplaySmall,
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    schedule.partName,
-                    style: AppTypography.interSecondary,
-                  ),
+                  Text(schedule.partName, style: AppTypography.interSecondary),
                 ],
               ),
             ),
@@ -89,8 +82,7 @@ class ServiceHistorySheet extends ConsumerWidget {
             Expanded(
               child: historyAsync.when(
                 loading: () => Center(
-                  child:
-                      CircularProgressIndicator(color: context.accent),
+                  child: CircularProgressIndicator(color: context.accent),
                 ),
                 error: (_, _) => Center(
                   child: Text(
@@ -114,11 +106,7 @@ class ServiceHistorySheet extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.history,
-            color: AppColors.textMuted,
-            size: 48,
-          ),
+          const Icon(Icons.history, color: AppColors.textMuted, size: 48),
           const SizedBox(height: 16),
           Text('No service history', style: AppTypography.interSecondary),
           const SizedBox(height: 8),
@@ -170,10 +158,7 @@ class ServiceHistorySheet extends ConsumerWidget {
 }
 
 class _ServiceHistoryTile extends StatelessWidget {
-  const _ServiceHistoryTile({
-    required this.entry,
-    required this.onDelete,
-  });
+  const _ServiceHistoryTile({required this.entry, required this.onDelete});
 
   final ServiceHistoryData entry;
   final VoidCallback onDelete;
@@ -181,8 +166,9 @@ class _ServiceHistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final date = DateTime.tryParse(entry.serviceDate);
-    final dateStr =
-        date != null ? DateFormat('MMM d, yyyy').format(date) : entry.serviceDate;
+    final dateStr = date != null
+        ? DateFormat('MMM d, yyyy').format(date)
+        : entry.serviceDate;
 
     return GlassCard(
       padding: const EdgeInsets.all(14),
@@ -194,12 +180,18 @@ class _ServiceHistoryTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(dateStr, style: AppTypography.inter.copyWith(fontSize: 14)),
+                Text(
+                  dateStr,
+                  style: AppTypography.inter.copyWith(fontSize: 14),
+                ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.straighten,
-                        size: 13, color: AppColors.textMuted),
+                    Icon(
+                      Icons.straighten,
+                      size: 13,
+                      color: AppColors.textMuted,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '${entry.serviceOdo.toStringAsFixed(0)} km',

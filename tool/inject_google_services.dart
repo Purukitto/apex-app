@@ -85,18 +85,14 @@ Map<String, dynamic> _buildGoogleServicesJson({
       {
         'client_info': {
           'mobilesdk_app_id': mobilesdkAppId,
-          'android_client_info': {
-            'package_name': packageName,
-          },
+          'android_client_info': {'package_name': packageName},
         },
         'oauth_client': <dynamic>[],
         'api_key': [
           {'current_key': apiKey},
         ],
         'services': {
-          'appinvite_service': {
-            'other_platform_oauth_client': <dynamic>[],
-          },
+          'appinvite_service': {'other_platform_oauth_client': <dynamic>[]},
         },
       },
     ],
@@ -107,8 +103,6 @@ Map<String, dynamic> _buildGoogleServicesJson({
 void _writeJson(String path, Map<String, dynamic> json) {
   final file = File(path);
   file.parent.createSync(recursive: true);
-  file.writeAsStringSync(
-    const JsonEncoder.withIndent('  ').convert(json),
-  );
+  file.writeAsStringSync(const JsonEncoder.withIndent('  ').convert(json));
   print('  Wrote $path');
 }

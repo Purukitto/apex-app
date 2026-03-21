@@ -73,10 +73,7 @@ class HeroBikeCard extends StatelessWidget {
                       ),
                       if (bike.year != null) ...[
                         const SizedBox(height: 4),
-                        Text(
-                          '${bike.year}',
-                          style: AppTypography.interMuted,
-                        ),
+                        Text('${bike.year}', style: AppTypography.interMuted),
                       ],
                       if (bike.avgMileage != null) ...[
                         const SizedBox(height: 4),

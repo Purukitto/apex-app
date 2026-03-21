@@ -37,7 +37,9 @@ class UpdateChecker {
       // Record check time
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(
-          _kLastUpdateCheckKey, DateTime.now().millisecondsSinceEpoch);
+        _kLastUpdateCheckKey,
+        DateTime.now().millisecondsSinceEpoch,
+      );
 
       if (Platform.isAndroid) {
         await _checkAndroid();
@@ -72,8 +74,9 @@ class UpdateChecker {
 
     final client = HttpClient();
     try {
-      final request = await client.getUrl(Uri.parse(
-          'https://itunes.apple.com/lookup?bundleId=$_kAppStoreId'));
+      final request = await client.getUrl(
+        Uri.parse('https://itunes.apple.com/lookup?bundleId=$_kAppStoreId'),
+      );
       final response = await request.close();
       final body = await response.transform(utf8.decoder).join();
       final json = jsonDecode(body) as Map<String, dynamic>;
@@ -138,8 +141,7 @@ class UpdateChecker {
             onPressed: () {
               Navigator.of(context).pop();
               launchUrl(
-                Uri.parse(
-                    'https://apps.apple.com/app/$_kAppStoreId'),
+                Uri.parse('https://apps.apple.com/app/$_kAppStoreId'),
                 mode: LaunchMode.externalApplication,
               );
             },

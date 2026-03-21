@@ -55,10 +55,7 @@ const _destinations = [
 
 /// Floating pill bottom navigation bar.
 class ApexBottomNavBar extends StatelessWidget {
-  const ApexBottomNavBar({
-    super.key,
-    required this.currentLocation,
-  });
+  const ApexBottomNavBar({super.key, required this.currentLocation});
 
   final String currentLocation;
 
@@ -86,17 +83,13 @@ class ApexBottomNavBar extends StatelessWidget {
             gradient: const LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0xF01A1D20),
-                Color(0xF0141416),
-              ],
+              colors: [Color(0xF01A1D20), Color(0xF0141416)],
             ),
             borderRadius: BorderRadius.circular(40),
             border: Border.all(color: AppColors.cardBorder),
           ),
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: List.generate(_destinations.length, (index) {

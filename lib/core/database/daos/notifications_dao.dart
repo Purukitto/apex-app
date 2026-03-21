@@ -13,8 +13,7 @@ class NotificationsDao extends DatabaseAccessor<AppDatabase>
   /// Watch active (non-dismissed) notifications for a user.
   Stream<List<Notification>> watchActive(String userId) {
     return (select(notifications)
-          ..where((n) =>
-              n.userId.equals(userId) & n.dismissedAt.isNull())
+          ..where((n) => n.userId.equals(userId) & n.dismissedAt.isNull())
           ..orderBy([(n) => OrderingTerm.desc(n.createdAt)]))
         .watch();
   }
@@ -23,17 +22,20 @@ class NotificationsDao extends DatabaseAccessor<AppDatabase>
   Stream<int> watchUnreadCount(String userId) {
     final count = countAll();
     final query = selectOnly(notifications)
-      ..where(notifications.userId.equals(userId) &
-          notifications.readAt.isNull() &
-          notifications.dismissedAt.isNull())
+      ..where(
+        notifications.userId.equals(userId) &
+            notifications.readAt.isNull() &
+            notifications.dismissedAt.isNull(),
+      )
       ..addColumns([count]);
     return query.watchSingle().map((row) => row.read(count)!);
   }
 
   /// Get a single notification by ID.
   Future<Notification?> getById(String id) {
-    return (select(notifications)..where((n) => n.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      notifications,
+    )..where((n) => n.id.equals(id))).getSingleOrNull();
   }
 
   /// Insert or update a notification.
@@ -43,14 +45,16 @@ class NotificationsDao extends DatabaseAccessor<AppDatabase>
 
   /// Get all rows that haven't been synced.
   Future<List<Notification>> getDirtyRows() {
-    return (select(notifications)..where((n) => n.isSynced.equals(false)))
-        .get();
+    return (select(
+      notifications,
+    )..where((n) => n.isSynced.equals(false))).get();
   }
 
   /// Mark a row as synced.
   Future<void> markSynced(String id) {
-    return (update(notifications)..where((n) => n.id.equals(id)))
-        .write(const NotificationsCompanion(isSynced: Value(true)));
+    return (update(notifications)..where((n) => n.id.equals(id))).write(
+      const NotificationsCompanion(isSynced: Value(true)),
+    );
   }
 
   /// Mark a notification as read.
@@ -78,27 +82,29 @@ class NotificationsDao extends DatabaseAccessor<AppDatabase>
   /// Mark all notifications as read for a user.
   Future<void> markAllAsRead(String userId) {
     final now = DateTime.now();
-    return (update(notifications)
-          ..where((n) =>
-              n.userId.equals(userId) & n.readAt.isNull()))
-        .write(NotificationsCompanion(
-          readAt: Value(now),
-          isSynced: const Value(false),
-          lastModified: Value(now),
-        ));
+    return (update(
+      notifications,
+    )..where((n) => n.userId.equals(userId) & n.readAt.isNull())).write(
+      NotificationsCompanion(
+        readAt: Value(now),
+        isSynced: const Value(false),
+        lastModified: Value(now),
+      ),
+    );
   }
 
   /// Dismiss all notifications for a user.
   Future<void> dismissAll(String userId) {
     final now = DateTime.now();
-    return (update(notifications)
-          ..where((n) =>
-              n.userId.equals(userId) & n.dismissedAt.isNull()))
-        .write(NotificationsCompanion(
-          dismissedAt: Value(now),
-          isSynced: const Value(false),
-          lastModified: Value(now),
-        ));
+    return (update(
+      notifications,
+    )..where((n) => n.userId.equals(userId) & n.dismissedAt.isNull())).write(
+      NotificationsCompanion(
+        dismissedAt: Value(now),
+        isSynced: const Value(false),
+        lastModified: Value(now),
+      ),
+    );
   }
 
   /// Delete a notification by ID.

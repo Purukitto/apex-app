@@ -51,7 +51,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text('Profile', style: AppTypography.inter.copyWith(fontSize: 18)),
+        title: Text(
+          'Profile',
+          style: AppTypography.inter.copyWith(fontSize: 18),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 18),
           onPressed: () => context.pop(),
@@ -149,13 +152,11 @@ class _AccountSectionState extends ConsumerState<_AccountSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'ACCOUNT',
-            style: AppTypography.interLabel,
-          ),
+          Text('ACCOUNT', style: AppTypography.interLabel),
           const SizedBox(height: 16),
           profileAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator.adaptive()),
+            loading: () =>
+                const Center(child: CircularProgressIndicator.adaptive()),
             error: (e, _) => Text(
               'Failed to load profile',
               style: AppTypography.inter.copyWith(color: AppColors.error),
@@ -236,8 +237,11 @@ class _AccountSectionState extends ConsumerState<_AccountSection> {
           ),
         ] else
           IconButton(
-            icon: const Icon(Icons.edit_outlined,
-                color: AppColors.textMuted, size: 18),
+            icon: const Icon(
+              Icons.edit_outlined,
+              color: AppColors.textMuted,
+              size: 18,
+            ),
             onPressed: () => _startEditName(currentName),
           ),
       ],
@@ -333,7 +337,9 @@ class _EmailChangeSheetState extends ConsumerState<_EmailChangeSheet> {
       await ref.read(profileProvider.notifier).updateEmail(email);
       if (mounted) {
         ApexToast.success(
-            context, 'Verification codes sent to both email addresses');
+          context,
+          'Verification codes sent to both email addresses',
+        );
         setState(() => _showOtpStep = true);
       }
     } catch (e) {
@@ -356,10 +362,9 @@ class _EmailChangeSheetState extends ConsumerState<_EmailChangeSheet> {
 
     setState(() => _isLoading = true);
     try {
-      await ref.read(profileProvider.notifier).verifyEmailChangeOtp(
-            email: newEmail,
-            token: token,
-          );
+      await ref
+          .read(profileProvider.notifier)
+          .verifyEmailChangeOtp(email: newEmail, token: token);
       if (mounted) {
         ApexToast.success(context, 'Email address updated successfully');
         Navigator.of(context).pop();
@@ -396,8 +401,11 @@ class _EmailChangeSheetState extends ConsumerState<_EmailChangeSheet> {
                     style: AppTypography.playfairDisplay.copyWith(fontSize: 20),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close,
-                        color: AppColors.textMuted, size: 18),
+                    icon: const Icon(
+                      Icons.close,
+                      color: AppColors.textMuted,
+                      size: 18,
+                    ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -440,16 +448,20 @@ class _EmailChangeSheetState extends ConsumerState<_EmailChangeSheet> {
                           await ref
                               .read(profileProvider.notifier)
                               .resendEmailChangeOtp(
-                                  _newEmailController.text.trim());
+                                _newEmailController.text.trim(),
+                              );
                           if (context.mounted) {
                             ApexToast.success(
-                                context, 'Verification codes resent');
+                              context,
+                              'Verification codes resent',
+                            );
                           }
                         },
                   child: Text(
                     'Resend codes',
-                    style: AppTypography.interSmall
-                        .copyWith(color: context.accent),
+                    style: AppTypography.interSmall.copyWith(
+                      color: context.accent,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -575,7 +587,9 @@ class _ChangePasswordSheetState extends ConsumerState<_ChangePasswordSheet> {
 
     setState(() => _isLoading = true);
     try {
-      await ref.read(profileProvider.notifier).updatePasswordWithNonce(
+      await ref
+          .read(profileProvider.notifier)
+          .updatePasswordWithNonce(
             password: _passwordController.text,
             nonce: nonce,
           );
@@ -615,8 +629,11 @@ class _ChangePasswordSheetState extends ConsumerState<_ChangePasswordSheet> {
                     style: AppTypography.playfairDisplay.copyWith(fontSize: 20),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close,
-                        color: AppColors.textMuted, size: 18),
+                    icon: const Icon(
+                      Icons.close,
+                      color: AppColors.textMuted,
+                      size: 18,
+                    ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -636,8 +653,7 @@ class _ChangePasswordSheetState extends ConsumerState<_ChangePasswordSheet> {
                       color: AppColors.textMuted,
                       size: 18,
                     ),
-                    onPressed: () =>
-                        setState(() => _obscureNew = !_obscureNew),
+                    onPressed: () => setState(() => _obscureNew = !_obscureNew),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -714,10 +730,7 @@ class _ThemeSection extends ConsumerWidget {
           const SizedBox(height: 20),
 
           // Background toggle
-          Text(
-            'Background',
-            style: AppTypography.interSecondary,
-          ),
+          Text('Background', style: AppTypography.interSecondary),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -746,10 +759,7 @@ class _ThemeSection extends ConsumerWidget {
           const SizedBox(height: 20),
 
           // Accent color picker
-          Text(
-            'Accent Colour',
-            style: AppTypography.interSecondary,
-          ),
+          Text('Accent Colour', style: AppTypography.interSecondary),
           const SizedBox(height: 12),
           Row(
             children: AccentColor.values.map((accent) {
@@ -767,21 +777,19 @@ class _ThemeSection extends ConsumerWidget {
                       shape: BoxShape.circle,
                       color: color,
                       border: isSelected
-                          ? Border.all(
-                              color: AppColors.textPrimary, width: 2.5)
+                          ? Border.all(color: AppColors.textPrimary, width: 2.5)
                           : Border.all(color: Colors.transparent, width: 2.5),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
                                 color: color.withValues(alpha: 0.4),
                                 blurRadius: 8,
-                              )
+                              ),
                             ]
                           : null,
                     ),
                     child: isSelected
-                        ? const Icon(Icons.check,
-                            color: Colors.white, size: 16)
+                        ? const Icon(Icons.check, color: Colors.white, size: 16)
                         : null,
                   ),
                 ),

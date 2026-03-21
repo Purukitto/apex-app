@@ -65,8 +65,9 @@ class RidesDao extends DatabaseAccessor<AppDatabase> with _$RidesDaoMixin {
 
   /// Mark a row as synced.
   Future<void> markSynced(String id) {
-    return (update(rides)..where((r) => r.id.equals(id)))
-        .write(const RidesCompanion(isSynced: Value(true)));
+    return (update(rides)..where((r) => r.id.equals(id))).write(
+      const RidesCompanion(isSynced: Value(true)),
+    );
   }
 
   /// Delete a ride by ID.

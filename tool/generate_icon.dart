@@ -39,11 +39,13 @@ void main() {
   for (int i = 0; i <= steps; i++) {
     final t = i / steps;
     final mt = 1.0 - t;
-    final x = mt * mt * mt * p0x +
+    final x =
+        mt * mt * mt * p0x +
         3 * mt * mt * t * p1x +
         3 * mt * t * t * p2x +
         t * t * t * p3x;
-    final y = mt * mt * mt * p0y +
+    final y =
+        mt * mt * mt * p0y +
         3 * mt * mt * t * p1y +
         3 * mt * t * t * p2y +
         t * t * t * p3y;
@@ -78,7 +80,12 @@ void main() {
 }
 
 void _drawFilledCircle(
-    img.Image image, double cx, double cy, double radius, img.Color color) {
+  img.Image image,
+  double cx,
+  double cy,
+  double radius,
+  img.Color color,
+) {
   final r2 = radius * radius;
   final minX = max(0, (cx - radius - 1).floor());
   final maxX = min(image.width - 1, (cx + radius + 1).ceil());
@@ -97,9 +104,21 @@ void _drawFilledCircle(
           final alpha = (radius - dist).clamp(0.0, 1.0);
           final existing = image.getPixel(x, y);
           final blended = img.ColorRgba8(
-            _blend(existing.r.toInt(), (color as img.ColorRgba8).r.toInt(), alpha),
-            _blend(existing.g.toInt(), (color as img.ColorRgba8).g.toInt(), alpha),
-            _blend(existing.b.toInt(), (color as img.ColorRgba8).b.toInt(), alpha),
+            _blend(
+              existing.r.toInt(),
+              (color as img.ColorRgba8).r.toInt(),
+              alpha,
+            ),
+            _blend(
+              existing.g.toInt(),
+              (color as img.ColorRgba8).g.toInt(),
+              alpha,
+            ),
+            _blend(
+              existing.b.toInt(),
+              (color as img.ColorRgba8).b.toInt(),
+              alpha,
+            ),
             255,
           );
           image.setPixel(x, y, blended);

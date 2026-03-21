@@ -24,8 +24,9 @@ final rideCountProvider = FutureProvider<int>((ref) async {
 });
 
 /// Paginated rides list notifier for infinite scroll.
-final ridesListProvider =
-    NotifierProvider<RidesListNotifier, RidesListState>(RidesListNotifier.new);
+final ridesListProvider = NotifierProvider<RidesListNotifier, RidesListState>(
+  RidesListNotifier.new,
+);
 
 class RidesListState {
   const RidesListState({
@@ -56,9 +57,7 @@ class RidesListNotifier extends Notifier<RidesListState> {
       return;
     }
 
-    db.ridesDao
-        .watchForUserPaginated(uid, limit: limit)
-        .listen((rides) {
+    db.ridesDao.watchForUserPaginated(uid, limit: limit).listen((rides) {
       state = RidesListState(
         rides: rides,
         isLoading: false,
@@ -104,23 +103,25 @@ class RideActions {
     final existing = await _db.ridesDao.getById(rideId);
     if (existing == null) return;
 
-    await _db.ridesDao.upsert(RidesCompanion(
-      id: Value(rideId),
-      bikeId: Value(existing.bikeId),
-      userId: Value(existing.userId),
-      startTime: Value(existing.startTime),
-      endTime: Value(existing.endTime),
-      distanceKm: Value(existing.distanceKm),
-      maxLeanLeft: Value(existing.maxLeanLeft),
-      maxLeanRight: Value(existing.maxLeanRight),
-      routePath: Value(existing.routePath),
-      rideName: Value(rideName),
-      notes: Value(notes),
-      imageUrl: Value(imageUrl),
-      createdAt: Value(existing.createdAt),
-      isSynced: const Value(false),
-      lastModified: Value(now),
-    ));
+    await _db.ridesDao.upsert(
+      RidesCompanion(
+        id: Value(rideId),
+        bikeId: Value(existing.bikeId),
+        userId: Value(existing.userId),
+        startTime: Value(existing.startTime),
+        endTime: Value(existing.endTime),
+        distanceKm: Value(existing.distanceKm),
+        maxLeanLeft: Value(existing.maxLeanLeft),
+        maxLeanRight: Value(existing.maxLeanRight),
+        routePath: Value(existing.routePath),
+        rideName: Value(rideName),
+        notes: Value(notes),
+        imageUrl: Value(imageUrl),
+        createdAt: Value(existing.createdAt),
+        isSynced: const Value(false),
+        lastModified: Value(now),
+      ),
+    );
 
     AppLogger.i('Ride updated: $rideId');
   }

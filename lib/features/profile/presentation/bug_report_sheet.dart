@@ -66,7 +66,10 @@ class _BugReportSheetState extends State<BugReportSheet> {
       AppLogger.i('Bug report created: ${result.issueUrl}');
 
       if (mounted) {
-        ApexToast.success(context, 'Bug report submitted (#${result.issueNumber})');
+        ApexToast.success(
+          context,
+          'Bug report submitted (#${result.issueNumber})',
+        );
         Navigator.of(context).pop();
       }
     } catch (e) {
@@ -120,13 +123,17 @@ class _BugReportSheetState extends State<BugReportSheet> {
                 // Header
                 Row(
                   children: [
-                    Icon(Icons.bug_report_outlined,
-                        color: context.accent, size: 22),
+                    Icon(
+                      Icons.bug_report_outlined,
+                      color: context.accent,
+                      size: 22,
+                    ),
                     const SizedBox(width: 10),
                     Text(
                       'Bug Report',
-                      style:
-                          AppTypography.playfairDisplay.copyWith(fontSize: 24),
+                      style: AppTypography.playfairDisplay.copyWith(
+                        fontSize: 24,
+                      ),
                     ),
                   ],
                 ),

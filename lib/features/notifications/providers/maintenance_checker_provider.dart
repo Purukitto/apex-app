@@ -29,8 +29,7 @@ final maintenanceCheckerProvider = Provider<void>((ref) {
     final schedules = schedulesAsync.value;
     if (schedules == null) continue;
 
-    final bikeName =
-        bike.nickName ?? '${bike.make} ${bike.model}';
+    final bikeName = bike.nickName ?? '${bike.make} ${bike.model}';
 
     for (final schedule in schedules) {
       if (!schedule.isActive) continue;
@@ -70,10 +69,11 @@ Future<void> _maybeCreateNotification({
   final dedupeKey = '${bikeId}_${scheduleId}_maintenance';
 
   // Check for existing non-dismissed notification with this dedupe key
-  final existing = await (db.select(db.notifications)
-        ..where((n) =>
-            n.dedupeKey.equals(dedupeKey) & n.dismissedAt.isNull()))
-      .get();
+  final existing =
+      await (db.select(db.notifications)..where(
+            (n) => n.dedupeKey.equals(dedupeKey) & n.dismissedAt.isNull(),
+          ))
+          .get();
 
   if (existing.isNotEmpty) return;
 
@@ -85,20 +85,22 @@ Future<void> _maybeCreateNotification({
   final message =
       '$bikeName — ${partName.toLowerCase()} maintenance is ${health <= 0 ? "overdue" : "due soon"}.';
 
-  await db.notificationsDao.upsert(NotificationsCompanion(
-    id: Value(_uuid.v4()),
-    userId: Value(userId),
-    type: Value(type),
-    title: Value(title),
-    message: Value(message),
-    bikeId: Value(bikeId),
-    scheduleId: Value(scheduleId),
-    source: const Value('maintenance_checker'),
-    dedupeKey: Value(dedupeKey),
-    createdAt: Value(now),
-    isSynced: const Value(false),
-    lastModified: Value(now),
-  ));
+  await db.notificationsDao.upsert(
+    NotificationsCompanion(
+      id: Value(_uuid.v4()),
+      userId: Value(userId),
+      type: Value(type),
+      title: Value(title),
+      message: Value(message),
+      bikeId: Value(bikeId),
+      scheduleId: Value(scheduleId),
+      source: const Value('maintenance_checker'),
+      dedupeKey: Value(dedupeKey),
+      createdAt: Value(now),
+      isSynced: const Value(false),
+      lastModified: Value(now),
+    ),
+  );
 
   AppLogger.i('Maintenance notification created: $title');
 

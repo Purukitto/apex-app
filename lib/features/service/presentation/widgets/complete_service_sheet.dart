@@ -72,7 +72,9 @@ class _CompleteServiceSheetState extends ConsumerState<CompleteServiceSheet> {
 
     final odo = double.tryParse(_odoCtrl.text.trim()) ?? 0;
     final cost = double.tryParse(_costCtrl.text.trim());
-    final notes = _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim();
+    final notes = _notesCtrl.text.trim().isEmpty
+        ? null
+        : _notesCtrl.text.trim();
 
     final actions = ref.read(serviceActionsProvider);
 
@@ -172,12 +174,14 @@ class _CompleteServiceSheetState extends ConsumerState<CompleteServiceSheet> {
                     ApexTextField(
                       controller: _costCtrl,
                       label: 'Cost (optional)',
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return null;
                         final val = double.tryParse(v.trim());
-                        if (val != null && val < 0) return 'Must be 0 or greater';
+                        if (val != null && val < 0)
+                          return 'Must be 0 or greater';
                         return null;
                       },
                     ),

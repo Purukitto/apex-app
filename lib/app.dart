@@ -74,8 +74,7 @@ class _ApexAppState extends ConsumerState<ApexApp> {
   Future<void> _registerFcmToken() async {
     final granted = await FirebaseService.requestPermission();
     if (!granted) return;
-    final uid =
-        ref.read(supabaseClientProvider).auth.currentUser?.id;
+    final uid = ref.read(supabaseClientProvider).auth.currentUser?.id;
     if (uid != null) {
       await FirebaseService.registerToken(uid);
     }
@@ -117,10 +116,7 @@ class _ApexAppState extends ConsumerState<ApexApp> {
         // Shell routes — tabbed navigation
         ShellRoute(
           builder: (context, state, child) {
-            return _AppShell(
-              currentLocation: state.uri.path,
-              child: child,
-            );
+            return _AppShell(currentLocation: state.uri.path, child: child);
           },
           routes: [
             GoRoute(
@@ -179,10 +175,7 @@ class _ApexAppState extends ConsumerState<ApexApp> {
 }
 
 class _AppShell extends ConsumerStatefulWidget {
-  const _AppShell({
-    required this.currentLocation,
-    required this.child,
-  });
+  const _AppShell({required this.currentLocation, required this.child});
 
   final String currentLocation;
   final Widget child;
@@ -198,10 +191,9 @@ class _AppShellState extends ConsumerState<_AppShell> {
   Widget build(BuildContext context) {
     final themeState = ref.watch(themeProvider);
     final bgColor = ThemeNotifier.backgroundColorFor(themeState.background);
-    final rideStatus = ref.watch(
-      rideSessionProvider.select((s) => s.status),
-    );
-    final hideNav = rideStatus == RideStatus.countdown ||
+    final rideStatus = ref.watch(rideSessionProvider.select((s) => s.status));
+    final hideNav =
+        rideStatus == RideStatus.countdown ||
         rideStatus == RideStatus.recording ||
         rideStatus == RideStatus.paused ||
         rideStatus == RideStatus.saving;
@@ -230,15 +222,10 @@ class _AppShellState extends ConsumerState<_AppShell> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         extendBody: true,
-        body: MeshBackground(
-          backgroundColor: bgColor,
-          child: widget.child,
-        ),
+        body: MeshBackground(backgroundColor: bgColor, child: widget.child),
         bottomNavigationBar: hideNav
             ? null
-            : ApexBottomNavBar(
-                currentLocation: widget.currentLocation,
-              ),
+            : ApexBottomNavBar(currentLocation: widget.currentLocation),
       ),
     );
   }

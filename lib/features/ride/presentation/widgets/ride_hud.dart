@@ -12,10 +12,7 @@ import 'live_ride_map.dart';
 
 /// The telemetry HUD overlay shown during ride recording.
 class RideHud extends StatefulWidget {
-  const RideHud({
-    super.key,
-    required this.state,
-  });
+  const RideHud({super.key, required this.state});
 
   final RideSessionState state;
 
@@ -78,7 +75,8 @@ class _RideHudState extends State<RideHud> {
 
             // Title row: "ACTIVE RIDE" + paused badge
             _Header(
-              bikeName: s.selectedBike?.nickName ??
+              bikeName:
+                  s.selectedBike?.nickName ??
                   '${s.selectedBike?.make ?? ''} ${s.selectedBike?.model ?? ''}'
                       .trim(),
               isPaused: s.status == RideStatus.paused,
@@ -165,13 +163,16 @@ class _Header extends StatelessWidget {
             if (isPaused) ...[
               const SizedBox(width: 12),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.warning.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                      color: AppColors.warning.withValues(alpha: 0.4)),
+                    color: AppColors.warning.withValues(alpha: 0.4),
+                  ),
                 ),
                 child: Text(
                   'PAUSED',

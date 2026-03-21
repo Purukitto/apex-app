@@ -40,8 +40,7 @@ class RideTrackingNotifier extends Notifier<void> {
 
   @override
   void build() {
-    ref.listen(rideSessionProvider.select((s) => s.status),
-        (previous, next) {
+    ref.listen(rideSessionProvider.select((s) => s.status), (previous, next) {
       _onStatusChanged(previous, next);
     });
 
@@ -62,8 +61,7 @@ class RideTrackingNotifier extends Notifier<void> {
         _pauseStreams();
       case RideStatus.idle:
       case RideStatus.saving:
-        if (previous == RideStatus.recording ||
-            previous == RideStatus.paused) {
+        if (previous == RideStatus.recording || previous == RideStatus.paused) {
           _stopAll();
         }
       case RideStatus.countdown:
@@ -81,16 +79,13 @@ class RideTrackingNotifier extends Notifier<void> {
     await _foregroundService.startService();
 
     // GPS
-    _gpsSub = _locationService.startTracking().listen(
-      (position) {
-        final session = ref.read(rideSessionProvider);
-        if (session.status == RideStatus.recording) {
-          ref.read(rideSessionProvider.notifier).addCoordinate(position);
-          _handleAutoPause(position.speed);
-        }
-      },
-      onError: (e) => AppLogger.e('GPS error', e),
-    );
+    _gpsSub = _locationService.startTracking().listen((position) {
+      final session = ref.read(rideSessionProvider);
+      if (session.status == RideStatus.recording) {
+        ref.read(rideSessionProvider.notifier).addCoordinate(position);
+        _handleAutoPause(position.speed);
+      }
+    }, onError: (e) => AppLogger.e('GPS error', e));
 
     // Accelerometer
     final prefs = ref.read(sharedPrefsProvider);
@@ -98,32 +93,26 @@ class RideTrackingNotifier extends Notifier<void> {
         .read(rideSessionProvider.notifier)
         .getCalibrationOffset(prefs);
 
-    _motionSub = _motionService.startListening().listen(
-      (event) {
-        _lastAccelX = event.x;
-        _lastAccelY = event.y;
-        _lastAccelZ = event.z;
+    _motionSub = _motionService.startListening().listen((event) {
+      _lastAccelX = event.x;
+      _lastAccelY = event.y;
+      _lastAccelZ = event.z;
 
-        final session = ref.read(rideSessionProvider);
-        if (session.status == RideStatus.recording) {
-          ref
-              .read(rideSessionProvider.notifier)
-              .updateLean(event.x, event.y, event.z, offset);
-        }
-      },
-      onError: (e) => AppLogger.e('Accelerometer error', e),
-    );
+      final session = ref.read(rideSessionProvider);
+      if (session.status == RideStatus.recording) {
+        ref
+            .read(rideSessionProvider.notifier)
+            .updateLean(event.x, event.y, event.z, offset);
+      }
+    }, onError: (e) => AppLogger.e('Accelerometer error', e));
 
     // Pocket mode
-    _pocketSub = _pocketDetector.startListening().listen(
-      (isNear) {
-        final session = ref.read(rideSessionProvider);
-        if (session.isRecordingOrPaused) {
-          ref.read(rideSessionProvider.notifier).setPocketMode(isNear);
-        }
-      },
-      onError: (e) => AppLogger.e('Proximity error', e),
-    );
+    _pocketSub = _pocketDetector.startListening().listen((isNear) {
+      final session = ref.read(rideSessionProvider);
+      if (session.isRecordingOrPaused) {
+        ref.read(rideSessionProvider.notifier).setPocketMode(isNear);
+      }
+    }, onError: (e) => AppLogger.e('Proximity error', e));
   }
 
   void _pauseStreams() {
@@ -184,7 +173,6 @@ class RideTrackingNotifier extends Notifier<void> {
   }
 }
 
-final rideTrackingProvider =
-    NotifierProvider<RideTrackingNotifier, void>(
+final rideTrackingProvider = NotifierProvider<RideTrackingNotifier, void>(
   RideTrackingNotifier.new,
 );

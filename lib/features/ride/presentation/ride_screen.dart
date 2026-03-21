@@ -52,8 +52,10 @@ class _RideScreenState extends ConsumerState<RideScreen> {
     if (bikes.length == 1) {
       ref.read(rideSessionProvider.notifier).selectBike(bikes.first);
       if (mounted) {
-        ApexToast.success(context,
-            'Auto-selected ${bikes.first.nickName ?? bikes.first.make}');
+        ApexToast.success(
+          context,
+          'Auto-selected ${bikes.first.nickName ?? bikes.first.make}',
+        );
       }
     }
   }
@@ -68,8 +70,10 @@ class _RideScreenState extends ConsumerState<RideScreen> {
     if (session.selectedBike == null && bikes.length == 1) {
       ref.read(rideSessionProvider.notifier).selectBike(bikes.first);
       if (mounted) {
-        ApexToast.success(context,
-            'Auto-selected ${bikes.first.nickName ?? bikes.first.make}');
+        ApexToast.success(
+          context,
+          'Auto-selected ${bikes.first.nickName ?? bikes.first.make}',
+        );
       }
     }
 
@@ -86,7 +90,10 @@ class _RideScreenState extends ConsumerState<RideScreen> {
     final hasPermission = await locationService.checkAndRequestPermission();
     if (!hasPermission) {
       if (mounted) {
-        ApexToast.error(context, 'Location permission required to record rides');
+        ApexToast.error(
+          context,
+          'Location permission required to record rides',
+        );
       }
       return;
     }
@@ -134,12 +141,14 @@ class _RideScreenState extends ConsumerState<RideScreen> {
   Future<void> _onCalibrate() async {
     final tracking = ref.read(rideTrackingProvider.notifier);
     final prefs = ref.read(sharedPrefsProvider);
-    await ref.read(rideSessionProvider.notifier).calibrate(
-      tracking.lastAccelX,
-      tracking.lastAccelY,
-      tracking.lastAccelZ,
-      prefs,
-    );
+    await ref
+        .read(rideSessionProvider.notifier)
+        .calibrate(
+          tracking.lastAccelX,
+          tracking.lastAccelY,
+          tracking.lastAccelZ,
+          prefs,
+        );
 
     // Haptic feedback
     if ((await Vibration.hasVibrator()) == true) {
@@ -158,36 +167,34 @@ class _RideScreenState extends ConsumerState<RideScreen> {
 
     return switch (session.status) {
       RideStatus.idle => _IdleView(
-          bikesAsync: bikesAsync,
-          session: session,
-          onSelectBike: () async {
-            final bikes = bikesAsync.value ?? [];
-            if (bikes.isEmpty) return;
-            final bike = await BikeSelectionModal.show(context, bikes);
-            if (bike != null) {
-              ref.read(rideSessionProvider.notifier).selectBike(bike);
-            }
-          },
-          onStart: _startRide,
-        ),
+        bikesAsync: bikesAsync,
+        session: session,
+        onSelectBike: () async {
+          final bikes = bikesAsync.value ?? [];
+          if (bikes.isEmpty) return;
+          final bike = await BikeSelectionModal.show(context, bikes);
+          if (bike != null) {
+            ref.read(rideSessionProvider.notifier).selectBike(bike);
+          }
+        },
+        onStart: _startRide,
+      ),
       RideStatus.countdown => RideStartupAnimation(
-          onComplete: _onStartupComplete,
-        ),
-      RideStatus.recording ||
-      RideStatus.paused =>
-        _RecordingView(
-          session: session,
-          showSafetyWarning: _showSafetyWarning,
-          onStop: _onStop,
-          onDiscard: _onDiscard,
-          onCalibrate: _onCalibrate,
-          onDismissPocket: () {
-            ref.read(rideSessionProvider.notifier).setPocketMode(false);
-          },
-        ),
+        onComplete: _onStartupComplete,
+      ),
+      RideStatus.recording || RideStatus.paused => _RecordingView(
+        session: session,
+        showSafetyWarning: _showSafetyWarning,
+        onStop: _onStop,
+        onDiscard: _onDiscard,
+        onCalibrate: _onCalibrate,
+        onDismissPocket: () {
+          ref.read(rideSessionProvider.notifier).setPocketMode(false);
+        },
+      ),
       RideStatus.saving => Center(
-          child: CircularProgressIndicator(color: context.accent),
-        ),
+        child: CircularProgressIndicator(color: context.accent),
+      ),
     };
   }
 }
@@ -256,7 +263,7 @@ class _IdleView extends StatelessWidget {
                               Text(
                                 selected != null
                                     ? (selected.nickName ??
-                                        '${selected.make} ${selected.model}')
+                                          '${selected.make} ${selected.model}')
                                     : 'Select Bike',
                                 style: AppTypography.inter,
                               ),
@@ -268,8 +275,11 @@ class _IdleView extends StatelessWidget {
                             ],
                           ),
                         ),
-                        Icon(Icons.chevron_right,
-                            color: AppColors.textMuted, size: 20),
+                        Icon(
+                          Icons.chevron_right,
+                          color: AppColors.textMuted,
+                          size: 20,
+                        ),
                       ],
                     ),
                   ),
@@ -282,7 +292,8 @@ class _IdleView extends StatelessWidget {
             // Start button
             ApexButton(
               label: 'Start Ride',
-              onPressed: (session.selectedBike != null ||
+              onPressed:
+                  (session.selectedBike != null ||
                       (bikesAsync.value ?? []).isNotEmpty)
                   ? onStart
                   : null,
@@ -347,16 +358,13 @@ class _RecordingView extends StatelessWidget {
         // Main HUD + Controls
         Column(
           children: [
-            Expanded(
-              child: RideHud(state: session),
-            ),
+            Expanded(child: RideHud(state: session)),
 
             // Bottom controls
             SafeArea(
               top: false,
               child: Padding(
-                padding:
-                    const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
                 child: Column(
                   children: [
                     // Calibrate + Discard row
@@ -389,9 +397,7 @@ class _RecordingView extends StatelessWidget {
 
         // Pocket mode curtain
         if (session.isPocketMode)
-          Positioned.fill(
-            child: PocketCurtain(onDismiss: onDismissPocket),
-          ),
+          Positioned.fill(child: PocketCurtain(onDismiss: onDismissPocket)),
       ],
     );
   }
@@ -409,8 +415,7 @@ class _SafetyWarning extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.warning_amber_rounded,
-              color: AppColors.warning, size: 20),
+          Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

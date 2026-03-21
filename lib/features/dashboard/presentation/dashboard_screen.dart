@@ -52,9 +52,7 @@ class DashboardScreen extends ConsumerWidget {
                     child: _buildContent(context, ref, statsAsync, recentAsync),
                   ),
                 ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 120),
-                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 120)),
               ],
             ),
           ),
@@ -72,7 +70,10 @@ class DashboardScreen extends ConsumerWidget {
     return statsAsync.when(
       loading: () => const DashboardShimmer(),
       error: (e, _) => Center(
-        child: Text('Error loading dashboard', style: AppTypography.interSecondary),
+        child: Text(
+          'Error loading dashboard',
+          style: AppTypography.interSecondary,
+        ),
       ),
       data: (stats) {
         final recentRides = recentAsync.value ?? [];
@@ -102,24 +103,24 @@ class DashboardScreen extends ConsumerWidget {
 
             // Stats row
             Row(
-              children: [
-                Expanded(
-                  child: _TappableStatCard(
-                    label: 'Bikes',
-                    value: '${stats.bikeCount}',
-                    onTap: () => context.go('/garage'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _TappableStatCard(
-                    label: 'Rides',
-                    value: '${stats.rideCount}',
-                    onTap: () => context.go('/rides'),
-                  ),
-                ),
-              ],
-            )
+                  children: [
+                    Expanded(
+                      child: _TappableStatCard(
+                        label: 'Bikes',
+                        value: '${stats.bikeCount}',
+                        onTap: () => context.go('/garage'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _TappableStatCard(
+                        label: 'Rides',
+                        value: '${stats.rideCount}',
+                        onTap: () => context.go('/rides'),
+                      ),
+                    ),
+                  ],
+                )
                 .animate()
                 .fadeIn(duration: 500.ms, delay: 100.ms)
                 .slideY(begin: 0.1, end: 0, duration: 500.ms, delay: 100.ms),
@@ -136,10 +137,7 @@ class DashboardScreen extends ConsumerWidget {
 
             // Last ride card
             if (recentRides.isNotEmpty)
-              _LastRideCard(
-                ride: recentRides.first,
-                bikes: bikes,
-              )
+              _LastRideCard(ride: recentRides.first, bikes: bikes)
                   .animate()
                   .fadeIn(duration: 500.ms, delay: 200.ms)
                   .slideY(begin: 0.1, end: 0, duration: 500.ms, delay: 200.ms),
@@ -272,22 +270,31 @@ class _LastRideCard extends StatelessWidget {
           ),
           if (_bikeName != null && ride.rideName != null) ...[
             const SizedBox(height: 2),
-            Text(_bikeName!, style: AppTypography.interMuted.copyWith(fontSize: 12)),
+            Text(
+              _bikeName!,
+              style: AppTypography.interMuted.copyWith(fontSize: 12),
+            ),
           ],
           const SizedBox(height: 12),
 
           // Stats
           Row(
             children: [
-              _MiniStat(Icons.straighten,
-                  '${ride.distanceKm.toStringAsFixed(1)} km'),
+              _MiniStat(
+                Icons.straighten,
+                '${ride.distanceKm.toStringAsFixed(1)} km',
+              ),
               const SizedBox(width: 16),
-              _MiniStat(Icons.timer_outlined,
-                  formatDuration(ride.startTime, ride.endTime)),
+              _MiniStat(
+                Icons.timer_outlined,
+                formatDuration(ride.startTime, ride.endTime),
+              ),
               if (ride.maxLeanLeft != null) ...[
                 const SizedBox(width: 16),
-                _MiniStat(Icons.rotate_left,
-                    '${ride.maxLeanLeft!.toStringAsFixed(0)}°'),
+                _MiniStat(
+                  Icons.rotate_left,
+                  '${ride.maxLeanLeft!.toStringAsFixed(0)}°',
+                ),
               ],
             ],
           ),

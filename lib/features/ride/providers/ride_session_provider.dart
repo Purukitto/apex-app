@@ -193,8 +193,8 @@ class RideSessionNotifier extends Notifier<RideSessionState> {
         coord.lon,
       );
       // Round to 2 decimal places
-      newDistance =
-          (((newDistance + segmentKm) * 100).round() / 100).toDouble();
+      newDistance = (((newDistance + segmentKm) * 100).round() / 100)
+          .toDouble();
     }
 
     // Speed: m/s → km/h
@@ -210,8 +210,12 @@ class RideSessionNotifier extends Notifier<RideSessionState> {
 
   // ── Lean angle ──
 
-  void updateLean(double accelX, double accelY, double accelZ,
-      double calibrationOffset) {
+  void updateLean(
+    double accelX,
+    double accelY,
+    double accelZ,
+    double calibrationOffset,
+  ) {
     // Don't process lean if paused
     if (state.status != RideStatus.recording) return;
 
@@ -226,8 +230,9 @@ class RideSessionNotifier extends Notifier<RideSessionState> {
 
     // Motion lock: force lean to 0 below speed threshold
     final motionLocked = state.currentSpeedKmh < _motionLockSpeedKmh;
-    final processedAngle =
-        motionLocked ? 0.0 : min(smoothed.abs(), _maxLeanAngle);
+    final processedAngle = motionLocked
+        ? 0.0
+        : min(smoothed.abs(), _maxLeanAngle);
 
     // Round to 1 decimal place
     final rounded = (processedAngle * 10).round() / 10;
@@ -260,10 +265,15 @@ class RideSessionNotifier extends Notifier<RideSessionState> {
   // ── Calibration ──
 
   Future<void> calibrate(
-      double currentX, double currentY, double currentZ,
-      SharedPreferences prefs) async {
-    final rollRad =
-        atan2(currentX, sqrt(currentY * currentY + currentZ * currentZ));
+    double currentX,
+    double currentY,
+    double currentZ,
+    SharedPreferences prefs,
+  ) async {
+    final rollRad = atan2(
+      currentX,
+      sqrt(currentY * currentY + currentZ * currentZ),
+    );
     final rollDeg = rollRad * (180 / pi);
     await prefs.setDouble(calibrationKey, rollDeg);
     AppLogger.i('Calibration offset set: $rollDeg');
@@ -286,5 +296,5 @@ class RideSessionNotifier extends Notifier<RideSessionState> {
 
 final rideSessionProvider =
     NotifierProvider<RideSessionNotifier, RideSessionState>(
-  RideSessionNotifier.new,
-);
+      RideSessionNotifier.new,
+    );

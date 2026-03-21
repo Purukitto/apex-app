@@ -16,10 +16,7 @@ class ThemeState {
     this.background = BackgroundVariant.apexBlack,
   });
 
-  ThemeState copyWith({
-    AccentColor? accent,
-    BackgroundVariant? background,
-  }) {
+  ThemeState copyWith({AccentColor? accent, BackgroundVariant? background}) {
     return ThemeState(
       accent: accent ?? this.accent,
       background: background ?? this.background,
@@ -38,8 +35,13 @@ class ThemeNotifier extends Notifier<ThemeState> {
     final backgroundIndex = prefs.getInt(_keyBackground) ?? 0;
 
     return ThemeState(
-      accent: AccentColor.values[accentIndex.clamp(0, AccentColor.values.length - 1)],
-      background: BackgroundVariant.values[backgroundIndex.clamp(0, BackgroundVariant.values.length - 1)],
+      accent: AccentColor
+          .values[accentIndex.clamp(0, AccentColor.values.length - 1)],
+      background:
+          BackgroundVariant.values[backgroundIndex.clamp(
+            0,
+            BackgroundVariant.values.length - 1,
+          )],
     );
   }
 
@@ -84,5 +86,6 @@ class ThemeNotifier extends Notifier<ThemeState> {
   }
 }
 
-final themeProvider =
-    NotifierProvider<ThemeNotifier, ThemeState>(ThemeNotifier.new);
+final themeProvider = NotifierProvider<ThemeNotifier, ThemeState>(
+  ThemeNotifier.new,
+);

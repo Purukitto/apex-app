@@ -16,8 +16,9 @@ String generateGpx({
   final buffer = StringBuffer();
   buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
   buffer.writeln(
-      '<gpx version="1.1" creator="Apex Motorcycle App" '
-      'xmlns="http://www.topografix.com/GPX/1/1">');
+    '<gpx version="1.1" creator="Apex Motorcycle App" '
+    'xmlns="http://www.topografix.com/GPX/1/1">',
+  );
   buffer.writeln('  <metadata>');
   buffer.writeln('    <name>${_escapeXml(rideName)}</name>');
   buffer.writeln('    <time>${dateFormat.format(startTime.toUtc())}</time>');
@@ -35,9 +36,10 @@ String generateGpx({
     );
 
     buffer.writeln(
-        '      <trkpt lat="${coord.lat}" lon="${coord.lng}">'
-        '<time>${dateFormat.format(timestamp.toUtc())}</time>'
-        '</trkpt>');
+      '      <trkpt lat="${coord.lat}" lon="${coord.lng}">'
+      '<time>${dateFormat.format(timestamp.toUtc())}</time>'
+      '</trkpt>',
+    );
   }
 
   buffer.writeln('    </trkseg>');

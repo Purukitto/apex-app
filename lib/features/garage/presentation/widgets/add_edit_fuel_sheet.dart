@@ -12,11 +12,7 @@ import '../../providers/fuel_logs_provider.dart';
 
 /// Bottom sheet for adding or editing a fuel log.
 class AddEditFuelSheet extends ConsumerStatefulWidget {
-  const AddEditFuelSheet({
-    super.key,
-    required this.bike,
-    this.fuelLog,
-  });
+  const AddEditFuelSheet({super.key, required this.bike, this.fuelLog});
 
   final Bike bike;
   final FuelLog? fuelLog;
@@ -74,8 +70,8 @@ class _AddEditFuelSheetState extends ConsumerState<AddEditFuelSheet> {
       text: log != null
           ? log.pricePerLitre.toStringAsFixed(2)
           : (widget.bike.lastFuelPrice != null
-              ? widget.bike.lastFuelPrice!.toStringAsFixed(2)
-              : ''),
+                ? widget.bike.lastFuelPrice!.toStringAsFixed(2)
+                : ''),
     );
     _totalCtrl = TextEditingController(
       text: log != null ? log.totalCost.toStringAsFixed(2) : '',
@@ -198,8 +194,7 @@ class _AddEditFuelSheetState extends ConsumerState<AddEditFuelSheet> {
       finalTotal = _round2(total!);
     }
 
-    final odo =
-        double.tryParse(_odoCtrl.text.trim())?.roundToDouble() ?? 0;
+    final odo = double.tryParse(_odoCtrl.text.trim())?.roundToDouble() ?? 0;
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
     final actions = ref.read(fuelActionsProvider);
@@ -330,8 +325,9 @@ class _AddEditFuelSheetState extends ConsumerState<AddEditFuelSheet> {
                     ApexTextField(
                       controller: _litresCtrl,
                       label: 'Litres',
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return null;
                         final val = double.tryParse(v.trim());
@@ -343,8 +339,9 @@ class _AddEditFuelSheetState extends ConsumerState<AddEditFuelSheet> {
                     ApexTextField(
                       controller: _priceCtrl,
                       label: 'Price per Litre',
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return null;
                         final val = double.tryParse(v.trim());
@@ -356,8 +353,9 @@ class _AddEditFuelSheetState extends ConsumerState<AddEditFuelSheet> {
                     ApexTextField(
                       controller: _totalCtrl,
                       label: 'Total Cost',
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return null;
                         final val = double.tryParse(v.trim());
@@ -432,8 +430,9 @@ class _AddEditFuelSheetState extends ConsumerState<AddEditFuelSheet> {
                         Switch.adaptive(
                           value: _isFullTank,
                           onChanged: (v) => setState(() => _isFullTank = v),
-                          activeTrackColor:
-                              context.accent.withValues(alpha: 0.5),
+                          activeTrackColor: context.accent.withValues(
+                            alpha: 0.5,
+                          ),
                           activeThumbColor: context.accent,
                         ),
                       ],

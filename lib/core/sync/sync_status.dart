@@ -1,9 +1,4 @@
-enum SyncStatus {
-  idle,
-  syncing,
-  error,
-  offline,
-}
+enum SyncStatus { idle, syncing, error, offline }
 
 class SyncState {
   const SyncState({

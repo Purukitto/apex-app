@@ -23,11 +23,7 @@ class ShimmerEffect extends StatelessWidget {
 
 /// A GlassCard-shaped shimmer placeholder.
 class ShimmerCard extends StatelessWidget {
-  const ShimmerCard({
-    super.key,
-    this.height = 100,
-    this.borderRadius = 24.0,
-  });
+  const ShimmerCard({super.key, this.height = 100, this.borderRadius = 24.0});
 
   final double height;
   final double borderRadius;
@@ -72,11 +68,7 @@ class ShimmerCard extends StatelessWidget {
 
 /// A text-line shaped shimmer placeholder.
 class ShimmerLine extends StatelessWidget {
-  const ShimmerLine({
-    super.key,
-    this.width = 100,
-    this.height = 14,
-  });
+  const ShimmerLine({super.key, this.width = 100, this.height = 14});
 
   final double width;
   final double height;

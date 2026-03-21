@@ -12,24 +12,23 @@ const _uuid = Uuid();
 /// Watches all maintenance schedules for a specific bike.
 final schedulesStreamProvider =
     StreamProvider.family<List<MaintenanceSchedule>, String>((ref, bikeId) {
-  final db = ref.watch(databaseProvider);
-  return db.maintenanceDao.watchSchedulesForBike(bikeId);
-});
+      final db = ref.watch(databaseProvider);
+      return db.maintenanceDao.watchSchedulesForBike(bikeId);
+    });
 
 /// Watches all service history for a specific bike.
 final serviceHistoryStreamProvider =
     StreamProvider.family<List<ServiceHistoryData>, String>((ref, bikeId) {
-  final db = ref.watch(databaseProvider);
-  return db.maintenanceDao.watchHistoryForBike(bikeId);
-});
+      final db = ref.watch(databaseProvider);
+      return db.maintenanceDao.watchHistoryForBike(bikeId);
+    });
 
 /// Watches service history for a specific schedule.
 final scheduleHistoryStreamProvider =
-    StreamProvider.family<List<ServiceHistoryData>, String>(
-        (ref, scheduleId) {
-  final db = ref.watch(databaseProvider);
-  return db.maintenanceDao.watchHistoryForSchedule(scheduleId);
-});
+    StreamProvider.family<List<ServiceHistoryData>, String>((ref, scheduleId) {
+      final db = ref.watch(databaseProvider);
+      return db.maintenanceDao.watchHistoryForSchedule(scheduleId);
+    });
 
 /// Service mutation actions.
 final serviceActionsProvider = Provider<ServiceActions>((ref) {
@@ -55,27 +54,31 @@ class ServiceActions {
     final today = DateFormat('yyyy-MM-dd').format(now);
 
     // Insert service history entry
-    await _db.maintenanceDao.upsertHistory(ServiceHistoryCompanion(
-      id: Value(id),
-      bikeId: Value(bikeId),
-      scheduleId: Value(scheduleId),
-      serviceDate: Value(today),
-      serviceOdo: Value(serviceOdo),
-      cost: Value(cost),
-      notes: Value(notes),
-      createdAt: Value(now),
-      isSynced: const Value(false),
-      lastModified: Value(now),
-    ));
+    await _db.maintenanceDao.upsertHistory(
+      ServiceHistoryCompanion(
+        id: Value(id),
+        bikeId: Value(bikeId),
+        scheduleId: Value(scheduleId),
+        serviceDate: Value(today),
+        serviceOdo: Value(serviceOdo),
+        cost: Value(cost),
+        notes: Value(notes),
+        createdAt: Value(now),
+        isSynced: const Value(false),
+        lastModified: Value(now),
+      ),
+    );
 
     // Update schedule's last service info
-    await _db.maintenanceDao.upsertSchedule(MaintenanceSchedulesCompanion(
-      id: Value(scheduleId),
-      lastServiceDate: Value(today),
-      lastServiceOdo: Value(serviceOdo),
-      isSynced: const Value(false),
-      lastModified: Value(now),
-    ));
+    await _db.maintenanceDao.upsertSchedule(
+      MaintenanceSchedulesCompanion(
+        id: Value(scheduleId),
+        lastServiceDate: Value(today),
+        lastServiceOdo: Value(serviceOdo),
+        isSynced: const Value(false),
+        lastModified: Value(now),
+      ),
+    );
 
     AppLogger.i('Service completed for schedule $scheduleId at $serviceOdo km');
   }

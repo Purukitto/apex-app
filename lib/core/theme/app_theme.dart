@@ -30,16 +30,11 @@ class AppTheme {
       canvasColor: AppColors.backgroundDark,
       cardColor: AppColors.cardBg,
       dividerColor: AppColors.cardBorder,
-      textTheme: GoogleFonts.interTextTheme(
-        ThemeData.dark().textTheme,
-      ).apply(
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).apply(
         bodyColor: AppColors.textPrimary,
         displayColor: AppColors.textPrimary,
       ),
-      iconTheme: const IconThemeData(
-        color: AppColors.textSecondary,
-        size: 20,
-      ),
+      iconTheme: const IconThemeData(color: AppColors.textSecondary, size: 20),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -89,8 +84,10 @@ class AppTheme {
           fontSize: 12,
           color: AppColors.error,
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -137,15 +134,11 @@ class AppTheme {
           color: AppColors.textPrimary,
         ),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.backgroundMid,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.backgroundMid,

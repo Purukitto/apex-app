@@ -46,9 +46,9 @@ class ChangelogService {
 
     for (final line in lines) {
       // Release header: ## [1.0.0](link) (2026-03-20) or ## 1.0.0 (2026-03-20)
-      final releaseMatch =
-          RegExp(r'^## \[?(\d+\.\d+\.\d+)\]?.*?\((\d{4}-\d{2}-\d{2})\)')
-              .firstMatch(line);
+      final releaseMatch = RegExp(
+        r'^## \[?(\d+\.\d+\.\d+)\]?.*?\((\d{4}-\d{2}-\d{2})\)',
+      ).firstMatch(line);
       if (releaseMatch != null) {
         // Save previous release
         if (currentVersion != null) {
@@ -97,11 +97,9 @@ class ChangelogService {
       sections.entries.where((e) => _allowedSections.contains(e.key)),
     );
     if (filtered.isNotEmpty) {
-      releases.add(ChangelogRelease(
-        version: version,
-        date: date,
-        sections: filtered,
-      ));
+      releases.add(
+        ChangelogRelease(version: version, date: date, sections: filtered),
+      );
     }
   }
 }

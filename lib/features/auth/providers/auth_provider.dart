@@ -14,10 +14,7 @@ final isAuthenticatedProvider = Provider<bool>((ref) {
 
 /// Minimal user profile read from Supabase auth metadata.
 class UserProfile {
-  const UserProfile({
-    required this.email,
-    this.riderName,
-  });
+  const UserProfile({required this.email, this.riderName});
 
   final String email;
   final String? riderName;

@@ -7,11 +7,7 @@ import '../../providers/ride_session_provider.dart';
 
 /// A compact live map that shows the route being traced during an active ride.
 class LiveRideMap extends StatefulWidget {
-  const LiveRideMap({
-    super.key,
-    required this.coords,
-    this.height = 160,
-  });
+  const LiveRideMap({super.key, required this.coords, this.height = 160});
 
   final List<RideCoord> coords;
   final double height;
@@ -29,14 +25,16 @@ class _LiveRideMapState extends State<LiveRideMap> {
     if (widget.coords.length > oldWidget.coords.length &&
         widget.coords.isNotEmpty) {
       final last = widget.coords.last;
-      _mapController.move(LatLng(last.lat, last.lon), _mapController.camera.zoom);
+      _mapController.move(
+        LatLng(last.lat, last.lon),
+        _mapController.camera.zoom,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final points =
-        widget.coords.map((c) => LatLng(c.lat, c.lon)).toList();
+    final points = widget.coords.map((c) => LatLng(c.lat, c.lon)).toList();
 
     final center = points.isNotEmpty
         ? points.last
@@ -51,80 +49,80 @@ class _LiveRideMapState extends State<LiveRideMap> {
           child: Stack(
             children: [
               FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: center,
-                initialZoom: 15,
-                interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.none,
-                ),
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate:
-                      'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-                  userAgentPackageName: 'com.apex.app',
-                  retinaMode: true,
-                ),
-                // Route polyline
-                if (points.length > 1)
-                  PolylineLayer(
-                    polylines: [
-                      Polyline(
-                        points: points,
-                        strokeWidth: 3.5,
-                        color: context.accent.withValues(alpha: 0.9),
-                        strokeJoin: StrokeJoin.round,
-                        strokeCap: StrokeCap.round,
-                      ),
-                    ],
+                mapController: _mapController,
+                options: MapOptions(
+                  initialCenter: center,
+                  initialZoom: 15,
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.none,
                   ),
-                // Current position marker
-                if (points.isNotEmpty)
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: points.last,
-                        width: 20,
-                        height: 20,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: context.accent,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: context.accent.withValues(alpha: 0.5),
-                                blurRadius: 8,
-                              ),
-                            ],
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+                    userAgentPackageName: 'com.apex.app',
+                    retinaMode: true,
+                  ),
+                  // Route polyline
+                  if (points.length > 1)
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: points,
+                          strokeWidth: 3.5,
+                          color: context.accent.withValues(alpha: 0.9),
+                          strokeJoin: StrokeJoin.round,
+                          strokeCap: StrokeCap.round,
+                        ),
+                      ],
+                    ),
+                  // Current position marker
+                  if (points.isNotEmpty)
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: points.last,
+                          width: 20,
+                          height: 20,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: context.accent,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: context.accent.withValues(alpha: 0.5),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                ],
+              ),
+              // Compass icon top-right
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.9),
+                    shape: BoxShape.circle,
                   ),
-              ],
-            ),
-            // Compass icon top-right
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.9),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.navigation,
-                  color: Colors.white,
-                  size: 16,
+                  child: const Icon(
+                    Icons.navigation,
+                    color: Colors.white,
+                    size: 16,
+                  ),
                 ),
               ),
-            ),
-          ],
-         ),
+            ],
+          ),
         ),
       ),
     );

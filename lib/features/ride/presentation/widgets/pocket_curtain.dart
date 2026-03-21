@@ -46,8 +46,7 @@ class _PocketCurtainState extends State<PocketCurtain>
 
   void _handleTap() {
     final now = DateTime.now();
-    if (_lastTap != null &&
-        now.difference(_lastTap!).inMilliseconds < 500) {
+    if (_lastTap != null && now.difference(_lastTap!).inMilliseconds < 500) {
       widget.onDismiss();
       _lastTap = null;
     } else {
@@ -75,43 +74,40 @@ class _PocketCurtainState extends State<PocketCurtain>
     return FadeTransition(
       opacity: _fadeController,
       child: GestureDetector(
-      onTap: _handleTap,
-      onVerticalDragStart: _handleVerticalDragStart,
-      onVerticalDragUpdate: _handleVerticalDragUpdate,
-      onVerticalDragEnd: _handleVerticalDragEnd,
-      child: Container(
-        color: Colors.black,
-        child: Center(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              final t = _controller.value * 2 * pi;
-              // Circular motion, radius 30px
-              final dx = cos(t) * 30;
-              final dy = sin(t) * 30;
-              // Pulsing opacity
-              final opacity = 0.5 + 0.5 * sin(t * 2).abs();
+        onTap: _handleTap,
+        onVerticalDragStart: _handleVerticalDragStart,
+        onVerticalDragUpdate: _handleVerticalDragUpdate,
+        onVerticalDragEnd: _handleVerticalDragEnd,
+        child: Container(
+          color: Colors.black,
+          child: Center(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                final t = _controller.value * 2 * pi;
+                // Circular motion, radius 30px
+                final dx = cos(t) * 30;
+                final dy = sin(t) * 30;
+                // Pulsing opacity
+                final opacity = 0.5 + 0.5 * sin(t * 2).abs();
 
-              return Transform.translate(
-                offset: Offset(dx, dy),
-                child: Opacity(
-                  opacity: opacity,
-                  child: child,
+                return Transform.translate(
+                  offset: Offset(dx, dy),
+                  child: Opacity(opacity: opacity, child: child),
+                );
+              },
+              child: Text(
+                'Pocket Mode Active',
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 16,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 2,
                 ),
-              );
-            },
-            child: Text(
-              'Pocket Mode Active',
-              style: GoogleFonts.jetBrainsMono(
-                fontSize: 16,
-                color: AppColors.textSecondary,
-                letterSpacing: 2,
               ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
 }

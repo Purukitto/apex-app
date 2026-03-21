@@ -15,7 +15,8 @@
       "mcp__supabase__get_edge_function",
       "Bash(flutter pub:*)",
       "Bash(flutter analyze:*)",
-      "Bash(wc -l /d/Code/apex_flutter/lib/core/database/*.dart /d/Code/apex_flutter/lib/core/providers/*.dart /d/Code/apex_flutter/lib/core/services/*.dart)"
+      "Bash(wc -l /d/Code/apex_flutter/lib/core/database/*.dart /d/Code/apex_flutter/lib/core/providers/*.dart /d/Code/apex_flutter/lib/core/services/*.dart)",
+      "Bash(dart format:*)"
     ]
   }
 }

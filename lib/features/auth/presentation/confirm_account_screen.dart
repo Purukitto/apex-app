@@ -23,8 +23,7 @@ class ConfirmAccountScreen extends ConsumerStatefulWidget {
       _ConfirmAccountScreenState();
 }
 
-class _ConfirmAccountScreenState
-    extends ConsumerState<ConfirmAccountScreen> {
+class _ConfirmAccountScreenState extends ConsumerState<ConfirmAccountScreen> {
   _ConfirmState _state = _ConfirmState.checking;
 
   @override
@@ -45,8 +44,7 @@ class _ConfirmAccountScreenState
       }
 
       // Retry once after delay
-      await Future.delayed(
-          const Duration(milliseconds: kConfirmRetryDelayMs));
+      await Future.delayed(const Duration(milliseconds: kConfirmRetryDelayMs));
 
       if (!mounted) return;
       final retrySession = client.auth.currentSession;
@@ -56,8 +54,7 @@ class _ConfirmAccountScreenState
       } else {
         setState(() => _state = _ConfirmState.invalid);
         if (mounted) {
-          ApexToast.error(
-              context, 'Invalid or expired confirmation link');
+          ApexToast.error(context, 'Invalid or expired confirmation link');
         }
       }
     } catch (e) {
@@ -128,8 +125,7 @@ class _ConfirmAccountScreenState
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.check_circle_outline,
-              color: context.accent, size: 48),
+          Icon(Icons.check_circle_outline, color: context.accent, size: 48),
           const SizedBox(height: 16),
           Text(
             'Account Confirmed!',

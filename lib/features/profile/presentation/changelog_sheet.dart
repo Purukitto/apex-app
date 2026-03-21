@@ -80,12 +80,16 @@ class _ChangelogContent extends StatelessWidget {
                     children: [
                       Text(
                         "What's New",
-                        style: AppTypography.playfairDisplay
-                            .copyWith(fontSize: 22),
+                        style: AppTypography.playfairDisplay.copyWith(
+                          fontSize: 22,
+                        ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close,
-                            color: AppColors.textMuted, size: 18),
+                        icon: const Icon(
+                          Icons.close,
+                          color: AppColors.textMuted,
+                          size: 18,
+                        ),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],
@@ -122,54 +126,59 @@ class _ReleaseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Version + date header
-          Row(
+          padding: const EdgeInsets.only(bottom: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'v${release.version}',
-                style: AppTypography.jetBrainsMonoSmall.copyWith(
-                  color: context.accent,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                release.date,
-                style: AppTypography.jetBrainsMonoSmall.copyWith(
-                  color: AppColors.textMuted,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Sections
-          ...release.sections.entries.map((entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      entry.key,
-                      style: AppTypography.interSmall.copyWith(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
+              // Version + date header
+              Row(
+                children: [
+                  Text(
+                    'v${release.version}',
+                    style: AppTypography.jetBrainsMonoSmall.copyWith(
+                      color: context.accent,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
                     ),
-                    const SizedBox(height: 4),
-                    ...entry.value.map((item) => Padding(
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    release.date,
+                    style: AppTypography.jetBrainsMonoSmall.copyWith(
+                      color: AppColors.textMuted,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Sections
+              ...release.sections.entries.map(
+                (entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        entry.key,
+                        style: AppTypography.interSmall.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      ...entry.value.map(
+                        (item) => Padding(
                           padding: const EdgeInsets.only(left: 8, top: 2),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('  •  ',
-                                  style: AppTypography.interSmall
-                                      .copyWith(color: AppColors.textMuted)),
+                              Text(
+                                '  •  ',
+                                style: AppTypography.interSmall.copyWith(
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
                               Expanded(
                                 child: Text(
                                   _cleanItem(item),
@@ -178,13 +187,15 @@ class _ReleaseCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                        )),
-                  ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              )),
-        ],
-      ),
-    )
+              ),
+            ],
+          ),
+        )
         .animate()
         .fadeIn(duration: 300.ms, delay: (index * 80).ms)
         .slideY(begin: 0.05, end: 0, duration: 300.ms, delay: (index * 80).ms);

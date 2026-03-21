@@ -91,7 +91,7 @@ class _RideStartupAnimationState extends State<RideStartupAnimation>
 
 class _BootPhase extends AnimatedWidget {
   const _BootPhase({required Animation<double> animation})
-      : super(listenable: animation);
+    : super(listenable: animation);
 
   @override
   Widget build(BuildContext context) {
@@ -103,11 +103,7 @@ class _BootPhase extends AnimatedWidget {
       children: [
         Opacity(
           opacity: pulse,
-          child: Icon(
-            Icons.two_wheeler,
-            size: 64,
-            color: context.accent,
-          ),
+          child: Icon(Icons.two_wheeler, size: 64, color: context.accent),
         ),
         const SizedBox(height: 24),
         Text(
@@ -125,7 +121,7 @@ class _BootPhase extends AnimatedWidget {
 
 class _GaugePhase extends AnimatedWidget {
   const _GaugePhase({required Animation<double> animation})
-      : super(listenable: animation);
+    : super(listenable: animation);
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +135,10 @@ class _GaugePhase extends AnimatedWidget {
           width: 120,
           height: 120,
           child: CustomPaint(
-            painter: _GaugePainter(progress: progress, accentColor: context.accent),
+            painter: _GaugePainter(
+              progress: progress,
+              accentColor: context.accent,
+            ),
           ),
         ),
         const SizedBox(height: 24),
@@ -209,12 +208,13 @@ class _GaugePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _GaugePainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.accentColor != accentColor;
+      oldDelegate.progress != progress ||
+      oldDelegate.accentColor != accentColor;
 }
 
 class _ReadyPhase extends AnimatedWidget {
   const _ReadyPhase({required Animation<double> animation})
-      : super(listenable: animation);
+    : super(listenable: animation);
 
   @override
   Widget build(BuildContext context) {
@@ -225,11 +225,7 @@ class _ReadyPhase extends AnimatedWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.two_wheeler,
-            size: 48,
-            color: context.accent,
-          ),
+          Icon(Icons.two_wheeler, size: 48, color: context.accent),
           const SizedBox(height: 16),
           Text(
             'READY TO RIDE',

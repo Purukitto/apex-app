@@ -73,8 +73,9 @@ class GlobalBikeSearchService {
           .order('model')
           .limit(20); // Fetch more, score client-side, return top N
 
-      final specs =
-          (response as List).map((r) => GlobalBikeSpec.fromJson(r)).toList();
+      final specs = (response as List)
+          .map((r) => GlobalBikeSpec.fromJson(r))
+          .toList();
 
       // Client-side scoring
       final queryLower = query.toLowerCase();
@@ -138,7 +139,8 @@ class GlobalBikeSearchService {
 
       await client
           .from('global_bike_specs')
-          .update({'report_count': currentCount + 1}).eq('id', bikeId);
+          .update({'report_count': currentCount + 1})
+          .eq('id', bikeId);
     } catch (e, st) {
       AppLogger.e('Failed to report bike spec', e, st);
     }

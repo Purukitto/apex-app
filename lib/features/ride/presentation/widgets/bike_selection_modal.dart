@@ -73,11 +73,16 @@ class BikeSelectionModal extends StatelessWidget {
               padding: const EdgeInsets.all(32),
               child: Column(
                 children: [
-                  Icon(Icons.garage_outlined,
-                      color: AppColors.textMuted, size: 48),
+                  Icon(
+                    Icons.garage_outlined,
+                    color: AppColors.textMuted,
+                    size: 48,
+                  ),
                   const SizedBox(height: 12),
-                  Text('No bikes in garage',
-                      style: AppTypography.interSecondary),
+                  Text(
+                    'No bikes in garage',
+                    style: AppTypography.interSecondary,
+                  ),
                 ],
               ),
             )
@@ -85,23 +90,29 @@ class BikeSelectionModal extends StatelessWidget {
             Flexible(
               child: ListView.separated(
                 shrinkWrap: true,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 itemCount: bikes.length,
                 separatorBuilder: (_, _) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final bike = bikes[index];
-                  final label =
-                      bike.nickName ?? '${bike.make} ${bike.model}';
+                  final label = bike.nickName ?? '${bike.make} ${bike.model}';
                   return PressableGlassCard(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 16),
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                     borderRadius: 16,
                     onTap: () => onSelect(bike),
                     child: Row(
                       children: [
-                        Icon(Icons.two_wheeler,
-                            color: context.accent, size: 24),
+                        Icon(
+                          Icons.two_wheeler,
+                          color: context.accent,
+                          size: 24,
+                        ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
@@ -116,8 +127,11 @@ class BikeSelectionModal extends StatelessWidget {
                             ],
                           ),
                         ),
-                        Icon(Icons.chevron_right,
-                            color: AppColors.textMuted, size: 20),
+                        Icon(
+                          Icons.chevron_right,
+                          color: AppColors.textMuted,
+                          size: 20,
+                        ),
                       ],
                     ),
                   );

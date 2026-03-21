@@ -22,8 +22,12 @@ class MeshBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = backgroundColor ?? AppColors.backgroundDark;
     final isOled = bg == Colors.black;
-    final gradientEnd = isOled ? const Color(0xFF050506) : AppColors.backgroundMid;
-    final auraColor = Theme.of(context).colorScheme.primary.withValues(alpha: 0.15);
+    final gradientEnd = isOled
+        ? const Color(0xFF050506)
+        : AppColors.backgroundMid;
+    final auraColor = Theme.of(
+      context,
+    ).colorScheme.primary.withValues(alpha: 0.15);
 
     return Stack(
       fit: StackFit.expand,
@@ -58,11 +62,7 @@ class MeshBackground extends StatelessWidget {
 
         // Optional subtle grid overlay
         if (showGrid)
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _GridPainter(),
-            ),
-          ),
+          Positioned.fill(child: CustomPaint(painter: _GridPainter())),
 
         // Content
         child,

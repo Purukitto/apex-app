@@ -95,7 +95,6 @@ class _AddEditBikeSheetState extends ConsumerState<AddEditBikeSheet> {
 
     _searchCtrl.clear();
     ref.read(globalBikeSearchProvider.notifier).clear();
-
   }
 
   Future<void> _onSubmit() async {
@@ -342,26 +341,27 @@ class _AddEditBikeSheetState extends ConsumerState<AddEditBikeSheet> {
             return Column(
               children: [
                 const SizedBox(height: 8),
-                ...results.map((spec) => Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: _SearchResultCard(
-                        spec: spec,
-                        onTap: () => _onSpecSelected(spec),
-                        onReport: () {
-                          GlobalBikeSearchService.reportBikeSpec(
-                            ref.read(supabaseClientProvider),
-                            spec.id,
-                          );
-                          ApexToast.success(context, 'Spec reported');
-                        },
-                      ),
-                    )),
+                ...results.map(
+                  (spec) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: _SearchResultCard(
+                      spec: spec,
+                      onTap: () => _onSpecSelected(spec),
+                      onReport: () {
+                        GlobalBikeSearchService.reportBikeSpec(
+                          ref.read(supabaseClientProvider),
+                          spec.id,
+                        );
+                        ApexToast.success(context, 'Spec reported');
+                      },
+                    ),
+                  ),
+                ),
                 Center(
                   child: TextButton(
                     onPressed: () {
                       _searchCtrl.clear();
                       ref.read(globalBikeSearchProvider.notifier).clear();
-                  
                     },
                     child: Text(
                       'Enter details manually',
@@ -417,11 +417,7 @@ class _SearchResultCard extends StatelessWidget {
                     ),
                     if (spec.isVerified) ...[
                       const SizedBox(width: 6),
-                      Icon(
-                        Icons.verified,
-                        size: 14,
-                        color: context.accent,
-                      ),
+                      Icon(Icons.verified, size: 14, color: context.accent),
                     ],
                   ],
                 ),

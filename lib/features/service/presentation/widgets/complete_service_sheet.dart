@@ -180,8 +180,9 @@ class _CompleteServiceSheetState extends ConsumerState<CompleteServiceSheet> {
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return null;
                         final val = double.tryParse(v.trim());
-                        if (val != null && val < 0)
+                        if (val != null && val < 0) {
                           return 'Must be 0 or greater';
+                        }
                         return null;
                       },
                     ),

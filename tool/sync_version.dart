@@ -1,6 +1,9 @@
 // ignore_for_file: avoid_print
+
 /// Reads the version from package.json and writes it to pubspec.yaml.
 /// Called as a standard-version postbump hook.
+library;
+
 import 'dart:convert';
 import 'dart:io';
 

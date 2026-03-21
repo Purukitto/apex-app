@@ -1,10 +1,12 @@
 // ignore_for_file: avoid_print
+
 /// Generates a 1024x1024 PNG launcher icon for the Apex app.
 ///
 /// Uses the `image` package (pure Dart, no dart:ui dependency).
 /// Run: dart pub add image --dev && dart run tool/generate_icon.dart
 ///
 /// Draws the Apex curve logo (green on dark background).
+library;
 
 import 'dart:io';
 import 'dart:math';
@@ -84,7 +86,7 @@ void _drawFilledCircle(
   double cx,
   double cy,
   double radius,
-  img.Color color,
+  img.ColorRgba8 color,
 ) {
   final r2 = radius * radius;
   final minX = max(0, (cx - radius - 1).floor());
@@ -104,21 +106,9 @@ void _drawFilledCircle(
           final alpha = (radius - dist).clamp(0.0, 1.0);
           final existing = image.getPixel(x, y);
           final blended = img.ColorRgba8(
-            _blend(
-              existing.r.toInt(),
-              (color as img.ColorRgba8).r.toInt(),
-              alpha,
-            ),
-            _blend(
-              existing.g.toInt(),
-              (color as img.ColorRgba8).g.toInt(),
-              alpha,
-            ),
-            _blend(
-              existing.b.toInt(),
-              (color as img.ColorRgba8).b.toInt(),
-              alpha,
-            ),
+            _blend(existing.r.toInt(), color.r.toInt(), alpha),
+            _blend(existing.g.toInt(), color.g.toInt(), alpha),
+            _blend(existing.b.toInt(), color.b.toInt(), alpha),
             255,
           );
           image.setPixel(x, y, blended);

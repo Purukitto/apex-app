@@ -1,4 +1,5 @@
 // ignore_for_file: avoid_print
+
 /// Writes android/app/src/{flavor}/google-services.json from environment variables.
 ///
 /// Required env vars:
@@ -15,6 +16,8 @@
 ///   dart run tool/inject_google_services.dart          # writes prod only
 ///   dart run tool/inject_google_services.dart --dev     # writes dev only
 ///   dart run tool/inject_google_services.dart --all     # writes both
+library;
+
 import 'dart:convert';
 import 'dart:io';
 

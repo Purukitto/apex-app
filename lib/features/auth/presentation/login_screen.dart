@@ -64,13 +64,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       await _supabase.auth.signInWithPassword(email: email, password: password);
-      if (mounted) context.go('/dashboard');
+      // GoRouter redirect handles navigation on auth state change
     } on AuthException catch (e) {
       AppLogger.w('Sign in failed', e);
       if (mounted) ApexToast.error(context, 'Invalid email or password');
     } catch (e) {
       AppLogger.e('Unexpected sign in error', e);
-      if (mounted) ApexToast.error(context, 'Invalid email or password');
+      if (mounted) ApexToast.error(context, 'Something went wrong');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

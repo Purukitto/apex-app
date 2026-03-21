@@ -51,8 +51,8 @@ jobs:
       - name: Write .env from secrets
         if: steps.check.outputs.exists == 'false'
         run: |
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
-          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+          echo "SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" >> .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env
 
       - name: Install dependencies
         if: steps.check.outputs.exists == 'false'

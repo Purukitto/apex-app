@@ -6,45 +6,43 @@ labels: bug
 assignees: ''
 ---
 
-## 🐛 Bug Description
+## Bug Description
 
 A clear and concise description of what the bug is.
 
-## 🔄 Steps to Reproduce
+## Steps to Reproduce
 
 1. Go to '...'
-2. Click on '...'
+2. Tap on '...'
 3. Scroll down to '...'
 4. See error
 
-## ✅ Expected Behavior
+## Expected Behavior
 
 A clear and concise description of what you expected to happen.
 
-## ❌ Actual Behavior
+## Actual Behavior
 
 A clear and concise description of what actually happened.
 
-## 📸 Screenshots
+## Screenshots
 
 If applicable, add screenshots to help explain your problem.
 
-## 🌍 Environment
+## Environment
 
-- **OS**: [e.g. Windows 11, macOS 14, iOS 17, Android 13]
-- **Browser**: [e.g. Chrome 120, Safari 17] (if web)
-- **Device**: [e.g. iPhone 15, Samsung Galaxy S23] (if mobile)
-- **Screen**: [e.g. 390x844 @3x, 1920x1080 @1x]
-- **App Version**: [e.g. 0.3.2]
+- **OS**: [e.g. Android 14, iOS 17]
+- **Device**: [e.g. Pixel 8, iPhone 15]
+- **App Version**: [e.g. 2.0.0]
 
-## 📝 Additional Context
+## Additional Context
 
 Add any other context about the problem here.
 
-## 🧾 Logs (Last 150 lines)
+## Logs
 
-Attach the log file from the app or paste the last 150 lines here.
+Attach any relevant log output or paste the last 150 lines here.
 
-## 🔍 Possible Solution
+## Possible Solution
 
 If you have ideas on how to fix this, please share them here.

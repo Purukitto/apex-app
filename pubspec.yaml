@@ -1,0 +1,117 @@
+name: apex
+description: "Apex — motorcycle companion app"
+publish_to: 'none'
+
+version: 2.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^3.0.0
+
+  # Routing
+  go_router: ^14.0.0
+
+  # Backend
+  supabase_flutter: ^2.12.0
+
+  # Animations
+  flutter_animate: ^4.5.0
+
+  # Fonts (fetched at runtime)
+  google_fonts: ^8.0.0
+
+  # Logger
+  logger: ^2.0.0
+
+  # Storage
+  shared_preferences: ^2.0.0
+
+  # App info
+  package_info_plus: ^9.0.0
+
+  # Utilities
+  uuid: ^4.0.0
+  intl: ^0.19.0
+
+  # Offline-first database
+  drift: ^2.22.0
+  sqlite3_flutter_libs: ^0.5.28
+
+  # Connectivity
+  connectivity_plus: ^6.1.0
+
+  # Ride recording
+  geolocator: ^13.0.2
+  sensors_plus: ^6.1.1
+  flutter_foreground_task: ^8.12.0
+  wakelock_plus: ^1.2.8
+  vibration: ^2.0.0
+  proximity_sensor: ^1.0.5
+
+  # File paths
+  path_provider: ^2.1.0
+  path: ^1.9.0
+
+  # Maps
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
+  # SVG rendering
+  flutter_svg: ^2.0.10
+
+  # Sharing
+  share_plus: ^10.1.4
+
+  # Push & local notifications
+  firebase_core: ^3.12.1
+  firebase_messaging: ^15.2.5
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.10.0
+  flutter_boring_avatars: ^2.1.0
+
+  # Environment variable injection with obfuscation
+  envied: ^1.1.1
+
+  # In-app updates (Android Play Store)
+  in_app_update: ^4.2.3
+
+  # URL launcher (iOS App Store redirect)
+  url_launcher: ^6.2.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # Drift code generation
+  drift_dev: ^2.22.0
+  build_runner: ^2.4.0
+
+  # Launcher icons
+  flutter_launcher_icons: ^0.14.3
+  image: ^4.8.0
+
+  # Envied code generation
+  envied_generator: ^1.1.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/ic_launcher.png"
+  adaptive_icon_background: "#0A0A0C"
+  adaptive_icon_foreground: "assets/icon/ic_launcher_foreground.png"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/
+    - CHANGELOG.md

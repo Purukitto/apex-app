@@ -64,8 +64,16 @@ jobs:
 
       - name: Inject google-services.json
         if: steps.check.outputs.exists == 'false'
-        run: dart run tool/inject_google_services.dart
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            mkdir -p android/app/src/prod
+            echo "$GOOGLE_SERVICES_JSON" > android/app/src/prod/google-services.json
+            echo "google-services.json created from secret"
+          else
+            dart run tool/inject_google_services.dart
+          fi
         env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
           FIREBASE_PROJECT_NUMBER: ${{ secrets.FIREBASE_PROJECT_NUMBER }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
@@ -86,9 +94,9 @@ jobs:
           BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/*/ | tail -1)
           ${BUILD_TOOLS}apksigner sign \
             --ks android/app/release-keystore.jks \
-            --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
-            --ks-key-alias ${{ secrets.KEY_ALIAS }} \
-            --key-pass pass:${{ secrets.KEY_PASSWORD }} \
+            --ks-pass pass:${{ secrets.RELEASE_KEYSTORE_PASSWORD }} \
+            --ks-key-alias ${{ secrets.RELEASE_KEY_ALIAS }} \
+            --key-pass pass:${{ secrets.RELEASE_KEY_PASSWORD }} \
             --out build/app/outputs/flutter-apk/apex-v${{ steps.version.outputs.version }}.apk \
             build/app/outputs/flutter-apk/app-prod-release.apk
 

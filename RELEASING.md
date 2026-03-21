@@ -48,22 +48,28 @@ Set these in **Settings → Secrets and variables → Actions**:
 | `SUPABASE_URL` | Your Supabase project URL (e.g., `https://xxx.supabase.co`) |
 | `SUPABASE_ANON_KEY` | Supabase publishable anon key |
 
-### Firebase
+### Firebase (one of the following)
 | Secret | Description |
 |--------|-------------|
-| `FIREBASE_PROJECT_NUMBER` | Firebase project number (e.g., `898623854898`) |
-| `FIREBASE_PROJECT_ID` | Firebase project ID (e.g., `apex-app-main`) |
-| `FIREBASE_STORAGE_BUCKET` | Storage bucket (e.g., `apex-app-main.firebasestorage.app`) |
-| `FIREBASE_MOBILESDK_APP_ID` | Android app ID (e.g., `1:898623854898:android:...`) |
+| `GOOGLE_SERVICES_JSON` | Raw `google-services.json` content (preferred) |
+
+Or, if not using `GOOGLE_SERVICES_JSON`, set individual vars:
+
+| Secret | Description |
+|--------|-------------|
+| `FIREBASE_PROJECT_NUMBER` | Firebase project number |
+| `FIREBASE_PROJECT_ID` | Firebase project ID |
+| `FIREBASE_STORAGE_BUCKET` | Storage bucket |
+| `FIREBASE_MOBILESDK_APP_ID` | Android app ID |
 | `FIREBASE_API_KEY` | Firebase API key |
 
 ### APK Signing
 | Secret | Description |
 |--------|-------------|
 | `RELEASE_KEYSTORE` | Base64-encoded release keystore file |
-| `KEYSTORE_PASSWORD` | Keystore password |
-| `KEY_ALIAS` | Key alias in the keystore |
-| `KEY_PASSWORD` | Key password |
+| `RELEASE_KEYSTORE_PASSWORD` | Keystore password |
+| `RELEASE_KEY_ALIAS` | Key alias in the keystore |
+| `RELEASE_KEY_PASSWORD` | Key password |
 
 ### How to Base64-Encode the Keystore
 

@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Enable version updates for npm
+  # Enable version updates for npm (commitlint, standard-version)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -12,19 +12,19 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
-    # Group updates to reduce PR noise
     groups:
-      production-dependencies:
-        dependency-type: "production"
       development-dependencies:
         dependency-type: "development"
-    # Ignore major version updates for critical packages (review manually)
-    ignore:
-      - dependency-name: "react"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react-dom"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@supabase/supabase-js"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@capacitor/*"
-        update-types: ["version-update:semver-major"]
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "ci"
+      include: "scope"

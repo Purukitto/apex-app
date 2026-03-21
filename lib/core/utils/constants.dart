@@ -1,0 +1,10 @@
+const kSessionPollMaxAttempts = 5;
+const kSessionPollDelayMs = 200;
+const kPostSignupDelayMs = 300;
+const kConfirmRetryDelayMs = 800;
+const kResetVerifyDelayMs = 1000;
+const kSuccessRedirectDelayMs = 1200;
+const kRiderNameMaxLength = 12;
+const kOtpLength = 6;
+const kToastDurationSuccess = Duration(seconds: 3);
+const kToastDurationError = Duration(seconds: 4);

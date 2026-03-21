@@ -1,139 +1,145 @@
-<div align="center">
-  <img src="./public/apex-logo.svg" alt="Apex Logo" width="120" height="120">
-  
-  # Apex: The Rider's Black Box
-  
-  A minimalist, high-precision utility for motorcyclists. Apex is a "Flight Recorder" for the road and a "Digital Garage" for the machine.
-  
-  [![CI](https://github.com/Purukitto/apex-app/actions/workflows/ci.yml/badge.svg)](https://github.com/Purukitto/apex-app/actions)
-  [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
-  [![Release](https://img.shields.io/github/v/release/Purukitto/apex-app?include_prereleases)](https://github.com/Purukitto/apex-app/releases/latest)
-  [![Deployed on Vercel](https://img.shields.io/badge/deployed%20on-vercel-black?logo=vercel)](https://apex.purukitto.xyz)
-</div>
+# Apex
 
-## 🎯 What is Apex?
+A motorcycle companion app built with Flutter — track rides, manage your garage, log fuel, and stay on top of maintenance.
 
-Apex combines real-time ride tracking with comprehensive maintenance management, designed with the philosophy of **"The Dark Cockpit"** - optimized for OLED displays, high contrast, and instrument-grade precision.
+## Features
 
-Whether you're tracking your weekend rides or managing a fleet of motorcycles, Apex provides the tools you need to monitor your machines and your adventures.
+- **Ride Tracking** — GPS ride recording with foreground service, pocket detection, and route visualization
+- **Garage** — manage multiple bikes with global bike search and image support
+- **Fuel Logs** — track fill-ups with mileage calculation (km/l) and price history
+- **Maintenance** — service scheduling with push notification alerts and health tracking
+- **Offline-First** — local SQLite database (Drift) with Supabase cloud sync and conflict resolution
+- **Dark Theme** — accent color customization with OLED black mode
 
-## ✨ Features
+## Getting Started
 
-### 🏍️ The Garage
-- **Multi-bike Management**: Track multiple motorcycles in your fleet
-- **Maintenance Logs**: Comprehensive service history tracking with detailed records of all maintenance work performed, including parts replaced, service dates, costs, and odometer readings at service time
-- **Maintenance Schedules**: Set up custom service intervals (time-based and distance-based) for different parts and components
-- **Service Reminders**: Automatic notifications when maintenance is due based on time or mileage thresholds
-- **Odometer Tracking**: Monitor mileage for each bike with automatic updates from ride recordings
-- **Fuel Logging**: Track every refuel with fuel consumption, efficiency (km/L or MPG), cost per kilometer, and fuel price history. Calculate average mileage and identify trends in fuel economy
+### Prerequisites
 
-<img src="docs/screenshots/garage.jpg" alt="The Garage" width="280" />
+- Flutter SDK (stable channel, Dart ^3.11.0)
+- Android Studio / Xcode
+- Node.js 20+ (for commitlint & changelog tooling)
 
-### 📍 The Recorder
-- **GPS Tracking**: Real-time route recording with detailed path visualization
-- **Telemetry**: Speed, lean angle, G-force, and altitude tracking
-- **Ride History**: View past rides with detailed statistics and maps
-- **Share Rides**: Export and share your ride data
+### Setup
 
-<img src="docs/screenshots/recorder.jpg" alt="The Recorder" width="280" /> <img src="docs/screenshots/rides.jpg" alt="Ride History" width="280" />
+1. **Clone & install dependencies**
+   ```bash
+   git clone https://github.com/Purukitto/apex-app.git
+   cd apex-app
+   flutter pub get
+   npm install
+   ```
 
-### 📊 The Dashboard
-- **Current Status**: Overview of all bikes and their maintenance status
-- **Last Ride Summary**: Quick access to recent ride data
-- **Maintenance Alerts**: Warnings for upcoming service intervals
+2. **Create `.env`** from the template
+   ```bash
+   cp .env.example .env
+   ```
+   Fill in your Supabase project URL and anon key.
 
-<img src="docs/screenshots/dashboard.jpg" alt="The Dashboard" width="280" />
+3. **Generate code** (envied + drift)
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   ```
 
-### 🔗 Discord Integration
-- **Status Sharing (Android, experimental)**: Share your ride status
+4. **Set up Firebase** (Android)
+   ```bash
+   export FIREBASE_PROJECT_NUMBER=...
+   export FIREBASE_PROJECT_ID=...
+   export FIREBASE_STORAGE_BUCKET=...
+   export FIREBASE_MOBILESDK_APP_ID=...
+   export FIREBASE_API_KEY=...
+   dart run tool/inject_google_services.dart
+   ```
 
-> Warning: This app uses the Discord Gateway connection. Use this at your own risk. However people have been using custom rich presence for past 4-5 years and there is still no case of account getting terminated.
+5. **Run**
+   ```bash
+   # Development (no Firebase, .dev app ID)
+   flutter run --flavor dev -t lib/main_dev.dart
 
-## 🎨 Design Philosophy
+   # Production
+   flutter run --flavor prod -t lib/main.dart
+   ```
 
-### The Dark Cockpit
+## Build Flavours
 
-Apex is designed with the rider in mind, especially for use on mobile devices during rides:
+| Flavour | App ID                    | App Name  | Entry Point          |
+|---------|---------------------------|-----------|----------------------|
+| `dev`   | `com.purukitto.apex.dev`  | Apex Dev  | `lib/main_dev.dart`  |
+| `prod`  | `com.purukitto.apex`      | Apex      | `lib/main.dart`      |
 
-- **OLED First**: OLED black backgrounds (`#0A0A0A`) to save battery and reduce glare
-- **High Contrast**: White and Apex Green (`#3DBF6F`) for critical data visibility
-- **Instrument Grade**: Monospaced fonts (JetBrains Mono) for telemetry precision
-- **Glove-Friendly**: Large touch targets, long-press for destructive actions
-- **Smooth Animations**: Subtle, high-end transitions for a polished experience
+Both can be installed side-by-side on the same device.
 
-For more details on the design philosophy and Discord integration, see [DOCS.md](DOCS.md).
+## Architecture
 
-## 📥 Download & Install
+```
+lib/
+├── main.dart / main_dev.dart    # Entry points per flavour
+├── app.dart                     # Root widget, GoRouter, auth state
+├── core/
+│   ├── config/                  # Environment config (envied)
+│   ├── database/                # Drift tables & DAOs
+│   ├── network/                 # Supabase client provider
+│   ├── providers/               # Global Riverpod providers
+│   ├── services/                # Firebase, notifications, updates
+│   ├── sync/                    # Sync engine & conflict resolver
+│   ├── theme/                   # Colors, typography, theme
+│   ├── utils/                   # Formatters, geo, fuel calc
+│   └── widgets/                 # Reusable UI components
+└── features/
+    ├── auth/                    # Login, confirm, reset password
+    ├── dashboard/               # Home screen with stats
+    ├── garage/                  # Bike management + fuel logs
+    ├── notifications/           # Push & maintenance notifications
+    ├── profile/                 # Settings, changelog, bug report
+    ├── ride/                    # Active ride recording
+    ├── rides/                   # Ride history & details
+    └── service/                 # Maintenance scheduling
+```
 
-### For End Users
+**State management:** Riverpod
+**Routing:** GoRouter
+**Database:** Drift (SQLite) with Supabase sync
+**Auth:** Supabase Auth (email/password)
 
-Apex is available as a mobile app for iOS and Android:
+## Release Process
 
-- **Android**: Download the latest APK from [GitHub Releases](https://github.com/Purukitto/apex-app/releases/latest)
-- **iOS**: Coming soon (App Store submission in progress)
-- **Web**: Access the web version at [apex.purukitto.xyz](https://apex.purukitto.xyz)
+See [RELEASING.md](RELEASING.md) for the complete release guide.
 
-### Installation Instructions
+Quick version:
+```bash
+# Bump version, update changelog, sync pubspec.yaml
+npm run release          # auto-detect from commits
+npm run release:patch    # force patch bump
+npm run release:minor    # force minor bump
 
-1. **Android**:
-   - Download the latest `apex-*.apk` file from the [releases page](https://github.com/Purukitto/apex-app/releases/latest)
-   - Enable "Install from Unknown Sources" in your Android settings
-   - Open the downloaded APK file and follow the installation prompts
+# Push with tags
+git push --follow-tags origin main
+```
 
-2. **iOS**:
-   - Installation instructions will be available once the app is published to the App Store
+The CI pipeline automatically builds a signed APK and creates a GitHub Release.
 
-3. **First Launch**:
-   - Create an account or sign in
-   - Add your first motorcycle to get started
-   - Grant location permissions for ride tracking
+## Testing
 
-## 🚀 Getting Started
+```bash
+flutter test                              # all tests
+flutter test test/core/utils/             # unit tests only
+flutter test test/core/widgets/           # widget tests only
+```
 
-Once installed:
+## CI/CD
 
-1. **Create an Account**: Sign up with your email or use social authentication
-2. **Add Your Bike**: Go to the Garage and add your motorcycle(s)
-3. **Set Up Maintenance**: Configure service intervals for your bike
-4. **Start Recording**: Use the Recorder to track your rides
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `ci.yml` | Push & PR | `dart analyze` + `dart format` + `flutter test` |
+| `commitlint.yml` | PR | Validates conventional commit messages |
+| `release.yml` | Push to `main` | Builds signed APK, creates GitHub Release |
 
-## 📚 Documentation
+## Contributing
 
-For more information:
+1. Create a feature branch from `main`
+2. Use [conventional commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, etc.)
+3. Open a PR — CI will lint commits and run tests
+4. After merge, the release workflow handles versioning automatically
 
-- **[DEVELOPER.md](DEVELOPER.md)** - Developer setup and technical documentation
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture and data flow
-- **[DOCS.md](DOCS.md)** - Design philosophy and core pillars
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Guidelines for contributing
+## License
 
-## 📊 Analytics
-
-Apex uses [Vercel Analytics](https://vercel.com/analytics) to collect anonymous usage statistics and performance metrics. This helps us understand how the app is being used and identify areas for improvement. All analytics data is collected in compliance with privacy best practices and does not include personally identifiable information.
-
-## ☕ Support Development
-
-Apex is free and open-source. If it helps you, consider supporting development:
-
-- **[Buy Me a Coffee](https://buymeacoffee.com/purukitto)** — One-time support ($)
-- **UPI** — `apex-app@axl` (India, ₹) — *Payee: Apex Development*
-
-## 🤝 Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
-
-## 📄 License
-
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-Maps © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors
-
-Discord RPC approach inspired by [Kizzy](https://github.com/dead8309/Kizzy)
-
----
-
-<div align="center">
-  Made with ❤️ for the motorcycle community
-</div>
+This project is licensed under the [GNU General Public License v3.0](LICENSE).

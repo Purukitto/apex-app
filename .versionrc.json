@@ -2,18 +2,24 @@
   "types": [
     { "type": "feat", "section": "Features" },
     { "type": "fix", "section": "Bug Fixes" },
-    { "type": "perf", "section": "Performance Improvements" },
+    { "type": "docs", "section": "Documentation" },
+    { "type": "style", "section": "Styles" },
     { "type": "refactor", "section": "Code Refactoring" },
-    { "type": "docs", "section": "Documentation", "hidden": false },
-    { "type": "style", "section": "Styles", "hidden": false },
-    { "type": "chore", "section": "Miscellaneous Chores", "hidden": false },
-    { "type": "test", "section": "Tests", "hidden": false },
-    { "type": "build", "section": "Build System", "hidden": false },
-    { "type": "ci", "section": "Continuous Integration", "hidden": false },
-    { "type": "revert", "section": "Reverts", "hidden": false }
+    { "type": "perf", "section": "Performance" },
+    { "type": "test", "section": "Tests" },
+    { "type": "build", "section": "Build System" },
+    { "type": "ci", "section": "CI/CD" },
+    { "type": "chore", "section": "Chores" },
+    { "type": "revert", "section": "Reverts" },
+    { "type": "security", "section": "Security" }
   ],
-  "releaseCommitMessageFormat": "chore(release): {{currentTag}}",
-  "skip": {
-    "tag": false
-  }
+  "scripts": {
+    "postbump": "dart run tool/sync_version.dart"
+  },
+  "bumpFiles": [
+    {
+      "filename": "package.json",
+      "type": "json"
+    }
+  ]
 }

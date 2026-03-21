@@ -2,54 +2,60 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, master]
   pull_request:
-    branches: [main, develop]
+    branches: [main, master]
 
 jobs:
-  lint:
-    name: Lint & Type Check
+  analyze:
+    name: Analyze & Format
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: subosito/flutter-action@v2
         with:
-          node-version: '18'
-          cache: 'npm'
+          channel: stable
+          cache: true
+
+      - name: Write .env from secrets
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
 
       - name: Install dependencies
-        run: npm ci
+        run: flutter pub get
 
-      - name: Run ESLint
-        run: npm run lint
+      - name: Generate code (envied + drift)
+        run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Type check
-        run: npx tsc --noEmit
+      - name: Check formatting
+        run: dart format --set-exit-if-changed .
 
-  build:
-    name: Build
+      - name: Analyze
+        run: dart analyze --fatal-infos
+
+  test:
+    name: Test
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: subosito/flutter-action@v2
         with:
-          node-version: '18'
-          cache: 'npm'
+          channel: stable
+          cache: true
+
+      - name: Write .env from secrets
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
 
       - name: Install dependencies
-        run: npm ci
+        run: flutter pub get
 
-      - name: Build project
-        run: npm run build
-        env:
-          # Use dummy values for build (actual values not needed for build)
-          VITE_SUPABASE_URL: https://dummy.supabase.co
-          VITE_SUPABASE_ANON_KEY: dummy-key
+      - name: Generate code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Run tests
+        run: flutter test

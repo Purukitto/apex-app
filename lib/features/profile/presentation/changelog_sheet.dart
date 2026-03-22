@@ -70,6 +70,7 @@ class _ChangelogContent extends StatelessWidget {
           child: GlassCard(
             padding: EdgeInsets.zero,
             borderRadius: 20,
+            opaque: true,
             child: Column(
               children: [
                 // Header

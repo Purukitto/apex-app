@@ -135,11 +135,13 @@ class _ApexAppState extends ConsumerState<ApexApp> {
               path: '/rides',
               builder: (context, state) => const AllRidesScreen(),
             ),
-            GoRoute(
-              path: '/profile',
-              builder: (context, state) => const ProfileScreen(),
-            ),
           ],
+        ),
+
+        // Profile — standalone route (no bottom nav bar)
+        GoRoute(
+          path: '/profile',
+          builder: (context, state) => const ProfileScreen(),
         ),
       ],
     );

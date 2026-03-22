@@ -88,7 +88,7 @@ class DashboardScreen extends ConsumerWidget {
                 const Spacer(),
                 const NotificationBell(),
                 const SizedBox(width: 8),
-                UserAvatar(name: stats.riderName),
+                UserAvatar(name: stats.riderName, size: 40),
               ],
             ),
             const SizedBox(height: 8),

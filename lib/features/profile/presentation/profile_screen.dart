@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/providers/theme_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
@@ -908,6 +909,46 @@ class _AppSection extends ConsumerWidget {
             onPressed: () => _handleSignOut(context, ref),
             variant: ApexButtonVariant.ghost,
             accentColor: AppColors.error,
+          ),
+
+          const SizedBox(height: 24),
+
+          // Made with love
+          Center(
+            child: GestureDetector(
+              onTap: () => launchUrl(
+                Uri.parse('https://github.com/Purukitto'),
+                mode: LaunchMode.externalApplication,
+              ),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Made with ',
+                      style: AppTypography.interMuted.copyWith(fontSize: 12),
+                    ),
+                    TextSpan(
+                      text: '<3',
+                      style: AppTypography.interMuted.copyWith(
+                        fontSize: 12,
+                        color: AppColors.error,
+                      ),
+                    ),
+                    TextSpan(
+                      text: ' by ',
+                      style: AppTypography.interMuted.copyWith(fontSize: 12),
+                    ),
+                    TextSpan(
+                      text: 'Purukitto',
+                      style: AppTypography.interSmall.copyWith(
+                        fontSize: 12,
+                        color: context.accent,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),

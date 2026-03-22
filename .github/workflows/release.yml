@@ -2,7 +2,8 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    tags:
+      - 'v*'
 
 jobs:
   release:
@@ -13,57 +14,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Read version from pubspec.yaml
+      - name: Extract version from tag
         id: version
         run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//')
+          VERSION="${GITHUB_REF_NAME#v}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Check if release exists
-        id: check
-        run: |
-          if gh release view "v${{ steps.version.outputs.version }}" > /dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Exit if release already exists
-        if: steps.check.outputs.exists == 'true'
-        run: |
-          echo "Release v${{ steps.version.outputs.version }} already exists. Skipping."
-          exit 0
-
       - uses: actions/setup-java@v4
-        if: steps.check.outputs.exists == 'false'
         with:
           distribution: temurin
           java-version: 21
 
       - uses: subosito/flutter-action@v2
-        if: steps.check.outputs.exists == 'false'
         with:
           channel: stable
           cache: true
 
       - name: Write .env from secrets
-        if: steps.check.outputs.exists == 'false'
         run: |
           echo "SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" >> .env
           echo "SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env
 
       - name: Install dependencies
-        if: steps.check.outputs.exists == 'false'
         run: flutter pub get
 
       - name: Generate code (envied + drift)
-        if: steps.check.outputs.exists == 'false'
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Inject google-services.json
-        if: steps.check.outputs.exists == 'false'
         run: |
           dart run tool/inject_google_services.dart || echo "Warning: Firebase injection skipped"
         env:
@@ -74,15 +52,12 @@ jobs:
           FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_ANDROID_API_KEY }}
 
       - name: Build release APK
-        if: steps.check.outputs.exists == 'false'
         run: flutter build apk --flavor prod -t lib/main.dart --release
 
       - name: Decode keystore
-        if: steps.check.outputs.exists == 'false'
         run: echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 -d > android/app/release-keystore.jks
 
       - name: Sign APK
-        if: steps.check.outputs.exists == 'false'
         run: |
           BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/*/ | tail -1)
           ${BUILD_TOOLS}apksigner sign \
@@ -94,7 +69,6 @@ jobs:
             build/app/outputs/flutter-apk/app-prod-release.apk
 
       - name: Extract changelog for this version
-        if: steps.check.outputs.exists == 'false'
         id: changelog
         run: |
           VERSION="${{ steps.version.outputs.version }}"
@@ -102,11 +76,9 @@ jobs:
           if [ -z "$NOTES" ]; then
             NOTES="Release v${VERSION}"
           fi
-          # Write to file to handle multiline
           echo "$NOTES" > /tmp/release_notes.md
 
       - name: Create GitHub Release
-        if: steps.check.outputs.exists == 'false'
         run: |
           gh release create "v${{ steps.version.outputs.version }}" \
             build/app/outputs/flutter-apk/apex-v${{ steps.version.outputs.version }}.apk \

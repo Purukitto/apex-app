@@ -28,8 +28,8 @@ const _destinations = [
   ),
   _NavDestination(
     route: '/garage',
-    icon: Icons.edit_outlined,
-    activeIcon: Icons.edit,
+    icon: Icons.two_wheeler_outlined,
+    activeIcon: Icons.two_wheeler,
     label: 'Garage',
   ),
   _NavDestination(
@@ -41,15 +41,9 @@ const _destinations = [
   ),
   _NavDestination(
     route: '/rides',
-    icon: Icons.notifications_outlined,
-    activeIcon: Icons.notifications,
+    icon: Icons.route_outlined,
+    activeIcon: Icons.route,
     label: 'History',
-  ),
-  _NavDestination(
-    route: '/profile',
-    icon: Icons.settings_outlined,
-    activeIcon: Icons.settings,
-    label: 'Settings',
   ),
 ];
 

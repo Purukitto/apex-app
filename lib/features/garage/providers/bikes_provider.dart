@@ -9,14 +9,19 @@ import '../../../core/database/app_database.dart';
 import '../../../core/network/supabase_client.dart';
 import '../../../core/providers/database_provider.dart';
 import '../../../core/utils/logger.dart';
+import '../../../features/auth/providers/auth_provider.dart';
 import '../data/global_bike_search_service.dart';
 
 const _uuid = Uuid();
 
 /// Watches all bikes for the currently authenticated user.
+/// Re-evaluates when auth state changes so we never get stuck on a stale null UID.
 final bikesStreamProvider = StreamProvider<List<Bike>>((ref) {
   final db = ref.watch(databaseProvider);
-  final uid = Supabase.instance.client.auth.currentUser?.id;
+  // Watch auth state so this provider re-creates when user signs in/out.
+  final authState = ref.watch(authStateProvider);
+  final session = authState.asData?.value.session;
+  final uid = session?.user.id;
   if (uid == null) return const Stream.empty();
   return db.bikesDao.watchForUser(uid);
 });

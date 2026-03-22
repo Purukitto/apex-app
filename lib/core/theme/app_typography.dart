@@ -5,21 +5,21 @@ import 'app_colors.dart';
 class AppTypography {
   AppTypography._();
 
-  /// Playfair Display — page titles, weight 300, 28–32sp
-  static TextStyle get playfairDisplay => GoogleFonts.playfairDisplay(
-    fontWeight: FontWeight.w300,
+  /// Display — page titles, sans-serif, weight 600, 28–32sp
+  static TextStyle get playfairDisplay => GoogleFonts.inter(
+    fontWeight: FontWeight.w600,
     fontSize: 30,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle get playfairDisplayLarge => GoogleFonts.playfairDisplay(
-    fontWeight: FontWeight.w300,
+  static TextStyle get playfairDisplayLarge => GoogleFonts.inter(
+    fontWeight: FontWeight.w600,
     fontSize: 32,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle get playfairDisplaySmall => GoogleFonts.playfairDisplay(
-    fontWeight: FontWeight.w300,
+  static TextStyle get playfairDisplaySmall => GoogleFonts.inter(
+    fontWeight: FontWeight.w600,
     fontSize: 28,
     color: AppColors.textPrimary,
   );

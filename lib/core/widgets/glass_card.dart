@@ -11,12 +11,16 @@ class GlassCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(24),
     this.isAccent = false,
     this.borderRadius = 24.0,
+    this.opaque = false,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
   final bool isAccent;
   final double borderRadius;
+
+  /// When true, uses fully opaque background colors (for bottom sheets, etc.).
+  final bool opaque;
 
   @override
   Widget build(BuildContext context) {
@@ -42,14 +46,20 @@ class GlassCard extends StatelessWidget {
                   const Color(0xF20A0A0A),
                 ],
               )
-            : const LinearGradient(
+            : LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0x80181818), // rgba(24,24,24,0.5)
-                  Color(0xCC0A0A0A), // rgba(10,10,10,0.8)
-                  Color(0xF20A0A0A), // rgba(10,10,10,0.95)
-                ],
+                colors: opaque
+                    ? const [
+                        Color(0xFF1A1A1A),
+                        Color(0xFF111111),
+                        Color(0xFF0E0E0E),
+                      ]
+                    : const [
+                        Color(0x80181818), // rgba(24,24,24,0.5)
+                        Color(0xCC0A0A0A), // rgba(10,10,10,0.8)
+                        Color(0xF20A0A0A), // rgba(10,10,10,0.95)
+                      ],
               ),
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(color: border, width: 1),

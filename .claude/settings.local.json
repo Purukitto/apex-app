@@ -24,7 +24,14 @@
       "Read(//d/Code/apex_flutter/$LOCALAPPDATA/**)",
       "Read(//d/Code/apex_flutter/$HOME/scoop/shims/**)",
       "Bash(cmd.exe /c \"where gh\")",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(flutter test:*)",
+      "Bash(npm run:*)",
+      "Bash(dart pub:*)",
+      "WebSearch",
+      "Bash(gh api:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }

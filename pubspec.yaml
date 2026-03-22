@@ -2,7 +2,7 @@ name: apex
 description: "Apex — motorcycle companion app"
 publish_to: 'none'
 
-version: 2.0.1+1
+version: 2.0.2+1
 
 environment:
   sdk: ^3.11.0
@@ -108,6 +108,11 @@ flutter_launcher_icons:
   image_path: "assets/icon/ic_launcher.png"
   adaptive_icon_background: "#0A0A0C"
   adaptive_icon_foreground: "assets/icon/ic_launcher_foreground.png"
+
+hooks:
+  user_defines:
+    sqlite3:
+      source: system
 
 flutter:
   uses-material-design: true

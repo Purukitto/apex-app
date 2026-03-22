@@ -36,7 +36,7 @@ class PocketDetector {
     );
 
     _subscription = ProximitySensor.events
-        .map((value) => value == 0)
+        .map((value) => value > 0)
         .distinct()
         .transform(
           StreamTransformer<bool, bool>.fromHandlers(

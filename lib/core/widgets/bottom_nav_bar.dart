@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_colors.dart';
@@ -33,17 +35,17 @@ const _destinations = [
     label: 'Garage',
   ),
   _NavDestination(
+    route: '/rides',
+    icon: Icons.route_outlined,
+    activeIcon: Icons.route,
+    label: 'History',
+  ),
+  _NavDestination(
     route: '/ride',
     icon: Icons.play_arrow_rounded,
     activeIcon: Icons.play_arrow_rounded,
     label: 'Start Ride',
     isCta: true,
-  ),
-  _NavDestination(
-    route: '/rides',
-    icon: Icons.route_outlined,
-    activeIcon: Icons.route,
-    label: 'History',
   ),
 ];
 
@@ -72,38 +74,44 @@ class ApexBottomNavBar extends StatelessWidget {
       minimum: const EdgeInsets.only(bottom: 16),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xF01A1D20), Color(0xF0141416)],
-            ),
-            borderRadius: BorderRadius.circular(40),
-            border: Border.all(color: AppColors.cardBorder),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(_destinations.length, (index) {
-                final dest = _destinations[index];
-                final isActive = index == activeIndex;
-                if (dest.isCta) {
-                  return _RideCtaItem(
-                    destination: dest,
-                    isActive: isActive,
-                    accentColor: themeAccent,
-                    onTap: () => context.go(dest.route),
-                  );
-                }
-                return _NavItem(
-                  destination: dest,
-                  isActive: isActive,
-                  accentColor: themeAccent,
-                  onTap: () => context.go(dest.route),
-                );
-              }),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(40),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xB01A1D20), Color(0xB0141416)],
+                ),
+                borderRadius: BorderRadius.circular(40),
+                border: Border.all(color: AppColors.cardBorder),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(_destinations.length, (index) {
+                    final dest = _destinations[index];
+                    final isActive = index == activeIndex;
+                    if (dest.isCta) {
+                      return _RideCtaItem(
+                        destination: dest,
+                        isActive: isActive,
+                        accentColor: themeAccent,
+                        onTap: () => context.go(dest.route),
+                      );
+                    }
+                    return _NavItem(
+                      destination: dest,
+                      isActive: isActive,
+                      accentColor: themeAccent,
+                      onTap: () => context.go(dest.route),
+                    );
+                  }),
+                ),
+              ),
             ),
           ),
         ),

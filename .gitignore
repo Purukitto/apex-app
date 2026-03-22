@@ -44,6 +44,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Claude Code
+.claude/
+
 # Secrets & generated config
 .env
 lib/core/config/env.g.dart

@@ -1,6 +1,6 @@
 {
   "name": "apex-flutter",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "scripts": {
     "dev": "flutter run --flavor dev -t lib/main_dev.dart",
     "dev:release": "flutter run --flavor dev -t lib/main_dev.dart --release",
@@ -15,11 +15,13 @@
     "release": "standard-version",
     "release:minor": "standard-version --release-as minor",
     "release:major": "standard-version --release-as major",
-    "release:patch": "standard-version --release-as patch"
+    "release:patch": "standard-version --release-as patch",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.0.0",
     "@commitlint/config-conventional": "^19.0.0",
+    "husky": "^9.1.7",
     "standard-version": "^9.5.0"
   }
 }

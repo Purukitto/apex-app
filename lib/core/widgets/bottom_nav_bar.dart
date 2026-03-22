@@ -89,8 +89,7 @@ class ApexBottomNavBar extends StatelessWidget {
                 border: Border.all(color: AppColors.cardBorder),
               ),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: List.generate(_destinations.length, (index) {

@@ -18,7 +18,7 @@ jobs:
 
       - name: Ensure tag is on main branch
         run: |
-          if ! git branch --contains "$GITHUB_SHA" | grep -qE '(^|\s)main$'; then
+          if ! git branch -r --contains "$GITHUB_SHA" | grep -qE 'origin/main$'; then
             echo "::error::Tag is not on the main branch. Skipping release."
             exit 1
           fi

@@ -20,36 +20,43 @@ class FuelLogEntry {
   final DateTime createdAt;
 }
 
-/// Calculate average mileage from full tank logs.
+/// Calculate average mileage from the last 10 full-tank fill-ups.
 ///
-/// Formula: (LogB.odometer - LogA.odometer) / LogB.litres
-/// where LogA and LogB are the last two consecutive full tank logs
-/// sorted by odometer descending.
+/// Uses consecutive full-tank pairs: km/l = (odoB - odoA) / litresB.
+/// Averages across all valid pairs within the last 10 full-tank logs.
 double? calculateMileage(List<FuelLogEntry> fuelLogs) {
-  // Filter to only full tank logs, sorted by odometer descending
+  // Filter to only full tank logs, sorted by odometer descending, take last 10
   final fullTankLogs = fuelLogs.where((log) => log.isFullTank).toList()
     ..sort((a, b) => b.odometer.compareTo(a.odometer));
 
-  if (fullTankLogs.length < 2) {
+  final recent = fullTankLogs.take(10).toList();
+
+  if (recent.length < 2) {
     return null;
   }
 
-  final logB = fullTankLogs[0]; // Most recent
-  final logA = fullTankLogs[1]; // Previous
+  double totalMileage = 0;
+  int validPairs = 0;
 
-  if (logB.litres == 0) {
-    return null;
+  for (int i = 0; i < recent.length - 1; i++) {
+    final logB = recent[i];
+    final logA = recent[i + 1];
+
+    if (logB.litres == 0) continue;
+
+    final mileage = (logB.odometer - logA.odometer) / logB.litres;
+
+    // Skip invalid pairs (negative or unrealistic)
+    if (mileage <= 0 || mileage > 1000) continue;
+
+    totalMileage += mileage;
+    validPairs++;
   }
 
-  final mileage = (logB.odometer - logA.odometer) / logB.litres;
-
-  // Return null if result is invalid (negative or unrealistic)
-  if (mileage <= 0 || mileage > 1000) {
-    return null;
-  }
+  if (validPairs == 0) return null;
 
   // Round to 2 decimal places
-  return (mileage * 100).roundToDouble() / 100;
+  return ((totalMileage / validPairs) * 100).roundToDouble() / 100;
 }
 
 /// Get the most recent fuel price from fuel logs.

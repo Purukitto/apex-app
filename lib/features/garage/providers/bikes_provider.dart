@@ -168,9 +168,9 @@ class BikeActions {
   }) async {
     final now = DateTime.now();
 
-    await _db.bikesDao.upsert(
+    await _db.bikesDao.updateFields(
+      bikeId,
       BikesCompanion(
-        id: Value(bikeId),
         make: Value(make),
         model: Value(model),
         year: Value(year),

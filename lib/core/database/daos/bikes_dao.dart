@@ -66,6 +66,11 @@ class BikesDao extends DatabaseAccessor<AppDatabase> with _$BikesDaoMixin {
     );
   }
 
+  /// Update specific fields on an existing bike (proper UPDATE, not upsert).
+  Future<void> updateFields(String bikeId, BikesCompanion companion) {
+    return (update(bikes)..where((b) => b.id.equals(bikeId))).write(companion);
+  }
+
   /// Delete a bike by ID.
   Future<int> deleteById(String id) {
     return (delete(bikes)..where((b) => b.id.equals(id))).go();

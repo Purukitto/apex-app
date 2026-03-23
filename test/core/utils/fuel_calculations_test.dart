@@ -34,6 +34,18 @@ void main() {
       expect(calculateMileage(logs), 50.0);
     });
 
+    test('averages across multiple consecutive pairs', () {
+      final logs = [
+        makeLog(odometer: 100, litres: 5.0),
+        makeLog(odometer: 300, litres: 4.0),
+        makeLog(odometer: 500, litres: 5.0),
+      ];
+      // pair 1: (500 - 300) / 5.0 = 40.0
+      // pair 2: (300 - 100) / 4.0 = 50.0
+      // avg: (40.0 + 50.0) / 2 = 45.0
+      expect(calculateMileage(logs), 45.0);
+    });
+
     test('ignores non-full-tank logs', () {
       final logs = [
         makeLog(odometer: 100),
@@ -65,6 +77,18 @@ void main() {
       ];
       // (233 - 100) / 3.0 = 44.333...
       expect(calculateMileage(logs), 44.33);
+    });
+
+    test('uses only last 10 full-tank logs', () {
+      // Create 12 full-tank logs; oldest 2 should be ignored
+      final logs = List.generate(
+        12,
+        (i) => makeLog(odometer: (i + 1) * 100.0, litres: 5.0),
+      );
+      // Last 10 by odo desc: 1200, 1100, ..., 300
+      // Each pair: (next - prev) / litres = 100 / 5 = 20.0
+      // Average of 9 pairs all equal to 20.0 → 20.0
+      expect(calculateMileage(logs), 20.0);
     });
   });
 

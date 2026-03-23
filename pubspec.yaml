@@ -85,6 +85,7 @@ dependencies:
 
   # URL launcher (iOS App Store redirect)
   url_launcher: ^6.2.5
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:

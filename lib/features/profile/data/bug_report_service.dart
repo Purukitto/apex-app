@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -28,11 +30,14 @@ class BugReportService {
       throw Exception('Please sign in to submit a bug report');
     }
 
+    final userId = session.user.id;
+    final reporterTag = _generateReporterTag(userId);
     final logsText = AppLogger.getRecentLogsText();
     final body = await _buildBody(
       description: description,
       stepsToReproduce: stepsToReproduce,
       logsText: logsText,
+      reporterTag: reporterTag,
     );
 
     final prefixedTitle = title.trim().startsWith('[BUG]')
@@ -41,7 +46,12 @@ class BugReportService {
 
     final response = await Supabase.instance.client.functions.invoke(
       'create-bug-report',
-      body: {'title': prefixedTitle, 'body': body},
+      body: {
+        'title': prefixedTitle,
+        'body': body,
+        'reporterTag': reporterTag,
+        'userId': userId,
+      },
     );
 
     if (response.status != 200) {
@@ -58,10 +68,18 @@ class BugReportService {
     );
   }
 
+  /// Generate a short, deterministic, non-reversible tag from a user ID.
+  /// Safe to include in public issue trackers — not PII, not a real table key.
+  static String _generateReporterTag(String userId) {
+    final hash = sha256.convert(utf8.encode(userId)).toString();
+    return hash.substring(0, 8);
+  }
+
   static Future<String> _buildBody({
     required String description,
     String? stepsToReproduce,
     required String logsText,
+    required String reporterTag,
   }) async {
     final env = await _getEnvironmentInfo();
     final steps =
@@ -84,6 +102,7 @@ $steps
 - **Device**: ${env['device']}
 - **Screen**: ${env['screen']}
 - **App Version**: ${env['appVersion']}
+- **Reporter**: `$reporterTag`
 
 ## Logs (Last 150 lines)
 

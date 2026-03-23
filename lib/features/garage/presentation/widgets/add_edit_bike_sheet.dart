@@ -115,21 +115,24 @@ class _AddEditBikeSheetState extends ConsumerState<AddEditBikeSheet> {
 
     try {
       if (widget.isEdit) {
-        await actions.updateBike(
-          widget.bike!.id,
-          make: make,
-          model: model,
-          year: year,
-          nickName: nickname.isEmpty ? null : nickname,
-          currentOdo: odo,
-          imageUrl: imageUrl.isEmpty ? null : imageUrl,
-          specsEngine: engine.isEmpty ? null : engine,
-          specsPower: power.isEmpty ? null : power,
+        await ApexToast.promise(
+          context,
+          actions.updateBike(
+            widget.bike!.id,
+            make: make,
+            model: model,
+            year: year,
+            nickName: nickname.isEmpty ? null : nickname,
+            currentOdo: odo,
+            imageUrl: imageUrl.isEmpty ? null : imageUrl,
+            specsEngine: engine.isEmpty ? null : engine,
+            specsPower: power.isEmpty ? null : power,
+          ),
+          loading: 'Updating bike...',
+          success: 'Bike updated',
+          error: 'Failed to update bike',
         );
-        if (mounted) {
-          ApexToast.success(context, 'Bike updated successfully');
-          Navigator.of(context).pop();
-        }
+        if (mounted) Navigator.of(context).pop();
       } else {
         await ApexToast.promise(
           context,
@@ -256,16 +259,12 @@ class _AddEditBikeSheetState extends ConsumerState<AddEditBikeSheet> {
                           hint: '0',
                           keyboardType: TextInputType.number,
                           validator: (v) {
-                            if (!widget.isEdit) {
-                              if (v == null || v.trim().isEmpty) {
-                                return 'Required';
-                              }
+                            if (v == null || v.trim().isEmpty) {
+                              return 'Required';
                             }
-                            if (v != null && v.trim().isNotEmpty) {
-                              final odo = double.tryParse(v.trim());
-                              if (odo == null || odo < 0) {
-                                return 'Must be 0 or greater';
-                              }
+                            final odo = double.tryParse(v.trim());
+                            if (odo == null || odo < 0) {
+                              return 'Must be 0 or greater';
                             }
                             return null;
                           },

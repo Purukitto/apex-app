@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.4](https://github.com/Purukitto/apex-app/compare/v2.0.3...v2.0.4) (2026-03-24)
+
+
+### Bug Fixes
+
+* odometer edit, fuel odo sync, mileage avg, pagination, reporter tag ([44d4fc5](https://github.com/Purukitto/apex-app/commit/44d4fc55f79515ab5b65bab9682d60fc8dada148)), closes [#98](https://github.com/Purukitto/apex-app/issues/98)
+
 ### [2.0.3](https://github.com/Purukitto/apex-app/compare/v2.0.2...v2.0.3) (2026-03-22)
 
 

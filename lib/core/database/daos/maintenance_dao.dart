@@ -142,11 +142,15 @@ class MaintenanceDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
-  Stream<List<ServiceHistoryData>> watchHistoryForSchedule(String scheduleId) {
-    return (select(serviceHistory)
-          ..where((h) => h.scheduleId.equals(scheduleId))
-          ..orderBy([(h) => OrderingTerm.desc(h.serviceDate)]))
-        .watch();
+  Stream<List<ServiceHistoryData>> watchHistoryForSchedule(
+    String scheduleId, {
+    int? limit,
+  }) {
+    final query = select(serviceHistory)
+      ..where((h) => h.scheduleId.equals(scheduleId))
+      ..orderBy([(h) => OrderingTerm.desc(h.serviceDate)]);
+    if (limit != null) query.limit(limit);
+    return query.watch();
   }
 
   Future<void> upsertHistory(ServiceHistoryCompanion entry) {

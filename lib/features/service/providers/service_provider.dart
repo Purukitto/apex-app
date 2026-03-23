@@ -9,6 +9,9 @@ import '../../../core/utils/logger.dart';
 
 const _uuid = Uuid();
 
+/// Default page size for service history.
+const kServiceHistoryPageSize = 20;
+
 /// Watches all maintenance schedules for a specific bike.
 final schedulesStreamProvider =
     StreamProvider.family<List<MaintenanceSchedule>, String>((ref, bikeId) {
@@ -23,7 +26,20 @@ final serviceHistoryStreamProvider =
       return db.maintenanceDao.watchHistoryForBike(bikeId);
     });
 
-/// Watches service history for a specific schedule.
+/// Watches service history for a schedule with a limit.
+final scheduleHistoryPaginatedProvider =
+    StreamProvider.family<
+      List<ServiceHistoryData>,
+      ({String scheduleId, int limit})
+    >((ref, args) {
+      final db = ref.watch(databaseProvider);
+      return db.maintenanceDao.watchHistoryForSchedule(
+        args.scheduleId,
+        limit: args.limit,
+      );
+    });
+
+/// Watches all service history for a specific schedule (no limit).
 final scheduleHistoryStreamProvider =
     StreamProvider.family<List<ServiceHistoryData>, String>((ref, scheduleId) {
       final db = ref.watch(databaseProvider);

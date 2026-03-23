@@ -8,7 +8,21 @@ import '../../../core/utils/logger.dart';
 
 const _uuid = Uuid();
 
-/// Watches all fuel logs for a specific bike.
+/// Default page size for fuel logs.
+const kFuelLogsPageSize = 20;
+
+/// Watches fuel logs for a specific bike with a limit.
+/// Pass limit via the record key: (bikeId, limit).
+final fuelLogsPaginatedProvider =
+    StreamProvider.family<List<FuelLog>, ({String bikeId, int limit})>((
+      ref,
+      args,
+    ) {
+      final db = ref.watch(databaseProvider);
+      return db.fuelDao.watchForBike(args.bikeId, limit: args.limit);
+    });
+
+/// Watches all fuel logs for a specific bike (used by recalculation/stats).
 final fuelLogsStreamProvider = StreamProvider.family<List<FuelLog>, String>((
   ref,
   bikeId,
@@ -57,6 +71,7 @@ class FuelActions {
       ),
     );
 
+    await _updateBikeOdoIfHigher(bikeId, odometer);
     await _db.fuelDao.recalculateBikeStats(bikeId);
     AppLogger.i('Fuel log added for bike $bikeId');
   }
@@ -88,8 +103,17 @@ class FuelActions {
       ),
     );
 
+    await _updateBikeOdoIfHigher(bikeId, odometer);
     await _db.fuelDao.recalculateBikeStats(bikeId);
     AppLogger.i('Fuel log updated: $id');
+  }
+
+  /// Update the bike's odometer if the fuel log reading is higher.
+  Future<void> _updateBikeOdoIfHigher(String bikeId, double odo) async {
+    final bike = await _db.bikesDao.getById(bikeId);
+    if (bike != null && odo > bike.currentOdo) {
+      await _db.bikesDao.updateOdometer(bikeId, odo);
+    }
   }
 
   Future<void> deleteFuelLog(String id, String bikeId) async {

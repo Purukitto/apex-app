@@ -12,7 +12,7 @@ import 'add_edit_fuel_sheet.dart';
 import 'fuel_log_tile.dart';
 
 /// Bottom sheet showing all fuel logs for a bike.
-class FuelLogSheet extends ConsumerWidget {
+class FuelLogSheet extends ConsumerStatefulWidget {
   const FuelLogSheet({super.key, required this.bike});
 
   final Bike bike;
@@ -29,8 +29,19 @@ class FuelLogSheet extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final logsAsync = ref.watch(fuelLogsStreamProvider(bike.id));
+  ConsumerState<FuelLogSheet> createState() => _FuelLogSheetState();
+}
+
+class _FuelLogSheetState extends ConsumerState<FuelLogSheet> {
+  int _limit = kFuelLogsPageSize;
+
+  Bike get bike => widget.bike;
+
+  @override
+  Widget build(BuildContext context) {
+    final logsAsync = ref.watch(
+      fuelLogsPaginatedProvider((bikeId: bike.id, limit: _limit)),
+    );
     final displayName = bike.nickName?.isNotEmpty == true
         ? bike.nickName!
         : '${bike.make} ${bike.model}';
@@ -152,12 +163,25 @@ class FuelLogSheet extends ConsumerWidget {
     List<FuelLog> logs,
     ScrollController scrollController,
   ) {
+    final hasMore = logs.length >= _limit;
+
     return ListView.separated(
       controller: scrollController,
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-      itemCount: logs.length,
+      itemCount: logs.length + (hasMore ? 1 : 0),
       separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
+        if (index == logs.length) {
+          return Center(
+            child: TextButton(
+              onPressed: () => setState(() => _limit += kFuelLogsPageSize),
+              child: Text(
+                'Load more',
+                style: AppTypography.interSmall.copyWith(color: context.accent),
+              ),
+            ),
+          );
+        }
         final log = logs[index];
         return FuelLogTile(
           fuelLog: log,

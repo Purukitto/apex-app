@@ -11,7 +11,7 @@ import '../../../../core/widgets/glass_card.dart';
 import '../../providers/service_provider.dart';
 
 /// Bottom sheet showing service history for a maintenance schedule.
-class ServiceHistorySheet extends ConsumerWidget {
+class ServiceHistorySheet extends ConsumerStatefulWidget {
   const ServiceHistorySheet({super.key, required this.schedule});
 
   final MaintenanceSchedule schedule;
@@ -31,8 +31,23 @@ class ServiceHistorySheet extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final historyAsync = ref.watch(scheduleHistoryStreamProvider(schedule.id));
+  ConsumerState<ServiceHistorySheet> createState() =>
+      _ServiceHistorySheetState();
+}
+
+class _ServiceHistorySheetState extends ConsumerState<ServiceHistorySheet> {
+  int _limit = kServiceHistoryPageSize;
+
+  MaintenanceSchedule get schedule => widget.schedule;
+
+  @override
+  Widget build(BuildContext context) {
+    final historyAsync = ref.watch(
+      scheduleHistoryPaginatedProvider((
+        scheduleId: schedule.id,
+        limit: _limit,
+      )),
+    );
 
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -125,12 +140,26 @@ class ServiceHistorySheet extends ConsumerWidget {
     List<ServiceHistoryData> entries,
     ScrollController scrollController,
   ) {
+    final hasMore = entries.length >= _limit;
+
     return ListView.separated(
       controller: scrollController,
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-      itemCount: entries.length,
+      itemCount: entries.length + (hasMore ? 1 : 0),
       separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
+        if (index == entries.length) {
+          return Center(
+            child: TextButton(
+              onPressed: () =>
+                  setState(() => _limit += kServiceHistoryPageSize),
+              child: Text(
+                'Load more',
+                style: AppTypography.interSmall.copyWith(color: context.accent),
+              ),
+            ),
+          );
+        }
         final entry = entries[index];
         return _ServiceHistoryTile(
           entry: entry,

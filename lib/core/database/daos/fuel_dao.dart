@@ -12,11 +12,12 @@ class FuelDao extends DatabaseAccessor<AppDatabase> with _$FuelDaoMixin {
   FuelDao(super.db);
 
   /// Watch all fuel logs for a bike, ordered by date descending.
-  Stream<List<FuelLog>> watchForBike(String bikeId) {
-    return (select(fuelLogs)
-          ..where((f) => f.bikeId.equals(bikeId))
-          ..orderBy([(f) => OrderingTerm.desc(f.date)]))
-        .watch();
+  Stream<List<FuelLog>> watchForBike(String bikeId, {int? limit}) {
+    final query = select(fuelLogs)
+      ..where((f) => f.bikeId.equals(bikeId))
+      ..orderBy([(f) => OrderingTerm.desc(f.date)]);
+    if (limit != null) query.limit(limit);
+    return query.watch();
   }
 
   /// Get a single fuel log by ID.

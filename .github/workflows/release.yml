@@ -9,11 +9,19 @@ jobs:
   release:
     name: Build & Release APK
     runs-on: ubuntu-latest
-    if: github.event.base_ref == 'refs/heads/main' || github.ref == 'refs/heads/main'
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure tag is on main branch
+        run: |
+          if ! git branch --contains "$GITHUB_SHA" | grep -qE '(^|\s)main$'; then
+            echo "::error::Tag is not on the main branch. Skipping release."
+            exit 1
+          fi
 
       - name: Extract version from tag
         id: version

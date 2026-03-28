@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.purukitto.apex"
+    namespace = "xyz.purukitto.apex"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -22,7 +22,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.purukitto.apex"
+        applicationId = "xyz.purukitto.apex"
         minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

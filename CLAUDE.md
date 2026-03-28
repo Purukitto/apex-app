@@ -65,8 +65,8 @@ git push --follow-tags origin main   # triggers CI build + GitHub Release
 ### Build Flavors
 | Flavor | App ID | Entry Point |
 |--------|--------|-------------|
-| `dev` | `com.purukitto.apex.dev` | `lib/main_dev.dart` |
-| `prod` | `com.purukitto.apex` | `lib/main.dart` |
+| `dev` | `xyz.purukitto.apex.dev` | `lib/main_dev.dart` |
+| `prod` | `xyz.purukitto.apex` | `lib/main.dart` |
 
 ### Code Organization
 - `lib/core/` — shared infrastructure: database (Drift tables + DAOs), sync engine, Supabase client, theme system, services (Firebase, notifications, location), global Riverpod providers, utility functions

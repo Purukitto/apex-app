@@ -13,7 +13,7 @@ import '../utils/logger.dart';
 
 const _kLastUpdateCheckKey = 'last_update_check';
 const _kCheckIntervalHours = 24;
-const _kAppStoreId = 'com.purukitto.apex';
+const _kAppStoreId = 'xyz.purukitto.apex';
 
 /// Platform-aware update checker.
 ///

@@ -1,4 +1,4 @@
-package com.purukitto.apex
+package xyz.purukitto.apex
 
 import io.flutter.embedding.android.FlutterActivity
 

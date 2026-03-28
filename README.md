@@ -63,8 +63,8 @@ A motorcycle companion app built with Flutter — track rides, manage your garag
 
 | Flavour | App ID                    | App Name  | Entry Point          |
 |---------|---------------------------|-----------|----------------------|
-| `dev`   | `com.purukitto.apex.dev`  | Apex Dev  | `lib/main_dev.dart`  |
-| `prod`  | `com.purukitto.apex`      | Apex      | `lib/main.dart`      |
+| `dev`   | `xyz.purukitto.apex.dev`  | Apex Dev  | `lib/main_dev.dart`  |
+| `prod`  | `xyz.purukitto.apex`      | Apex      | `lib/main.dart`      |
 
 Both can be installed side-by-side on the same device.
 

@@ -10,7 +10,7 @@
 ///   FIREBASE_API_KEY
 ///
 /// Optional:
-///   FIREBASE_PACKAGE_NAME (defaults to com.purukitto.apex)
+///   FIREBASE_PACKAGE_NAME (defaults to xyz.purukitto.apex)
 ///
 /// Usage:
 ///   dart run tool/inject_google_services.dart          # writes prod only
@@ -31,7 +31,7 @@ void main(List<String> args) {
   final mobilesdkAppId = _env('FIREBASE_MOBILESDK_APP_ID');
   final apiKey = _env('FIREBASE_API_KEY');
   final packageName =
-      Platform.environment['FIREBASE_PACKAGE_NAME'] ?? 'com.purukitto.apex';
+      Platform.environment['FIREBASE_PACKAGE_NAME'] ?? 'xyz.purukitto.apex';
 
   final json = _buildGoogleServicesJson(
     projectNumber: projectNumber,

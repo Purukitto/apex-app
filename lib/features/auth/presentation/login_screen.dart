@@ -95,7 +95,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final response = await _supabase.auth.signUp(
         email: email,
         password: password,
-        emailRedirectTo: 'https://apex.purukitto.xyz/confirmed',
+        emailRedirectTo: 'https://purukitto.xyz/apex/confirm',
       );
 
       if (!mounted) return;
@@ -175,7 +175,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await _supabase.auth.resetPasswordForEmail(
         email,
-        redirectTo: 'https://apex.purukitto.xyz/reset-password',
+        redirectTo: 'https://purukitto.xyz/apex/reset-password',
       );
       if (mounted) {
         ApexToast.success(

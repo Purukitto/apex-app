@@ -913,40 +913,30 @@ class _AppSection extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-          // Made with love
+          // Made with intent
           Center(
             child: GestureDetector(
               onTap: () => launchUrl(
-                Uri.parse('https://github.com/Purukitto'),
+                Uri.parse('https://purukitto.xyz'),
                 mode: LaunchMode.externalApplication,
               ),
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'Made with ',
-                      style: AppTypography.interMuted.copyWith(fontSize: 12),
+              child: Column(
+                children: [
+                  Text(
+                    'Made with intent',
+                    style: AppTypography.interMuted.copyWith(fontSize: 12),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Purukitto.',
+                    style: AppTypography.interSmall.copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                      color: context.accent,
                     ),
-                    TextSpan(
-                      text: '<3',
-                      style: AppTypography.interMuted.copyWith(
-                        fontSize: 12,
-                        color: AppColors.error,
-                      ),
-                    ),
-                    TextSpan(
-                      text: ' by ',
-                      style: AppTypography.interMuted.copyWith(fontSize: 12),
-                    ),
-                    TextSpan(
-                      text: 'Purukitto',
-                      style: AppTypography.interSmall.copyWith(
-                        fontSize: 12,
-                        color: context.accent,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

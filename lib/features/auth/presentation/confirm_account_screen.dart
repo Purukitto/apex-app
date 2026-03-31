@@ -43,7 +43,7 @@ class _ConfirmAccountScreenState extends ConsumerState<ConfirmAccountScreen> {
         return;
       }
 
-      // Retry once after delay
+      // Retry after delay — deep link token exchange can be slow
       await Future.delayed(const Duration(milliseconds: kConfirmRetryDelayMs));
 
       if (!mounted) return;
@@ -51,11 +51,34 @@ class _ConfirmAccountScreenState extends ConsumerState<ConfirmAccountScreen> {
 
       if (retrySession != null) {
         await _handleConfirmed(client);
-      } else {
-        setState(() => _state = _ConfirmState.invalid);
-        if (mounted) {
-          ApexToast.error(context, 'Invalid or expired confirmation link');
+        return;
+      }
+
+      // No session yet — but the user may already be verified server-side.
+      // This happens when the token exchange races with the confirmation.
+      // Check the current user object (cached from the deep link callback).
+      final user = client.auth.currentUser;
+      if (user != null && user.emailConfirmedAt != null) {
+        await _handleConfirmed(client);
+        return;
+      }
+
+      // Final fallback: try refreshing the session in case the token was
+      // processed but the local state hasn't caught up yet.
+      try {
+        final refreshed = await client.auth.refreshSession();
+        if (!mounted) return;
+        if (refreshed.session != null) {
+          await _handleConfirmed(client);
+          return;
         }
+      } catch (_) {
+        // refresh failed — fall through to invalid
+      }
+
+      if (mounted) {
+        setState(() => _state = _ConfirmState.invalid);
+        ApexToast.error(context, 'Invalid or expired confirmation link');
       }
     } catch (e) {
       AppLogger.e('Confirm account error', e);

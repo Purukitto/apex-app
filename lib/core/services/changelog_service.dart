@@ -45,9 +45,9 @@ class ChangelogService {
     Map<String, List<String>> currentSections = {};
 
     for (final line in lines) {
-      // Release header: ## [1.0.0](link) (2026-03-20) or ## 1.0.0 (2026-03-20)
+      // Release header: ## [1.0.0](link) (2026-03-20) or ### [1.0.0]... or ## 1.0.0 (2026-03-20)
       final releaseMatch = RegExp(
-        r'^## \[?(\d+\.\d+\.\d+)\]?.*?\((\d{4}-\d{2}-\d{2})\)',
+        r'^#{2,3} \[?(\d+\.\d+\.\d+)\]?.*?\((\d{4}-\d{2}-\d{2})\)',
       ).firstMatch(line);
       if (releaseMatch != null) {
         // Save previous release

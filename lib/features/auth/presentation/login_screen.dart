@@ -108,10 +108,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       // Email confirmation required
       if (response.user?.emailConfirmedAt == null && response.session == null) {
-        ApexToast.success(
-          context,
-          'Please check your email to confirm your account',
-        );
+        await _showEmailConfirmationDialog(email);
         _emailController.clear();
         _passwordController.clear();
         setState(() => _isSignUp = false);
@@ -129,6 +126,48 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _showEmailConfirmationDialog(String email) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black87,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: GlassCard(
+          isAccent: true,
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.mark_email_read_outlined,
+                  color: context.accent, size: 48),
+              const SizedBox(height: 20),
+              Text(
+                'Verify Your Email',
+                style: AppTypography.playfairDisplay.copyWith(fontSize: 22),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'We sent a confirmation link to $email. '
+                'Please check your inbox and verify your email, '
+                'then return here to sign in.',
+                style: AppTypography.interSecondary.copyWith(height: 1.5),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ApexButton(
+                label: 'Got It',
+                onPressed: () => Navigator.of(ctx).pop(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _pollAndNavigate() async {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:vibration/vibration.dart';
 
 import '../../../core/database/app_database.dart';
@@ -87,13 +88,32 @@ class _RideScreenState extends ConsumerState<RideScreen> {
 
     // Check location permission
     final locationService = LocationService();
-    final hasPermission = await locationService.checkAndRequestPermission();
-    if (!hasPermission) {
+    final permResult = await locationService.checkAndRequestPermission();
+    if (permResult != LocationPermissionResult.granted) {
       if (mounted) {
-        ApexToast.error(
-          context,
-          'Location permission required to record rides',
-        );
+        switch (permResult) {
+          case LocationPermissionResult.serviceDisabled:
+            ApexToast.error(
+              context,
+              'Location services are turned off',
+              actionLabel: 'Settings',
+              onAction: () => Geolocator.openLocationSettings(),
+            );
+          case LocationPermissionResult.deniedForever:
+            ApexToast.error(
+              context,
+              'Location permission permanently denied',
+              actionLabel: 'Settings',
+              onAction: () => Geolocator.openAppSettings(),
+            );
+          case LocationPermissionResult.denied:
+            ApexToast.error(
+              context,
+              'Location permission required to record rides',
+            );
+          default:
+            break;
+        }
       }
       return;
     }

@@ -151,7 +151,10 @@ class BikeActions {
       ),
     );
 
-    await _db.maintenanceDao.initializeDefaultSchedules(bikeId);
+    await _db.maintenanceDao.initializeDefaultSchedules(
+      bikeId,
+      currentOdo: currentOdo,
+    );
     AppLogger.i('Bike added: $make $model ($bikeId)');
   }
 

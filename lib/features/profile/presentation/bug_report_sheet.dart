@@ -18,6 +18,7 @@ class BugReportSheet extends StatefulWidget {
       useSafeArea: true,
       useRootNavigator: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.black87,
       builder: (_) => const BugReportSheet(),
     );
   }

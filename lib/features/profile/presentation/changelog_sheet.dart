@@ -25,6 +25,7 @@ class ChangelogSheet {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.black87,
       builder: (_) => _ChangelogContent(releases: releases),
     );
   }

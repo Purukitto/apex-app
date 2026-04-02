@@ -111,8 +111,15 @@ class MaintenanceDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// Create default maintenance schedules for a newly added bike.
-  Future<void> initializeDefaultSchedules(String bikeId) async {
+  ///
+  /// Sets [lastServiceDate] and [lastServiceOdo] to the current values so
+  /// that health starts at 100 % and notifications are not fired immediately.
+  Future<void> initializeDefaultSchedules(
+    String bikeId, {
+    required double currentOdo,
+  }) async {
     final now = DateTime.now();
+    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     await batch((b) {
       b.insertAll(
         maintenanceSchedules,
@@ -127,6 +134,8 @@ class MaintenanceDao extends DatabaseAccessor<AppDatabase>
             createdAt: now,
             isSynced: const Value(false),
             lastModified: now,
+            lastServiceDate: Value(todayStr),
+            lastServiceOdo: Value(currentOdo),
           );
         }).toList(),
       );

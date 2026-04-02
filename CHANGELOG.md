@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.7](https://github.com/Purukitto/apex-app/compare/v2.0.6...v2.0.7) (2026-04-02)
+
+
+### Bug Fixes
+
+* maintain bottom nav back stack with double-back-to-exit ([4436b36](https://github.com/Purukitto/apex-app/commit/4436b36cd9e36e50775471254d2630fbd1a49d29))
+* make bottom sheet modals fully opaque ([71fd1f0](https://github.com/Purukitto/apex-app/commit/71fd1f0cae60ec650e39ccc0d905ef686a2a9fc0))
+* move toasts to top of screen using overlay ([9c7891e](https://github.com/Purukitto/apex-app/commit/9c7891e19318782d4c45c476257cc744506e7d02))
+* prompt user to enable location services when GPS is off ([6d8f55b](https://github.com/Purukitto/apex-app/commit/6d8f55b138fd76f09be3b39e3c4e449af1d6c0d9))
+* reduce end-ride hold duration to 1s and show hint toast ([30cd122](https://github.com/Purukitto/apex-app/commit/30cd12220446e9ae0957314c9ab9a83900ee3a14))
+* suppress maintenance notifications for newly added bikes ([6c9e416](https://github.com/Purukitto/apex-app/commit/6c9e4166ee44136e381656dcd5ddaa6c75176537))
+
+
+### Chores
+
+* merge fix/ux-improvements into main ([c116a82](https://github.com/Purukitto/apex-app/commit/c116a82990957ddca4676d36c1f8ac3362104111))
+* sync package.json version to 2.0.6 ([a4b3a03](https://github.com/Purukitto/apex-app/commit/a4b3a0398e30e8cad1e597890c43bd3f91fc5a92))
+
 ### [2.0.4](https://github.com/Purukitto/apex-app/compare/v2.0.3...v2.0.4) (2026-03-24)
 
 

@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.8](https://github.com/Purukitto/apex-app/compare/v2.0.7...v2.0.8) (2026-04-02)
+
+
+### Bug Fixes
+
+* format code and fix pubspec version sync in release process ([d586684](https://github.com/Purukitto/apex-app/commit/d5866845cd5361477bfbafaaa0c01f08e2006bd6))
+
+
+### Chores
+
+* fix release process to include pubspec.yaml in version commits ([b9d7d86](https://github.com/Purukitto/apex-app/commit/b9d7d86091b04d388e5a0943d7e4ae50a3a89396))
+* sync pubspec.yaml version to 2.0.7 ([edc4f62](https://github.com/Purukitto/apex-app/commit/edc4f625e65f86f8f6af67db36c086c8af5d6c19))
+
 ### [2.0.7](https://github.com/Purukitto/apex-app/compare/v2.0.6...v2.0.7) (2026-04-02)
 
 

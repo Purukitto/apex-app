@@ -1,10 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import 'constants.dart';
 
-/// App-wide toast utility. Use ApexToast — never show SnackBars directly.
+/// App-wide toast utility. Shows overlay-based toasts at the top of the screen.
 class ApexToast {
   ApexToast._();
+
+  static OverlayEntry? _currentEntry;
+  static Timer? _dismissTimer;
 
   static void success(BuildContext context, String message) {
     _show(
@@ -32,7 +37,7 @@ class ApexToast {
     );
   }
 
-  /// Show a loading snackbar while [future] runs, then replace with
+  /// Show a loading toast while [future] runs, then replace with
   /// success or error message on completion.
   static Future<T> promise<T>(
     BuildContext context,
@@ -41,26 +46,22 @@ class ApexToast {
     required String success,
     String? error,
   }) async {
-    final messenger = ScaffoldMessenger.of(context);
-
-    // Show loading snack (persistent until we remove it)
-    final controller = messenger.showSnackBar(
-      _buildSnackBar(
-        message: loading,
-        borderColor: AppColors.textMuted,
-        duration: const Duration(days: 1), // dismissed manually
-      ),
+    _show(
+      context,
+      message: loading,
+      borderColor: AppColors.textMuted,
+      duration: const Duration(days: 1), // dismissed manually
     );
 
     try {
       final result = await future;
-      messenger.hideCurrentSnackBar();
+      _dismiss();
       if (context.mounted) {
         ApexToast.success(context, success);
       }
       return result;
     } catch (e) {
-      messenger.hideCurrentSnackBar();
+      _dismiss();
       if (context.mounted) {
         ApexToast.error(
           context,
@@ -68,9 +69,14 @@ class ApexToast {
         );
       }
       rethrow;
-    } finally {
-      controller.close();
     }
+  }
+
+  static void _dismiss() {
+    _dismissTimer?.cancel();
+    _dismissTimer = null;
+    _currentEntry?.remove();
+    _currentEntry = null;
   }
 
   static void _show(
@@ -81,66 +87,32 @@ class ApexToast {
     VoidCallback? onAction,
     String? actionLabel,
   }) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        _buildSnackBar(
-          message: message,
-          borderColor: borderColor,
-          duration: duration,
-          onAction: onAction,
-          actionLabel: actionLabel,
-        ),
-      );
-  }
+    _dismiss();
 
-  static SnackBar _buildSnackBar({
-    required String message,
-    required Color borderColor,
-    required Duration duration,
-    VoidCallback? onAction,
-    String? actionLabel,
-  }) {
-    return SnackBar(
-      duration: duration,
-      behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      backgroundColor: AppColors.backgroundDark,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.cardBorder),
+    final overlay = Overlay.of(context, rootOverlay: true);
+
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (context) => _ToastOverlay(
+        message: message,
+        borderColor: borderColor,
+        onAction: onAction,
+        actionLabel: actionLabel,
+        onDismiss: () {
+          _dismissTimer?.cancel();
+          _dismissTimer = null;
+          entry.remove();
+          if (_currentEntry == entry) _currentEntry = null;
+        },
       ),
-      content: Row(
-        children: [
-          Container(
-            width: 3,
-            height: 36,
-            decoration: BoxDecoration(
-              color: borderColor,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w300,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ],
-      ),
-      action: (onAction != null && actionLabel != null)
-          ? SnackBarAction(
-              label: actionLabel,
-              textColor: borderColor,
-              onPressed: onAction,
-            )
-          : null,
     );
+
+    _currentEntry = entry;
+    overlay.insert(entry);
+
+    if (duration.inDays < 1) {
+      _dismissTimer = Timer(duration, _dismiss);
+    }
   }
 
   /// Truncates [text] to [maxLen] characters at a word boundary.
@@ -151,5 +123,139 @@ class ApexToast {
     return lastSpace > 0
         ? '${truncated.substring(0, lastSpace)}…'
         : '$truncated…';
+  }
+}
+
+class _ToastOverlay extends StatefulWidget {
+  const _ToastOverlay({
+    required this.message,
+    required this.borderColor,
+    required this.onDismiss,
+    this.onAction,
+    this.actionLabel,
+  });
+
+  final String message;
+  final Color borderColor;
+  final VoidCallback onDismiss;
+  final VoidCallback? onAction;
+  final String? actionLabel;
+
+  @override
+  State<_ToastOverlay> createState() => _ToastOverlayState();
+}
+
+class _ToastOverlayState extends State<_ToastOverlay>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<Offset> _slideAnimation;
+  late final Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, -1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(_controller);
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+
+    return Positioned(
+      top: topPadding + 8,
+      left: 16,
+      right: 16,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Material(
+            color: Colors.transparent,
+            child: GestureDetector(
+              onVerticalDragEnd: (details) {
+                // Swipe up to dismiss
+                if (details.velocity.pixelsPerSecond.dy < -100) {
+                  widget.onDismiss();
+                }
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundDark,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.cardBorder),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 3,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: widget.borderColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        widget.message,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w300,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    if (widget.onAction != null && widget.actionLabel != null)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: GestureDetector(
+                          onTap: () {
+                            widget.onAction!();
+                            widget.onDismiss();
+                          },
+                          child: Text(
+                            widget.actionLabel!,
+                            style: TextStyle(
+                              color: widget.borderColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

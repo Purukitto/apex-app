@@ -3,8 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/toast.dart';
 
-/// Long-press stop button — wide bar style with 3 second hold progress fill.
+/// Long-press stop button — wide bar style with 1 second hold progress fill.
 class LongPressStopButton extends StatefulWidget {
   const LongPressStopButton({super.key, required this.onStop});
 
@@ -19,7 +20,7 @@ class _LongPressStopButtonState extends State<LongPressStopButton>
   late final AnimationController _controller;
   bool _holding = false;
 
-  static const _holdDuration = Duration(milliseconds: 3000);
+  static const _holdDuration = Duration(milliseconds: 1000);
 
   @override
   void initState() {
@@ -46,12 +47,16 @@ class _LongPressStopButtonState extends State<LongPressStopButton>
     _controller.forward(from: 0);
   }
 
-  void _onUp(TapUpDetails _) => _cancel();
+  void _onUp(TapUpDetails _) => _cancel(showHint: true);
   void _onCancel() => _cancel();
 
-  void _cancel() {
+  void _cancel({bool showHint = false}) {
+    final wasHolding = _holding && _controller.status != AnimationStatus.completed;
     _controller.reset();
     setState(() => _holding = false);
+    if (showHint && wasHolding) {
+      ApexToast.success(context, 'Hold to end ride');
+    }
   }
 
   @override

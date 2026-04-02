@@ -51,7 +51,8 @@ class _LongPressStopButtonState extends State<LongPressStopButton>
   void _onCancel() => _cancel();
 
   void _cancel({bool showHint = false}) {
-    final wasHolding = _holding && _controller.status != AnimationStatus.completed;
+    final wasHolding =
+        _holding && _controller.status != AnimationStatus.completed;
     _controller.reset();
     setState(() => _holding = false);
     if (showHint && wasHolding) {

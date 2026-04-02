@@ -119,7 +119,8 @@ class MaintenanceDao extends DatabaseAccessor<AppDatabase>
     required double currentOdo,
   }) async {
     final now = DateTime.now();
-    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final todayStr =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     await batch((b) {
       b.insertAll(
         maintenanceSchedules,

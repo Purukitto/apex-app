@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
-/// Reads the version from package.json and writes it to pubspec.yaml.
+/// Reads the version from package.json and writes it to pubspec.yaml,
+/// then stages the file so standard-version includes it in the release commit.
 /// Called as a standard-version postbump hook.
 library;
 
@@ -24,4 +25,10 @@ void main() {
 
   pubspecFile.writeAsStringSync(updated);
   print('Synced pubspec.yaml to version $version+1');
+
+  // Stage so standard-version includes it in the release commit
+  final result = Process.runSync('git', ['add', 'pubspec.yaml']);
+  if (result.exitCode != 0) {
+    print('Warning: failed to stage pubspec.yaml: ${result.stderr}');
+  }
 }

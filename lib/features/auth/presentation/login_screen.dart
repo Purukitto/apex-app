@@ -142,8 +142,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.mark_email_read_outlined,
-                  color: context.accent, size: 48),
+              Icon(
+                Icons.mark_email_read_outlined,
+                color: context.accent,
+                size: 48,
+              ),
               const SizedBox(height: 20),
               Text(
                 'Verify Your Email',

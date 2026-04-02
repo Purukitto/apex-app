@@ -13,13 +13,14 @@
     { "type": "revert", "section": "Reverts" },
     { "type": "security", "section": "Security" }
   ],
-  "scripts": {
-    "postbump": "dart run tool/sync_version.dart"
-  },
   "bumpFiles": [
     {
       "filename": "package.json",
       "type": "json"
+    },
+    {
+      "filename": "pubspec.yaml",
+      "updater": "tool/pubspec-updater.js"
     }
   ]
 }

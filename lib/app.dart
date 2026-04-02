@@ -189,6 +189,29 @@ class _AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<_AppShell> {
   DateTime? _lastBackPress;
 
+  /// Navigation history stack (no consecutive duplicates).
+  /// Dashboard is the implicit root and is not stored in the stack.
+  static final List<String> _navHistory = [];
+
+  @override
+  void didUpdateWidget(covariant _AppShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentLocation != widget.currentLocation) {
+      _pushToHistory(widget.currentLocation);
+    }
+  }
+
+  void _pushToHistory(String location) {
+    // Don't store dashboard — it's the implicit root
+    if (location == '/dashboard') {
+      _navHistory.clear();
+      return;
+    }
+    // Remove if already in history (avoids duplicates)
+    _navHistory.remove(location);
+    _navHistory.add(location);
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeState = ref.watch(themeProvider);
@@ -205,8 +228,16 @@ class _AppShellState extends ConsumerState<_AppShell> {
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
 
-        // If not on dashboard, go to dashboard first
+        // Pop from navigation history if available
+        if (_navHistory.length > 1) {
+          _navHistory.removeLast();
+          context.go(_navHistory.last);
+          return;
+        }
+
+        // Go to dashboard if not already there
         if (widget.currentLocation != '/dashboard') {
+          _navHistory.clear();
           context.go('/dashboard');
           return;
         }

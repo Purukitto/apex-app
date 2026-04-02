@@ -269,6 +269,7 @@ class _EmailRowState extends ConsumerState<_EmailRow> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.black87,
       builder: (ctx) => _EmailChangeSheet(currentEmail: widget.email),
     );
   }
@@ -390,6 +391,7 @@ class _EmailChangeSheetState extends ConsumerState<_EmailChangeSheet> {
         child: GlassCard(
           padding: const EdgeInsets.all(24),
           borderRadius: 20,
+          opaque: true,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -517,6 +519,7 @@ class _ChangePasswordRow extends ConsumerWidget {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.black87,
       builder: (ctx) => const _ChangePasswordSheet(),
     );
   }
@@ -618,6 +621,7 @@ class _ChangePasswordSheetState extends ConsumerState<_ChangePasswordSheet> {
         child: GlassCard(
           padding: const EdgeInsets.all(24),
           borderRadius: 20,
+          opaque: true,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -1,20 +1,17 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 
 class _NavDestination {
   const _NavDestination({
-    required this.route,
     required this.icon,
     required this.activeIcon,
     required this.label,
     this.isCta = false,
   });
 
-  final String route;
   final IconData icon;
   final IconData activeIcon;
   final String label;
@@ -23,25 +20,21 @@ class _NavDestination {
 
 const _destinations = [
   _NavDestination(
-    route: '/dashboard',
     icon: Icons.home_outlined,
     activeIcon: Icons.home,
     label: 'Home',
   ),
   _NavDestination(
-    route: '/garage',
     icon: Icons.two_wheeler_outlined,
     activeIcon: Icons.two_wheeler,
     label: 'Garage',
   ),
   _NavDestination(
-    route: '/rides',
     icon: Icons.route_outlined,
     activeIcon: Icons.route,
     label: 'History',
   ),
   _NavDestination(
-    route: '/ride',
     icon: Icons.play_arrow_rounded,
     activeIcon: Icons.play_arrow_rounded,
     label: 'Start Ride',
@@ -51,22 +44,17 @@ const _destinations = [
 
 /// Floating pill bottom navigation bar.
 class ApexBottomNavBar extends StatelessWidget {
-  const ApexBottomNavBar({super.key, required this.currentLocation});
+  const ApexBottomNavBar({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
 
-  final String currentLocation;
-
-  int get _currentIndex {
-    for (int i = 0; i < _destinations.length; i++) {
-      if (currentLocation.startsWith(_destinations[i].route)) {
-        return i;
-      }
-    }
-    return 0;
-  }
+  final int currentIndex;
+  final ValueChanged<int> onTap;
 
   @override
   Widget build(BuildContext context) {
-    final activeIndex = _currentIndex;
     final themeAccent = Theme.of(context).colorScheme.primary;
 
     return SafeArea(
@@ -94,20 +82,20 @@ class ApexBottomNavBar extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: List.generate(_destinations.length, (index) {
                     final dest = _destinations[index];
-                    final isActive = index == activeIndex;
+                    final isActive = index == currentIndex;
                     if (dest.isCta) {
                       return _RideCtaItem(
                         destination: dest,
                         isActive: isActive,
                         accentColor: themeAccent,
-                        onTap: () => context.go(dest.route),
+                        onTap: () => onTap(index),
                       );
                     }
                     return _NavItem(
                       destination: dest,
                       isActive: isActive,
                       accentColor: themeAccent,
-                      onTap: () => context.go(dest.route),
+                      onTap: () => onTap(index),
                     );
                   }),
                 ),

@@ -113,27 +113,43 @@ class _ApexAppState extends ConsumerState<ApexApp> {
           builder: (context, state) => const ResetPasswordScreen(),
         ),
 
-        // Shell routes — tabbed navigation
-        ShellRoute(
-          builder: (context, state, child) {
-            return _AppShell(currentLocation: state.uri.path, child: child);
+        // Stateful shell — each tab keeps its own navigator and state
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) {
+            return _AppShell(navigationShell: navigationShell);
           },
-          routes: [
-            GoRoute(
-              path: '/dashboard',
-              builder: (context, state) => const DashboardScreen(),
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/dashboard',
+                  builder: (context, state) => const DashboardScreen(),
+                ),
+              ],
             ),
-            GoRoute(
-              path: '/garage',
-              builder: (context, state) => const GarageScreen(),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/garage',
+                  builder: (context, state) => const GarageScreen(),
+                ),
+              ],
             ),
-            GoRoute(
-              path: '/ride',
-              builder: (context, state) => const RideScreen(),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/rides',
+                  builder: (context, state) => const AllRidesScreen(),
+                ),
+              ],
             ),
-            GoRoute(
-              path: '/rides',
-              builder: (context, state) => const AllRidesScreen(),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/ride',
+                  builder: (context, state) => const RideScreen(),
+                ),
+              ],
             ),
           ],
         ),
@@ -177,10 +193,9 @@ class _ApexAppState extends ConsumerState<ApexApp> {
 }
 
 class _AppShell extends ConsumerStatefulWidget {
-  const _AppShell({required this.currentLocation, required this.child});
+  const _AppShell({required this.navigationShell});
 
-  final String currentLocation;
-  final Widget child;
+  final StatefulNavigationShell navigationShell;
 
   @override
   ConsumerState<_AppShell> createState() => _AppShellState();
@@ -189,27 +204,34 @@ class _AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<_AppShell> {
   DateTime? _lastBackPress;
 
-  /// Navigation history stack (no consecutive duplicates).
-  /// Dashboard is the implicit root and is not stored in the stack.
-  static final List<String> _navHistory = [];
+  /// Stack of visited branch indices for cross-tab back navigation.
+  /// Index 0 (dashboard) is the implicit root and always the bottom.
+  final List<int> _branchHistory = [0];
+
+  int get _currentIndex => widget.navigationShell.currentIndex;
 
   @override
   void didUpdateWidget(covariant _AppShell oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentLocation != widget.currentLocation) {
-      _pushToHistory(widget.currentLocation);
+    final newIndex = widget.navigationShell.currentIndex;
+    final oldIndex = oldWidget.navigationShell.currentIndex;
+    if (newIndex != oldIndex) {
+      _pushBranch(newIndex);
     }
   }
 
-  void _pushToHistory(String location) {
-    // Don't store dashboard — it's the implicit root
-    if (location == '/dashboard') {
-      _navHistory.clear();
-      return;
-    }
-    // Remove if already in history (avoids duplicates)
-    _navHistory.remove(location);
-    _navHistory.add(location);
+  void _pushBranch(int index) {
+    // Remove existing entry to avoid duplicates, then push
+    _branchHistory.remove(index);
+    _branchHistory.add(index);
+  }
+
+  void _onTabTapped(int index) {
+    // Switch to the branch, preserving its existing state
+    widget.navigationShell.goBranch(
+      index,
+      initialLocation: index == _currentIndex,
+    );
   }
 
   @override
@@ -228,21 +250,22 @@ class _AppShellState extends ConsumerState<_AppShell> {
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
 
-        // Pop from navigation history if available
-        if (_navHistory.length > 1) {
-          _navHistory.removeLast();
-          context.go(_navHistory.last);
+        // If the current branch's navigator can pop, let it
+        final router = GoRouter.of(context);
+        if (router.canPop()) {
+          router.pop();
           return;
         }
 
-        // Go to dashboard if not already there
-        if (widget.currentLocation != '/dashboard') {
-          _navHistory.clear();
-          context.go('/dashboard');
+        // Cross-tab back: pop the history stack
+        if (_branchHistory.length > 1) {
+          _branchHistory.removeLast();
+          final previousIndex = _branchHistory.last;
+          widget.navigationShell.goBranch(previousIndex);
           return;
         }
 
-        // On dashboard: double-back to exit
+        // At dashboard root: double-back to exit
         final now = DateTime.now();
         if (_lastBackPress != null &&
             now.difference(_lastBackPress!) < const Duration(seconds: 2)) {
@@ -255,10 +278,16 @@ class _AppShellState extends ConsumerState<_AppShell> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         extendBody: true,
-        body: MeshBackground(backgroundColor: bgColor, child: widget.child),
+        body: MeshBackground(
+          backgroundColor: bgColor,
+          child: widget.navigationShell,
+        ),
         bottomNavigationBar: hideNav
             ? null
-            : ApexBottomNavBar(currentLocation: widget.currentLocation),
+            : ApexBottomNavBar(
+                currentIndex: _currentIndex,
+                onTap: _onTabTapped,
+              ),
       ),
     );
   }

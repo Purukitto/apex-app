@@ -95,3 +95,7 @@ jobs:
             --notes-file /tmp/release_notes.md
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger website rebuild
+        if: success()
+        run: curl -s -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}"

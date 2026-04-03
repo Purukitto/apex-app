@@ -1,6 +1,6 @@
 {
   "name": "apex-flutter",
-  "version": "2.0.8",
+  "version": "2.0.9",
   "scripts": {
     "dev": "flutter run --flavor dev -t lib/main_dev.dart",
     "dev:release": "flutter run --flavor dev -t lib/main_dev.dart --release",

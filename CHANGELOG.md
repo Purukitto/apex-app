@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.9](https://github.com/Purukitto/apex-app/compare/v2.0.8...v2.0.9) (2026-04-03)
+
+
+### Bug Fixes
+
+* migrate to StatefulShellRoute for proper back navigation ([0dc13a0](https://github.com/Purukitto/apex-app/commit/0dc13a030493e5cb9ff6b095089734b615c71671))
+
+
+### Chores
+
+* merge fix/back-navigation into main ([ab2cf24](https://github.com/Purukitto/apex-app/commit/ab2cf248bc61961f129feb67b9485c91ada6c972))
+
 ### [2.0.8](https://github.com/Purukitto/apex-app/compare/v2.0.7...v2.0.8) (2026-04-02)
 
 

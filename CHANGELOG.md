@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.10](https://github.com/Purukitto/apex-app/compare/v2.0.9...v2.0.10) (2026-04-26)
+
+
+### Bug Fixes
+
+* write maintenance log and update odo on service completion ([33a712c](https://github.com/Purukitto/apex-app/commit/33a712cbef6ddd310ef21fcb49a59474995b0c7f))
+
+
+### CI/CD
+
+* trigger website rebuild on new release ([6f10375](https://github.com/Purukitto/apex-app/commit/6f10375ab605f0bee49e6f66fac9369a94522e1e))
+
 ### [2.0.9](https://github.com/Purukitto/apex-app/compare/v2.0.8...v2.0.9) (2026-04-03)
 
 

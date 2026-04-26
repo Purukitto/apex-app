@@ -33,10 +33,11 @@ npm run release:major    # 1.0.0 → 2.0.0
 
 1. Reads commits since the last tag
 2. Determines bump type from conventional commits (`feat:` = minor, `fix:` = patch)
-3. Bumps version in `package.json`
-4. Runs `dart run tool/sync_version.dart` (postbump hook) to sync `pubspec.yaml`
-5. Updates `CHANGELOG.md`
-6. Creates a git commit (`chore(release): x.y.z`) and tag (`vx.y.z`)
+3. Bumps version in both `package.json` and `pubspec.yaml` via `bumpFiles` in `.versionrc.json`
+   - `package.json`: updated to `x.y.z` (standard JSON updater)
+   - `pubspec.yaml`: updated to `x.y.z+1` via `tool/pubspec-updater.js` (custom updater)
+4. Updates `CHANGELOG.md`
+5. Creates a git commit (`chore(release): x.y.z`) and tag (`vx.y.z`)
 
 ## GitHub Secrets Required
 

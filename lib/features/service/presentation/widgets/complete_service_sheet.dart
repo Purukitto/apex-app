@@ -84,6 +84,7 @@ class _CompleteServiceSheetState extends ConsumerState<CompleteServiceSheet> {
         actions.completeService(
           scheduleId: widget.schedule.id,
           bikeId: widget.bike.id,
+          serviceType: widget.schedule.partName,
           serviceOdo: odo,
           cost: cost,
           notes: notes,

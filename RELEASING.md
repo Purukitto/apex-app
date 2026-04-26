@@ -5,21 +5,32 @@ Everything is automated — you just need to run one command and push.
 ## Quick Release
 
 ```bash
-# 1. Make sure you're on main with a clean working tree
+# 1. Merge your PR first, then switch to main
 git checkout main
 git pull origin main
 
 # 2. Bump version + generate changelog (auto-detects from commit types)
 npm run release
 
-# 3. Push the version commit + tag
-git push --follow-tags origin main
+# 3. Push — the CI release workflow fires automatically on the chore(release) commit
+git push origin main
 ```
 
 That's it. The GitHub Actions `release.yml` workflow will:
 - Build a signed release APK (`--flavor prod`)
 - Extract release notes from CHANGELOG.md
 - Create a GitHub Release with the APK attached
+
+> **Important:** Never run `npm run release` on a feature branch. The release
+> workflow triggers on push to `main` when the HEAD commit is `chore(release): x.y.z`.
+> Running it on a branch means the trigger fires before the PR is merged and will fail.
+
+## Re-triggering a Failed Release
+
+If the workflow didn't fire (e.g. the `chore(release)` commit was already on main
+before the workflow fix), use the manual trigger:
+
+GitHub → Actions → Release → **Run workflow** → enter the version number (e.g. `2.0.10`).
 
 ## Forcing a Version Bump
 
@@ -37,7 +48,7 @@ npm run release:major    # 1.0.0 → 2.0.0
    - `package.json`: updated to `x.y.z` (standard JSON updater)
    - `pubspec.yaml`: updated to `x.y.z+1` via `tool/pubspec-updater.js` (custom updater)
 4. Updates `CHANGELOG.md`
-5. Creates a git commit (`chore(release): x.y.z`) and tag (`vx.y.z`)
+5. Creates a git commit (`chore(release): x.y.z`) and local tag (`vx.y.z`)
 
 ## GitHub Secrets Required
 

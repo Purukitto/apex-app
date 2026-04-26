@@ -2,13 +2,22 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 2.0.10)'
+        required: true
 
 jobs:
   release:
     name: Build & Release APK
     runs-on: ubuntu-latest
+    # Auto-mode: only fire when the merge commit is a chore(release) bump.
+    # Manual mode (workflow_dispatch): always runs.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      startsWith(github.event.head_commit.message, 'chore(release):')
     permissions:
       contents: write
     steps:
@@ -16,17 +25,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Ensure tag is on main branch
-        run: |
-          if ! git branch -r --contains "$GITHUB_SHA" | grep -qE 'origin/main$'; then
-            echo "::error::Tag is not on the main branch. Skipping release."
-            exit 1
-          fi
-
-      - name: Extract version from tag
+      - name: Extract version
         id: version
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=$(echo "${{ github.event.head_commit.message }}" | head -1 | sed 's/chore(release): //')
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - uses: actions/setup-java@v5
@@ -81,7 +87,9 @@ jobs:
         id: changelog
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          NOTES=$(awk "/^## \\[?${VERSION}\\]?/{found=1; next} /^## \\[?[0-9]/{if(found) exit} found{print}" CHANGELOG.md)
+          # standard-version uses ### for patch/minor and ## for major headings.
+          # Match both, and stop at the next version heading (starts with digit or [digit).
+          NOTES=$(awk "/^###? \\[?${VERSION}\\]?/{found=1; next} found && /^###? \\[?[0-9]/{exit} found{print}" CHANGELOG.md)
           if [ -z "$NOTES" ]; then
             NOTES="Release v${VERSION}"
           fi

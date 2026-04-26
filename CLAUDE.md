@@ -31,12 +31,13 @@ flutter run --flavor prod -t lib/main.dart        # prod
 
 ### Test, Lint, Format
 ```bash
-flutter test                                # all tests
+flutter test                                  # all tests
 flutter test test/path/to/specific_test.dart  # single test file
-flutter analyze                             # static analysis
-dart analyze --fatal-infos                  # CI-level analysis (fails on infos)
-dart format .                               # format all files
-dart format --set-exit-if-changed .         # CI check (no writes)
+flutter test test/path/to/file.dart --name "pattern"  # single test case by name
+flutter analyze                               # static analysis
+dart analyze --fatal-infos                    # CI-level analysis (fails on infos)
+dart format .                                 # format all files
+dart format --set-exit-if-changed .           # CI check (no writes)
 ```
 
 ### Code Generation
@@ -46,12 +47,16 @@ dart run build_runner build --delete-conflicting-outputs
 ```
 
 ### Release
+**Always run from `main` after merging your PR — never from a feature branch.**
 ```bash
+git checkout main && git pull origin main
 npm run release              # auto-detect bump from conventional commits
 npm run release:patch        # force patch
 npm run release:minor        # force minor
-git push --follow-tags origin main   # triggers CI build + GitHub Release
+git push origin main         # triggers CI build + GitHub Release automatically
 ```
+To manually trigger a release for a version already on main (e.g. after a workflow failure):
+go to GitHub → Actions → Release → Run workflow → enter version number.
 
 ## Architecture
 
@@ -75,12 +80,12 @@ git push --follow-tags origin main   # triggers CI build + GitHub Release
 
 ### Routing (lib/app.dart)
 - Auth routes (no shell): `/login`, `/confirmed`, `/reset-password`
-- Shell routes (bottom nav): `/dashboard`, `/garage`, `/ride`, `/rides`
+- Shell routes (bottom nav): `/dashboard`, `/garage`, `/ride`, `/rides` — wrapped in a `StatefulShellRoute` so each tab maintains its own navigator stack and back-stack across tab switches
 - Standalone: `/profile` (no bottom nav)
 - `_RouterRefreshNotifier` bridges Riverpod auth state → GoRouter refresh for auth redirects
 
 ### Key Architectural Patterns
-- **Offline-first sync:** Local Drift DB is source of truth. `SyncEngine` (`core/sync/sync_engine.dart`) orchestrates bidirectional Supabase sync with 30-second polling. Push phase upserts dirty rows per-table; pull phase uses per-table last-sync timestamps stored in SharedPreferences (`last_sync_TABLE`). Conflict resolution is last-write-wins (server wins ties). `syncOrchestratorProvider` auto-starts/stops sync based on auth + connectivity state, and triggers an initial full sync on fresh login.
+- **Offline-first sync:** Local Drift DB is source of truth. `SyncEngine` (`core/sync/sync_engine.dart`) orchestrates bidirectional Supabase sync with 30-second polling (interval and per-table SharedPreferences key prefix `last_sync_<table>` are defined in that file). Push phase upserts dirty rows per-table; pull phase uses per-table last-sync timestamps. Conflict resolution is last-write-wins (server wins ties). `syncOrchestratorProvider` auto-starts/stops sync based on auth + connectivity state, and triggers an initial full sync on fresh login.
 - **Drift database:** 7 tables (Bikes, Rides, FuelLogs, MaintenanceLogs, MaintenanceSchedules, ServiceHistory, Notifications) with 5 DAOs accessed via `databaseProvider`. All sync-enabled tables include `isSynced` + `lastModified` columns — local writes set `isSynced=false`, sync engine processes dirty rows. Generated code lives in `*.g.dart` files — never edit these.
 - **Provider initialization:** `databaseProvider` and `sharedPrefsProvider` must be overridden in the root `ProviderScope` at startup — they throw if accessed without override. See `main.dart` for the pattern.
 - **Environment secrets:** Managed via envied with code generation. `.env` holds Supabase URL/key. `env.g.dart` is generated and gitignored. `AppConfig.initialize(environment:)` in `main()` sets up Supabase.
@@ -89,13 +94,16 @@ git push --follow-tags origin main   # triggers CI build + GitHub Release
 - **GeoJSON:** Route geometry stored as text in SQLite. Server-side RPC (`get_rides_with_geojson`) converts PostGIS geometry to GeoJSON for client rendering.
 
 ### Files to Never Commit
-- `.env`, `env.g.dart`, `google-services.json`, `*.g.dart` (generated files are gitignored but some may be tracked — check before modifying)
+- Secrets: `.env`, `env.g.dart`, `google-services.json`
+
+### Generated Files (Do Not Hand-Edit)
+- `*.g.dart` — produced by `build_runner` (Drift, envied). Some are gitignored, some are tracked; either way, regenerate via `dart run build_runner build --delete-conflicting-outputs` rather than editing.
 
 ## CI/CD
 
 - **ci.yml** (push/PR): code generation → format check → analyze → test
 - **commitlint.yml** (PR): validates conventional commit messages (`feat:`, `fix:`, `chore:`, etc.)
-- **release.yml** (push to main): builds signed APK, creates GitHub Release with changelog
+- **release.yml** (push to main where HEAD is a `chore(release):` commit, or manual `workflow_dispatch`): builds signed APK, creates GitHub Release with changelog. **Do not run `npm run release` on feature branches** — always release from `main` after merging.
 
 ## Testing Requirements
 

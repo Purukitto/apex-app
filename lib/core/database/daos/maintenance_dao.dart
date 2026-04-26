@@ -106,6 +106,24 @@ class MaintenanceDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Update only the service-completion fields of an existing schedule.
+  /// Uses UPDATE (not upsert) so it never tries to INSERT a partial row.
+  Future<void> updateScheduleServiceInfo(
+    String id, {
+    required String lastServiceDate,
+    required double lastServiceOdo,
+    required DateTime lastModified,
+  }) {
+    return (update(maintenanceSchedules)..where((s) => s.id.equals(id))).write(
+      MaintenanceSchedulesCompanion(
+        lastServiceDate: Value(lastServiceDate),
+        lastServiceOdo: Value(lastServiceOdo),
+        isSynced: const Value(false),
+        lastModified: Value(lastModified),
+      ),
+    );
+  }
+
   Future<int> deleteScheduleById(String id) {
     return (delete(maintenanceSchedules)..where((s) => s.id.equals(id))).go();
   }
@@ -161,6 +179,12 @@ class MaintenanceDao extends DatabaseAccessor<AppDatabase>
       ..orderBy([(h) => OrderingTerm.desc(h.serviceDate)]);
     if (limit != null) query.limit(limit);
     return query.watch();
+  }
+
+  Future<ServiceHistoryData?> getHistoryById(String id) {
+    return (select(
+      serviceHistory,
+    )..where((h) => h.id.equals(id))).getSingleOrNull();
   }
 
   Future<void> upsertHistory(ServiceHistoryCompanion entry) {

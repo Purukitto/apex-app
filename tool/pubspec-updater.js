@@ -11,5 +11,9 @@ module.exports.readVersion = function (contents) {
 };
 
 module.exports.writeVersion = function (contents, version) {
-  return contents.replace(versionRegex, `version: ${version}+1`);
+  // Encode semver as a monotonically-increasing integer so Android versionCode
+  // never repeats: 2.0.10 → 20010, 2.1.0 → 20100, 3.0.0 → 30000.
+  const [major, minor, patch] = version.split('.').map(Number);
+  const buildNumber = major * 10000 + minor * 100 + patch;
+  return contents.replace(versionRegex, `version: ${version}+${buildNumber}`);
 };

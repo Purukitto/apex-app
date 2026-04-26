@@ -107,15 +107,13 @@ class ServiceActions {
       ),
     );
 
-    // Update schedule's last service info
-    await _db.maintenanceDao.upsertSchedule(
-      MaintenanceSchedulesCompanion(
-        id: Value(scheduleId),
-        lastServiceDate: Value(today),
-        lastServiceOdo: Value(serviceOdo),
-        isSynced: const Value(false),
-        lastModified: Value(now),
-      ),
+    // Update schedule's last service info — use UPDATE not upsert so a partial
+    // companion never hits SQLite NOT NULL constraints on absent columns.
+    await _db.maintenanceDao.updateScheduleServiceInfo(
+      scheduleId,
+      lastServiceDate: today,
+      lastServiceOdo: serviceOdo,
+      lastModified: now,
     );
 
     // Update bike odometer if service reading is higher

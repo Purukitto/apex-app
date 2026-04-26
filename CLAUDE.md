@@ -105,6 +105,15 @@ go to GitHub → Actions → Release → Run workflow → enter version number.
 - **commitlint.yml** (PR): validates conventional commit messages (`feat:`, `fix:`, `chore:`, etc.)
 - **release.yml** (push to main where HEAD is a `chore(release):` commit, or manual `workflow_dispatch`): builds signed APK, creates GitHub Release with changelog. **Do not run `npm run release` on feature branches** — always release from `main` after merging.
 
+### Versioning internals
+`npm run release` runs `standard-version`, which:
+1. Bumps `version` in **`package.json`** (the source of truth for the semver).
+2. Bumps `version` in **`pubspec.yaml`** via `tool/pubspec-updater.js`. The build number (the `+N` suffix) is computed as `major*10000 + minor*100 + patch`, giving a monotonically-increasing Android `versionCode` (e.g. `2.0.11` → `version: 2.0.11+20011`). Never hand-edit the `+N` suffix.
+3. Writes `CHANGELOG.md` from conventional commits.
+4. Creates a `chore(release): x.y.z` commit and a `vx.y.z` git tag.
+
+If you add or modify the version bump scripts, verify that `package.json` and `pubspec.yaml` both update correctly and that `pubspec-updater.js` keeps the build number formula consistent.
+
 ## Testing Requirements
 
 Every bug fix and feature change **must** include or update relevant tests. Before submitting:
@@ -118,6 +127,7 @@ Every bug fix and feature change **must** include or update relevant tests. Befo
 Run `flutter test` and `dart analyze --fatal-infos` before every commit.
 
 ### Test Organization
+- `test/core/database/` — DAO unit tests using Drift in-memory databases (`NativeDatabase.memory()`)
 - `test/core/utils/` — unit tests for formatters, geo utilities, fuel calculations, GeoJSON parsing
 - `test/core/services/` — service tests (changelog, etc.)
 - `test/core/theme/` — typography tests

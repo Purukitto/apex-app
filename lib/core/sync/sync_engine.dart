@@ -526,6 +526,13 @@ class SyncEngine {
 
     for (final row in rows) {
       final remoteModified = DateTime.parse(row['created_at'] as String);
+      final local = await db.maintenanceDao.getHistoryById(
+        row['id'] as String,
+      );
+
+      if (local != null && !local.isSynced) {
+        if (!shouldAcceptRemote(local.lastModified, remoteModified)) continue;
+      }
 
       await db.maintenanceDao.upsertHistory(
         ServiceHistoryCompanion(

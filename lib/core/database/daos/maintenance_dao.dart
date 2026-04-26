@@ -114,9 +114,7 @@ class MaintenanceDao extends DatabaseAccessor<AppDatabase>
     required double lastServiceOdo,
     required DateTime lastModified,
   }) {
-    return (update(maintenanceSchedules)
-          ..where((s) => s.id.equals(id)))
-        .write(
+    return (update(maintenanceSchedules)..where((s) => s.id.equals(id))).write(
       MaintenanceSchedulesCompanion(
         lastServiceDate: Value(lastServiceDate),
         lastServiceOdo: Value(lastServiceOdo),
@@ -184,8 +182,9 @@ class MaintenanceDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<ServiceHistoryData?> getHistoryById(String id) {
-    return (select(serviceHistory)..where((h) => h.id.equals(id)))
-        .getSingleOrNull();
+    return (select(
+      serviceHistory,
+    )..where((h) => h.id.equals(id))).getSingleOrNull();
   }
 
   Future<void> upsertHistory(ServiceHistoryCompanion entry) {

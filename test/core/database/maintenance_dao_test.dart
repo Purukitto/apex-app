@@ -21,18 +21,18 @@ void main() {
     final created = DateTime(2026, 1, 1);
 
     Future<void> insertSchedule() => db.maintenanceDao.upsertSchedule(
-          MaintenanceSchedulesCompanion.insert(
-            id: scheduleId,
-            bikeId: bikeId,
-            partName: 'Chain Lube',
-            intervalKm: 500,
-            intervalMonths: 1,
-            isActive: true,
-            createdAt: created,
-            isSynced: const Value(true),
-            lastModified: created,
-          ),
-        );
+      MaintenanceSchedulesCompanion.insert(
+        id: scheduleId,
+        bikeId: bikeId,
+        partName: 'Chain Lube',
+        intervalKm: 500,
+        intervalMonths: 1,
+        isActive: true,
+        createdAt: created,
+        isSynced: const Value(true),
+        lastModified: created,
+      ),
+    );
 
     test('updates service fields without touching other columns', () async {
       await insertSchedule();
